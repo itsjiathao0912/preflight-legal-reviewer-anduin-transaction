@@ -450,3 +450,14 @@ SEQUENTIAL test steps — never a literal shell pipe.
 - Cloudflare resources for this project (Workers, Pages, D1, R2, KV…) are account-level and named with the `aduin-transaction` prefix.
 - Credentials: `~/.config/cloudflare/credentials.env` — load with `set -a; source ~/.config/cloudflare/credentials.env; set +a`. Never print the key or commit it.
 - If a task would require touching `itsjiathao.com`, stop and ask the user first.
+
+### Credentials & external APIs
+
+Secrets live OUTSIDE the repo (chmod 600). Never print, hardcode, or commit them. Loading a `.env` file trips the kit's privacy hook — ask the user, then add the `APPROVED:` marker.
+
+| Service | File | Variables | How to call |
+|---|---|---|---|
+| Cloudflare | `~/.config/cloudflare/credentials.env` | `CLOUDFLARE_EMAIL`, `CLOUDFLARE_API_KEY` (Global key), `CLOUDFLARE_ACCOUNT_ID` | `https://api.cloudflare.com/client/v4` with headers `X-Auth-Email` + `X-Auth-Key` |
+| OpenRouter (LLM) | `~/.config/openrouter/credentials.env` | `OPENROUTER_API_KEY`, `OPENROUTER_BASE_URL` | `POST $OPENROUTER_BASE_URL/chat/completions` with `Authorization: Bearer $OPENROUTER_API_KEY` (OpenAI-compatible; model ids like `openai/gpt-4o`) |
+
+In app code, read keys from env vars only: local dev → `.dev.vars` / `.env` (gitignored); deployed Workers → `wrangler secret put OPENROUTER_API_KEY`. Never expose the OpenRouter key to browser/client code — call it from the Worker/server side.
