@@ -74,3 +74,30 @@ Other risks:
 | 9 | Deploy, a11y, perf, final precompute, README/video/slides | all |
 
 Phases 3 and 4 can run in parallel.
+
+---
+
+## Revision R6 (2026-10-17): Review Memory + investor paths + outline export
+
+SPEC R6 (user-approved) added Review Memory (user PRD), investor-type paths, a JSON logic outline and sibling-doc diff framing.
+**Approach A still holds.** Full delta, D1 data model (19 tables), lookup SQL, flows, migrations and new risks:
+`subdoc-qa-mvp_DATA-MODEL_17-10-26.md`.
+
+| Area | Change |
+|---|---|
+| D1 role | Becomes the **system of record** for workspaces, analysts, firms, funds, document metadata, runs, findings (best-effort), append-only decisions, counsel Q&A, firm rules, rule evidence and audit. Cache, counters and ledger stay. |
+| Worker | Adds session, memory lookup, runs/findings, decisions (+ revoke), counsel, rules (+ approve/reject/revoke), firm memory, audit and export endpoints. Still no parsing. Worst endpoint is ~20 D1 queries, ~1–3 ms CPU (estimated). |
+| AI | The Worker injects the active firm rules into the prompt. The cache key adds `rules_hash`. |
+| IndexedDB | Shrinks to document bytes, parsed-model cache, UI state, drafts and the decision outbox. |
+| Fingerprint | `sha256("fp1|"+firm+"|"+class+"|"+sha256(normalize(quote)))`, one core implementation (`@noble/hashes`). The browser uses it for lookups; the Worker re-checks on writes. |
+| Isolation | Signed cookie `{workspace, analyst}`, composite `(workspace_id, id)` keys + FKs, every query binds `workspace_id`. The demo seed is copied into each sandbox, and no cookie is ever bound to the demo workspace. |
+| Learning | Rule proposal is computed on write (≥3 same-reason dismissals per `pattern_key`). It takes effect only after an analyst approves it. |
+| Retention | Lazy purge from new sessions, at most once per hour. Cron is unverified on Free, so it is not relied on. |
+| New risks | **D1 Free 100k rows written/day** (main risk) and sandbox-minting abuse; spikes S8–S10 cover them. Phases 4b (D1/memory) and 8b (memory UI, P1) are added. |
+
+Rejected for memory:
+- IndexedDB-only: no shared audit, and it breaks the server-snippet rule.
+- KV: write limit.
+- Durable Objects: Free plan.
+- Read-only demo overlay: breaks isolation.
+- Per-row INSERTs: exceed the 50-query limit.

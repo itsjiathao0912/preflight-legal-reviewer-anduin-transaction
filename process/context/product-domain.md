@@ -24,7 +24,15 @@ subscription documents (from GP law firms) into guided, validated online forms t
 clause and conditional structure. The analyst works out the form logic, so the analyst's real question is:
 **"Can this document be turned into unambiguous form logic, and what must counsel confirm first?"**
 The tool is built for this analyst, not for the drafting lawyer.
-Scale context: 1,180+ funds, 64,000+ investors, $205B+ raised.
+Scale context (shifting definitions): 2024 job post $205B / 1,180 funds / 64K investors; Apr 2026 PR $255B+ / 1,305 funds / 74K+;
+current site (Oct 2026) $265B+ raised / 76K+ investors / $7T client AUM / 400K+ users.
+
+**Today the step we target is manual:** Digitization Service Analysts (Ho Chi Minh City) digitize PDF sub docs with internal
+tools, derive the form logic, implement it in a simple scripting language, and coordinate with GP counsel. There is no public
+pre-digitization QA tooling, defect taxonomy, counsel query sheet, or automated logic check.
+**Anduin's AI is investor-side only:** OCR of completed submissions with human review (Data Extraction Service, Instant
+Extraction Apr 2026), IDM data matching and expiry tracking, and portal document routing. "Review Agent" and "MCPs" are
+undescribed 2026 roadmap labels. Details: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_ANDUIN-PLATFORM-RESEARCH_17-10-26.md`.
 
 ## Defect taxonomy (what the tool must find)
 
@@ -59,11 +67,24 @@ detector (rule id or LLM model), confidence, and for counsel items the possible 
 - **Pitch line:** "Litera-style proofreading plus form-logic validation, built for the digitization
   analyst rather than the drafting lawyer."
 
+## Review Memory (added 2026-10-17, user PRD)
+
+Source: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PRD-REVIEW-MEMORY_17-10-26.md`.
+Law firms reuse templates across funds, so the tool remembers analyst decisions and counsel answers **per law firm**:
+- Fingerprint = law firm + issue class + sha256(normalized quote). Normalization: lowercase, collapse whitespace, unify quotes;
+  **numbers and section numbers are kept**. Only exact matches count (no fuzzy/embedding matching).
+- Labels: New / Previously dismissed / Already answered / Awaiting counsel. Handled items are grouped, never deleted.
+- Safety: a digitization-blocking finding is never hidden ("re-confirm"); memory never crosses law firms or workspaces;
+  Dismiss needs a reason; decisions are append-only (revoke, don't delete); answered items stay out of the counsel sheet.
+- "AI-native" learning = lookup + firm rules as LLM context + rule proposals after ≥3 same-reason dismissals that an analyst
+  approves. No model training.
+
 ## Competitive landscape (why this is differentiated)
 
 - Generic legal proofreaders (Word add-ins for lawyers): Litera Check / Contract Companion,
   Definely Proof, Spellbook. They catch cross-refs, undefined terms, inconsistent phrases. They don't model form logic.
-- Sub-doc platforms: Anduin, Passthrough (iCapital), Juniper Square (manual doc review + JunieAI
+- Consolidation: iCapital acquired Passthrough (Feb 2026); Juniper Square acquired Tenor Digital (Oct 2025).
+- Sub-doc platforms: Anduin, Passthrough (now iCapital), Juniper Square (manual doc review + JunieAI
   on investor PDFs). Their review tools check **investor submissions after the fact**, not the source document's logic.
 - Gap: nobody validates a sub doc's conditional logic *before* digitization and turns problems
   into a counsel query workflow. Steps 4–5 (precedent diff + counsel sheet) are the differentiators.
