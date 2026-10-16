@@ -1,6 +1,6 @@
 # aduin-transaction - All Context
 
-Last updated: 2026-10-17 (Phase 00 UPDATE PROCESS; HEAD 7d9955b)
+Last updated: 2026-10-17 (Phase 01 UPDATE PROCESS; HEAD 6d12628)
 
 This file is the root context entrypoint for the repo.
 
@@ -91,6 +91,7 @@ For most substantial tasks:
 | File | Read when |
 |---|---|
 | `process/context/all-context.md` | any substantial planning, research, review, or implementation task |
+| `process/context/engine/all-engine.md` | any work in packages/core, detector/threshold changes, API contract changes, or phases 02-09 that extend the engine |
 | `process/context/planning/all-planning.md` | creating or reviewing an implementation plan |
 | `process/context/tests/all-tests.md` | testing, verification, test fixtures, or test debugging |
 | `process/context/ui/all-ui.md` | any UI/UX design, mockup, frontend implementation or UI review task |
@@ -99,6 +100,7 @@ For most substantial tasks:
 
 | Group | Entry point | Scope |
 |---|---|---|
+| `engine/` | `process/context/engine/all-engine.md` | Core engine architecture in packages/core (adapters, structure, graph, detectors, findings, memory, session, frozen contracts v1), pinned algorithms H/L/R/U/S with final thresholds, and how later phases extend it additively |
 | `planning/` | `process/context/planning/all-planning.md` | Planning conventions and plan-shape examples (SIMPLE vs COMPLEX) for writing implementation plans |
 | `tests/` | `process/context/tests/all-tests.md` | Test runners (vitest 4 + cloudflare vitest plugin + Playwright), real pnpm commands, no-double-dash rule, tooling caveats and known gaps for the sub-doc QA tool |
 | `ui/` | `process/context/ui/all-ui.md` | UI/UX design direction, design skills, references, tokens and approved mockups for the sub-doc QA web app |
@@ -133,6 +135,7 @@ For most substantial tasks:
 | test fixtures / sample documents | `samples/sub-docs/README.md` |
 | choosing libraries or copying open-source code | `docs/research/reusable-repos.md` (license rules) |
 | Cloudflare / OpenRouter calls, secrets | `CLAUDE.md` → Project Rules (credentials table) |
+| core engine, detectors, thresholds, frozen API contracts (packages/core) | `process/context/engine/all-engine.md` |
 | testing or verification | `process/context/tests/all-tests.md` |
 | creating a new plan | `process/context/planning/all-planning.md` |
 | UI/UX design, mockups, frontend look and feel | `process/context/ui/all-ui.md` |
@@ -184,7 +187,7 @@ When durable project knowledge changes:
 
 ## Repository Structure
 
-pnpm monorepo scaffold exists (Phase 00 of the subdoc-qa-mvp program, commit 7d9955b); product logic arrives from Phase 01. Current layout:
+pnpm monorepo scaffold exists (Phase 00 of the subdoc-qa-mvp program, commit 7d9955b); Phase 01 (commit 6d12628) added the core engine in `packages/core` (see `process/context/engine/all-engine.md`). Current layout:
 
 ```
 aduin-transaction/
@@ -249,7 +252,7 @@ Secrets live outside the repo (see `CLAUDE.md` credentials table). Env var names
   The paid fallback is chosen against the ~$10 cap.
 - Persistence for counsel-query tracking (D1 vs KV) and whether the demo needs auth.
 - OpenRouter credits not yet topped up by the user; paid fallback unavailable until then.
-- Next step: Phase 01 EXECUTE (core engine) in the subdoc-qa-mvp program; see the umbrella `## Current Execution State`.
+- Next step: Phases 03 and 04a EXECUTE in parallel, then M1 slice deploy; see the umbrella `## Current Execution State`. Phase 01 (core engine) is DONE, see `process/context/engine/all-engine.md`.
 - a11y scanner: axe is MPL-2.0 and not installed; user decision needed before Phases 03/10 a11y gates.
 
 ## Scan Metadata

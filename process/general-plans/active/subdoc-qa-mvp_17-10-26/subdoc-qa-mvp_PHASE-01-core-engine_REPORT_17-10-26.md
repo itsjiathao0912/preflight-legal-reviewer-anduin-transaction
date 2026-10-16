@@ -179,3 +179,19 @@ Sample #2 (378,698 B, 587 lines): adapter + structure was 68.8 ms cold and 34.9-
 
 ### Dependency Changes
 None added. `fixtures/memory/law-firms.json` is new and imported by `memory/firms.ts` through a JSON import attribute.
+
+## UPDATE PROCESS Closeout Packet (17-10-26, supersedes the EXECUTE-time packet above)
+
+1. Selected plan: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-01-core-engine_PLAN_17-10-26.md`
+2. Closeout classification: Ready for UPDATE PROCESS archival (phase VERIFIED/DONE; the task folder stays in `active/` because it holds the whole program, not just Phase 01)
+3. Finished: all Phase 01 touchpoints except `memory/patternKey.ts` (owned by P02); contracts v1 frozen with snapshot; source commit 6d12628.
+4. Verified: independent EVL re-run, CLEAN: core 217, golden 44, property 29, corpus 13, vectors 38, security 16, contracts 34, typecheck/lint/guard:cf/secrets:scan, root `pnpm test`, nosuchtoken negative exits 1. Unverified: workerd/browser conformance (P04b/P03); label-coherence precision on non-golden docs (P02); independent security review decision (harness/phase-01, in progress).
+4b. Validate-contract: present in plan, PASS (2 supplement cycles).
+5. Cleanup done: phase plan steps 6-7 ticked; umbrella `## Current Execution State` rewritten; registry Phase 01 `status: DONE`; context group `process/context/engine/all-engine.md` added; `tests/all-tests.md` core gate row corrected. Still needed: add fast-check/typescript/vitest to THIRD_PARTY_NOTICES.md (backlog NOTE in P02/P10 scope); process commit by orchestrator.
+6. Next valid state: Phases 03 and 04a EXECUTE (running in parallel); then M1 slice deploy; then 02, 04b, then 05/06/07/08/08b/09/10.
+7. Commit checkpoint: source commit already made (6d12628). Process commit belongs to the orchestrator (autopilot: no commits here).
+8. Regression status: Phase 00 smoke surfaces re-run via root `pnpm test` (scripts 22, core 217, web 2, worker 7) PASS.
+9. SPEC achievement: no per-phase SPEC (umbrella SPEC governs). Phase-01-relevant criteria AC11 (#1 = 2), AC12 (#3, #5 = 2 each), AC13 (#11 = 1) met by passing golden gates. AC29 timing observed, no gate. No unmet criteria; residual gaps carried above as notes.
+
+Drift score: MEDIUM (3 signals: >=10 files touched, backlog/follow-up notes written, structural context-group addition)
+Recommend UPDATE PROCESS -- significant changes detected.

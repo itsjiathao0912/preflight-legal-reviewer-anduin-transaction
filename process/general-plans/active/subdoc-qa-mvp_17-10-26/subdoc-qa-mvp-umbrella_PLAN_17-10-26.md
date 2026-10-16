@@ -602,16 +602,16 @@ node .claude/skills/vc-generate-plan/scripts/validate-plan-artifact.mjs <each pl
 ## Current Execution State
 
 Last updated: 17-10-26
-Current phase: 1 of 13 (Phase 00 DONE, commit 7d9955b; Phase 01 next)
-Phase name: Phase 01 — Core engine
-Phase status: PVL PASS (2 supplement cycles); ready for EXECUTE
-Phase EVL: Phase 00 EVL 11/11 green (CLEAN). Phase 01 EVL not started
-Phase report: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-00-scaffold-spikes_REPORT_17-10-26.md` (Phase 00, written); closeout `subdoc-qa-mvp_PHASE-00-closeout_REPORT_17-10-26.md`
-Next phase: Phase 01 EXECUTE, then 04a (PVL PASS), then 03 (re-target supplement to app.html in progress; hold released, see Execution Holds), M1 slice deploy deferred until 03 is done; later 02, 04b, 07, 06
-Current loop step: EXECUTE (Phase 01; Phase 00 closed at UPDATE-PROCESS)
-Validate-contract status: Phase 01 PASS; 04a PASS; 03 supplement cycle 3 in progress; holds and defaults are recorded in `## Execution Holds`
-Program Net Gate: PENDING (Phase 00 exit gate met; carried gaps: remote spikes not re-run in EVL, S2 PASS-WITH-RISK use string-template rebuild, OpenRouter free-tier limits read at runtime in 05, D1 batch vs 50-query budget open in 04b S8, axe MPL-2.0 decision pending)
-Latest validator run: 17-10-26 — Phase 00 EVL gates 11/11 green (install, typecheck, lint, test, guard:cf, secrets:scan, worker 7/7, scripts 22/22, spike:check, spike:s06-local, spike:s07)
+Current phase: 3 and 4a of 13 executing in parallel (Phase 00 DONE, commit 7d9955b; Phase 01 DONE, commit 6d12628)
+Phase name: Phase 03 — Web shell + Phase 04a — Worker proxy (parallel EXECUTE)
+Phase status: Phase 01 DONE (EVL CLEAN; independent security review pending); 03 and 04a EXECUTING in parallel; M1 slice deploy after 03 + 04a
+Phase EVL: Phase 01 EVL green (core 217, golden 44, property 29, corpus 13, vectors 38, security 16, contracts 34, typecheck/lint/guard:cf/secrets:scan, root test, negative check); 03 and 04a EVL not started
+Phase report: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-01-core-engine_REPORT_17-10-26.md` (Phase 01, written); closeout appended there; Phase 00 `subdoc-qa-mvp_PHASE-00-scaffold-spikes_REPORT_17-10-26.md`
+Next phase: after M1 slice deploy (03 + 04a): 02, 04b, then 05/06/07/08/08b/09/10; all UI holds released (see Execution Holds, Hold update 2)
+Current loop step: EXECUTE (Phase 03 and Phase 04a in parallel; Phase 01 closed at UPDATE-PROCESS)
+Validate-contract status: Phase 01 PASS (EXECUTED, EVL green); 03 PASS (after 3 supplement cycles); 04a PASS; holds and defaults are recorded in `## Execution Holds`
+Program Net Gate: PENDING (Phase 01 exit gate met; carried gaps: workerd/browser conformance of vectors + cookie helper owned by P04b/P03, dev deps missing from THIRD_PARTY_NOTICES.md, patternKey.ts owned by P02, remote spikes not re-run, S2 PASS-WITH-RISK use string-template rebuild, OpenRouter free-tier limits read at runtime in 05, D1 batch vs 50-query budget open in 04b S8, axe MPL-2.0 decision pending)
+Latest validator run: 17-10-26 — Phase 01 EVL gates green (core 217, golden 44, property 29, corpus 13, vectors 38, security 16, contracts 34, typecheck/lint/guard:cf/secrets:scan, root pnpm test, nosuchtoken exits 1)
 
 Loop step values: RESEARCH | INNOVATE | PLAN-SUPPLEMENT | PVL | EXECUTE | EVL | UPDATE-PROCESS
 Orchestrator rule: read "Current loop step" and "validate-contract status" before spawning any subagent. Never spawn execute-agent when loop step is RESEARCH, INNOVATE, PLAN-SUPPLEMENT, or PVL.

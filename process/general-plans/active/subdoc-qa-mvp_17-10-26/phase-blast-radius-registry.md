@@ -26,6 +26,7 @@ status: DONE (17-10-26, commit 7d9955b, EVL 11/11 green)
 
 ## Phase 01
 Owns: `packages/core/src/{model,adapters/html,structure,graph,findings,detectors (golden files only),memory,session,config,contracts,engine}` + their tests, `fixtures/fingerprint-vectors.json`, `fixtures/memory/law-firms.json`. NOT owned (later phases): `llm`, `diff`, `counsel`, `outline`, `investor`, `adapters/{pdf,docx,ocr}`. Seams (append-only): `packages/core/src/index.ts`, `detectors/registry.ts`. Phase-00-owned manifests/lint edited only via the serialized F0 seam step (2026-10-17 revision).
+status: DONE (17-10-26, commit 6d12628, EVL CLEAN; independent security review pending)
 
 ## Phase 02
 Owns: `packages/core/src/{detectors (new files), investor, memory/patternKey.ts}`, `packages/core/test/**` (new), `fixtures/html-seeded`, `fixtures/memory/{fund-*,demo-seed-spec.json}`, `scripts/src/fixtures`, `apps/web/src/features/investor-paths`, 2 web e2e specs. Disjoint from 04b.

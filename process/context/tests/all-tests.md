@@ -188,7 +188,7 @@ pnpm test -- path/to/file.test.ts  # single file
 
 | Package | Runner | Commands |
 |---|---|---|
-| `@aduin/core` (`packages/core`) | vitest | `pnpm --filter @aduin/core test`; subsets `test:golden`, `test:property`, `test:seeded`, `test:corpus` (all `--passWithNoTests`) |
+| `@aduin/core` (`packages/core`) | vitest | `pnpm --filter @aduin/core test`; subsets `test:golden`, `test:property`, `test:corpus`, `test:vectors` (Phase 01: `--passWithNoTests` removed; unmatched token exits 1), `test:seeded` (still `--passWithNoTests`, Phase 02); filename-token gates `test security`, `test contracts`. See `process/context/engine/all-engine.md` |
 | `@aduin/web` (`apps/web`) | vitest (jsdom), Playwright | `pnpm --filter @aduin/web test`; `test:e2e`; `test:a11y` (`--grep @a11y --pass-with-no-tests`) |
 | `@aduin/worker` (`apps/worker`) | vitest + cloudflare plugin | `pnpm --filter @aduin/worker test` (health, 404 JSON, seam tests: 7 tests) |
 | `@aduin/scripts` (`scripts`) | vitest | `pnpm --filter @aduin/scripts test` (22 tests: guard failing-cases, spike-check, thresholds, gzip) |
