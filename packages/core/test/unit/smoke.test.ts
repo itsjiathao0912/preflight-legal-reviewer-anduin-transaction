@@ -6,7 +6,37 @@ describe('@aduin/core smoke', () => {
     expect(core.CORE_PACKAGE).toBe('@aduin/core');
   });
 
-  it('barrel seam exposes only the package marker before Phase 01', () => {
-    expect(Object.keys(core)).toEqual(['CORE_PACKAGE']);
+  it('barrel exposes the Phase 01 public API (append-only seam)', () => {
+    for (const name of [
+      'CORE_PACKAGE',
+      'analyzeHtml',
+      'runDeterministic',
+      'detectors',
+      'FindingSchema',
+      'FindingWireSchema',
+      'normalize',
+      'quoteHash',
+      'fingerprint',
+      'fingerprintFor',
+      'mask',
+      'resolveLabel',
+      'rulesHash',
+      'snapToSentence',
+      'resolveFirm',
+      'LAW_FIRMS',
+      'signCookie',
+      'verifyCookie',
+      'resign',
+      'SessionClaimsSchema',
+      'cacheKey',
+      'parseFrameLine',
+      'errorStatus',
+      'ErrorBodySchema',
+      'MEMORY_LABELS',
+      'limits',
+      'DemoSeedSpecSchema',
+    ]) {
+      expect(core, name).toHaveProperty(name);
+    }
   });
 });

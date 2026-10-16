@@ -38,6 +38,8 @@ Project rule: only MIT / BSD / Apache-2.0 / ISC code (fonts: OFL). Keep upstream
 | esbuild                                     | 0.28.2                    | MIT               | dev                                        |
 | @types/node, @types/react, @types/react-dom | 24.19.2 / 19.3.0 / 19.3.0 | MIT               | dev                                        |
 
+Ideas ported without copying code (own implementation and tests): defined-term extraction patterns from `defined-terms-checker` (MIT), Phase 01 `packages/core/src/structure/defined-terms.ts`. Phase 01 added no new dependencies; `htmlparser2`, `zod`, `@noble/hashes` and `fast-check` were already pinned in Phase 00.
+
 Not installed (license outside the rule, user decision pending): `@axe-core/playwright` 4.14.0 and `axe-core` are MPL-2.0.
 
 Fonts (Phase 03): Newsreader and Geist, both SIL Open Font License 1.1 (to be confirmed when self-hosted).

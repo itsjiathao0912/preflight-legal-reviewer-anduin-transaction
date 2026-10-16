@@ -1,0 +1,217 @@
+{
+  "version": 1,
+  "fp_version": 1,
+  "note": "Conformance vectors for core normalize/quoteHash/fingerprint/mask (DATA-MODEL 2.2). Expected values computed independently (Python hashlib/unicodedata), not by core. Must pass in Node (P01), workerd (P04b) and the browser bundle (P03).",
+  "normalize": [
+    {
+      "name": "case",
+      "input": "Section 4 CUSTODIAN Information",
+      "expected": "section 4 custodian information",
+      "quote_hash": "ea11756b1442e4a0c3b21d513d335929304f8b459986beab461f1ebcf5847979"
+    },
+    {
+      "name": "whitespace",
+      "input": "  amount\tspecified \n in  Part B  ",
+      "expected": "amount specified in part b",
+      "quote_hash": "f43e1088530935ac3c9431830d5b7c90c5be505056f229005faf0f6df06c1b6f"
+    },
+    {
+      "name": "nbsp",
+      "input": "Section 4 of the Agreement",
+      "expected": "section 4 of the agreement",
+      "quote_hash": "d8b72c472ad439e696ed79e45b6cedf4a3d2b33b54e724e3711c8d3d72ae9794"
+    },
+    {
+      "name": "curly-double",
+      "input": "the “Shares”",
+      "expected": "the \"shares\"",
+      "quote_hash": "d147c0a14b5cd93111e325df272ad1f7cac678ed8c2535b8ae0f894cb0451223"
+    },
+    {
+      "name": "curly-single",
+      "input": "Subscriber’s ‘consent’",
+      "expected": "subscriber's 'consent'",
+      "quote_hash": "41f60e21799cea8e4b1d11c22193860ef8683050c34ce3bac663de3f3a523d2a"
+    },
+    {
+      "name": "invisible",
+      "input": "sub­scrip​tion‌ agree‍ment﻿",
+      "expected": "subscription agreement",
+      "quote_hash": "fec5aea167d19689554c9dce180e7db35dc210c8ccb095a5e7cf2ce9425212f1"
+    },
+    {
+      "name": "nfc",
+      "input": "Café Fund",
+      "expected": "café fund",
+      "quote_hash": "5b0f1bf223863879d95c647691b60e8dfae4e3bfa7adbcc2172f71a167d9d962"
+    },
+    {
+      "name": "keep-punctuation",
+      "input": "Section 3(c)(1) — § 4975; footnote*†",
+      "expected": "section 3(c)(1) — § 4975; footnote*†",
+      "quote_hash": "4a089ddf993946e0485ec48e8592b901ca792150d58c84ae19f4ce36602a003c"
+    }
+  ],
+  "equal": [
+    {
+      "name": "case",
+      "a": "Section 4 Custodian Information",
+      "b": "SECTION 4 CUSTODIAN INFORMATION"
+    },
+    {
+      "name": "whitespace",
+      "a": "amount specified in Part B",
+      "b": "amount   specified\n\tin Part B"
+    },
+    {
+      "name": "nbsp",
+      "a": "Section 4",
+      "b": "Section 4"
+    },
+    {
+      "name": "curly-vs-straight-double",
+      "a": "the “Shares”",
+      "b": "the \"Shares\""
+    },
+    {
+      "name": "curly-vs-straight-single",
+      "a": "Subscriber’s",
+      "b": "Subscriber's"
+    }
+  ],
+  "differ": [
+    {
+      "name": "section-4-vs-5",
+      "a": "as specified in Part B of Section 4",
+      "b": "as specified in Part B of Section 5"
+    },
+    {
+      "name": "edited-passage",
+      "a": "the offered Units will not be sold",
+      "b": "the offered Shares will not be sold"
+    }
+  ],
+  "fingerprint": [
+    {
+      "name": "firm-a",
+      "firm": "firm-x",
+      "issue_class": "broken_cross_reference",
+      "quote": "as specified in Part B of Section 4",
+      "quote_hash": "1efbecb5124d7207c9c8a0bfa1b36c1b90ecf4674a824646bc20b688d2eb062a",
+      "fingerprint": "19a2c84f3de590e578b958100ad7a14c49048d648272167ea2af63399ffb63f4"
+    },
+    {
+      "name": "firm-b",
+      "firm": "firm-y",
+      "issue_class": "broken_cross_reference",
+      "quote": "as specified in Part B of Section 4",
+      "quote_hash": "1efbecb5124d7207c9c8a0bfa1b36c1b90ecf4674a824646bc20b688d2eb062a",
+      "fingerprint": "99ab96b02d19b9bf12f1ea4dfa09bc913cdeebaee95784813fe7b2be2497eb88"
+    },
+    {
+      "name": "class-differs",
+      "firm": "firm-x",
+      "issue_class": "defined_term_issue",
+      "quote": "as specified in Part B of Section 4",
+      "quote_hash": "1efbecb5124d7207c9c8a0bfa1b36c1b90ecf4674a824646bc20b688d2eb062a",
+      "fingerprint": "608f837b295ccbb42a1b6493f49a8331627d7291b11ea252449a469f7ff8ef24"
+    },
+    {
+      "name": "section-5",
+      "firm": "firm-x",
+      "issue_class": "broken_cross_reference",
+      "quote": "as specified in Part B of Section 5",
+      "quote_hash": "3a246748f2595bfe2c25c7588a27a016b1158f6c3c36234ef2817890e099782b",
+      "fingerprint": "27b42240d25d87aed638630b4d6e3e54e89909b22d0ea73bcb834a019444bdcc"
+    },
+    {
+      "name": "curly",
+      "firm": "partners-group",
+      "issue_class": "defined_term_issue",
+      "quote": "the offered “Units”",
+      "quote_hash": "1c6acb417cceb6f969d8b813b26a0fb78126da603e88ab24bbeb2869a96c491b",
+      "fingerprint": "4372a637c5842f871eca1792a62ac51a8dc151748f274bbff19d39d26b3e2e21"
+    },
+    {
+      "name": "straight",
+      "firm": "partners-group",
+      "issue_class": "defined_term_issue",
+      "quote": "the offered \"Units\"",
+      "quote_hash": "1c6acb417cceb6f969d8b813b26a0fb78126da603e88ab24bbeb2869a96c491b",
+      "fingerprint": "4372a637c5842f871eca1792a62ac51a8dc151748f274bbff19d39d26b3e2e21"
+    },
+    {
+      "name": "masked",
+      "firm": "partners-group",
+      "issue_class": "sensitive_data",
+      "quote": "Routing number #0021",
+      "quote_hash": "01f8303c340e62392d52c4e212b00b44dab0e195fa655820c960b27a446c8636",
+      "fingerprint": "4fef8cb3ae5aac0b051a618f538663deebbf3085e25f2357825de428ec82387e"
+    }
+  ],
+  "length": [
+    {
+      "name": "1000-accepted",
+      "length": 1000,
+      "accepted": true
+    },
+    {
+      "name": "1001-rejected",
+      "length": 1001,
+      "accepted": false
+    }
+  ],
+  "mask": [
+    {
+      "name": "routing-number",
+      "input": "Routing number 021000021",
+      "spans": [
+        {
+          "start": 15,
+          "end": 24
+        }
+      ],
+      "expected": "Routing number #0021"
+    },
+    {
+      "name": "no-length-leak",
+      "input": "Routing number 1021000021",
+      "spans": [
+        {
+          "start": 15,
+          "end": 25
+        }
+      ],
+      "expected": "Routing number #0021"
+    },
+    {
+      "name": "dashed-account",
+      "input": "ABA routing: 1010-0069-5",
+      "spans": [
+        {
+          "start": 13,
+          "end": 24
+        }
+      ],
+      "expected": "ABA routing: #0695"
+    }
+  ],
+  "cp1252": [
+    {
+      "name": "cp1252-quotes",
+      "html": "<p>the &#147;Shares&#148; and Subscriber&#146;s</p>",
+      "expected_text": "the “Shares” and Subscriber’s",
+      "expected_normalized": "the \"shares\" and subscriber's",
+      "straight": "the \"Shares\" and Subscriber's",
+      "quote_hash": "e638ab22aaad94f9be7e118f304b3b46efc8622cb6710dd4038e81014092850f"
+    },
+    {
+      "name": "cp1252-dashes",
+      "html": "<p>Part B &#150; Investment amount &#151; total</p>",
+      "expected_text": "Part B – Investment amount — total",
+      "expected_normalized": "part b – investment amount — total",
+      "straight": null,
+      "quote_hash": "996cb9495069ff7893a422e64b1a04ceb9efdb64d2b348b117e399fb2b699c6e"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "note": "Canonical law firms for Review Memory (demo). Consumed by core resolveFirm, web firms.json (P03) and migration 0003 (P04b). Aliases are normalized with core normalizeFirmAlias (lowercase, legal suffixes and punctuation stripped).",
+  "firms": [
+    {
+      "id": "partners-group",
+      "name": "Partners Group",
+      "aliases": ["Partners Group AG", "Partners Group (USA) Inc.", "Partners Group LLP", "PG"]
+    },
+    {
+      "id": "firm-x",
+      "name": "Firm X",
+      "aliases": ["Firm X LLP", "Firm X, LLP", "Firm-X"]
+    },
+    {
+      "id": "firm-y",
+      "name": "Firm Y",
+      "aliases": ["Firm Y LLC", "Firm Y & Partners", "Firm-Y"]
+    }
+  ]
+}

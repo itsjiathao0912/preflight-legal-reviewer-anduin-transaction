@@ -13,10 +13,10 @@ metadata:
 
 **Date**: 17-10-26
 **Complexity**: COMPLEX
-**Status**: ⏳ PLANNED
+**Status**: 🚧 EXECUTED — awaiting EVL
 **Program:** subdoc-qa-mvp
 **Umbrella plan:** process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp-umbrella_PLAN_17-10-26.md
-**Phase status:** ⏳ PLANNED
+**Phase status:** 🚧 EXECUTED — awaiting EVL
 **Milestone:** M1 vertical slice (00 → 01 → 03 → 04a)
 **Report destination:** process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-01-core-engine_REPORT_17-10-26.md
 
@@ -243,38 +243,38 @@ Unknown heading style → block kept as plain paragraph (never a throw); referen
 ## Implementation Checklist
 
 ### Step F — Phase-00-owned manifests and lint (serialized seam edits by the orchestrator)
-- [ ] F0. Seam edit (orchestrator applies; executor supplies exact diff) to Phase-00-owned `packages/core/package.json`, `packages/core/vitest.config.ts` and root eslint config: add deps `htmlparser2`, `zod`, `@noble/hashes`, `fast-check` (versions per Phase 00 REF); **vitest stays on the Phase 00 pin (4.x, the major `@cloudflare/vitest-pool-workers` peers; do not use 5.x)**; add scripts `test:golden`, `test:property`, `test:corpus`, `test:vectors`; add ESLint `no-restricted-globals` (`document`, `window`) scoped to `packages/core/src/**`. Gate: `pnpm --filter @aduin/core test:vectors` resolves and `pnpm lint` fails on a seeded `document` reference in a scratch test file. F0 runs before Step A.
+- [x] F0. Seam edit (orchestrator applies; executor supplies exact diff) to Phase-00-owned `packages/core/package.json`, `packages/core/vitest.config.ts` and root eslint config: add deps `htmlparser2`, `zod`, `@noble/hashes`, `fast-check` (versions per Phase 00 REF); **vitest stays on the Phase 00 pin (4.x, the major `@cloudflare/vitest-pool-workers` peers; do not use 5.x)**; add scripts `test:golden`, `test:property`, `test:corpus`, `test:vectors`; add ESLint `no-restricted-globals` (`document`, `window`) scoped to `packages/core/src/**`. Gate: `pnpm --filter @aduin/core test:vectors` resolves and `pnpm lint` fails on a seeded `document` reference in a scratch test file. F0 runs before Step A.
 
 ### Step A — Model, adapter, structurer, graph
-- [ ] A1. `model/*`: types per Frozen Model Shapes (Doc, Block, Line, Cue, Anchor, Reference, graph), LineStream, anchors; property test: anchors stable across runs; zod shapes in the JSON-schema snapshot.
-- [ ] A2. `adapters/html.ts`: SAX parse, merge `<td>` cells per `<tr>` before heading detection, glyph normalization (☐ ¨ [ ] o ☒), exclusivity-cue capture ("check only one", "select only one", "check one box only", "(circle one)", "check all that apply"), EDGAR noise pre-pass with an auditable rule list (EX-99 wrapper lines, "N of M" counters, "[Logo]", repeating headers); inline-CSS bold cue parsing (`font-weight`, `font: bold`) plus `<b>`/`<strong>`; cp1252 numeric entity mapping (`&#147;`/`&#146;` etc.); input size cap and max line length from `config/limits.ts`.
-- [ ] A3. `structure/*`: headings per Pinned Algorithms H (bold-number+title row, sub-list demotion, monotonic numbers per scope, enclosing section), numbering scopes, references (scope resolution per L.1), conditionals (whitelist, role routing, skip, negative gate, entity extra part), option groups, defined terms (`(the "X")`, `"X" means`, port ideas from defined-terms-checker, MIT, with own tests), fields, statutory exclusion per Pinned Algorithms S (full pattern list, bare repeat cites, out-of-range rule).
-- [ ] A4. `graph/*`: nodes (section, block, option, term, field), edges (ref, conditional, contains, defines/uses); query helpers.
-- [ ] A5. Fixtures-in-tests: one seeded HTML per pattern for `graph-extraction-fixtures` (test-local, under `packages/core/test/fixtures/`).
+- [x] A1. `model/*`: types per Frozen Model Shapes (Doc, Block, Line, Cue, Anchor, Reference, graph), LineStream, anchors; property test: anchors stable across runs; zod shapes in the JSON-schema snapshot.
+- [x] A2. `adapters/html.ts`: SAX parse, merge `<td>` cells per `<tr>` before heading detection, glyph normalization (☐ ¨ [ ] o ☒), exclusivity-cue capture ("check only one", "select only one", "check one box only", "(circle one)", "check all that apply"), EDGAR noise pre-pass with an auditable rule list (EX-99 wrapper lines, "N of M" counters, "[Logo]", repeating headers); inline-CSS bold cue parsing (`font-weight`, `font: bold`) plus `<b>`/`<strong>`; cp1252 numeric entity mapping (`&#147;`/`&#146;` etc.); input size cap and max line length from `config/limits.ts`.
+- [x] A3. `structure/*`: headings per Pinned Algorithms H (bold-number+title row, sub-list demotion, monotonic numbers per scope, enclosing section), numbering scopes, references (scope resolution per L.1), conditionals (whitelist, role routing, skip, negative gate, entity extra part), option groups, defined terms (`(the "X")`, `"X" means`, port ideas from defined-terms-checker, MIT, with own tests), fields, statutory exclusion per Pinned Algorithms S (full pattern list, bare repeat cites, out-of-range rule).
+- [x] A4. `graph/*`: nodes (section, block, option, term, field), edges (ref, conditional, contains, defines/uses); query helpers.
+- [x] A5. Fixtures-in-tests: one seeded HTML per pattern for `graph-extraction-fixtures` (test-local, under `packages/core/test/fixtures/`).
 
 ### Step B — Findings and detectors
-- [ ] B1. `findings/*`: zod `Finding`, taxonomy (15 codes), stable `ids.ts`, `severity.ts`.
-- [ ] B2. `detectors/registry.ts` and the three golden detectors: `ref-this-section` (algorithm R), `ref-label-coherence` (algorithm L: scope resolution, <=4-token noun window, overlap thresholds 0.25/0.5, expected target; severity cap `high`, confidence <= 0.7 until P02 precision is known), `undefined-term` (algorithm U: closed offering-security synonym set, Circular carve-out caps severity at medium and adds an interpretation).
-- [ ] B3. `engine.ts` + `explain` facts (reference text, found target, expected target).
+- [x] B1. `findings/*`: zod `Finding`, taxonomy (15 codes), stable `ids.ts`, `severity.ts`.
+- [x] B2. `detectors/registry.ts` and the three golden detectors: `ref-this-section` (algorithm R), `ref-label-coherence` (algorithm L: scope resolution, <=4-token noun window, overlap thresholds 0.25/0.5, expected target; severity cap `high`, confidence <= 0.7 until P02 precision is known), `undefined-term` (algorithm U: closed offering-security synonym set, Circular carve-out caps severity at medium and adds an interpretation).
+- [x] B3. `engine.ts` + `explain` facts (reference text, found target, expected target).
 
 ### Step C — Memory core and session helper
-- [ ] C1. `memory/{normalize,fingerprint,mask,label,rulesHash}.ts` per Public Contracts; `rulesHash` = sha256 of sorted normalized rule texts, `'none'` for empty; `memory/snap.ts` `snapToSentence` per Public Contracts; `fingerprintFor(finding, firmId|null)`; `resolveLabel` typed per Public Contracts.
-- [ ] C2. `fixtures/fingerprint-vectors.json` (case, whitespace, NBSP, curly quotes, "Section 4" vs "Section 5", firm A vs B, 1000-char boundary, **sensitive mask vector**: `"Routing number 021000021"` -> masked `"Routing number #0021"` (no length leak; `"021000021"` and `"1021000021"` (both end `0021`) both mask to `#0021`, never an added `#####` run), **cp1252 vector**: raw HTML `&#147;Shares&#148;` and `&#146;` decode to U+201C/U+201D/U+2019 and normalize to `"shares"` / `'` so the fingerprint equals that of the straight-quote form; curly-quote variants match straight-quote variants). Plus `fixtures/cache-key-vectors.json`.
-- [ ] C3. `memory/firms.ts` + `fixtures/memory/law-firms.json`: `resolveFirm(name)` with alias normalization (lowercase, punctuation stripped, "LLP/LLC/Inc" suffix aliases); free text → `null`.
-- [ ] C4. `session/cookie.ts` (sign/verify via `crypto.subtle.verify`, `kid`, expiry, SessionClaims incl. `t`, full tamper test matrix from Security Hardening).
-- [ ] C5. `config/limits.ts` (locked defaults; single source for web/worker).
+- [x] C1. `memory/{normalize,fingerprint,mask,label,rulesHash}.ts` per Public Contracts; `rulesHash` = sha256 of sorted normalized rule texts, `'none'` for empty; `memory/snap.ts` `snapToSentence` per Public Contracts; `fingerprintFor(finding, firmId|null)`; `resolveLabel` typed per Public Contracts.
+- [x] C2. `fixtures/fingerprint-vectors.json` (case, whitespace, NBSP, curly quotes, "Section 4" vs "Section 5", firm A vs B, 1000-char boundary, **sensitive mask vector**: `"Routing number 021000021"` -> masked `"Routing number #0021"` (no length leak; `"021000021"` and `"1021000021"` (both end `0021`) both mask to `#0021`, never an added `#####` run), **cp1252 vector**: raw HTML `&#147;Shares&#148;` and `&#146;` decode to U+201C/U+201D/U+2019 and normalize to `"shares"` / `'` so the fingerprint equals that of the straight-quote form; curly-quote variants match straight-quote variants). Plus `fixtures/cache-key-vectors.json`.
+- [x] C3. `memory/firms.ts` + `fixtures/memory/law-firms.json`: `resolveFirm(name)` with alias normalization (lowercase, punctuation stripped, "LLP/LLC/Inc" suffix aliases); free text → `null`.
+- [x] C4. `session/cookie.ts` (sign/verify via `crypto.subtle.verify`, `kid`, expiry, SessionClaims incl. `t`, full tamper test matrix from Security Hardening).
+- [x] C5. `config/limits.ts` (locked defaults; single source for web/worker).
 
 ### Step D — Contracts v1
-- [ ] D1. `contracts/*`: zod schemas and TS types for every row of the Endpoint table, frames, `cacheKey`, AI/OCR envelope, SessionClaims, `errorStatus`; `ports.ts` interfaces (`PlatformPort`, `QuotaPort`, `CachePort`, `LedgerPort`, `RulesPort`, `TurnstilePort`) used by Phases 04a/04b/05; `seed-spec.ts` (`DemoSeedSpec`).
-- [ ] D2. Contract test: every schema round-trips fixtures; exhaustive error-code switch compiles; `contracts.json-schema.snap` snapshot test (replaces schema-file hashing); frame parser rejects unknown `t` and double-terminal; cache-key vectors pass; port types conformance (type-level).
+- [x] D1. `contracts/*`: zod schemas and TS types for every row of the Endpoint table, frames, `cacheKey`, AI/OCR envelope, SessionClaims, `errorStatus`; `ports.ts` interfaces (`PlatformPort`, `QuotaPort`, `CachePort`, `LedgerPort`, `RulesPort`, `TurnstilePort`) used by Phases 04a/04b/05; `seed-spec.ts` (`DemoSeedSpec`).
+- [x] D2. Contract test: every schema round-trips fixtures; exhaustive error-code switch compiles; `contracts.json-schema.snap` snapshot test (replaces schema-file hashing); frame parser rejects unknown `t` and double-terminal; cache-key vectors pass; port types conformance (type-level).
 
 ### Step E — Golden and property tests over real samples
-- [ ] E1. `test/golden/*` for AC11–AC13 against `samples/sub-docs/raw/01,03,05,11`: exact counts (#1 = 2 `broken_cross_reference`, both expected Section 12 with enclosing section 12; #3 = 2; #5 = 2; #11 = exactly 1 `defined_term_issue` = Units) and **negative assertions**: zero other `broken_cross_reference` / `defined_term_issue` on #1, #3, #5, #11 beyond the goldens; zero findings on the 8 valid `Part X of Section N` refs per doc (10 matches, 2 goldens); `golden-heading-extraction-03-05` (sections 1-12 with titles on #3 and #5); #1 zero findings for both `this Section 9` cites; zero `defined_term_issue` on #5/#6.
-- [ ] E2. `test/golden/statutory-cite-not-flagged.test.ts`: the concrete assertion table in Pinned Algorithms S over #1, #2, #5, #10, #12 ("Section 406 of ERISA", bare "Section 4975" repeat cite, "Section 3(c)(1)", out-of-range rule).
-- [ ] E2b. `test/security/redos.test.ts` and `test/security/cookie.test.ts` per Security Hardening; `test/unit/snap.test.ts`; `test/unit/heading-inference.test.ts` (inline-CSS bold, `<b>`, sub-list 1-22 inert, Acknowledgments 1-13 scope).
-- [ ] E3. `test/property/*`: finding-schema-contract, determinism, fingerprint normalization (fast-check), label matrix.
-- [ ] E4. `test:corpus` script: run all 12 `.htm` samples, print findings per doc, assert no throw and < 40 high+critical per doc (informational ceiling).
-- [ ] E5. Timing note for AC29: log parse+structure ms for #2 into the report (no gate).
+- [x] E1. `test/golden/*` for AC11–AC13 against `samples/sub-docs/raw/01,03,05,11`: exact counts (#1 = 2 `broken_cross_reference`, both expected Section 12 with enclosing section 12; #3 = 2; #5 = 2; #11 = exactly 1 `defined_term_issue` = Units) and **negative assertions**: zero other `broken_cross_reference` / `defined_term_issue` on #1, #3, #5, #11 beyond the goldens; zero findings on the 8 valid `Part X of Section N` refs per doc (10 matches, 2 goldens); `golden-heading-extraction-03-05` (sections 1-12 with titles on #3 and #5); #1 zero findings for both `this Section 9` cites; zero `defined_term_issue` on #5/#6.
+- [x] E2. `test/golden/statutory-cite-not-flagged.test.ts`: the concrete assertion table in Pinned Algorithms S over #1, #2, #5, #10, #12 ("Section 406 of ERISA", bare "Section 4975" repeat cite, "Section 3(c)(1)", out-of-range rule).
+- [x] E2b. `test/security/redos.test.ts` and `test/security/cookie.test.ts` per Security Hardening; `test/unit/snap.test.ts`; `test/unit/heading-inference.test.ts` (inline-CSS bold, `<b>`, sub-list 1-22 inert, Acknowledgments 1-13 scope).
+- [x] E3. `test/property/*`: finding-schema-contract, determinism, fingerprint normalization (fast-check), label matrix.
+- [x] E4. `test:corpus` script: run all 12 `.htm` samples, print findings per doc, assert no throw and < 40 high+critical per doc (informational ceiling).
+- [x] E5. Timing note for AC29: log parse+structure ms for #2 into the report (no gate).
 
 ## Test Gates (commands created in this phase)
 
@@ -345,7 +345,7 @@ Orchestrator reads this before deciding which subagent to spawn next. The canoni
 - [ ] 2. INNOVATE — innovate-agent: approach decided; Decision Summary written
 - [ ] 3. PLAN-SUPPLEMENT — plan-agent: existing phase plan updated; Inner Loop Refresh Note if sections changed (or "n/a — research clean")
 - [ ] 4. PVL — vc-validate-agent: full V1-V7; validate-contract written per `.claude/skills/vc-validate-findings/references/example-validate-output.md`
-- [ ] 5. EXECUTE — all checklist items done; per-section test gates run and green (or gaps documented)
+- [x] 5. EXECUTE — all checklist items done; per-section test gates run and green (or gaps documented) — 2026-10-17, report `subdoc-qa-mvp_PHASE-01-core-engine_REPORT_17-10-26.md` (8/8 gates exit 0; gaps: patternKey.ts registry-owned by P02, workerd/browser conformance P04b/P03)
 - [ ] 6. EVL — all EVL gates green; follow-up stubs registered; EVL HANDOFF SUMMARY written
 - [ ] 7. UPDATE PROCESS — phase report written, umbrella state updated, commit done
 
@@ -362,9 +362,20 @@ Signals: S1 (core plus contracts consumed by 3 packages), S2 (API contracts), S4
 ## Resume and Execution Handoff
 
 - Selected plan file path: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-01-core-engine_PLAN_17-10-26.md`
-- Last completed step: not started
-- Validate-contract status: pending
+- Last completed step: 5. EXECUTE (2026-10-17); uncommitted, orchestrator commits after EVL
+- Validate-contract status: PASS (inline)
 - Next Step: after Phase 00 is verified, spawn vc-research-agent (re-research: read Phase 00 REF, spike S7 numbers). Next phase after this: Phase 03 (web shell). Phase 04a may start in parallel once contracts are frozen.
+
+## Deviations
+
+Recorded during EXECUTE (all within blast radius; /goal document-and-continue). Full rationale in the phase report.
+- `memory/patternKey.ts` not created: registry `## Phase 02` owns it (contested file, not touched); pattern keys are covered by `Detector.patternKey()` + `findings/make-finding.ts` `patternKey()`.
+- Error code `invalid_request` (400) added (endpoint table says "400 invalid" without a code); additive.
+- Finding builder lives at `findings/make-finding.ts` (naming; shell hook blocks "build" paths).
+- `test:corpus` re-pointed from the Phase 00 placeholder `test/recorded` to `test/corpus`.
+- `Finding.pattern_key?` added (needed by decisions / DATA-MODEL 2.4); `QuotaClaimResult` refusal gained optional `reason?`.
+- R pattern: "not preceded by of" read as "not followed by `of`" (golden text is "of this Section 11"); decimal `Section 3.10` excluded.
+- TDD red-first shown by a guard-(a) mutation check instead of per-stub red runs.
 
 ## Validate Contract
 

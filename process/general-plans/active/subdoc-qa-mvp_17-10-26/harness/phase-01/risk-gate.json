@@ -1,0 +1,14 @@
+{
+  "task": "subdoc-qa-mvp phase 01 core engine: session cookie helper + frozen API contracts v1",
+  "planPath": "process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-01-core-engine_PLAN_17-10-26.md",
+  "riskLevel": "high",
+  "riskClasses": [
+    "auth or identity",
+    "public API or external contract changes",
+    "permission, secret, or trust-boundary logic"
+  ],
+  "mustStopBeforeFinalize": true,
+  "humanApprovalRequired": false,
+  "why": "session/cookie.ts signs and verifies the visitor/sandbox cookie used by 04a/04b; contracts/* freeze the HTTP + NDJSON shapes consumed by 03/04a/04b/05/06/08. No deploy, no secret material, no network in this phase.",
+  "approver": "vc-execute-agent (classification); independent review = orchestrator EVL"
+}

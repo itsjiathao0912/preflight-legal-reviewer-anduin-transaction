@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "note": "cacheKey = hex(sha256([kind,input_hash,model,prompt_ver,schema_ver,rules_hash].join('|'))). Expected values computed independently (Python hashlib). Components containing '|' are rejected.",
+  "vectors": [
+    {
+      "input": {
+        "kind": "ai",
+        "input_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "model": "nvidia/nemotron-3.5-super-vl:free",
+        "prompt_ver": "p1",
+        "schema_ver": "s1",
+        "rules_hash": "none"
+      },
+      "key": "cce1108863c9ae0eba4f5556a6ff5a37faf482cf467b7dcf23c857e0ae20b135"
+    },
+    {
+      "input": {
+        "kind": "ai",
+        "input_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "model": "nvidia/nemotron-3.5-super-vl:free",
+        "prompt_ver": "p1",
+        "schema_ver": "s1",
+        "rules_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "key": "4290767078ae6b0294403333bd58c26b9b2ed053489a3280070db6fac788aefc"
+    },
+    {
+      "input": {
+        "kind": "ocr",
+        "input_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "model": "nvidia/nemotron-3.5-super-vl:free",
+        "prompt_ver": "ocr1",
+        "schema_ver": "s1",
+        "rules_hash": "none"
+      },
+      "key": "33999cde5462095f9e3075074c9c25f0459b13ce466ec0e5d45a0f74fae7ef8d"
+    },
+    {
+      "input": {
+        "kind": "ai",
+        "input_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "model": "liquid/lfm-2.5-2.6b:free",
+        "prompt_ver": "p1",
+        "schema_ver": "s1",
+        "rules_hash": "none"
+      },
+      "key": "b56404e3c7bbf8a7c3c401370d0c6c21534da7204e4e7300fe53f9d6db49b116"
+    },
+    {
+      "input": {
+        "kind": "ai",
+        "input_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "model": "nvidia/nemotron-3.5-super-vl:free",
+        "prompt_ver": "p2",
+        "schema_ver": "s1",
+        "rules_hash": "none"
+      },
+      "key": "5a95f3b2f29bc4ebba033174523d7e6dc52f95107e27bb1160bb0daa4bf7d3d1"
+    }
+  ],
+  "rejected": [
+    {
+      "kind": "ai",
+      "input_hash": "a|b",
+      "model": "m",
+      "prompt_ver": "p1",
+      "schema_ver": "s1",
+      "rules_hash": "none"
+    }
+  ]
+}

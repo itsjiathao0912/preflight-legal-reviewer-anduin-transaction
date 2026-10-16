@@ -1,0 +1,43 @@
+{
+  "task": "subdoc-qa-mvp phase 01 core engine: session cookie helper + frozen API contracts v1",
+  "commands": [
+    {
+      "command": "pnpm --filter @aduin/core test security",
+      "result": "PASS",
+      "notes": "3 files / 16 tests: cookie matrix (valid, tampered payload, tampered sig, wrong-length sig, unknown kid, expired, iat skew, malformed, invalid claims, oversize, kid rotation, resign preserves w/a), size cap, ReDoS budget"
+    },
+    {
+      "command": "pnpm --filter @aduin/core test contracts",
+      "result": "PASS",
+      "notes": "1 file / 34 tests: JSON-schema snapshot, round-trips, errorStatus exhaustive, shared error schema, frames, cache key, ports type conformance"
+    },
+    {
+      "command": "pnpm --filter @aduin/core test:vectors",
+      "result": "PASS",
+      "notes": "fingerprint + cache-key vectors computed independently in Python"
+    },
+    {
+      "command": "pnpm typecheck && pnpm lint && pnpm guard:cf && pnpm secrets:scan",
+      "result": "PASS",
+      "notes": "regression gate"
+    }
+  ],
+  "manualChecks": [
+    {
+      "check": "No signature string comparison anywhere in session/cookie.ts",
+      "result": "PASS",
+      "notes": "only crypto.subtle.verify is used"
+    },
+    {
+      "check": "No key material in fixtures, vectors or logs",
+      "result": "PASS",
+      "notes": "test keys generated with crypto.getRandomValues per run"
+    },
+    {
+      "check": "Boundary/failure cases covered",
+      "result": "PASS",
+      "notes": "oversize 513 B, iat +61 s rejected / +60 s accepted, 1001-char quote rejected"
+    }
+  ],
+  "result": "PASS"
+}

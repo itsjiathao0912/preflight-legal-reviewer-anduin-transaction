@@ -10,10 +10,11 @@
   },
   "scripts": {
     "test": "vitest run",
-    "test:golden": "vitest run test/golden --passWithNoTests",
-    "test:property": "vitest run test/property --passWithNoTests",
+    "test:golden": "vitest run test/golden",
+    "test:property": "vitest run test/property",
     "test:seeded": "vitest run test/seeded --passWithNoTests",
-    "test:corpus": "vitest run test/recorded --passWithNoTests",
+    "test:corpus": "vitest run test/corpus",
+    "test:vectors": "vitest run test/vectors",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {

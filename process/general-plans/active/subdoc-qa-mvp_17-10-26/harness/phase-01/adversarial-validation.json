@@ -1,0 +1,45 @@
+{
+  "task": "subdoc-qa-mvp phase 01 core engine: session cookie helper + frozen API contracts v1",
+  "scenarios": [
+    {
+      "scenario": "Forge claims (change v/w/a) keeping the old signature",
+      "ruled_out": true,
+      "rationale": "HMAC over the payload; test 'tampered payload' -> bad_signature"
+    },
+    {
+      "scenario": "Timing attack on signature comparison",
+      "ruled_out": true,
+      "rationale": "crypto.subtle.verify; no string compare"
+    },
+    {
+      "scenario": "Kid confusion: sign with key B, claim kid A",
+      "ruled_out": true,
+      "rationale": "key looked up by kid, verify fails; test 'lie'"
+    },
+    {
+      "scenario": "Retired key reuse after rotation",
+      "ruled_out": true,
+      "rationale": "only kids present in the supplied key map verify"
+    },
+    {
+      "scenario": "Oversize / malformed cookie DoS",
+      "ruled_out": true,
+      "rationale": "512 B cap checked before decode; malformed base64/JSON rejected"
+    },
+    {
+      "scenario": "Escalate visitor to sandbox by adding w without a",
+      "ruled_out": true,
+      "rationale": "schema refinement w requires a, plus signature"
+    },
+    {
+      "scenario": "ReDoS via crafted document text",
+      "ruled_out": true,
+      "rationale": "redos-budget test: every exported regex < 2 s on 1 MB adversarial lines; full pipeline < 10 s"
+    },
+    {
+      "scenario": "Hash brute-force of masked account numbers",
+      "ruled_out": false,
+      "rationale": "by design only last 4 digits enter the hash (DATA-MODEL 2.2, user decision); sensitive_data severity capped at medium so collisions cannot hide blocking items"
+    }
+  ]
+}

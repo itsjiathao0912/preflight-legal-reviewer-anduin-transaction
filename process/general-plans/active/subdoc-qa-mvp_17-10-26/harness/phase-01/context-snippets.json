@@ -1,0 +1,35 @@
+{
+  "task": "subdoc-qa-mvp phase 01 core engine: session cookie helper + frozen API contracts v1",
+  "snippets": [
+    {
+      "file": "packages/core/src/session/cookie.ts",
+      "lines": "81-120",
+      "description": "verifyCookie: size cap before parse, single-dot split, base64url validation, kid must be in supplied key map, crypto.subtle.verify (constant-time), schema parse, exp/iat-skew checks"
+    },
+    {
+      "file": "packages/core/src/session/cookie.ts",
+      "lines": "55-62",
+      "description": "importKey: keys are parameters only; keys shorter than 32 bytes rejected"
+    },
+    {
+      "file": "packages/core/src/contracts/claims.ts",
+      "lines": "1-35",
+      "description": "SessionClaims {v,w?,a?,iat,exp,kid,t?} strict; w requires a; resign merges patch over verified claims"
+    },
+    {
+      "file": "packages/core/src/contracts/errors.ts",
+      "lines": "26-80",
+      "description": "ONE ErrorDetail schema {code,message,reason?,retry_after_s?} for HTTP body and NDJSON error frame; exhaustive errorStatus"
+    },
+    {
+      "file": "packages/core/src/contracts/frames.ts",
+      "lines": "40-80",
+      "description": "parseFrameLine rejects unknown t / malformed; parseFrameStream enforces exactly one terminal frame"
+    },
+    {
+      "file": "packages/core/test/__snapshots__/contracts.json-schema.snap",
+      "lines": "all",
+      "description": "JSON-schema freeze of every exported contract schema"
+    }
+  ]
+}

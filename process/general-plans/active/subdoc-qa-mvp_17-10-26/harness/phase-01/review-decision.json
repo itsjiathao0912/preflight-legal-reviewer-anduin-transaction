@@ -1,0 +1,13 @@
+{
+  "task": "subdoc-qa-mvp phase 01 core engine: session cookie helper + frozen API contracts v1",
+  "reviewer": "vc-execute-agent self-review (independent EVL re-run and code review pending, orchestrator-owned)",
+  "decision": "approved-with-concerns",
+  "blockingFindings": [],
+  "nonBlockingFindings": [
+    "Reviewer is the implementing agent; EVL must re-run the security/contracts gates independently before finalize.",
+    "workerd/browser conformance of vectors and cookie helper not proven until P04b/P03 (known-gap, owner phases named)."
+  ],
+  "notes": "mustStopBeforeFinalize stays true until EVL confirms.",
+  "rationale": "All tamper/expiry/kid cases rejected by tests; shapes frozen by snapshot.",
+  "timestamp": "2026-10-17"
+}
