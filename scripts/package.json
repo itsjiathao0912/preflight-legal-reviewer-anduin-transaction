@@ -8,7 +8,7 @@
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.worker.json",
     "guard:cf": "tsx src/guards/guard-cf.ts",
     "secrets:scan": "tsx src/guards/secrets-scan.ts",
-    "slice:check": "tsx src/slice-check-stub.ts",
+    "slice:check": "tsx src/slice-check.ts",
     "spike:check": "tsx src/spikes/spike-check.ts",
     "spike:s07": "tsx src/spikes/s07-browser-timing/run.ts",
     "spike:s06-local": "tsx src/spikes/s06-local/run.ts"

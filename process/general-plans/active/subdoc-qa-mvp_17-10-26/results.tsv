@@ -27,3 +27,6 @@ iteration	timestamp	gaps_found	fail_count	concern_count	applied	saturation_statu
 25	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	phase=01 EVL all gates green; committed (security review pending)
 26	2026-10-17	3	1	2	0	ACTIVE	CONTINUE	phase=01 evl cycle 1: security review APPROVE_WITH_FIXES (F1 high nested-tag DoS, F2 masking default, F9 probe file); scoped fix
 27	2026-10-17	0	0	0	7	SATURATED	HALTED_SUCCESS	phase=01 evl cycle 1 fixes verified by re-review (APPROVE_WITH_FIXES low only; autoStop cleared)
+28	2026-10-17	2	0	2	0	ACTIVE	CONTINUE	phase=04a review APPROVE_WITH_FIXES (F1 abort-refund, F2 breaker suffix medium); fixing before M1 deploy
+29	2026-10-17	0	0	4	0	ACTIVE	CONTINUE	phase=03 second visual review PASS_WITH_NOTES (15/15 PASS; 4 non-blocking UI notes → backlog)
+30	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	phase=03 EVL all gates green (17 e2e, 9 unit, a11y, D0); committed

@@ -1,0 +1,53 @@
+/* Design tokens: copied verbatim from the design/mockups/app.html :root (single source in the web app).
+   tokens-match-mockup asserts every app.html :root custom property equals the value here. */
+:root {
+  --ground: #e9ece9; /* app ground: low-chroma cool stone */
+  --panel: #f4f6f3; /* panels one tone step above ground */
+  --card: #fbfcfa; /* cards one step above panel */
+  --paper: #fdfefd; /* document page */
+  --ink: #15181b;
+  --ink-2: #434a50; /* 8.0:1 on panel */
+  --ink-3: #5c646b; /* 5.6:1 on panel */
+  --accent: #1d5c57; /* the single accent: deep teal */
+  --accent-tint: #d9e8e5;
+  --step: #dde2dd; /* tone step used instead of rules */
+  --block-fg: #8a1c1c;
+  --block-bg: #f7e2df;
+  --fix-fg: #734400;
+  --fix-bg: #f5e8c8;
+  --note-fg: #38454f;
+  --note-bg: #dfe6ea;
+  --ok-fg: #1b5632;
+  --ok-bg: #daeedf;
+  --mark: #f3d676;
+  --r: 4px;
+  --sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Tailwind maps to the tokens through CSS variables (no hard-coded colors in components). */
+@theme inline {
+  --color-ground: var(--ground);
+  --color-panel: var(--panel);
+  --color-card: var(--card);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-accent: var(--accent);
+  --color-accent-tint: var(--accent-tint);
+  --color-step: var(--step);
+  --color-block-fg: var(--block-fg);
+  --color-block-bg: var(--block-bg);
+  --color-fix-fg: var(--fix-fg);
+  --color-fix-bg: var(--fix-bg);
+  --color-note-fg: var(--note-fg);
+  --color-note-bg: var(--note-bg);
+  --color-ok-fg: var(--ok-fg);
+  --color-ok-bg: var(--ok-bg);
+  --color-mark: var(--mark);
+  --radius-r: var(--r);
+  --font-sans: var(--sans);
+  --font-serif: var(--serif);
+}

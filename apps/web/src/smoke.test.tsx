@@ -1,16 +1,32 @@
-import { render, screen } from './test-utils';
 import { describe, expect, it } from 'vitest';
-import { PlaceholderPage } from './pages/placeholder-page';
-import { features } from './features/registry';
+import { featureFor, features, navModules } from './features/registry';
+import { PlaceholderView } from './features/placeholders/PlaceholderView';
+import { render, screen } from './test-utils';
 
 describe('@aduin/web smoke (jsdom)', () => {
-  it('renders the placeholder page', () => {
-    render(<PlaceholderPage />);
-    expect(screen.getHeading()).toBe('Sub-doc QA');
+  it('renders a placeholder route view', () => {
+    render(<PlaceholderView route="structure" title="Structure" />);
+    expect(screen.getHeading()).toBe('Structure');
   });
 
-  it('features registry seam exists and is empty', () => {
-    expect(Array.isArray(features)).toBe(true);
-    expect(features).toHaveLength(0);
+  it('registers findings plus the five placeholder routes; last entry per id wins', () => {
+    expect(features.map((f) => f.id)).toEqual([
+      'findings',
+      'counsel',
+      'structure',
+      'compare',
+      'memory',
+      'documents',
+    ]);
+    expect(navModules().map((m) => m.group)).toEqual([
+      'review',
+      'review',
+      'check',
+      'check',
+      'firm',
+      'firm',
+    ]);
+    expect(featureFor('findings')?.label).toBe('Findings');
+    expect(featureFor('nope')).toBeUndefined();
   });
 });
