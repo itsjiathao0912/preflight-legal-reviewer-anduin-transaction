@@ -1,6 +1,6 @@
 # aduin-transaction - All Context
 
-Last updated: 2026-10-17 (Phase 03/04a + Milestone 1 UPDATE PROCESS; HEAD 70d320b)
+Last updated: 2026-10-17 (Phase 02/04b UPDATE PROCESS; HEAD 59d9831 plus the process commit)
 
 This file is the root context entrypoint for the repo.
 
@@ -192,7 +192,7 @@ When durable project knowledge changes:
 
 ## Repository Structure
 
-pnpm monorepo scaffold exists (Phase 00 of the subdoc-qa-mvp program, commit 7d9955b); Phase 01 (6d12628) added the core engine in `packages/core` (see `process/context/engine/all-engine.md`); Phase 03 (833161b) added the web shell and Findings screen; Phase 04a (729e7fd) added the Worker AI/OCR proxy; Milestone 1 closed at 70d320b. Current layout:
+pnpm monorepo scaffold exists (Phase 00 of the subdoc-qa-mvp program, commit 7d9955b); Phase 01 (6d12628) added the core engine in `packages/core` (see `process/context/engine/all-engine.md`); Phase 03 (833161b) added the web shell and Findings screen; Phase 04a (729e7fd) added the Worker AI/OCR proxy; Milestone 1 closed at 70d320b; Phase 02 (7a7f421 + 1f5dade) added detectors, investor paths, the structure view and fixtures; Phase 04b (7a7f421 + bb83e04 + fb3064f + 59d9831) added the D1 schema, platform ports and the memory API. Current layout:
 
 ```
 aduin-transaction/
@@ -202,7 +202,7 @@ aduin-transaction/
   tsconfig.base.json, eslint.config.js, THIRD_PARTY_NOTICES.md
   packages/core/            -- @aduin/core: parser/graph/detector engine (src/index.ts seam; test/{unit,golden,property,seeded,recorded})
   apps/web/                 -- @aduin/web: React 19 + Vite 8 + Tailwind 4 SPA. src/{styles,shell,features,components,state,engine,storage,api,memory}; engine runs in a Comlink Web Worker; e2e/ = 17 Playwright specs + fixtures; test/ = 9 Vitest gates + support/mockupCss.ts; public/samples and firms.json are generated (gitignored). See process/context/ui/all-ui.md
-  apps/worker/              -- @aduin/worker: Cloudflare Worker, wrangler.jsonc. src/{config,proxy,limits,upstream,identity,routes/proxy}: POST /api/ai, POST /api/ocr, GET /api/quota (NDJSON hold-open proxy to OpenRouter, quotas, spend cap, Turnstile, breaker); routes/memory and platform/ are Phase 04b seams. See process/context/worker/all-worker.md
+  apps/worker/              -- @aduin/worker: Cloudflare Worker, wrangler.jsonc. src/{config,proxy,limits,upstream,identity,routes/proxy}: POST /api/ai, POST /api/ocr, GET /api/quota (NDJSON hold-open proxy to OpenRouter, quotas, spend cap, Turnstile, breaker); routes/memory, memory/, platform/, migrations/0001-0005 and seed/ are the Phase 04b D1 memory API. See process/context/worker/all-worker.md
   scripts/                  -- @aduin/scripts: guards (guard:cf, secrets:scan), build-samples.ts, slice-check.ts (M1 check), spike runners and spike worker scripts (spikes/s01-s02)
   fixtures/                 -- fixture dirs (fingerprint vectors and memory seeds land in Phases 01/02)
   design/                   -- approved mockups and design assets
@@ -258,12 +258,12 @@ Secrets live outside the repo (see `CLAUDE.md` credentials table). Env var names
   The paid fallback is chosen against the ~$10 cap.
 - Persistence for counsel-query tracking (D1 vs KV) and whether the demo needs auth.
 - OpenRouter credits not yet topped up by the user; paid fallback unavailable until then.
-- Next step: Phases 02 and 04b (inner PVL running), then 05, 06, 07, 08, 08b, 09, 10; see the umbrella `## Current Execution State`. Phases 00, 01, 03, 04a are DONE and Milestone 1 is closed and live. Phase 04b must replace the placeholder D1 id in `apps/worker/wrangler.jsonc`.
+- Next step: Phase 05 (LLM tasks / AI lane; carries U1 locator chip, masking for AI findings, F4, live probe of the served model id and billing, free models only) starting at Step 1 RESEARCH, then 06 and 09, 07, 08, 08b, 10; see the umbrella `## Current Execution State`. Phases 00, 01, 02, 03, 04a, 04b are DONE and Milestone 1 is closed and live. Phase 10 owns creating and migrating the real D1 (the placeholder id in `apps/worker/wrangler.jsonc` stays until then), setting `TURNSTILE_SECRET`, and the remote D1 rows_written re-measure (`process/context/worker/all-worker.md`).
 - Open backlog: AC6 edit text/severity (B-EDIT), UI notes U1-U4, core follow-ups, `/api/health` no-store (`process/general-plans/backlog/`).
 
 ## Scan Metadata
 
 - Generated: 2026-10-17
-- HEAD: 70d320b
-- Mode: delta update after Phase 03 (web shell), Phase 04a (worker proxy) and Milestone 1 closure + deploy
+- HEAD: 59d9831 (execution), process commit follows
+- Mode: delta update after Phase 02 (detectors/fixtures/structure view) and Phase 04b (D1 memory API)
 - Package manager: pnpm 11.13.1 (workspaces: packages/*, apps/*, scripts)

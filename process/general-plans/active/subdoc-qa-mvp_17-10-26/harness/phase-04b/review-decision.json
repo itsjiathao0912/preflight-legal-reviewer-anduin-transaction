@@ -9,19 +9,17 @@
   "autoStopCleared": true,
   "blockingFindings": [],
   "nonBlockingFindings": [
-    "N7 MEDIUM: availability amplification via the unbounded re-proposal evidence insert. PROPOSAL_SQL.evidence was INSERT OR IGNORE ... SELECT over ALL active same-key dismissals, so a reject -> dismiss loop over hundreds of same-key dismissals wrote ~K rows per request for 25 weight units; the decision weight was not an upper bound. Fix: cap the evidence link, re-calibrate the weight, test the loop, add the scenario to adversarial-validation.json, scan other set-based writes.",
-    "N8 LOW: the per-workspace mw|req claim (1 row) is written before the global row-budget claim refuses; add a 0-row read pre-check of mw|rows|<day> before the req claim (the guarded claim stays the authority).",
-    "N9 LOW: rowBudgetPerDay 40000 leaves thin headroom for purge DELETEs and refused claims; lower to 30000 and document the full daily-row arithmetic in the 04b report.",
-    "N10 INFO: the global budget is charged before body validation, so a malformed request still costs its weight; acceptable (bounded by the per-workspace req cap). The web outbox (Phase 08) must treat 429 memory_write_budget as a soft failure (retry next UTC day), not a data error.",
-    "Phase 10 preconditions: apply migrations 0001-0005 to the remote D1 before deploy; set TURNSTILE_SECRET (otherwise the global 300/day session cap is exhaustible by ~60 IPs)."
+    "N11 MEDIUM (accepted risk): daily D1 Free rows-written arithmetic was understated (purge row: 300 x 130 = 39k, not <= 12k; purge DELETEs mirror rows written 30 days earlier plus quota 2 d and cache 7 d mirrors). Days 1-30 worst case ~84-96k/day; steady state from day 31 under simultaneous max abuse of all caps ~140-170k/day. Impact is availability only (D1 Free refuses writes until UTC reset, app fails closed, no data or security impact). Doc corrected in the 04b report. ACCEPTED RISK until Turnstile is live; Phase 10 must re-measure remotely (S9) and, if needed, lower SESSION_CAPS.globalPerDay or rowBudgetPerDay so 2 x (memory + sessions + AI) <= ~90k.",
+    "N12 LOW: AI refused requests still write ~6-12 claim/refund rows; hardening: peek g|global before visitor claims, keep the global-claimed-last invariant. Backlog.",
+    "N13 INFO: evidence_count = linked evidence (<= 10 at (re-)proposal); the UI must not present it as the total number of dismissals.",
+    "N14 INFO: budget error precedence; the web outbox (Phase 08) must treat 429 memory_write_budget and workspace_*_limit as a soft failure and retry next UTC day.",
+    "N5 LOW accepted.",
+    "N8 gone (0-row budget pre-check before the req claim; budget refusals write 0 rows).",
+    "Phase 10 preconditions: apply migrations 0001-0005 to the remote D1; set TURNSTILE_SECRET (otherwise the global 300/day session cap is exhaustible by ~60 IPs); re-measure rows_written remotely for the decision, session and AI paths; decide N11/N12."
   ],
-  "notes": "Re-review of fix cycle 2 (HEAD fb3064f). M1 write-flood mechanism, L1-L6 and N1-N4, N6 verified fixed with passing tests. Remaining: N7 (MEDIUM, set-based evidence insert breaks the decision weight as an upper bound), N8/N9 (LOW budget hygiene), N10 informational. No critical/high findings; tenant isolation, append-only integrity, demo protection and fail-closed quota behaviour hold.",
-  "rationale": "All prior findings are resolved; N7 is an availability-only amplification within the global budget scheme (no data compromise) and is cheap to fix inside the 04b blast radius, so the verdict is approve-with-fixes with auto-stop cleared.",
-  "pendingFixes": [
-    "N7",
-    "N8",
-    "N9"
-  ],
+  "notes": "Final verdict after fix cycles 1-3 (HEAD 59d9831). Evidence: worker 445/445, core 291/291, risk validator 0 failures. No critical/high findings; tenant isolation, append-only integrity, demo protection and fail-closed quota behaviour hold.",
+  "rationale": "All blocking and fixable findings are resolved with passing tests. Remaining items are availability-only or informational and are accepted or recorded in backlog / Phase 10 preconditions, so the verdict is approve-with-fixes with auto-stop cleared.",
+  "pendingFixes": [],
   "resolvedFindings": [
     "M1 (mechanism: per-workspace req/run/fnd caps + global weighted row budget)",
     "L1",
@@ -34,6 +32,10 @@
     "N2",
     "N3",
     "N4",
-    "N6"
+    "N6",
+    "N7",
+    "N8",
+    "N9",
+    "N11 (doc corrected; risk accepted until Turnstile live)"
   ]
 }

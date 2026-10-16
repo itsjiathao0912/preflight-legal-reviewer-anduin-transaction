@@ -31,6 +31,7 @@ status: DONE (17-10-26, commit 6d12628, EVL CLEAN; independent security review p
 ## Phase 02
 Owns: `packages/core/src/{detectors (new files), investor, structure-view (buildStructureView), memory/patternKey.ts}`, `packages/core/test/**` (new files), `fixtures/html-seeded`, `fixtures/memory/{fund-*,demo-seed-spec.json}`, `scripts/src/fixtures`, `apps/web/src/features/{structure,investor-paths}/**`, new web e2e specs (structure-view, investor-path-view, reveal-sensitive).
 Narrow additive edits (revision 2026-10-17, inner PVL E14): core `memory/mask.ts` (F3 widening), `adapters/html.ts` + `structure/option-groups.ts` + `structure/types.ts` (footnote_marker TS-only side channel; no schema change), `findings/make-finding.ts` (re-export patternKey), golden tests `golden-01`/`golden-03-05`/`golden-11` (narrow "no other finding" totals to Phase 01 detector ids; golden content unchanged), `finding-schema-contract.test.ts` (mask-aware), `detectors/registry.ts` + `index.ts` (append-only seams); web `engine/types.ts` (optional `structure`), `engine.worker.ts`, `shell/Sidebar.tsx`, `shell/NavGroup.tsx` (structure badge), `features/registry.ts` (append); Phase 03 e2e specs repaired by derivation (gate-pill, filter-sort, previously-handled-section, placeholder-routes, app-shell, a11y-smoke, finding-highlight). Seams: `packages/core/package.json` (test:seeded), `scripts/package.json` (fixtures:build/check) — serialized against 04b. Disjoint from 04b code (apps/worker/**, worker-side memory/mask).
+status: DONE (17-10-26, commits 7a7f421 + 1f5dade, EVL core 291/291, review fixes applied; F4 deferred to Phase 05)
 ## Phase 03
 Owns: `apps/web/**` (except later feature dirs), `scripts/src/build-samples.ts`. Reads `design/mockups/*`. Disjoint from 04a.
 status: DONE (17-10-26, commit 833161b, EVL green, visual review PASS_WITH_NOTES)
@@ -41,6 +42,7 @@ status: DONE (17-10-26, commits 729e7fd + 70d320b, EVL green, review APPROVE_WIT
 
 ## Phase 04b
 Owns: `apps/worker/{migrations,seed,src/db,src/platform,src/memory,src/routes/memory,test/memory}`, `scripts/src/{seed,spikes/s05*,s08*,s09*,s10*}`, `fixtures/memory/_test-seed-spec.json`. Single owner of all SQL.
+status: DONE (17-10-26, commits 7a7f421 + bb83e04 + fb3064f + 59d9831, EVL worker 445/445, core 291/291, review APPROVE_WITH_FIXES final, autoStop cleared)
 
 ## Phase 05
 Owns: `packages/core/src/llm/**` (except `tasks/drift-narrative*`), `fixtures/llm-recordings/{clause-judgment,counsel-draft}`, `apps/web/src/features/ai/**`, `scripts/src/{record/record-ai.ts,precompute/precompute-ai.ts}`, `design/mockups/ai-states.html`. Extends: `apps/worker/src/routes/proxy/ai.ts` (04a-owned; verified before this phase).

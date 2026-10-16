@@ -611,16 +611,16 @@ node .claude/skills/vc-generate-plan/scripts/validate-plan-artifact.mjs <each pl
 ## Current Execution State
 
 Last updated: 17-10-26
-Current phase: Phases 02 and 04b of 13 (parallel inner loop; Phases 00, 01, 03, 04a DONE; Milestone 1 CLOSED and live)
-Phase name: Phase 02 — Detectors + fixtures, and Phase 04b — D1 + memory API (both in inner PVL)
-Phase status: 00 DONE (7d9955b); 01 DONE (6d12628); 03 DONE (833161b); 04a DONE (729e7fd); M1 CLOSED (70d320b; full `pnpm slice:check` PASS, live slice spec PASS); live at https://aduin-transaction-web.giathaowork.workers.dev (version 9dcf2f75-d8ac-419f-b33b-5a2525847ae7; AI fail-closed until 04b); 02 and 04b not executed yet
-Phase EVL: 03 green (17 e2e, 9 unit, a11y 0 critical, D0; visual review PASS_WITH_NOTES); 04a green (11 gates, 148 worker tests, lint/typecheck clean; review APPROVE_WITH_FIXES, fixes verified); M1 slice:check full PASS; 02 and 04b EVL not started
-Phase report: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-04a-worker-proxy_REPORT_17-10-26.md` (04a incl. Fix cycle 1 and M1 closure + deploy, closeout appended); `subdoc-qa-mvp_PHASE-03-web-shell_REPORT_17-10-26.md` (03, closeout appended); earlier: PHASE-01 and PHASE-00 reports
-Next phase: 02 in parallel with 04b (inner PVL running), then 05, 06, 07, 08, 08b, 09, 10; Phase 04b must set the real D1 database id in `apps/worker/wrangler.jsonc` and wire the persisted breaker/QuotaPort (see the 04a plan `### Phase 04b contract notes`)
-Current loop step: PVL (Phase 02 and Phase 04b inner PVL validators running; do not EXECUTE until both contracts are written)
-Validate-contract status: 01, 03, 04a PASS and EXECUTED; 02 and 04b in PVL (contract pending); holds and defaults are recorded in `## Execution Holds`
-Program Net Gate: CONDITIONAL (M1 exit gate met; carried gaps: AC6 edit clause (B-EDIT backlog), AC17/AC61 views placeholder until later UI phases, U1-U4 UI notes and 2 serious axe items to Phase 10, AC40 real workerd CPU/hold-open and OpenRouter abort/4xx accounting need the Phase 05/10 live probe, breaker per-isolate until 04b, `/api/health` lacks no-store, THIRD_PARTY_NOTICES transitive rows before 10, axe MPL-2.0 dev-only decision recorded in notices, remote spikes not re-run)
-Latest validator run: 17-10-26 — M1 full `pnpm slice:check` PASS; web e2e 58 passed; live slice spec PASS; 04a 11 gates + 148 worker tests green; UPDATE PROCESS (03, 04a): `discover-context --check-routing`, `validate-context-discovery`, `validate-all-context`, `validate-plan-inventory` (failures []), `validate-umbrella-artifact`, `validate-phase-stub` (03, 04a) all clean, `git diff --check` clean
+Current phase: Phase 05 of 13 (Phases 00, 01, 02, 03, 04a, 04b DONE; Milestone 1 CLOSED and live)
+Phase name: Phase 05 - LLM tasks / AI lane (carries U1 locator chip, R2 masking for AI findings, F4 quadratic defined-term scan, live probe of served model id and billing; free models only)
+Phase status: 00 DONE (7d9955b); 01 DONE (6d12628); 03 DONE (833161b); 04a DONE (729e7fd); M1 CLOSED (70d320b; live at https://aduin-transaction-web.giathaowork.workers.dev, version 9dcf2f75-d8ac-419f-b33b-5a2525847ae7, AI fail-closed until 04b is deployed and Turnstile is live); 02 DONE (7a7f421 + 1f5dade); 04b DONE (7a7f421 + bb83e04 + fb3064f + 59d9831); 05 not started
+Phase EVL: 02 green (core 291/291, golden 44/44, fixtures:check; review fixes F1/F2/F3/P2-1/F5/F6/F8/F9 applied; F4 deferred to 05, F7 skipped); 04b green (worker 445/445, core 291/291, risk validator 0 failures; review APPROVE_WITH_FIXES final, autoStop cleared; N11 accepted risk until Turnstile is live)
+Phase report: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-02-detectors-fixtures_REPORT_17-10-26.md` (incl. Review fix cycle + orchestrator decisions); `subdoc-qa-mvp_PHASE-04b-d1-memory-api_REPORT_17-10-26.md` (incl. fix cycles 1-3, corrected D1 rows arithmetic, closeout)
+Next phase: 05 (then 06, 09 in parallel, 07, 08, 08b, 10). Phase 10 preconditions: apply D1 migrations 0001-0005 to the remote D1, set TURNSTILE_SECRET, re-measure rows_written remotely, decide N11/N12 (backlog `core-followups_REF` W10-W16)
+Current loop step: RESEARCH (Phase 05 Step 1; inner PVL follows)
+Validate-contract status: 01, 02, 03, 04a, 04b PASS and EXECUTED; 05 not written (placeholder, outer PVL not run for 05)
+Program Net Gate: CONDITIONAL (carried gaps: AC6 edit clause (B-EDIT), AC17/AC61 views placeholder until later UI phases, U1-U4 UI notes and 2 serious axe items to Phase 10, AC40 real workerd CPU/hold-open and OpenRouter accounting need the Phase 05/10 live probe, N11 D1 daily-rows risk accepted until Turnstile is live, `/api/health` lacks no-store, THIRD_PARTY_NOTICES transitive rows before 10, remote spikes not re-run for deployed paths)
+Latest validator run: 17-10-26 - 02 + 04b UPDATE PROCESS: `validate-risk-artifacts` (harness/phase-04b) 0 failures; context and plan-inventory validators run at closeout (see closeout report)
 
 Loop step values: RESEARCH | INNOVATE | PLAN-SUPPLEMENT | PVL | EXECUTE | EVL | UPDATE-PROCESS
 Orchestrator rule: read "Current loop step" and "validate-contract status" before spawning any subagent. Never spawn execute-agent when loop step is RESEARCH, INNOVATE, PLAN-SUPPLEMENT, or PVL.

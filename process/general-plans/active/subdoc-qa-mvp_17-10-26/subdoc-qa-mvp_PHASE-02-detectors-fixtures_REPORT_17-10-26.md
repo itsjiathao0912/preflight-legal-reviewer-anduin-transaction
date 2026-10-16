@@ -260,3 +260,12 @@ All fixes are in `packages/core` plus one line in `apps/web/src/engine/engine.wo
 **Deferred:** F4 (quadratic defined-term scans) goes to Phase 05 / backlog P2. F7 skipped: `tokens.css` has no tokens for `#f7f9f6`, `#3f2a00`, `#5a4000` (the mockup CSS uses the same raw hex). F11/P2-5 (date masking) is out of scope. Note: the widened digit branch now also masks 6+ digit dates written with `/` or `.` (e.g. `10/17/2026`). No existing test covers this.
 
 **Gates (each a separate call, one token, no `--`):** core `test security` 6 files / 27 tests; `test:golden` 5 / 44; `test:seeded` 1 / 2; `test` 37 / 291; core `typecheck` exit 0; web `test import-graph` 1 / 4; web `typecheck` exit 0; `fixtures:check` OK; eslint + prettier clean on touched files.
+
+**Orchestrator decisions (UPDATE PROCESS, 17-10-26):**
+- F4 (quadratic defined-term scan): deferred to Phase 05 and recorded as backlog P2 (`core-followups_REF`, row F4).
+- F7: skipped (no matching tokens in `tokens.css`).
+- F10: `quote_hash` change note stands; `FP_VERSION` unchanged because no stored memory exists yet.
+- F11 / P2-5: the widened account mask now also masks dates written with `/` or `.` separators (e.g. `10/17/2026` becomes `#2026`). Decision: keep (privacy-safe); revisit together with the P2-5 date/phone exclusion.
+- P2-1: resolved (anchored EDGAR rule, commit 1f5dade).
+- Phase status: DONE. Phase Loop Progress steps 6 (EVL) and 7 (UPDATE PROCESS) ticked; registry P02 DONE; EVL iteration report `subdoc-qa-mvp-phase02-evl-iteration-001_REPORT_17-10-26.md`, TSV rows 40-41.
+- SPEC achievement: the phase-owned acceptance criteria (AC10 flags, detectors, structure view, fixtures) are proven by passing automated gates (core 291/291, golden 44/44, seeded matrix, web e2e); no criterion rests on Known-Gap. Residuals (investor paths on real samples: Agent-Probe only) are in backlog P2-2.

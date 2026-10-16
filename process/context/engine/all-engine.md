@@ -14,7 +14,7 @@ metadata:
 
 Source of truth: the code under `packages/core/src` plus the Phase 01 report
 `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-01-core-engine_REPORT_17-10-26.md`
-(commit 6d12628). Read the report for exact golden counts and rationale.
+(commit 6d12628). Read the report for exact golden counts and rationale. Phase 02 (commits 7a7f421 + review fixes 1f5dade) extended it additively; see the Phase 02 section below and `subdoc-qa-mvp_PHASE-02-detectors-fixtures_REPORT_17-10-26.md`.
 
 ## Layout (`packages/core/src`)
 
@@ -60,6 +60,18 @@ Exports by module: `ai` (AiCandidate/AiFinding/AiRequest/AiResult), `cache-key` 
 - A new or changed schema requires re-generating the contracts snapshot with a change note, and the `test contracts` gate must stay green.
 - Phase ownership (see `phase-blast-radius-registry.md`): P02 adds detectors + `memory/patternKey.ts` + `investor`; P05 `llm/`; P06 pdf/docx/ocr adapters; P07 `diff/`; P08 `counsel/`; P09 `outline/`. P04a/P04b/P03 consume the frozen contracts; they may not edit them in place.
 
+## Phase 02 additions (detectors, investor paths, structure view, fixtures)
+
+- **Detectors** (`detectors/`): `broken-conditional`, `unreachable-flow` (+ `flow.ts`), `option-gap-overlap`, `defined-term-issues`, `footnote-requirement` (reads the TS-only `footnote_marker` option side channel; no schema change), flags `flag-drafting-note`, `flag-placeholder`, `flag-sensitive` (facts = last4 + cue only), `investor-path-dead-end`, `investor-path-missing-item`. Every detector has an `explain()` that is total (>= 3 facts, truthy `expected`) for Phase 02 detectors; the Phase 01 detectors still print "undefined" on sparse facts (backlog P2-3). New findings on #3/#5/#6 (placeholders) and sensitive flags on #1/#7 are legitimate (AC10).
+- **Per-detector isolation:** `engine.ts` wraps each `d.run(g)` in try/catch; a throwing detector is recorded as `{stage:'detector', detectorId, code: <error name>}` in the optional `EngineSettings.diagnostics` (never the message or document text) and the other detectors' findings still return.
+- **Field clamps** (`findings/make-finding.ts`, `detectors/util.ts`): explanation 1000, facts 1000, interpretations 500 (max 6), expected 300; `maskFacts` clamps strings to 400 after masking; `listLabels` shows the first 5 labels + "and N more" so a 100-option group still yields one schema-valid finding.
+- **maskThenClip:** all quote/where/excerpt text is masked BEFORE it is clipped (`maskThenClip(s, n)`; `excerpt()` widens its window to whole sensitive spans). Never slice then mask.
+- **Masking** (`memory/mask.ts`): `ACCOUNT_NUMBER_RE` widened (alpha-prefixed `\b[A-Za-z]{1,4}-?\d{6,130}`, digit runs with optional space, dash, en-dash, `.`, `/`, NBSP separators up to 130, IBAN, no word-boundary assertions; all quantifiers bounded, linear). Side effects: `quote_hash` changes for any quote holding a newly masked run (`FP_VERSION` unchanged on purpose, no stored memory existed yet), phone numbers mask (P2-5), and 6+ digit dates with `/` or `.` also mask (e.g. `10/17/2026` becomes `#2026`); decision 17-10-26: keep (privacy-safe), revisit with a date/phone exclusion.
+- **EDGAR noise rule** (`adapters/html.ts`): anchored to the wrapper shape only (`EX-...`, `<TAG>...`, `TAG:...`, case-sensitive tags), so lines such as "Type of Subscriber (check one):" are kept. Sample #10 now keeps its "Documentation" line.
+- `memory/patternKey.ts` (charset `[a-z0-9:#>-]`, digits to `#`, 80 cap, no `|`; re-exported from `make-finding.ts`), `investor/{extract,paths,types}.ts`, `structure-view/build.ts` (`buildStructureView`, pure; worker wiring in `apps/web/src/engine/engine.worker.ts`, failure logs `console.warn` with the error name only).
+- **Fixtures:** `fixtures/html-seeded/*` (clean control + defect per class; `seeded-defect-matrix` precision >= 90%, recall 100%), `fixtures/memory/{fund-I,fund-II,fund-Y}.html` + `fund-expectations.json` / `fund-I-decisions.json` / `fund-I-answers.json`, `fixtures/memory/demo-seed-spec.json`; all built by `scripts/src/fixtures/*` (`pnpm --filter @aduin/scripts fixtures:build` / `fixtures:check`).
+- **Open (backlog `core-followups_REF`):** F4 quadratic defined-term scans (Phase 05), P2-4 "(check one)" cue, P2-6 defined-term false positives, P2-2 investor-path ground truth.
+
 ## Gate commands (no `--` under pnpm 11.13.1)
 
 `pnpm --filter @aduin/core test` | `test:golden` | `test:property` | `test:corpus` | `test:vectors` | `test security` | `test contracts`, plus `pnpm typecheck && pnpm lint && pnpm guard:cf && pnpm secrets:scan`. Phase 01 results: 217 / 44 / 29 / 13 / 38 / 16 / 34 tests green; `--passWithNoTests` removed so an unmatched token exits 1.
@@ -67,9 +79,9 @@ Exports by module: `ai` (AiCandidate/AiFinding/AiRequest/AiResult), `cache-key` 
 ## Known gaps / follow-ups
 
 - Vectors and cookie helper not yet re-run under workerd/browser (owners P04b, P03).
-- `memory/patternKey.ts` is created by Phase 02; the helper currently lives in `findings/make-finding.ts` and `Detector.patternKey()`.
+- `memory/patternKey.ts` now exists (Phase 02); `findings/make-finding.ts` re-exports it.
 - Dev deps fast-check/typescript/vitest are not in `THIRD_PARTY_NOTICES.md`.
-- Independent security review of Phase 01 (`harness/phase-01/`) was pending at closeout.
+- Independent security review of Phase 01 completed (APPROVE_WITH_FIXES, fixed); Phase 02 review fixes applied in 1f5dade.
 
 ## Update triggers
 

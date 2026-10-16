@@ -270,8 +270,8 @@ Orchestrator reads this before deciding which subagent to spawn next. The canoni
 - [x] 3. PLAN-SUPPLEMENT — plan-agent: PVL-supplement applied (13 gaps) to the existing plan
 - [x] 4. PVL — vc-validate-agent: re-run from V1 after the supplement; validate-contract refreshed (Gate: PASS, 17-10-26; binding execute instructions E1-E14 in the contract)
 - [x] 5. EXECUTE — all checklist items done; per-section test gates run and green (or gaps documented) — vc-execute-agent 17-10-26, report `subdoc-qa-mvp_PHASE-02-detectors-fixtures_REPORT_17-10-26.md`
-- [ ] 6. EVL — all EVL gates green; follow-up stubs registered; EVL HANDOFF SUMMARY written
-- [ ] 7. UPDATE PROCESS — phase report written, umbrella state updated, commit done
+- [x] 6. EVL — all EVL gates green (core 291/291 after review fix cycle 1f5dade; web e2e green); follow-up stubs registered; EVL HANDOFF SUMMARY written
+- [x] 7. UPDATE PROCESS — archived; context updated; committed (17-10-26; plan stays in active/ as part of the program folder)
 
 **Validate-contract required before execute.** If step 4 (PVL) is unchecked or `## Validate Contract` reads "(placeholder — vc-validate-agent writes this section before EXECUTE)", orchestrator must spawn vc-validate-agent first. A partial contract missing Plan updates applied / Execute-agent instructions / Test gates sections is treated as a placeholder.
 

@@ -45,13 +45,26 @@ metadata:
 
 | # | Item | Owner phase |
 |---|---|---|
-| P2-1 | Phase 01 adapter bug: the `edgar-exhibit-wrapper` noise rule (`TYPE`/`TEXT`/`DESCRIPTION`/`DOCUMENT`… with the `i` flag) drops any line that starts with "Type", "Text", "Description", "Document", "Sequence" or "Filename", e.g. "Type of Subscriber (check one):". Anchor it to the EDGAR wrapper form (`<TYPE>` or all-caps `TYPE:`), then re-run goldens and the corpus | next core touch (05) |
+| P2-1 | DONE (Phase 02 review fix 1f5dade, anchored EDGAR rule: `EX-...`, `<TAG>...`, `TAG:...`, case-sensitive). Was: Phase 01 adapter bug: the `edgar-exhibit-wrapper` noise rule (`TYPE`/`TEXT`/`DESCRIPTION`/`DOCUMENT`… with the `i` flag) drops any line that starts with "Type", "Text", "Description", "Document", "Sequence" or "Filename", e.g. "Type of Subscriber (check one):". Anchor it to the EDGAR wrapper form (`<TYPE>` or all-caps `TYPE:`), then re-run goldens and the corpus | next core touch (05) |
 | P2-2 | Investor paths on real samples #1, #7, #10 have no ground truth (Agent-Probe only): build a ground-truth fixture per sample and assert paths | 09 / 10 |
 | P2-3 | Phase 01 detectors (`ref-this-section`, `ref-label-coherence`, `undefined-term`) print "undefined" from `explain()` on sparse facts; the totality check is enforced for Phase 02 detectors only | next core touch |
 | P2-4 | `(check one)` / `check one` is not an exclusivity cue in `EXCLUSIVITY_CUES`, so most real option groups read "Cue inferred" and dominate the Structure badge (#2: 38, #5: 23). Add the cue (golden impact check) or weigh option issues differently | 05 / 09 |
-| P2-5 | Default masking (Phase 01 `ACCOUNT_NUMBER_RE`, 6+ digits with `-`) also masks phone numbers in quotes ("(844) #2584"); consider a phone-shape exclusion | 10 |
+| P2-5 | Default masking (Phase 01 `ACCOUNT_NUMBER_RE`, 6+ digits with `-`) also masks phone numbers in quotes ("(844) #2584"); consider a phone-shape exclusion. Phase 02 F3 widening also masks 6+ digit dates written with `/` or `.` (e.g. 10/17/2026 -> #2026); orchestrator decision 17-10-26: keep (privacy-safe), revisit together with a date/phone exclusion (no test covers it yet) | 10 |
 | P2-6 | `used-before-defined` residual false positives on titles, signature captions and headings (#2 "RIA Representative", #7/#10 "Subscription Agreement"); `unused` misses lowercase uses ("net worth", #10) and `capitalization` fires on a heading (#10) | 05 |
 | P2-7 | Structure view icons `restart`, `half`, `branch`, `pin`, `radio`, `boxes`, `ext` from app.html are not in the web sprite; substitutes are used (undo, ring, jump, rule, ring, check, doc) | 10 |
 | P2-8 | The "Show flow diagram" toggle renders a section/condition list, not the app.html SVG diagram | 09 |
 | P2-9 | U1 locator chip: explicitly deferred from Phase 02 to Phase 05 (engine `toView.ref` lacks the paragraph part; Phase 05 touches `features/review/**` next) | 05 |
 | F3 | Done in Phase 02 (`mask-widening`: digit runs over 31, IBAN, alpha-prefixed) | done |
+| F4 | Quadratic defined-term scans in `defined-term-issues` (Phase 02 review F4); deferred from the Phase 02 review fix cycle. F7 (raw hex tokens) skipped: `tokens.css` has no matching tokens | 05 |
+
+## Worker follow-ups (phase 04b review, 2026-10-17; final verdict APPROVE_WITH_FIXES, autoStop cleared)
+
+| # | Item | Owner phase |
+|---|---|---|
+| W10 | N12 (LOW): AI refused requests still write ~6-12 claim/refund rows; peek the global counter (`g, global`) before visitor claims and keep the global-claimed-last invariant | 05 / 10 |
+| W11 | N11 (accepted risk until Turnstile is live): daily D1 Free rows-written worst case ~84-96k/day (days 1-30), ~140-170k/day steady state under max abuse of all caps. Phase 10 re-measures remotely (S9) and, if needed, lowers `SESSION_CAPS.globalPerDay` or `rowBudgetPerDay` so 2 x (memory + sessions + AI) <= ~90k | 10 |
+| W12 | N14: web outbox must treat 429 `memory_write_budget` and `workspace_*_limit` as a soft failure and retry next UTC day (not a data error) | 08 |
+| W13 | Core `limits.findingsChunk` should align to the server cap of 25 findings per chunk | 08 |
+| W14 | N7 lint idea: add a lint/test that every handler calling `.batch(` enters via `postEntry` with `write: true`, so the budget/cap gates cannot be bypassed | 08 / 10 |
+| W15 | N13 (INFO): `evidence_count` = linked evidence (<= 10 at (re-)proposal); UI must not present it as the total number of dismissals | 08b |
+| W16 | D1 Free note: rows_written is the binding limit (100k/day); every new write path needs a weight in `MEMORY_WRITE_WEIGHTS` and a `rows-written` assertion | all |

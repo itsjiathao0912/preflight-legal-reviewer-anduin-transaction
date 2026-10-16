@@ -217,20 +217,35 @@ Plan `## Deviations` -> "Fix cycle 2 deviations" (counsel answer weight 18; chun
 - N9 (LOW): `rowBudgetPerDay` 40000 -> 30000.
 - `harness/phase-04b/review-decision.json` rewritten as the cycle-2 re-review verdict (pendingFixes N7-N9 as stated by the reviewer).
 
-### Daily D1 rows-written arithmetic (worst case, D1 Free 100k/day)
+### Daily D1 rows-written arithmetic (worst case, D1 Free 100k/day) - corrected per review N11
+
+Correction: the earlier table understated the purge row (300 sandboxes x 130 rows = 39k, not <= 12k). Purge DELETEs mirror the rows written 30 days earlier (sandboxRetentionDays 30, up to 50 workspaces per run, <= 24 lazy slots plus the cron), plus quota_counter (2 d) and ai_cache (7 d) mirrors.
 
 | Source | Bound | Rows/day |
 |---|---|---|
 | Memory writes (global weighted budget, weights >= measured rows) | 30,000 units | <= 30,000 |
 | Refused memory claims (N8 pre-check: budget refusals write 0; per-workspace req/run/fnd refusals write 0) | - | ~0 |
 | Sessions (SESSION_CAPS 300/day global, <= 130 rows incl. seed copy + lazy purge slot) | 300 x 130 | <= 39,000 |
-| Refused session claims (per-IP / global caps refuse with 0 rows; degrade path no refund) | - | ~0 |
-| AI/OCR path (measured <= 15 rows/call; bounded by per-visitor/global AI quotas and the spend cap) | ~1,000 calls | <= 15,000 |
-| Cron + lazy purge DELETEs (expired sandboxes <= 300/day x ~130 child rows; ai_cache <= 500, quota_counter <= 1000 per run) | - | <= ~12,000 |
-| Total | | <= ~96,000 (< 100,000) |
+| AI/OCR path (measured <= 15 rows/call; per-visitor/global AI quotas and spend cap; estimate) | ~1,000 calls | <= 15,000 |
+| Purge DELETEs, days 1-30 (quota 2 d + ai_cache 7 d mirrors only; no sandbox is old enough yet) | - | ~ +0 to 12,000 |
+| Purge DELETEs from day 31 (a day of 300 sandboxes x ~130 rows written 30 days earlier, capped 50 workspaces/run x (24 lazy + cron)) | 300 x 130 | <= 39,000 |
+| Total, days 1-30 worst case | | ~84-96k/day |
+| Total, steady state from day 31 under simultaneous max abuse of all caps | | ~140-170k/day |
 
-The AI/OCR row is an estimate from the 04a quota caps; Phase 10 should re-measure remotely (spike S9).
+Impact is availability only: D1 Free refuses writes until the UTC reset, the app fails closed, no data or security impact.
+
+Orchestrator disposition (17-10-26): ACCEPTED RISK until Turnstile is live (the session cap is the dominant term and is only exhaustible without Turnstile). Phase 10 must re-measure remotely (S9) and, if needed, lower `SESSION_CAPS.globalPerDay` or `rowBudgetPerDay` so that 2 x (memory + sessions + AI) <= ~90k.
+
+New backlog: N12 (LOW) - AI refused requests still write ~6-12 claim/refund rows; hardening: peek `g|global` before visitor claims and keep the global-claimed-last invariant.
 
 ### Gates
 
 memory-write-limits 17, rows-written 6, query-budget 2, rule-proposal-threshold-matrix 5, memory-guards-matrix 45, session-degrade-bounds 5, decision-record-contract 85, demo-workspace-not-polluted 7, proxy 11 files / 141; full worker suite 47 files / 445 passed. typecheck, lint, guard:cf, secrets:scan, seed:check all exit 0. validate-risk-artifacts on harness/phase-04b: 0 failures, 0 warnings.
+
+## UPDATE PROCESS closeout (17-10-26)
+
+- Final reviewer verdict: APPROVE_WITH_FIXES, autoStop cleared, `harness/phase-04b/review-decision.json` finalized (pendingFixes empty; risk validator 0 failures, 0 warnings).
+- Phase status: DONE. Steps 1-7 ticked in the plan; registry 04b DONE; EVL iteration reports `subdoc-qa-mvp-phase04b-evl-iteration-001..003_REPORT_17-10-26.md`, TSV rows 42-44.
+- Accepted risk N11 (see corrected arithmetic above); N12-N14 and Phase 10 preconditions recorded in `core-followups_REF` (W10-W16) and the review decision.
+- Phase 10 preconditions: apply migrations 0001-0005 to the remote D1, set `TURNSTILE_SECRET`, re-measure rows_written remotely (decision, session, AI paths), decide N11/N12.
+- SPEC achievement: memory API criteria are proven by passing automated gates (worker 445/445, memory-guards-matrix, rows-written, memory-write-limits, session-degrade-bounds); S9 and S10 ran remotely on throwaway spike resources (PASS-WITH-RISK / FAIL with fallback chunk 25); rows_written on the deployed memory paths still needs a Phase 10 re-measure (backlog W11).

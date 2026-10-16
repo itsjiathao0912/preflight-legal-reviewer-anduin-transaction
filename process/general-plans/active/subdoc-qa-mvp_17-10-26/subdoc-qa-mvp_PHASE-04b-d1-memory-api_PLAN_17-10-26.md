@@ -182,7 +182,7 @@ Unique-index conflict → `409` with the current decision; replayed `client_op_i
 - [x] E2. Tests, one file per token under `apps/worker/test/memory/<token>.test.ts`: all tokens in Test Gates, with the failing stubs below copied first. `memory-storage-contract` includes a canary in `detail.facts` and a 9-digit number in a note, fund name and rule text. Query-count and `meta.rows_written` assertions per endpoint through the counting wrapper in `db/meta.ts` (via the worker D1 binding; the wrangler CLI does not return rows_written). `memory-label-parity` asserts `MEMORY_LABELS` equals the applied `finding.memory_label` CHECK (closes F7 without editing the core test). Per-request counts in `query-budget` bound the AI worst path (incl. breaker read) well under 50 (DV1: no per-IP counter re-added).
 
 ### Step F — Risk evidence pack
-- [~] F1. (pack written in `harness/phase-04b/`; reviewer APPROVE pending, recorded by the orchestrator-run independent reviewer) Risk evidence pack in `harness/phase-04b/` (identity, schema/migration + destructive purge, public API, trust boundary) with the read-only vc-security STRIDE and vc-scenario review (tenant isolation, sandbox minting, privacy) before EXECUTE and an automated reviewer APPROVE recorded in `harness/phase-04b/review-decision.json` before DONE; validate with `node .claude/skills/vc-risk-evidence-pack/scripts/validate-risk-artifacts.mjs process/general-plans/active/subdoc-qa-mvp_17-10-26/harness`.
+- [x] F1. (pack written in `harness/phase-04b/`; reviewer APPROVE pending, recorded by the orchestrator-run independent reviewer) Risk evidence pack in `harness/phase-04b/` (identity, schema/migration + destructive purge, public API, trust boundary) with the read-only vc-security STRIDE and vc-scenario review (tenant isolation, sandbox minting, privacy) before EXECUTE and an automated reviewer APPROVE recorded in `harness/phase-04b/review-decision.json` before DONE; validate with `node .claude/skills/vc-risk-evidence-pack/scripts/validate-risk-artifacts.mjs process/general-plans/active/subdoc-qa-mvp_17-10-26/harness`.
 
 ## Test Gates (commands created in this phase)
 
@@ -312,13 +312,13 @@ All within the 04b blast radius (no hard-stop class). Recorded by EXECUTE 17-10-
 
 Orchestrator reads this before deciding which subagent to spawn next. The canonical 7-step inner loop `R → I → P → PVL → E → EVL → UP` SKIPS SPEC (SPEC runs once in the outer program loop).
 
-- [ ] 1. RESEARCH — research-agent: prior phase reports read; test context loaded; plan drift checked
-- [ ] 2. INNOVATE — innovate-agent: approach decided; Decision Summary written
-- [ ] 3. PLAN-SUPPLEMENT — plan-agent: existing phase plan updated; Inner Loop Refresh Note if sections changed (or "n/a — research clean")
-- [ ] 4. PVL — vc-validate-agent: full V1-V7; validate-contract written per `.claude/skills/vc-validate-findings/references/example-validate-output.md`
+- [x] 1. RESEARCH — research-agent: prior phase reports read; test context loaded; plan drift checked
+- [x] 2. INNOVATE — innovate-agent: approach decided; Decision Summary written
+- [x] 3. PLAN-SUPPLEMENT — plan-agent: existing phase plan updated; Inner Loop Refresh Note if sections changed (or "n/a — research clean")
+- [x] 4. PVL — vc-validate-agent: full V1-V7; validate-contract written per `.claude/skills/vc-validate-findings/references/example-validate-output.md`
 - [x] 5. EXECUTE — all checklist items done; per-section test gates run and green (or gaps documented) — 17-10-26: 34/34 tokens green, full suite 405/405, seed:check, core, typecheck, lint, guard:cf, secrets:scan, spike:check green; F1 reviewer decision pending (orchestrator)
-- [ ] 6. EVL — all EVL gates green; follow-up stubs registered; EVL HANDOFF SUMMARY written
-- [ ] 7. UPDATE PROCESS — phase report written, umbrella state updated, commit done
+- [x] 6. EVL — green (worker 445/445, core 291/291, risk validator 0 failures; fix cycles bb83e04, fb3064f, 59d9831; reviewer APPROVE_WITH_FIXES, autoStop cleared)
+- [x] 7. UPDATE PROCESS — archived; context updated; committed (17-10-26; plan stays in active/ as part of the program folder)
 
 **Validate-contract required before execute.** If step 4 (PVL) is unchecked or `## Validate Contract` reads "(placeholder — vc-validate-agent writes this section before EXECUTE)", orchestrator must spawn vc-validate-agent first. A partial contract missing Plan updates applied / Execute-agent instructions / Test gates sections is treated as a placeholder.
 
