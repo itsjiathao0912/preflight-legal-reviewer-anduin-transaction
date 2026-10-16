@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { analyzed, blockText } from '../helpers/samples';
 
+const PHASE01_DETECTORS = ['ref-this-section', 'ref-label-coherence', 'undefined-term'];
+
 describe('golden-01-this-section-11 (AC11, sample #1)', () => {
   const { g, findings } = analyzed(1);
   const xref = findings.filter((f) => f.issue_class === 'broken_cross_reference');
@@ -81,6 +83,8 @@ describe('golden-01-this-section-11 (AC11, sample #1)', () => {
 
   it('negative: no other broken_cross_reference or defined_term_issue on #1', () => {
     expect(findings.filter((f) => f.issue_class === 'defined_term_issue')).toHaveLength(0);
-    expect(findings).toHaveLength(2);
+    // Phase 02 (E2): "no other finding" holds for the Phase 01 detector ids; the AC10 flags
+    // (sensitive ABA/DDA on #1) are legitimate new findings covered by their own tests.
+    expect(findings.filter((f) => PHASE01_DETECTORS.includes(f.detector_id))).toHaveLength(2);
   });
 });

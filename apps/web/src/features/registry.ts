@@ -5,6 +5,7 @@ import type { ComponentType } from 'react';
 import type { IconName } from '../icons/sprite';
 import { FindingsScreen } from './review/FindingsScreen';
 import { placeholder } from './placeholders/PlaceholderView';
+import { StructureScreen } from './structure/StructureScreen';
 
 export type NavGroupId = 'review' | 'check' | 'firm';
 
@@ -56,6 +57,8 @@ export const features: readonly FeatureModule[] = [
     icon: 'doc',
     component: placeholder('documents', 'Documents'),
   },
+  // Phase 02: the real #structure view replaces the placeholder (last entry with an id wins)
+  { id: 'structure', label: 'Structure', group: 'check', icon: 'tree', component: StructureScreen },
 ];
 
 /** Resolve the view for a route: the last registered module with that id. */

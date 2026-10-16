@@ -35,8 +35,16 @@ export function mask(text: string, spans: Span[]): string {
   return out + text.slice(pos);
 }
 
-/** Digit runs of 6+ digits (optionally separated by - or space) — candidate account/routing numbers. */
-export const ACCOUNT_NUMBER_RE = /\b\d(?:[ -]?\d){5,30}\b/g;
+/**
+ * Candidate account/routing numbers (F3-widened; every quantifier bounded, no nested unbounded
+ * repetition, linear on hostile input — covered by security/redos.test.ts):
+ *  1. IBAN-like: 2 letters + 2 check digits + 2..7 groups of 4 alphanumerics (+ short tail)
+ *  2. alpha-prefixed account: 1-4 capitals, optional dash, 6-34 digits ("DDA-12345678")
+ *  3. digit runs of 6+ digits (optionally separated by - or space), including runs longer than 31
+ *     digits (the trailing `\d{0,96}` lets a 40-digit run end on a word boundary)
+ */
+export const ACCOUNT_NUMBER_RE =
+  /\b(?:[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,3})?|[A-Z]{1,4}-?\d{6,34}|\d(?:[ -]?\d){5,30}\d{0,96})\b/g;
 
 export function sensitiveSpans(text: string): Span[] {
   const out: Span[] = [];

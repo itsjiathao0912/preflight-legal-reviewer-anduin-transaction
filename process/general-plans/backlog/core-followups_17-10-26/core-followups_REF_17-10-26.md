@@ -40,3 +40,18 @@ metadata:
 | W7 | Playwright `stack` run leaves the e2e `preview` build in the shared `apps/web/dist`; always rebuild with `pnpm --filter @aduin/web build` before a deploy (consider a separate outDir) | 10 |
 | W8 | Main web bundle 568 kB (core barrel not fully tree-shaken on the main thread); code-splitting candidate | 10 |
 | W9 | THIRD_PARTY_NOTICES.md rows for Phase 03 dev deps are added; transitive rows (F8 above) still due before 10 | 10 |
+
+## Phase 02 follow-ups (detectors, fixtures, structure view, 2026-10-17)
+
+| # | Item | Owner phase |
+|---|---|---|
+| P2-1 | Phase 01 adapter bug: the `edgar-exhibit-wrapper` noise rule (`TYPE`/`TEXT`/`DESCRIPTION`/`DOCUMENT`… with the `i` flag) drops any line that starts with "Type", "Text", "Description", "Document", "Sequence" or "Filename", e.g. "Type of Subscriber (check one):". Anchor it to the EDGAR wrapper form (`<TYPE>` or all-caps `TYPE:`), then re-run goldens and the corpus | next core touch (05) |
+| P2-2 | Investor paths on real samples #1, #7, #10 have no ground truth (Agent-Probe only): build a ground-truth fixture per sample and assert paths | 09 / 10 |
+| P2-3 | Phase 01 detectors (`ref-this-section`, `ref-label-coherence`, `undefined-term`) print "undefined" from `explain()` on sparse facts; the totality check is enforced for Phase 02 detectors only | next core touch |
+| P2-4 | `(check one)` / `check one` is not an exclusivity cue in `EXCLUSIVITY_CUES`, so most real option groups read "Cue inferred" and dominate the Structure badge (#2: 38, #5: 23). Add the cue (golden impact check) or weigh option issues differently | 05 / 09 |
+| P2-5 | Default masking (Phase 01 `ACCOUNT_NUMBER_RE`, 6+ digits with `-`) also masks phone numbers in quotes ("(844) #2584"); consider a phone-shape exclusion | 10 |
+| P2-6 | `used-before-defined` residual false positives on titles, signature captions and headings (#2 "RIA Representative", #7/#10 "Subscription Agreement"); `unused` misses lowercase uses ("net worth", #10) and `capitalization` fires on a heading (#10) | 05 |
+| P2-7 | Structure view icons `restart`, `half`, `branch`, `pin`, `radio`, `boxes`, `ext` from app.html are not in the web sprite; substitutes are used (undo, ring, jump, rule, ring, check, doc) | 10 |
+| P2-8 | The "Show flow diagram" toggle renders a section/condition list, not the app.html SVG diagram | 09 |
+| P2-9 | U1 locator chip: explicitly deferred from Phase 02 to Phase 05 (engine `toView.ref` lacks the paragraph part; Phase 05 touches `features/review/**` next) | 05 |
+| F3 | Done in Phase 02 (`mask-widening`: digit runs over 31, IBAN, alpha-prefixed) | done |

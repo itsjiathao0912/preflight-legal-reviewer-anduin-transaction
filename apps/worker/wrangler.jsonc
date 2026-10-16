@@ -20,6 +20,8 @@
       "database_id": "00000000-0000-0000-0000-000000000000",
     },
   ],
+  // Phase 04b: daily retention purge (the lazy purge from new sessions stays the baseline).
+  "triggers": { "crons": ["17 3 * * *"] },
   "vars": {
     "PAID_FALLBACK_ENABLED": "false",
     "OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",

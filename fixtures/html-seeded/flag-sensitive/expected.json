@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "detector": "flag-sensitive",
+  "issue_class": "sensitive_data",
+  "cases": [
+    {
+      "file": "clean.html",
+      "kind": "clean",
+      "note": "phone, fax, P.O. Box and ZIP+4 digits carry no account cue",
+      "expect": []
+    },
+    {
+      "file": "aba-dda.html",
+      "kind": "defect",
+      "note": "ABA and DDA in two lines plus ABA# and DDA# in one sentence (one finding)",
+      "expect": [
+        {
+          "detector_id": "flag-sensitive",
+          "issue_class": "sensitive_data",
+          "count": 3
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "firm_id": "firm-x",
+  "fund": "fund-I",
+  "decisions": [
+    {
+      "id": "fi-d1",
+      "law_firm_id": "firm-x",
+      "fund": "fund-I",
+      "issue_class": "placeholder",
+      "pattern_key": "flag-placeholder:insert",
+      "quote": "Payable to: the Fund Subscriptions Account / [insert investor name]",
+      "quote_hash": "889ccc77951e505aefd4332c08f7bb4e8c6807bf0d24b77a0d2c84d5893e3ab4",
+      "fingerprint": "4f2282132ed72048d7b284aea73bc5f4295ec5f821e45355536d3cdf63665c63",
+      "decided_by_name": "Avery (simulated analyst)",
+      "decided_at": 1791763260000,
+      "decision": "dismissed",
+      "reason_code": "firm_standard_wording",
+      "note": "Firm X leaves the investor name for the administrator to fill in."
+    },
+    {
+      "id": "fi-d2",
+      "law_firm_id": "firm-x",
+      "fund": "fund-I",
+      "issue_class": "drafting_note",
+      "pattern_key": "flag-drafting-note:ntd",
+      "quote": "NTD: confirm the wire cut-off time with the administrator.",
+      "quote_hash": "d6fbd30f6ced253643af291a284c65b15cc9e5d925057031e5c0341a505a96fa",
+      "fingerprint": "148c315f69a2cd025ad00573fe2fcb7a51b7a47f62833d35bd338d804cae32de",
+      "decided_by_name": "Avery (simulated analyst)",
+      "decided_at": 1791763320000,
+      "decision": "dismissed",
+      "reason_code": "no_form_impact"
+    },
+    {
+      "id": "fi-d3",
+      "law_firm_id": "firm-x",
+      "fund": "fund-I",
+      "issue_class": "placeholder",
+      "pattern_key": "flag-placeholder:xx",
+      "quote": "Account Name: the Fund [xx] Subscriptions",
+      "quote_hash": "197c9e7a78db2e3a2dd26734be4d68a5aec01354d25f671d6587bd97345de1ff",
+      "fingerprint": "bb4bcd066de5d52602010bb1387ebba89c190ba796f87374195adb542716bc53",
+      "decided_by_name": "Avery (simulated analyst)",
+      "decided_at": 1791763380000,
+      "decision": "dismissed",
+      "reason_code": "firm_standard_wording"
+    }
+  ]
+}

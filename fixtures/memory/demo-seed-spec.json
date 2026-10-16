@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "workspace": {
+    "id": "ws_demo",
+    "name": "Demo workspace (seeded)"
+  },
+  "decisions": [
+    {
+      "id": "sd01",
+      "law_firm_id": "partners-group",
+      "sample_id": "03",
+      "issue_class": "placeholder",
+      "quote": "FFC: Partners Group Private Equity (Master Fund), LLC / [insert investor name]",
+      "decision": "dismissed",
+      "reason_code": "firm_standard_wording",
+      "note": "The administrator fills in the investor name on the wire line.",
+      "pattern_key": "flag-placeholder:insert",
+      "section_path": ["SUBSCRIPTION AGREEMENT INSTRUCTIONS"],
+      "fund_name": "Partners Group Private Equity (Master Fund)",
+      "doc_version_label": "2019",
+      "decided_by_name": "Avery (simulated analyst)",
+      "decided_at": 1791763260000
+    },
+    {
+      "id": "sd02",
+      "law_firm_id": "partners-group",
+      "sample_id": "05",
+      "issue_class": "placeholder",
+      "quote": "FFC: Partners Group Next Generation Infrastructure, LLC / [insert investor name]]",
+      "decision": "dismissed",
+      "reason_code": "firm_standard_wording",
+      "pattern_key": "flag-placeholder:insert",
+      "section_path": ["SUBSCRIPTION AGREEMENT INSTRUCTIONS"],
+      "fund_name": "Partners Group Next Generation Infrastructure",
+      "doc_version_label": "2024",
+      "decided_by_name": "Avery (simulated analyst)",
+      "decided_at": 1791763320000
+    },
+    {
+      "id": "sd03",
+      "law_firm_id": "partners-group",
+      "sample_id": "06",
+      "issue_class": "placeholder",
+      "quote": "FFC: Partners Group Next Generation Infrastructure, LLC / [insert investor name]",
+      "decision": "dismissed",
+      "reason_code": "firm_standard_wording",
+      "pattern_key": "flag-placeholder:insert",
+      "section_path": ["SubscripTIon Agreement INSTRUCTIONS"],
+      "fund_name": "Partners Group Next Generation Infrastructure",
+      "doc_version_label": "2026",
+      "decided_by_name": "Avery (simulated analyst)",
+      "decided_at": 1791763380000
+    },
+    {
+      "id": "sd04",
+      "law_firm_id": "partners-group",
+      "sample_id": "03",
+      "issue_class": "sensitive_data",
+      "quote": "ABA: #0028",
+      "decision": "dismissed",
+      "reason_code": "no_form_impact",
+      "note": "Fund wire details; masked in the digitized form.",
+      "pattern_key": "flag-sensitive:aba",
+      "section_path": ["SUBSCRIPTION AGREEMENT INSTRUCTIONS"],
+      "fund_name": "Partners Group Private Equity (Master Fund)",
+      "doc_version_label": "2019",
+      "decided_by_name": "Avery (simulated analyst)",
+      "decided_at": 1791763440000
+    },
+    {
+      "id": "sd05",
+      "law_firm_id": "partners-group",
+      "sample_id": "03",
+      "issue_class": "sensitive_data",
+      "quote": "DDA: #1927",
+      "decision": "dismissed",
+      "reason_code": "no_form_impact",
+      "pattern_key": "flag-sensitive:dda",
+      "section_path": ["SUBSCRIPTION AGREEMENT INSTRUCTIONS"],
+      "fund_name": "Partners Group Private Equity (Master Fund)",
+      "doc_version_label": "2019",
+      "decided_by_name": "Avery (simulated analyst)",
+      "decided_at": 1791763500000
+    },
+    {
+      "id": "sd06",
+      "law_firm_id": "partners-group",
+      "sample_id": "03",
+      "issue_class": "broken_cross_reference",
+      "quote": "☐ For all custodial accounts, please send all pages (including the terms and conditions) of this Subscription Agreement to the Custodian indicated in Part B of Section 6 for forwarding to the Fund",
+      "decision": "answered",
+      "counsel_option": "A",
+      "counsel_note": "Should read Section 4 (Custodian Information).",
+      "pattern_key": "ref-label-coherence:part-b-of-section",
+      "section_path": ["SUBSCRIPTION AGREEMENT INSTRUCTIONS"],
+      "fund_name": "Partners Group Private Equity (Master Fund)",
+      "doc_version_label": "2019",
+      "decided_by_name": "Avery (simulated analyst)",
+      "decided_at": 1791763560000
+    },
+    {
+      "id": "sd07",
+      "law_firm_id": "partners-group",
+      "sample_id": "03",
+      "issue_class": "broken_cross_reference",
+      "quote": "☐ Wire cleared funds equal to the amount specified in Part B of Section 4 to:",
+      "decision": "answered",
+      "counsel_option": "A",
+      "counsel_note": "Should read Part B of Section 6 (Investment amount).",
+      "pattern_key": "ref-label-coherence:part-b-of-section",
+      "section_path": ["SUBSCRIPTION AGREEMENT INSTRUCTIONS"],
+      "fund_name": "Partners Group Private Equity (Master Fund)",
+      "doc_version_label": "2019",
+      "decided_by_name": "Avery (simulated analyst)",
+      "decided_at": 1791763620000
+    }
+  ],
+  "rules": [
+    {
+      "id": "sr01",
+      "law_firm_id": "partners-group",
+      "text": "Placeholders for the investor name on the wire \"FFC\" line are firm standard wording.",
+      "status": "proposed",
+      "pattern_key": "flag-placeholder:insert"
+    }
+  ]
+}

@@ -29,8 +29,8 @@ Owns: `packages/core/src/{model,adapters/html,structure,graph,findings,detectors
 status: DONE (17-10-26, commit 6d12628, EVL CLEAN; independent security review pending)
 
 ## Phase 02
-Owns: `packages/core/src/{detectors (new files), investor, memory/patternKey.ts}`, `packages/core/test/**` (new), `fixtures/html-seeded`, `fixtures/memory/{fund-*,demo-seed-spec.json}`, `scripts/src/fixtures`, `apps/web/src/features/investor-paths`, 2 web e2e specs. Disjoint from 04b.
-
+Owns: `packages/core/src/{detectors (new files), investor, structure-view (buildStructureView), memory/patternKey.ts}`, `packages/core/test/**` (new files), `fixtures/html-seeded`, `fixtures/memory/{fund-*,demo-seed-spec.json}`, `scripts/src/fixtures`, `apps/web/src/features/{structure,investor-paths}/**`, new web e2e specs (structure-view, investor-path-view, reveal-sensitive).
+Narrow additive edits (revision 2026-10-17, inner PVL E14): core `memory/mask.ts` (F3 widening), `adapters/html.ts` + `structure/option-groups.ts` + `structure/types.ts` (footnote_marker TS-only side channel; no schema change), `findings/make-finding.ts` (re-export patternKey), golden tests `golden-01`/`golden-03-05`/`golden-11` (narrow "no other finding" totals to Phase 01 detector ids; golden content unchanged), `finding-schema-contract.test.ts` (mask-aware), `detectors/registry.ts` + `index.ts` (append-only seams); web `engine/types.ts` (optional `structure`), `engine.worker.ts`, `shell/Sidebar.tsx`, `shell/NavGroup.tsx` (structure badge), `features/registry.ts` (append); Phase 03 e2e specs repaired by derivation (gate-pill, filter-sort, previously-handled-section, placeholder-routes, app-shell, a11y-smoke, finding-highlight). Seams: `packages/core/package.json` (test:seeded), `scripts/package.json` (fixtures:build/check) — serialized against 04b. Disjoint from 04b code (apps/worker/**, worker-side memory/mask).
 ## Phase 03
 Owns: `apps/web/**` (except later feature dirs), `scripts/src/build-samples.ts`. Reads `design/mockups/*`. Disjoint from 04a.
 status: DONE (17-10-26, commit 833161b, EVL green, visual review PASS_WITH_NOTES)
@@ -101,3 +101,6 @@ None unresolved. Known shared-write points are the seam files above; mitigation 
 - Phase 03 publishes `data-testid`s (listed in its `## Public Contracts`); Phase 04a's `slice.spec.ts` selectors use only those.
 - Structure (incl. Investor types sub-view), Counsel, Compare, Firm memory, Documents are P03 placeholders registered via `apps/web/src/features/registry.ts`; later UI phases append real views. Phase 02's `apps/web/src/features/investor-paths` and its `investor-path-view` e2e have no host until the later Structure UI phase.
 - Phase 01 `MemoryLabel` enum must equal the DATA-MODEL `memory_label` CHECK list (`previously_dismissed`, `already_answered`, ...); P03 `memory-label-enum` test asserts it.
+
+## Revision 2026-10-17 (orchestrator, 04b inner PVL)
+Seam rule D2 also covers Phase 04b edits to `apps/worker/src/app.ts` (additive pattern-route API; route-mount lines never edited) and `apps/worker/src/index.ts` (lazy app build with env-bound D1 platform). Shared manifest `scripts/package.json`: Phase 02 owns `fixtures:build`/`fixtures:check`; Phase 04b owns `seed:gen`/`seed:check` and the `@aduin/core` dependency (one-key edits). Root `package.json` + `pnpm-lock.yaml`: Phase 04b only during 02 ∥ 04b.

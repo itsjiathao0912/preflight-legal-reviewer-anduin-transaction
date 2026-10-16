@@ -27,9 +27,8 @@ test.describe('app-shell', () => {
     await page.getByTestId('nav-structure').click();
     await expect(page.getByTestId('nav-structure')).toHaveAttribute('aria-current', 'page');
     await expect(page.getByTestId('nav-findings')).not.toHaveAttribute('aria-current', 'page');
-    await expect(
-      page.locator('[data-testid="placeholder-view"][data-route="structure"]'),
-    ).toBeVisible();
+    // Phase 02: Structure is a real view (no longer the placeholder)
+    await expect(page.getByTestId('structure-view')).toBeVisible();
     await page.getByTestId('nav-findings').click();
     await expect(page.getByTestId('findings-header')).toBeVisible();
   });

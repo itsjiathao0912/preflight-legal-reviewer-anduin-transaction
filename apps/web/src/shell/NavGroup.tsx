@@ -45,10 +45,11 @@ export function NavGroup({
               >
                 <Icon name={m.icon} />
                 <span className="lbl">{text}</span>
-                {m.id === 'findings' || m.id === 'counsel' ? (
+                {m.id === 'findings' || m.id === 'counsel' || m.id === 'structure' ? (
                   <span className="nc" data-testid={`nav-badge-${m.id}`}>
                     {b && b.n > 0 ? (
                       <>
+                        {m.id === 'structure' ? <Icon name="warn" /> : null}
                         <span className="sr">{b.sr}: </span>
                         {b.n}
                       </>

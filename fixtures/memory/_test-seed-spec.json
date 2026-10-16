@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "workspace": { "id": "ws_demo", "name": "Demo workspace (seeded)" },
+  "decisions": [
+    {
+      "id": "sd01",
+      "law_firm_id": "firm-x",
+      "sample_id": "fund-i",
+      "issue_class": "defined_term_issue",
+      "quote": "The Investor shall subscribe for Units in the Fund as set out in Part B.",
+      "decision": "dismissed",
+      "reason_code": "firm_standard_wording",
+      "note": "Firm X uses Units and Shares interchangeably in its booklets.",
+      "pattern_key": "defined-term:units->shares",
+      "section_path": ["Part B", "Subscription"],
+      "fund_name": "Demo Fund I",
+      "doc_version_label": "v1 template",
+      "decided_by_name": "Avery (simulated analyst)",
+      "decided_at": 1791763200000
+    },
+    {
+      "id": "sd02",
+      "law_firm_id": "firm-x",
+      "sample_id": "fund-i",
+      "issue_class": "defined_term_issue",
+      "quote": "Each Investor acknowledges that Units are issued at the Net Asset Value.",
+      "decision": "dismissed",
+      "reason_code": "firm_standard_wording",
+      "pattern_key": "defined-term:units->shares",
+      "section_path": ["Part B", "Pricing"],
+      "fund_name": "Demo Fund I",
+      "doc_version_label": "v1 template",
+      "decided_by_name": "Avery (simulated analyst)",
+      "decided_at": 1791763260000
+    },
+    {
+      "id": "sd03",
+      "law_firm_id": "firm-x",
+      "sample_id": "fund-i",
+      "issue_class": "defined_term_issue",
+      "quote": "Units may be redeemed only as described in the Offering Memorandum.",
+      "decision": "dismissed",
+      "reason_code": "firm_standard_wording",
+      "pattern_key": "defined-term:units->shares",
+      "section_path": ["Part C", "Redemption"],
+      "fund_name": "Demo Fund I",
+      "doc_version_label": "v1 template",
+      "decided_by_name": "Blake (simulated analyst)",
+      "decided_at": 1791763320000
+    },
+    {
+      "id": "sd04",
+      "law_firm_id": "firm-x",
+      "sample_id": "fund-i",
+      "issue_class": "broken_cross_reference",
+      "quote": "Complete Section 11 unless the Investor is an entity described in Section 14.",
+      "decision": "accepted",
+      "pattern_key": "ref:missing-section",
+      "section_path": ["Part A"],
+      "fund_name": "Demo Fund I",
+      "doc_version_label": "v1 template",
+      "decided_by_name": "Blake (simulated analyst)",
+      "decided_at": 1791763380000
+    },
+    {
+      "id": "sd05",
+      "law_firm_id": "firm-x",
+      "sample_id": "fund-i",
+      "issue_class": "ambiguity",
+      "quote": "The Investor may elect either option, or both, as applicable.",
+      "decision": "answered",
+      "counsel_option": "B",
+      "counsel_note": "Counsel confirmed both options may be selected together.",
+      "section_path": ["Part D", "Elections"],
+      "fund_name": "Demo Fund I",
+      "doc_version_label": "v1 template",
+      "decided_by_name": "Avery (simulated analyst)",
+      "decided_at": 1791763440000
+    },
+    {
+      "id": "sd06",
+      "law_firm_id": "partners-group",
+      "sample_id": "fund-ii",
+      "issue_class": "placeholder",
+      "quote": "Name of Fund: [insert fund name] (the Fund).",
+      "decision": "dismissed",
+      "reason_code": "no_form_impact",
+      "pattern_key": "placeholder:fund-name",
+      "fund_name": "Demo Fund II",
+      "decided_by_name": "Casey (simulated analyst)",
+      "decided_at": 1791763500000
+    },
+    {
+      "id": "sd07",
+      "law_firm_id": "firm-y",
+      "sample_id": "fund-ii",
+      "issue_class": "logic_contradiction",
+      "quote": "If the Investor answered No to Question 3, skip to Question 9.",
+      "decision": "answered",
+      "counsel_option": "unclear",
+      "counsel_note": "Counsel asked for the full booklet before answering.",
+      "fund_name": "Demo Fund II",
+      "decided_by_name": "Casey (simulated analyst)",
+      "decided_at": 1791763560000
+    },
+    {
+      "id": "sd08",
+      "law_firm_id": "firm-x",
+      "sample_id": "fund-i",
+      "issue_class": "sensitive_data",
+      "quote": "Wire subscription monies to account number 001234567 at the Bank.",
+      "sensitive_spans": [{ "start": 43, "end": 52 }],
+      "decision": "dismissed",
+      "reason_code": "tool_false_alarm",
+      "note": "Sample account 001234567 is a synthetic placeholder.",
+      "pattern_key": "sensitive:account-number",
+      "fund_name": "Demo Fund I",
+      "doc_version_label": "v1 template",
+      "decided_by_name": "Avery (simulated analyst)",
+      "decided_at": 1791763620000
+    }
+  ],
+  "rules": [
+    {
+      "id": "sr01",
+      "law_firm_id": "firm-x",
+      "text": "Firm X uses Units and Shares interchangeably in subscription booklets; treat this as standard wording.",
+      "status": "active",
+      "pattern_key": "defined-term:units->shares"
+    },
+    {
+      "id": "sr02",
+      "law_firm_id": "firm-x",
+      "text": "Firm X places the wire instructions in Part E; a missing Part E reference is not an error.",
+      "status": "proposed",
+      "pattern_key": "ref:missing-section"
+    },
+    {
+      "id": "sr03",
+      "law_firm_id": "partners-group",
+      "text": "Partners Group booklets always list the fund name on the cover page.",
+      "status": "active"
+    }
+  ]
+}

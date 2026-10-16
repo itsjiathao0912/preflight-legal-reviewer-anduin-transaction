@@ -21,10 +21,13 @@ export function Sidebar() {
   const toggle = useShell((s) => s.toggleCollapsed);
   const firmName = useReview((s) => s.doc?.firmName ?? '');
   const { open, counsel } = useReviewView();
+  const structureIssues = useReview((s) => s.result?.structure?.badge ?? 0);
   const mods = navModules();
   const badges = {
     findings: { n: open, sr: 'Open' },
     counsel: { n: counsel, sr: 'Needs counsel' },
+    // computed from the engine's structure view (app.html: "To check")
+    structure: { n: structureIssues, sr: 'To check' },
   };
   return (
     <aside className="side" data-testid="sidebar" aria-label="Sidebar">

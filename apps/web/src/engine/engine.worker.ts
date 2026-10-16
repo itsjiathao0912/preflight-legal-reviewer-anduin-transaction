@@ -7,6 +7,7 @@
 import * as Comlink from 'comlink';
 import {
   buildDocGraph,
+  buildStructureView,
   htmlToLines,
   ISSUE_CLASS_LABELS,
   runDeterministic,
@@ -176,6 +177,12 @@ const api: EngineApi = {
       return fail('checks', 'no rule findings for this document');
     }
     const n = result.findings.length;
+    // Phase 02: the #structure view model (pure core function, worker only; optional on the wire)
+    try {
+      result.structure = buildStructureView(g, result.findings);
+    } catch {
+      /* the Structure view shows its empty state */
+    }
     report({ id: 'checks', state: 'done', sub: `Done · ${n} finding${n === 1 ? '' : 's'}` });
     return result;
   },

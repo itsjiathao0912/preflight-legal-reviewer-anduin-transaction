@@ -16,7 +16,7 @@ async function audit(page: Page, label: string) {
 }
 
 test.describe('a11y-smoke', () => {
-  test('shell, Findings (expanded and rail), placeholder and every overlay have no critical violations', async ({
+  test('shell, Findings (expanded and rail), placeholder, Structure and every overlay have no critical violations', async ({
     page,
   }) => {
     test.setTimeout(120_000);
@@ -64,7 +64,18 @@ test.describe('a11y-smoke', () => {
     await page.getByTestId('sidebar-toggle').click();
     await audit(page, 'findings rail');
 
-    await page.getByTestId('nav-structure').click();
+    // Phase 02: Structure is a real view now; the placeholder audit moves to Compare versions
+    await page.getByTestId('nav-compare').click();
     await audit(page, 'placeholder');
+
+    await page.getByTestId('nav-structure').click();
+    await expect(page.getByTestId('structure-view')).toBeVisible();
+    await audit(page, 'structure');
+    await page.getByTestId('structure-toggle-everything').click();
+    await page.getByTestId('structure-row').first().click();
+    await expect(page.getByTestId('structure-drawer')).toBeVisible();
+    await audit(page, 'structure drawer');
+    await page.getByTestId('structure-lens-investors').click();
+    await audit(page, 'structure investor types');
   });
 });

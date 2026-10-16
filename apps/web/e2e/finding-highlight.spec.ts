@@ -29,21 +29,24 @@ test.describe('finding-highlight', () => {
   test('#3 swapped Part B references are highlighted', async ({ page }) => {
     await gotoApp(page);
     await openSample(page, '03');
-    for (const f of engineFindings('03'))
+    // Phase 02 (E9): only the golden swapped-reference findings carry facts.reference
+    for (const f of engineFindings('03').filter((x) => x.detector_id === 'ref-label-coherence'))
       await selectAndCheck(page, f.id, String(f.detail.facts.reference));
   });
 
   test('#11 undefined "Units" is highlighted', async ({ page }) => {
     await gotoApp(page);
     await openSample(page, '11');
-    const f = engineFindings('11').find((x) => x.detail.facts.used_term === 'Units')!;
+    const f = engineFindings('11').find(
+      (x) => x.detector_id === 'undefined-term' && x.detail.facts.used_term === 'Units',
+    )!;
     await selectAndCheck(page, f.id, /Units/);
   });
 
   test('clicking a highlight in the document selects its finding', async ({ page }) => {
     await gotoApp(page);
     await openSample(page, '03');
-    const f = engineFindings('03')[1]!;
+    const f = engineFindings('03').filter((x) => x.detector_id === 'ref-label-coherence')[1]!;
     await page.locator(`[data-testid="doc-highlight"][data-finding-id="${f.id}"]`).first().click();
     await expect(row(page, f.id)).toHaveAttribute('aria-expanded', 'true');
   });

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { scoreReference } from '../../src/detectors/ref-label-coherence';
 import { analyzed } from '../helpers/samples';
 
+const PHASE01_DETECTORS = ['ref-this-section', 'ref-label-coherence', 'undefined-term'];
+
 describe.each([3, 5])('golden-03-05-swapped-part-b-refs (AC12, sample #%i)', (n) => {
   const { g, findings } = analyzed(n);
   const xref = findings.filter((f) => f.issue_class === 'broken_cross_reference');
@@ -53,7 +55,9 @@ describe.each([3, 5])('golden-03-05-swapped-part-b-refs (AC12, sample #%i)', (n)
 
   it('negative: zero defined_term_issue and no other finding on this doc', () => {
     expect(findings.filter((f) => f.issue_class === 'defined_term_issue')).toHaveLength(0);
-    expect(findings).toHaveLength(2);
+    // Phase 02 (E2): "no other finding" holds for the Phase 01 detector ids; the AC10 flags
+    // (NTD, placeholders, sensitive ABA/DDA) are legitimate new findings with their own tests.
+    expect(findings.filter((f) => PHASE01_DETECTORS.includes(f.detector_id))).toHaveLength(2);
   });
 });
 

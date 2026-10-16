@@ -1,0 +1,18 @@
+{
+  "task": "subdoc-qa-mvp phase 04b D1 memory API",
+  "snippets": [
+    { "file": "apps/worker/src/memory/ctx.ts", "lines": "49-78", "description": "Memory routes verify the cookie with verifyCookie (never resolveVisitor, never mint); w-less cookie -> 401 except the explicit read-only demo marker a='ro' (reads only, writes 403); liveness (sandbox, active, unexpired, analyst present) + schema/seed health in the first query" },
+    { "file": "apps/worker/src/memory/repo/workspace.ts", "lines": "6-12", "description": "Liveness SQL joins analyst on (workspace_id, id) and reads schema_version + seed_mode in one statement" },
+    { "file": "apps/worker/src/routes/memory/session.ts", "lines": "68-145", "description": "Only minting route: Turnstile iff TURNSTILE_SECRET (fail closed), session_new per-IP then global claims, read-only degrade over the global cap, sandbox + analyst + audit + seed copy in one batch, resign(claims,{w,a,iat,exp}) preserving v and t" },
+    { "file": "apps/worker/src/routes/memory/decisions.ts", "lines": "95-180", "description": "Firm from run_id (A0), fingerprint recomputed (422), masked <=300-char snippet, audit-first batch, supersede by id, proposal statements, replay vs 409 by constraint text" },
+    { "file": "apps/worker/src/db/tx.ts", "lines": "1-40", "description": "Constraint/trigger text classification recorded by S8 (same substrings local and remote)" },
+    { "file": "apps/worker/src/memory/repo/finding.ts", "lines": "1-80", "description": "R1: detail (facts, explanation, interpretations) never copied; detail_json NULL; snippets re-masked; json_each multi-row insert" },
+    { "file": "apps/worker/src/memory/mask.ts", "lines": "1-20", "description": "maskFree wraps core mask(sensitiveSpans); snippetOf masks BEFORE the 300-char truncation" },
+    { "file": "apps/worker/migrations/0002_memory_core.sql", "lines": "88-90, 204-235, 296-299", "description": "uq_decision_active partial unique index; append-only/transition triggers gated on workspace.status='purging'; demo write-block triggers outside seed_mode" },
+    { "file": "apps/worker/src/memory/repo/purge.ts", "lines": "14-90", "description": "Destructive purge: mark <=50 expired sandboxes 'purging', child-first set-based deletes in one atomic batch, demo exempt; ai_cache/quota/breaker housekeeping" },
+    { "file": "apps/worker/src/platform/quota.ts", "lines": "13-95", "description": "E1 guarded atomic claim with numbered params; throws on D1 error (F5); ok:false only at cap; self-describing refund token clamped at 0" },
+    { "file": "apps/worker/src/platform/breaker.ts", "lines": "17-33", "description": "F14: in-isolate trip set first, then persisted; tripped() throws on read error (pipeline fails closed)" },
+    { "file": "apps/worker/src/platform/rules.ts", "lines": "1-27", "description": "Only createRulesPort(db, workspaceId) is exported; status='active' only" },
+    { "file": "apps/worker/src/index.ts", "lines": "11-61", "description": "Lazy buildApp per D1 binding; unavailablePlatform() fallback; scheduled() purge non-fatal" }
+  ]
+}

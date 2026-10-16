@@ -9,11 +9,16 @@
     "guard:cf": "tsx src/guards/guard-cf.ts",
     "secrets:scan": "tsx src/guards/secrets-scan.ts",
     "slice:check": "tsx src/slice-check.ts",
+    "fixtures:build": "tsx src/fixtures/build-seeded.ts",
+    "fixtures:check": "tsx src/fixtures/check.ts",
     "spike:check": "tsx src/spikes/spike-check.ts",
+    "seed:gen": "tsx src/seed/gen-demo-seed.ts",
+    "seed:check": "tsx src/seed/check-seed.ts",
     "spike:s07": "tsx src/spikes/s07-browser-timing/run.ts",
     "spike:s06-local": "tsx src/spikes/s06-local/run.ts"
   },
   "dependencies": {
+    "@aduin/core": "workspace:*",
     "@noble/hashes": "2.4.0",
     "htmlparser2": "12.0.0",
     "zod": "4.6.7"

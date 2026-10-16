@@ -1,6 +1,6 @@
 import { sha256Hex } from '../model/hash';
 import type { Block } from '../model/types';
-import { EXCLUSIVITY_CUES } from '../adapters/html';
+import { EXCLUSIVITY_CUES, supSegmentsOf } from '../adapters/html';
 import type { OptionGroup, OptionItem } from './types';
 
 const BOX = /[☐☒]/;
@@ -13,6 +13,36 @@ export function splitOptions(text: string): Array<{ label: string; checked: bool
     if (!BOX.test(p[0] ?? '')) continue;
     const label = p.slice(1).trim();
     if (label) out.push({ label, checked: p[0] === '☒' });
+  }
+  return out;
+}
+
+/**
+ * Footnote markers per option label (A3): a <sup> segment recorded by the HTML adapter that ends
+ * exactly where the option label ends. Labels are located with the same split as splitOptions.
+ */
+export function footnoteMarkers(block: Block): Array<string | undefined> {
+  const line = block.lines[0];
+  const sups = supSegmentsOf(line);
+  const out: Array<string | undefined> = [];
+  const text = block.lines.map((l) => l.text).join(' ');
+  let pos = 0;
+  for (const p of text.split(/(?=[☐☒])/)) {
+    const start = pos;
+    pos += p.length;
+    if (!BOX.test(p[0] ?? '')) continue;
+    const label = p.slice(1).trim();
+    if (!label) continue;
+    if (!sups.length || block.lines.length !== 1) {
+      out.push(undefined);
+      continue;
+    }
+    const lead = p.slice(1).length - p.slice(1).trimStart().length;
+    const end = start + 1 + lead + label.length;
+    out.push(
+      sups.find((s) => s.end === end || (s.end < end && text.slice(s.end, end).trim() === ''))
+        ?.text,
+    );
   }
   return out;
 }
@@ -48,7 +78,13 @@ export function extractOptionGroups(blocks: Block[]): OptionGroup[] {
     if (opts.length) {
       current = current ?? { idx: [], opts: [] };
       current.idx.push(bi);
-      for (const o of opts) current.opts.push({ ...o, blockIndex: bi });
+      const markers = footnoteMarkers(b);
+      opts.forEach((o, i) => {
+        const item: OptionItem = { ...o, blockIndex: bi };
+        const m = markers[i];
+        if (m) item.footnote_marker = m;
+        current!.opts.push(item);
+      });
     } else {
       close();
       const cueRe = EXCLUSIVITY_CUES.find((re) => re.test(text));

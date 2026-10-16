@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "detector": "footnote-requirement",
+  "issue_class": "inconsistent_footnote_requirement",
+  "cases": [
+    {
+      "file": "clean.html",
+      "kind": "clean",
+      "note": "footnote 1 on every sibling option",
+      "expect": []
+    },
+    {
+      "file": "one-sibling.html",
+      "kind": "defect",
+      "note": "footnote 1 on Wire and ACH, missing on Check",
+      "expect": [
+        {
+          "detector_id": "footnote-requirement",
+          "issue_class": "inconsistent_footnote_requirement",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

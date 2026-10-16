@@ -76,10 +76,5 @@ export function buildFinding(g: DocGraph, input: FindingInput): Finding {
   return FindingSchema.parse(f);
 }
 
-/** pattern_key spec: `<detector_id>[:<shape>]`, digits -> '#', lowercase, <= 80 chars. */
-export function patternKey(detectorId: string, shape?: string): string {
-  const s = shape
-    ? `${detectorId}:${shape.toLowerCase().replace(/\d+/g, '#').replace(/\s+/g, '-')}`
-    : detectorId;
-  return s.slice(0, 80);
-}
+/** pattern_key spec: single implementation in memory/patternKey.ts (byte-identical for existing keys). */
+export { patternKey } from '../memory/patternKey';

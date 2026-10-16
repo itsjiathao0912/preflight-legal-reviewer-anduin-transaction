@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
 import { gotoApp } from './fixtures/app';
 
+// Phase 02: Structure (with its Investor types sub-view) is a real view now (structure-view.spec.ts).
 const ROUTES: [string, string][] = [
   ['counsel', 'Counsel questions'],
-  ['structure', 'Structure'],
   ['compare', 'Compare versions'],
   ['memory', 'Firm memory'],
   ['documents', 'Documents'],
@@ -22,9 +22,10 @@ test.describe('placeholder-routes', () => {
       await expect(page.getByTestId('findings-header')).toHaveCount(0);
     });
   }
-  test('Structure placeholder covers the Investor types sub-view', async ({ page }) => {
+  test('Structure is no longer a placeholder', async ({ page }) => {
     await gotoApp(page);
     await page.getByTestId('nav-structure').click();
-    await expect(page.getByTestId('placeholder-view')).toContainText('Investor types');
+    await expect(page.getByTestId('structure-view')).toBeVisible();
+    await expect(page.getByTestId('placeholder-view')).toHaveCount(0);
   });
 });

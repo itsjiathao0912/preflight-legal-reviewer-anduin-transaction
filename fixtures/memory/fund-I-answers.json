@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "firm_id": "firm-x",
+  "fund": "fund-I",
+  "answers": [
+    {
+      "id": "fi-d4",
+      "law_firm_id": "firm-x",
+      "fund": "fund-I",
+      "issue_class": "broken_conditional",
+      "pattern_key": "broken-conditional:complete-missing",
+      "quote": "If the Subscriber is a custodial account, complete Section 7.",
+      "quote_hash": "b58f924e017c3f447f28927c0487cc95a4566dc073d5a50af2da26d9b2db124a",
+      "fingerprint": "2b5bf3a9b15f10191b63012fc1fed1637ffe847be0f9c23150ca6379ca4750ad",
+      "decided_by_name": "Avery (simulated analyst)",
+      "decided_at": 1791763440000,
+      "decision": "answered",
+      "counsel_option": "A",
+      "counsel_note": "Custodial accounts use the custodian pages; the reference is a leftover."
+    },
+    {
+      "id": "fi-d5",
+      "law_firm_id": "firm-x",
+      "fund": "fund-I",
+      "issue_class": "option_gap_overlap",
+      "pattern_key": "option-gap-overlap:overlap",
+      "quote": "☐ $0 to $100,000 ☐ $50,000 to $250,000 ☐ Over $250,000",
+      "quote_hash": "ba54408d147ab81be9d835be739e5b9a398061df14887e9abd96876c98ae2e7c",
+      "fingerprint": "8e04e7b60580cb09bbe7eef532250ed118716385ebbf5e0317e74612792e9dad",
+      "decided_by_name": "Avery (simulated analyst)",
+      "decided_at": 1791763500000,
+      "decision": "answered",
+      "counsel_option": "B",
+      "counsel_note": "Keep the ranges; the administrator reads the lower box."
+    },
+    {
+      "id": "fi-d6",
+      "law_firm_id": "firm-x",
+      "fund": "fund-I",
+      "issue_class": "broken_conditional",
+      "pattern_key": "broken-conditional:complete-missing",
+      "quote": "If the Subscriber is an IRA, complete Section 4.",
+      "quote_hash": "e18ef73483c147c365f4c275c3cded3d584de1b0b1d77ccc5417fa9775a14bcf",
+      "fingerprint": "45fa0e60a295c8237aabe3ce2c1433380e92d301d7872c9b69d6ac5bff4af5b1",
+      "decided_by_name": "Avery (simulated analyst)",
+      "decided_at": 1791763560000,
+      "decision": "answered",
+      "counsel_option": "A",
+      "counsel_note": "IRA subscribers complete the custodian section."
+    }
+  ]
+}

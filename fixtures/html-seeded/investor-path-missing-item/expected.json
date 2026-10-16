@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "detector": "investor-path-missing-item",
+  "issue_class": "investor_path_missing_item",
+  "cases": [
+    {
+      "file": "clean.html",
+      "kind": "clean",
+      "note": "entity peers all carry footnote 2; individuals do not need it",
+      "expect": []
+    },
+    {
+      "file": "part-c.html",
+      "kind": "defect",
+      "note": "trusts must also complete Part C of Section 2, which does not exist",
+      "expect": [
+        {
+          "detector_id": "investor-path-missing-item",
+          "issue_class": "investor_path_missing_item",
+          "count": 1
+        },
+        {
+          "detector_id": "broken-conditional",
+          "issue_class": "broken_conditional",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "peer-item.html",
+      "kind": "defect",
+      "note": "PATH-04: Trust, Corporation and Other entity carry footnote 2; Partnership or LLC does not",
+      "expect": [
+        {
+          "detector_id": "investor-path-missing-item",
+          "issue_class": "investor_path_missing_item",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

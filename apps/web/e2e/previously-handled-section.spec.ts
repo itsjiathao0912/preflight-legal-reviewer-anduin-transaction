@@ -3,6 +3,10 @@ import { chooseReasonAndSave, forceSeverity, gotoApp, openSample, row } from './
 import { engineFindings, seedMemory } from './fixtures/seedMemory';
 
 const FIRM = 'partners-group';
+// Phase 02 (E9): pick the golden swapped-reference findings by detector (a non-blocking AC10 flag
+// dismissed in #3 would land in "previously handled", not the main list); counts are derived.
+const goldens = (id: string) =>
+  engineFindings(id).filter((f) => f.detector_id === 'ref-label-coherence');
 
 test.describe('previously-handled-section', () => {
   test('real flow: dismissed in #3 (fund A) is labelled re-confirm in #5 (fund B, same firm) and stays in the main list', async ({
@@ -10,7 +14,7 @@ test.describe('previously-handled-section', () => {
   }) => {
     await gotoApp(page);
     await openSample(page, '03');
-    const [f3] = engineFindings('03');
+    const [f3] = goldens('03');
     const f5 = engineFindings('05').find((f) => f.quote_hash === f3!.quote_hash)!;
     await row(page, f3!.id).click();
     await page.getByTestId('action-dismiss').click();
@@ -29,7 +33,8 @@ test.describe('previously-handled-section', () => {
     page,
   }) => {
     await gotoApp(page);
-    const [a] = engineFindings('05');
+    const [a] = goldens('05');
+    const n = engineFindings('05').length;
     await seedMemory(page, [
       {
         finding: a!,
@@ -46,7 +51,7 @@ test.describe('previously-handled-section', () => {
     await expect(page.getByTestId('finding-memory-tag')).toHaveText(
       'Dismissed in Master Fund 2019, re-confirm',
     );
-    await expect(page.getByTestId('gate-button')).toHaveText(/Blocked · 2/);
+    await expect(page.getByTestId('gate-button')).toHaveText(new RegExp(`Blocked · ${n}`));
     await page.getByTestId('gate-button').click();
     await expect(
       page.locator(`[data-testid="gate-reason"][data-finding-id="${a!.id}"]`),
@@ -57,7 +62,7 @@ test.describe('previously-handled-section', () => {
     page,
   }) => {
     await gotoApp(page);
-    const [a, b] = engineFindings('05');
+    const [a, b] = goldens('05');
     const ids = await seedMemory(page, [
       {
         finding: a!,
@@ -76,7 +81,11 @@ test.describe('previously-handled-section', () => {
         option: 'A',
       },
     ]);
-    await forceSeverity(page, 'medium', 0);
+    await forceSeverity(
+      page,
+      'medium',
+      engineFindings('05').findIndex((f) => f.id === a!.id),
+    );
     await openSample(page, '05');
     await expect(page.getByTestId('previously-handled-count')).toHaveText('2');
     await expect(page.getByTestId('previously-handled-item').first()).toBeHidden();

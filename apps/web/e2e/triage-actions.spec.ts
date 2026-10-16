@@ -96,7 +96,10 @@ test.describe('triage-actions', () => {
     );
     await expect(mark.first()).toBeVisible();
     await expect(page.getByTestId('doc-pane')).not.toContainText('264158097');
-    await expect(page.getByTestId('doc-pane').locator('.mask')).toHaveText('#8097');
+    // Phase 02: #1 now also masks its own ABA/DDA flags, so scope to the seeded value's mask
+    await expect(page.getByTestId('doc-pane').locator('.mask', { hasText: '#8097' })).toHaveText(
+      '#8097',
+    );
     await page.getByTestId('reveal-toggle').click();
     await expect(q).toContainText('264158097');
     await expect(page.getByTestId('doc-pane')).toContainText('264158097');

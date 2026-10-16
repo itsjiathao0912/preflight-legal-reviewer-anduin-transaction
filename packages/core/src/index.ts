@@ -51,3 +51,23 @@ export * from './contracts/quota';
 export * from './contracts/memory';
 export type * from './contracts/ports';
 export * from './contracts/seed-spec';
+
+// --- Phase 02: structure view model (built in the engine worker; main thread imports types only) ---
+export {
+  buildStructureView,
+  LENS_IDS,
+  type LensId,
+  type StructureView,
+  type SectionRow,
+  type CrossrefRow,
+  type ExternalRow,
+  type ConditionRow,
+  type ConditionKind,
+  type OptionRow,
+  type TermRow,
+  type TermStatus,
+  type RefStatus,
+  type InvestorView,
+  type InvestorTypeRow,
+  type InvestorGapRow,
+} from './structure-view/build';

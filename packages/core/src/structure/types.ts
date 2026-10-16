@@ -84,6 +84,8 @@ export interface OptionItem {
   label: string;
   checked: boolean;
   blockIndex: number;
+  /** Text of a <sup> footnote marker that ends the option label (HTML only; omitted when absent). */
+  footnote_marker?: string;
 }
 
 export interface OptionGroup {

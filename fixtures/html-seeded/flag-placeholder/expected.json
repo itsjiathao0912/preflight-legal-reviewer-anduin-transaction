@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "detector": "flag-placeholder",
+  "issue_class": "placeholder",
+  "cases": [
+    {
+      "file": "clean.html",
+      "kind": "clean",
+      "note": "fill-in blanks, [ ] boxes and [***] redactions are not placeholders",
+      "expect": []
+    },
+    {
+      "file": "placeholders.html",
+      "kind": "defect",
+      "note": "[xx], [insert …] and [●] in three sentences",
+      "expect": [
+        {
+          "detector_id": "flag-placeholder",
+          "issue_class": "placeholder",
+          "count": 3
+        }
+      ]
+    }
+  ]
+}

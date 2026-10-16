@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "detector": "defined-term-issues",
+  "issue_class": "defined_term_issue",
+  "cases": [
+    {
+      "file": "clean.html",
+      "kind": "clean",
+      "note": "one definition, used after it, written as defined",
+      "expect": []
+    },
+    {
+      "file": "duplicate.html",
+      "kind": "defect",
+      "note": "\"Fund\" defined for two different entities in one scope",
+      "expect": [
+        {
+          "detector_id": "defined-term-issues",
+          "issue_class": "defined_term_issue",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "used-before-defined.html",
+      "kind": "defect",
+      "note": "\"Manager\" is used in Section 1 and defined in Section 2",
+      "expect": [
+        {
+          "detector_id": "defined-term-issues",
+          "issue_class": "defined_term_issue",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "unused.html",
+      "kind": "defect",
+      "note": "\"Escrow Agent\" is defined and never used",
+      "expect": [
+        {
+          "detector_id": "defined-term-issues",
+          "issue_class": "defined_term_issue",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "capitalization.html",
+      "kind": "defect",
+      "note": "\"Investor Questionnaire\" also written \"Investor questionnaire\"",
+      "expect": [
+        {
+          "detector_id": "defined-term-issues",
+          "issue_class": "defined_term_issue",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

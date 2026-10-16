@@ -166,6 +166,27 @@ export const MAX_PARSE_DEPTH = 16384;
 interface Run {
   text: string;
   bold: boolean;
+  /** Text inside a <sup> element (footnote marker side channel, A3/E5). */
+  sup?: boolean;
+}
+
+/** A <sup> segment inside an emitted Line's text: [start, end) offsets + the marker text. */
+export interface SupSegment {
+  start: number;
+  end: number;
+  text: string;
+}
+
+/**
+ * TS-only side channel (E5): <sup> segments per emitted Line object. Not part of LineSchema / Cue
+ * (contracts snapshot unchanged) and the line text itself is untouched. The structurer keeps the
+ * same Line object in block.lines[0], so structure/option-groups.ts can read it back.
+ */
+const SUP_SEGMENTS = new WeakMap<Line, readonly SupSegment[]>();
+
+/** <sup> segments recorded for a Line produced by htmlToLines (empty for any other Line). */
+export function supSegmentsOf(line: Line | undefined): readonly SupSegment[] {
+  return (line && SUP_SEGMENTS.get(line)) ?? [];
 }
 
 const WEIGHT_RE = /font-weight\s*:\s*([a-z0-9]+)/i;
@@ -253,6 +274,7 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
   let skipDepth = 0;
   let trDepth = 0;
   let runs: Run[] = [];
+  let supDepth = 0;
   let lineAlign: Frame['align'];
   let lineIndent = 0;
   let lineSource: Cue['cue_source'];
@@ -271,6 +293,7 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
     // collapse whitespace across runs, keeping per-char bold (array build: linear time)
     const chars: string[] = [];
     const boldMask: boolean[] = [];
+    const supMask: boolean[] = [];
     let lastSpace = true;
     for (const r of runs) {
       for (const ch of r.text) {
@@ -285,10 +308,12 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
           if (lastSpace) continue;
           chars.push(' ');
           boldMask.push(r.bold);
+          supMask.push(false);
           lastSpace = true;
         } else {
           chars.push(ch);
           boldMask.push(r.bold);
+          supMask.push(r.sup === true);
           lastSpace = false;
         }
       }
@@ -297,6 +322,7 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
     if (chars.length > 0 && chars[chars.length - 1] === ' ') {
       chars.pop();
       boldMask.pop();
+      supMask.pop();
     }
     let text = chars.join('');
     if (!text) return;
@@ -304,19 +330,29 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
       const re = new RegExp(rule.from.source, 'g');
       let out = '';
       const mask: boolean[] = [];
+      const smask: boolean[] = [];
       let last = 0;
       for (let m = re.exec(text); m; m = re.exec(text)) {
         out += text.slice(last, m.index) + rule.to;
-        for (let i = last; i < m.index; i++) mask.push(boldMask[i] ?? false);
+        for (let i = last; i < m.index; i++) {
+          mask.push(boldMask[i] ?? false);
+          smask.push(supMask[i] ?? false);
+        }
         mask.push(boldMask[m.index] ?? false);
+        smask.push(false);
         last = m.index + m[0].length;
       }
       if (last === 0) continue;
       out += text.slice(last);
-      for (let i = last; i < text.length; i++) mask.push(boldMask[i] ?? false);
+      for (let i = last; i < text.length; i++) {
+        mask.push(boldMask[i] ?? false);
+        smask.push(supMask[i] ?? false);
+      }
       text = out;
       boldMask.length = 0;
       for (const b of mask) boldMask.push(b);
+      supMask.length = 0;
+      for (const b of smask) supMask.push(b);
     }
     const noiseRule = NOISE_RULES.find((r) => r.pattern.test(text));
     if (noiseRule) {
@@ -356,8 +392,29 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
     };
     if (bold && lineSource) cue.cue_source = lineSource;
     else if (!bold && lineHasClass) cue.cue_source = 'class';
+    // <sup> segments in the final text (side channel; text and cues unchanged)
+    const sups: SupSegment[] = [];
+    for (let i = 0; i < text.length; i++) {
+      if (!supMask[i]) continue;
+      let j = i;
+      while (j < text.length && supMask[j]) j++;
+      const t = text.slice(i, j).trim();
+      if (t) sups.push({ start: i, end: j, text: t });
+      i = j;
+    }
+    let cursor = 0;
     for (const part of splitLong(text, limits.maxLineChars)) {
-      lines.push({ text: part, cue: { ...cue } });
+      const line: Line = { text: part, cue: { ...cue } };
+      if (sups.length) {
+        const at = text.indexOf(part, cursor);
+        const base = at === -1 ? cursor : at;
+        const own = sups
+          .filter((s) => s.start >= base && s.end <= base + part.length)
+          .map((s) => ({ start: s.start - base, end: s.end - base, text: s.text }));
+        if (own.length) SUP_SEGMENTS.set(line, own);
+        cursor = base + part.length;
+      }
+      lines.push(line);
     }
     lineAlign = undefined;
     lineIndent = 0;
@@ -378,6 +435,7 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
           if (!VOID_TAGS.has(name)) skipDepth++;
           return;
         }
+        if (name === 'sup') supDepth++;
         if (name === 'br') {
           if (trDepth === 0) flush();
           else runs.push({ text: ' ', bold: false });
@@ -446,7 +504,8 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
         if (/\S/.test(text)) lineHasText = true;
         if (bold && source && text.trim()) lineSource = lineSource ?? source;
         if (t?.effHasClass) lineHasClass = true;
-        runs.push({ text, bold });
+        if (supDepth > 0) runs.push({ text, bold, sup: true });
+        else runs.push({ text, bold });
       },
       onclosetag(name) {
         if (skipDepth > 0) {
@@ -454,6 +513,7 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
           return;
         }
         if (VOID_TAGS.has(name)) return;
+        if (name === 'sup') supDepth = Math.max(0, supDepth - 1);
         if (overflowDepth > 0) {
           // closes an untracked deep element; no frame to pop
           overflowDepth--;

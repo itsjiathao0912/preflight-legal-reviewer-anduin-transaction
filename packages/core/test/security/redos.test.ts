@@ -7,6 +7,15 @@ import { ACCOUNT_NUMBER_RE } from '../../src/memory/mask';
 import { OFFERING_CONTEXT_RE, CARVE_OUT_RE } from '../../src/detectors/undefined-term';
 import { NOISE_RULES, GLYPH_RULES, EXCLUSIVITY_CUES } from '../../src/adapters/html';
 import { analyzeHtml, runDeterministic } from '../../src/engine';
+import * as flagDraftingNote from '../../src/detectors/flag-drafting-note';
+import * as flagPlaceholder from '../../src/detectors/flag-placeholder';
+import * as flagSensitive from '../../src/detectors/flag-sensitive';
+import * as optionGapOverlap from '../../src/detectors/option-gap-overlap';
+import * as definedTermIssues from '../../src/detectors/defined-term-issues';
+import * as flow from '../../src/detectors/flow';
+import * as unreachableFlow from '../../src/detectors/unreachable-flow';
+import * as investorPaths from '../../src/investor/paths';
+import { TYPE_RULES } from '../../src/investor/types';
 import { htmlSamples, readSample } from '../helpers/samples';
 
 /** redos-budget: every heading/reference/statutory/detector regex on the largest sample and on 1 MB adversarial single lines. */
@@ -25,6 +34,16 @@ const ADVERSARIAL: Record<string, string> = {
   forFor: fill('for for '),
   capsWords: fill('Abc '),
   digitsDash: fill('1-2 '),
+  // Phase 02 detectors
+  insertOpen: fill('[insert '),
+  bullets: fill('[● '),
+  ntd: fill('NTD NTD: '),
+  abaCue: fill('ABA routing: # '),
+  money: fill('$1,000,000 to '),
+  ibanLike: fill('GB82 WEST '),
+  capsDigits: fill('ABCD123'),
+  ofSection: fill(' of Section '),
+  asDefined: fill('Fund (as defined '),
 };
 
 const HEADING_RES: RegExp[] = [
@@ -49,6 +68,16 @@ const ALL: RegExp[] = [
   ...GLYPH_RULES.map((r) => r.from),
   ...EXCLUSIVITY_CUES,
   ...HEADING_RES,
+  // Phase 02: every new detector regex + the widened ACCOUNT_NUMBER_RE (above)
+  ...collect(flagDraftingNote),
+  ...collect(flagPlaceholder),
+  ...collect(flagSensitive),
+  ...collect(optionGapOverlap),
+  ...collect(definedTermIssues),
+  ...collect(flow),
+  ...collect(unreachableFlow),
+  ...collect(investorPaths),
+  ...TYPE_RULES.map((r) => r.re),
 ];
 
 function scan(re: RegExp, text: string): number {
@@ -60,7 +89,7 @@ function scan(re: RegExp, text: string): number {
 
 describe('redos-budget', () => {
   it('collects every exported regex (sanity)', () => {
-    expect(ALL.length).toBeGreaterThanOrEqual(25);
+    expect(ALL.length).toBeGreaterThanOrEqual(45);
   });
 
   it(

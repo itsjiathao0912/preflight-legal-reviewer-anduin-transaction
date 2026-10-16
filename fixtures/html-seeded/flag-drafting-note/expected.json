@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "detector": "flag-drafting-note",
+  "issue_class": "drafting_note",
+  "cases": [
+    {
+      "file": "clean.html",
+      "kind": "clean",
+      "note": "notes to the reader are not drafting notes",
+      "expect": []
+    },
+    {
+      "file": "ntd-and-note.html",
+      "kind": "defect",
+      "note": "an NTD and a \"Drafting note\" left in the text",
+      "expect": [
+        {
+          "detector_id": "flag-drafting-note",
+          "issue_class": "drafting_note",
+          "count": 2
+        }
+      ]
+    }
+  ]
+}

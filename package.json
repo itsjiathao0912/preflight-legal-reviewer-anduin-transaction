@@ -14,7 +14,9 @@
     "guard:cf": "pnpm --filter @aduin/scripts guard:cf",
     "secrets:scan": "pnpm --filter @aduin/scripts secrets:scan",
     "dev:stack": "pnpm --filter @aduin/web build && pnpm --filter @aduin/worker dev",
-    "slice:check": "pnpm --filter @aduin/scripts slice:check"
+    "slice:check": "pnpm --filter @aduin/scripts slice:check",
+    "seed:gen": "pnpm --filter @aduin/scripts seed:gen",
+    "seed:check": "pnpm --filter @aduin/scripts seed:check"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "detector": "unreachable-flow",
+  "issue_class": "unreachable_or_circular_flow",
+  "cases": [
+    {
+      "file": "clean.html",
+      "kind": "clean",
+      "note": "a conditional forward jump; every section stays reachable",
+      "expect": []
+    },
+    {
+      "file": "circular.html",
+      "kind": "defect",
+      "note": "Section 2 jumps to Section 4 and Section 4 jumps back to Section 2",
+      "expect": [
+        {
+          "detector_id": "unreachable-flow",
+          "issue_class": "unreachable_or_circular_flow",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "unreachable.html",
+      "kind": "defect",
+      "note": "every subscriber is sent past Sections 2 and 3, which nothing else routes to",
+      "expect": [
+        {
+          "detector_id": "unreachable-flow",
+          "issue_class": "unreachable_or_circular_flow",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

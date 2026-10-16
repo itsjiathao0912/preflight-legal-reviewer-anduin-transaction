@@ -1,4 +1,4 @@
-import type { BlockKind, Finding } from '@aduin/core';
+import type { BlockKind, Finding, StructureView } from '@aduin/core';
 
 /** Wire types between the engine worker and the main thread (structured-clone safe). */
 export type StageId = 'read' | 'structure' | 'checks' | 'ai' | 'done';
@@ -61,6 +61,8 @@ export interface EngineResult {
   findings: FindingView[];
   stages: StageReport[];
   failedStage: StageId | null;
+  /** Phase 02 (additive, optional): the #structure view model; absent when the structurer failed. */
+  structure?: StructureView;
 }
 
 export interface EngineApi {

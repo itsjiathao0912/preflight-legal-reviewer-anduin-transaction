@@ -1,0 +1,16 @@
+{
+  "task": "subdoc-qa-mvp phase 04b: D1 schema + migrations 0001-0004, SQL platform ports (quota/cache/ledger/breaker/rules), sandbox session + cookie re-sign, workspace-scoped memory repository and 19 memory routes, audit, rule proposals, retention purge (lazy + scheduled), demo seed generator",
+  "planPath": "process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-04b-d1-memory-api_PLAN_17-10-26.md",
+  "riskLevel": "high",
+  "riskClasses": [
+    "auth or identity",
+    "schema/data migration or destructive data mutation",
+    "public API or external contract changes",
+    "permission, secret, or trust-boundary logic"
+  ],
+  "mustStopBeforeFinalize": true,
+  "humanApprovalRequired": false,
+  "why": "Phase 04b issues and re-signs the visitor cookie with workspace/analyst claims (identity), is the only owner of SQL including append-only triggers and a destructive retention purge (schema + destructive mutation), publishes the frozen memory API routes (public contract) and enforces tenant isolation between sandboxes plus the demo-workspace write block (trust boundary). No real D1 was created, no production deploy; remote work was limited to throwaway aduin-transaction-spike-* resources with no secrets, deleted and list-confirmed.",
+  "approver": "pending: independent automated reviewer scheduled by the orchestrator (autopilot)",
+  "date": "2026-10-17"
+}

@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "detector": "option-gap-overlap",
+  "issue_class": "option_gap_overlap",
+  "cases": [
+    {
+      "file": "clean.html",
+      "kind": "clean",
+      "note": "contiguous ranges and an exclusive group without \"all of the above\"",
+      "expect": []
+    },
+    {
+      "file": "gap.html",
+      "kind": "defect",
+      "note": "no box for $100,001 to $149,999",
+      "expect": [
+        {
+          "detector_id": "option-gap-overlap",
+          "issue_class": "option_gap_overlap",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "overlap.html",
+      "kind": "defect",
+      "note": "$50,000 to $100,000 fits two boxes",
+      "expect": [
+        {
+          "detector_id": "option-gap-overlap",
+          "issue_class": "option_gap_overlap",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "all-of-above.html",
+      "kind": "defect",
+      "note": "\"check only one\" group offering \"All of the above\"",
+      "expect": [
+        {
+          "detector_id": "option-gap-overlap",
+          "issue_class": "option_gap_overlap",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

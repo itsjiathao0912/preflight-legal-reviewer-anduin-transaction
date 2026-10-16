@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "detector": "investor-path-dead-end",
+  "issue_class": "investor_path_dead_end",
+  "cases": [
+    {
+      "file": "clean.html",
+      "kind": "clean",
+      "note": "every investor type reaches the signature section",
+      "expect": []
+    },
+    {
+      "file": "uncertain.html",
+      "kind": "clean",
+      "note": "no signature section: the path is uncertain and never asserted",
+      "expect": []
+    },
+    {
+      "file": "skips-signature.html",
+      "kind": "defect",
+      "note": "trusts are told to skip Section 3, the signature section",
+      "expect": [
+        {
+          "detector_id": "investor-path-dead-end",
+          "issue_class": "investor_path_dead_end",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

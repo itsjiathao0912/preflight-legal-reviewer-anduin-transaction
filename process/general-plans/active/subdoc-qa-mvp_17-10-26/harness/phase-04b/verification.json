@@ -1,0 +1,24 @@
+{
+  "task": "subdoc-qa-mvp phase 04b D1 memory API",
+  "commands": [
+    { "command": "pnpm --filter @aduin/worker test <token> (34 tokens, one per call, no --)", "result": "PASS", "notes": "all 34 rc=0: 32 test/memory gate files + seams (6) + proxy (11 files, 141 tests); each token was first run red against the copied TDD stubs (each matched exactly 1 file)" },
+    { "command": "pnpm --filter @aduin/worker test", "result": "PASS", "notes": "45 files, 405 tests" },
+    { "command": "pnpm seed:check", "result": "PASS", "notes": "0003 + seed/demo.sql regenerate byte-identical from the recorded spec path; guard:cf + secrets scanText over every .sql clean" },
+    { "command": "pnpm --filter @aduin/core test", "result": "PASS", "notes": "36 files, 277 tests (no core file edited by 04b)" },
+    { "command": "pnpm typecheck && pnpm lint && pnpm guard:cf && pnpm secrets:scan", "result": "PASS", "notes": "whole repo, run at the end of the phase" },
+    { "command": "pnpm --filter @aduin/scripts spike:check", "result": "PASS", "notes": "S5 PASS, S8 PASS-WITH-RISK, S9 PASS-WITH-RISK, S10 FAIL(fallback)" },
+    { "command": "bash scripts/src/spikes/s09-rows-written/run-remote.sh <scratch>", "result": "PASS", "notes": "throwaway aduin-transaction-spike-db + aduin-transaction-spike-mem, no secrets, deleted, d1 list + deployments list confirm absence" }
+  ],
+  "manualChecks": [
+    { "check": "wrangler.jsonc database_id placeholder untouched; only triggers.crons added; no routes key", "result": "PASS" },
+    { "check": "no real aduin-transaction-db created; production Worker not redeployed", "result": "PASS" },
+    { "check": "spike Worker secret list empty", "result": "PASS" }
+  ],
+  "steps": [
+    { "step": "happy path: session -> run -> findings -> dismiss -> lookup -> revoke -> New", "command": "memory-endpoint-contract, memory-reopen-integration", "result": "PASS" },
+    { "step": "boundary: cross-workspace and cross-firm reads, forged/mixed/stale/purged/ws_demo cookies", "command": "memory-no-cross-firm-or-workspace, sandbox-isolation, stale-cookie-invalid-session, demo-workspace-not-polluted", "result": "PASS" },
+    { "step": "failure: D1 down, seed_mode != 0, missing TURNSTILE_SECRET / DB with OPENROUTER_API_KEY set", "command": "platform-contract, breaker-persist, demo-workspace-not-polluted, ai-fail-closed-without-secrets", "result": "PASS" },
+    { "step": "destructive purge: day 29 kept, day 31 every child row gone, demo exempt, cron path", "command": "memory-retention-purge-test, cron-purge", "result": "PASS" }
+  ],
+  "result": "PASS (reviewer decision pending)"
+}

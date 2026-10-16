@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "detector": "broken-conditional",
+  "issue_class": "broken_conditional",
+  "cases": [
+    {
+      "file": "clean.html",
+      "kind": "clean",
+      "note": "every conditional target exists",
+      "expect": []
+    },
+    {
+      "file": "missing-section.html",
+      "kind": "defect",
+      "note": "the instruction points to Section 7; the form has Sections 1 to 3",
+      "expect": [
+        {
+          "detector_id": "broken-conditional",
+          "issue_class": "broken_conditional",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "missing-part.html",
+      "kind": "defect",
+      "note": "Part D of Section 2 is cited; Section 2 has Parts A and B only",
+      "expect": [
+        {
+          "detector_id": "broken-conditional",
+          "issue_class": "broken_conditional",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}
