@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Structure · Sub-doc QA (design trial)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
+<style>
+/* ===== Tokens (verbatim from review-workspace.html) ===== */
+:root{
+  --ground:#E9ECE9;      /* app ground: low-chroma cool stone */
+  --panel:#F4F6F3;       /* panels one tone step above ground */
+  --card:#FBFCFA;        /* cards one step above panel */
+  --paper:#FDFEFD;       /* document page */
+  --ink:#15181B;
+  --ink-2:#434A50;       /* 8.0:1 on panel */
+  --ink-3:#5C646B;       /* 5.6:1 on panel */
+  --accent:#1D5C57;      /* the single accent: deep teal */
+  --accent-tint:#D9E8E5;
+  --step:#DDE2DD;        /* tone step used instead of rules */
+  --block-fg:#8A1C1C; --block-bg:#F7E2DF;
+  --fix-fg:#734400;   --fix-bg:#F5E8C8;
+  --note-fg:#38454F;  --note-bg:#DFE6EA;
+  --ok-fg:#1B5632;    --ok-bg:#DAEEDF;
+  --mark:#F3D676;
+  --r:4px;
+  --sans:'Geist',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --serif:'Newsreader',Georgia,'Times New Roman',serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--ground);color:var(--ink);font:400 14px/1.5 var(--sans);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+button,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+svg.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.skip{position:absolute;left:8px;top:-48px;background:var(--ink);color:#fff;padding:8px 13px;border-radius:var(--r);z-index:50}
+.skip:focus{top:8px}
+
+/* ===== Shell (same as review workspace) ===== */
+.app{height:100dvh;display:grid;grid-template-rows:auto auto minmax(0,1fr);min-width:1000px}
+header.top{padding:14px 24px 0;display:grid;gap:13px}
+.row1{display:flex;align-items:center;gap:20px;min-width:0}
+.brand{display:flex;align-items:center;gap:10px;font:500 20px/1 var(--serif);letter-spacing:-.01em;white-space:nowrap}
+.brand svg{width:28px;height:28px}
+.docid{min-width:0;flex:1;padding-left:20px;margin-left:2px;position:relative}
+.docid::before{content:"";position:absolute;left:0;top:4px;bottom:4px;width:2px;background:var(--step)}
+.docid h1{margin:0;font:500 14px/1.3 var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.docid .meta{display:flex;gap:18px;color:var(--ink-3);font-size:13px;white-space:nowrap;overflow:hidden}
+.docid .meta b{font-weight:500;color:var(--ink-2)}
+.tools{display:flex;align-items:center;gap:13px}
+.tabs{display:flex;gap:4px;align-items:flex-end}
+.tabs button{border:0;background:transparent;padding:8px 13px;font-size:14px;color:var(--ink-3);border-radius:var(--r) var(--r) 0 0;display:flex;gap:6px;align-items:center}
+.tabs button[aria-current=page]{background:var(--panel);color:var(--ink);font-weight:500}
+.tabs button:not([aria-current]):hover{color:var(--ink)}
+.cnt{background:var(--accent);color:#fff;border-radius:999px;font-size:13px;padding:0 6px;min-width:18px;text-align:center}
+.row2{display:flex;align-items:center;gap:24px;background:var(--panel);padding:12px 24px;margin:0 -24px;justify-content:space-between}
+.sumline{display:flex;gap:22px;flex-wrap:wrap;color:var(--ink-3);font-size:13px}
+.sumline b{color:var(--ink);font-weight:600;margin-right:4px}
+.repro{font-size:13px;color:var(--ink-3);display:flex;gap:6px;align-items:center;white-space:nowrap}
+.gate{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:8px 14px 8px 13px;font-weight:600;font-size:14px;background:var(--block-bg);color:var(--block-fg)}
+.gate svg{width:18px;height:18px}
+.gate:hover{filter:brightness(.97)}
+
+/* ===== Workspace ===== */
+.main{display:grid;grid-template-columns:minmax(0,1fr) 448px;min-height:0}
+.pane{background:var(--panel);min-height:0;overflow:auto}
+.pane>section{padding:18px 24px 64px}
+.cap{margin:0 0 8px;font:600 13px/1.2 var(--sans);color:var(--ink-3)}
+h2.h{margin:0;font:500 20px/1.2 var(--sans);letter-spacing:-.01em}
+.lead{margin:4px 0 0;color:var(--ink-3);font-size:13px;max-width:78ch}
+
+/* lens tabs */
+.lenses{display:flex;gap:4px;flex-wrap:wrap;margin:14px 0 14px}
+.lens{border:0;background:var(--step);border-radius:var(--r);padding:6px 11px;display:inline-flex;gap:7px;align-items:center;font-size:14px;color:var(--ink-2)}
+.lens:hover{background:#D1D8D2}
+.lens[aria-selected=true]{background:var(--ink);color:#fff}
+.lens .n{font-weight:600;font-size:13px}
+.lens .fl{display:inline-flex;gap:3px;align-items:center;font-size:13px;font-weight:600;color:var(--fix-fg);background:var(--fix-bg);border-radius:3px;padding:0 5px}
+.lens[aria-selected=true] .fl{background:var(--fix-bg)}
+.lens .fl svg{width:13px;height:13px}
+
+/* tables */
+.twrap{overflow-x:auto}
+table.t{width:100%;border-collapse:separate;border-spacing:0 2px;font-size:14px}
+table.t th{text-align:left;font:600 13px/1.3 var(--sans);color:var(--ink-3);padding:4px 12px;white-space:nowrap}
+table.t td{background:var(--card);padding:9px 12px;vertical-align:top}
+table.t td:first-child{border-radius:var(--r) 0 0 var(--r);border-left:3px solid transparent}
+table.t td:last-child{border-radius:0 var(--r) var(--r) 0}
+table.t tr[data-id]{cursor:pointer}
+table.t tr[data-id]:hover td{background:#F7F9F6}
+table.t tr.sel td{background:var(--paper)}
+table.t tr.sel td:first-child{border-left-color:var(--accent)}
+.rb{border:0;background:transparent;text-align:left;padding:0;font:inherit;color:inherit;font-weight:500;display:block}
+.rb:has(.num){display:flex;gap:6px}
+.dim{color:var(--ink-3);font-size:13px}
+.q{font-family:var(--serif);font-size:15px}
+.ind{display:inline-block}
+.num{display:inline-block;min-width:26px;color:var(--ink-3);font-weight:500}
+.sub td{background:var(--card)}
+.badge{display:inline-flex;gap:5px;align-items:center;font-size:13px;font-weight:600;padding:2px 8px 2px 6px;border-radius:3px;white-space:nowrap}
+.badge svg{width:14px;height:14px}
+.b-block{background:var(--block-bg);color:var(--block-fg)}
+.b-fix{background:var(--fix-bg);color:var(--fix-fg)}
+.b-note{background:var(--note-bg);color:var(--note-fg)}
+.b-ok{background:var(--ok-bg);color:var(--ok-fg)}
+.b-st{background:var(--step);color:var(--ink-2)}
+.tag{font-size:13px;font-weight:500;padding:1px 7px;border-radius:3px;display:inline-flex;gap:4px;align-items:center;background:var(--accent-tint);color:var(--accent);white-space:nowrap}
+.tag svg{width:13px;height:13px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+.chip{border:0;background:var(--card);border-radius:var(--r);padding:5px 10px;display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--ink-2)}
+.chip[aria-pressed=true]{background:var(--ink);color:#fff}
+.chip svg{width:14px;height:14px}
+.chip .n{font-weight:600}
+.sechead{display:flex;align-items:baseline;gap:10px;margin:22px 0 4px}
+.sechead h3{margin:0;font:500 16px/1.3 var(--sans)}
+.scopes{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}
+.btn{white-space:nowrap;border:0;border-radius:var(--r);padding:7px 13px;font-size:13px;font-weight:500;display:inline-flex;gap:6px;align-items:center;background:var(--step);color:var(--ink)}
+.btn:hover{background:#D1D8D2}
+.btn:active{transform:scale(.98)}
+.btn.pri{background:var(--ink);color:#fff}
+.btn.pri:hover{background:#2c3238}
+.btn svg{width:14px;height:14px}
+
+/* flow */
+.flowbox{background:var(--card);border-radius:var(--r);padding:14px 16px 12px;margin:0 0 12px}
+.flowbox[hidden]{display:none}
+.flowscroll{overflow-x:auto}
+.flowscroll svg{display:block;width:780px;height:258px}
+.flowscroll text{font-family:var(--sans);font-size:13px;fill:var(--ink)}
+.flowscroll .s{fill:var(--ink-3)}
+.nd rect{fill:var(--panel)}
+.nd:hover rect{fill:var(--step)}
+.nd.sel rect{fill:var(--accent-tint);stroke:var(--accent);stroke-width:2}
+.nd,.lbl{cursor:pointer}
+.nd:focus-visible,.lbl:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ed{fill:none;stroke:var(--ink-2);stroke-width:1.6}
+.ed.d{stroke-dasharray:6 4}
+.flowleg{display:flex;gap:18px;flex-wrap:wrap;margin-top:6px;font-size:13px;color:var(--ink-3);align-items:center}
+.flowleg svg{width:34px;height:8px}
+
+/* investor types */
+.inv{display:grid;grid-template-columns:230px minmax(0,1fr);gap:16px;align-items:start}
+.tlist{display:grid;gap:2px}
+.tl{border:0;background:var(--card);border-radius:var(--r);text-align:left;padding:9px 12px;display:grid;gap:3px;border-left:3px solid transparent}
+.tl:hover{background:#F7F9F6}
+.tl[aria-pressed=true]{background:var(--paper);border-left-color:var(--accent)}
+.tl .tn{font-weight:500}
+.tl .badge{justify-self:start}
+.pathhead{margin:0 0 10px}
+.pathhead h3{margin:0;font:500 16px/1.3 var(--sans)}
+.path{display:grid;gap:2px}
+.prow{background:var(--card);border-radius:var(--r);padding:9px 12px;display:flex;gap:10px;align-items:flex-start;border-left:3px solid transparent;cursor:pointer}
+.prow:hover{background:#F7F9F6}
+.prow.sel{background:var(--paper);border-left-color:var(--accent)}
+.prow .rb{flex:1;display:flex;gap:6px}
+.prow.q2{margin-left:26px;font-size:14px}
+.prow.q2 .lab{flex:1}
+.skipline{display:flex;gap:8px;align-items:center;color:var(--ink-3);font-size:13px;padding:6px 12px}
+.skipline svg{width:14px;height:14px}
+.prow.gaprow{background:var(--fix-bg);color:#3F2A00;align-items:center}
+.prow.gaprow.sel{background:var(--fix-bg);border-left-color:var(--accent);outline:2px solid var(--accent-tint)}
+.prow.gaprow svg{color:var(--fix-fg)}
+.prow.gaprow{flex-wrap:wrap}
+.prow.gaprow .lab{flex:1 1 220px;min-width:220px}
+.prow.gaprow .btn{flex:none}
+.prow.gaprow small{display:block;font-size:13px;color:#5A4000}
+
+/* ===== Detail panel ===== */
+aside.dp{background:var(--card);min-height:0;overflow:auto;padding:18px 20px 40px}
+.dp h2{margin:0 0 8px;font:500 20px/1.25 var(--sans);letter-spacing:-.01em}
+.dp h2.q{font-family:var(--serif);font-weight:400;font-size:20px}
+.dp .k0{font-size:13px;color:var(--ink-3);margin:0 0 4px;font-weight:600}
+.dp .brow{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
+.facts{margin:0 0 14px;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px;background:var(--panel);border-radius:var(--r);padding:12px 14px}
+.facts dt{color:var(--ink-3);font-size:13px;padding-top:1px}
+.facts dd{margin:0;color:var(--ink)}
+blockquote.ev{margin:0 0 14px;font:400 15px/1.6 var(--serif);background:var(--panel);padding:10px 13px;border-radius:var(--r);border-left:3px solid var(--step)}
+blockquote.ev cite{display:block;font:400 13px/1.4 var(--sans);color:var(--ink-3);margin-top:4px;font-style:normal}
+.ef{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 14px}
+.ef>div{background:var(--panel);border-radius:var(--r);padding:8px 10px}
+.ef .k{font-size:13px;color:var(--ink-3)}
+.ef .v{font-weight:600}
+.why{font-size:14px;color:var(--ink-2);margin:0 0 14px}
+.prov{display:flex;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);align-items:center;margin:0 0 14px}
+.prov span{display:inline-flex;gap:5px;align-items:center}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:var(--r);padding:10px 14px;display:none;gap:14px;align-items:center;z-index:60;font-size:13px}
+.toast.on{display:flex}
+.foot{margin-top:18px;font-size:13px;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.empty{padding:20px;color:var(--ink-3)}
+
+@media (prefers-reduced-motion:no-preference){.cell,.lens,table.t td{transition:background .15s var(--ease)}}
+
+/* narrow desktop (1024) */
+@media (max-width:1279px){
+  .main{grid-template-columns:minmax(0,1fr) 400px}
+  .pane>section{padding:16px 16px 56px}
+  .docid .meta{gap:13px}
+  .brand span{display:none}
+  .repro{display:none}
+  .inv{grid-template-columns:190px minmax(0,1fr)}
+}
+@media (max-width:1100px){.docid .meta span:nth-child(n+3){display:none}.sumline{gap:14px}}
+</style>
+</head>
+<body>
+<a class="skip" href="#detail">Skip to details</a>
+
+<!-- ===== Icon sprite (bespoke, one stroke weight; same set as the review workspace plus a few for this screen) ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="logo" viewBox="0 0 28 28"><rect x="2" y="2" width="24" height="24" rx="5" fill="#15181B"/><path d="M8 9.5h7M8 14h4.5M8 18.5h5" stroke="#E9ECE9" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M15.5 17l2.6 2.6L22 14.6" stroke="#8FD0C6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="stop" viewBox="0 0 24 24"><path d="M8.2 3h7.6L21 8.2v7.6L15.8 21H8.2L3 15.8V8.2z"/><path d="M12 7.5v5.2M12 16h.01"/></symbol>
+  <symbol id="warn" viewBox="0 0 24 24"><path d="M12 3.5l9.2 16H2.8z"/><path d="M12 10v4.4M12 17.2h.01"/></symbol>
+  <symbol id="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.2M12 7.8h.01"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M7.8 12.4l2.9 2.9 5.6-6"/></symbol>
+  <symbol id="skip" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></symbol>
+  <symbol id="half" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18z" fill="currentColor"/></symbol>
+  <symbol id="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="rule" viewBox="0 0 24 24"><path d="M8 4H6.500A1.500 1.500 0 005 5.500v13A1.500 1.500 0 006.500 20H8M16 4h1.500A1.500 1.500 0 0119 5.500v13a1.500 1.500 0 01-1.500 1.500H16"/><path d="M9.500 12h5"/></symbol>
+  <symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="10.500" width="14" height="9.500" rx="2"/><path d="M8.500 10.500V8a3.500 3.500 0 017 0v2.500M12 14.500v2"/></symbol>
+  <symbol id="pin" viewBox="0 0 24 24"><path d="M12 21s6.500-5.800 6.500-11A6.500 6.500 0 005.500 10c0 5.200 6.500 11 6.500 11z"/><circle cx="12" cy="10" r="2.200"/></symbol>
+  <symbol id="doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M14 3v4h4M9 12h6M9 16h4"/></symbol>
+  <symbol id="branch" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="9" r="2"/><path d="M6 8v8M18 11c0 4-6 3-12 5"/></symbol>
+  <symbol id="ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></symbol>
+  <symbol id="radio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/></symbol>
+  <symbol id="boxes" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12.200l2.700 2.700L16 9.500"/></symbol>
+  <symbol id="restart" viewBox="0 0 24 24"><path d="M5 12a7 7 0 107-7H8"/><path d="M10.500 2.500L7.800 5 10.500 7.500"/></symbol>
+</svg>
+
+<div class="app">
+  <header class="top">
+    <div class="row1">
+      <div class="brand"><svg class="i" style="stroke:none;fill:none" aria-hidden="true"><use href="#logo"/></svg><span>Sub-doc QA</span></div>
+      <div class="docid">
+        <h1>Partners Group Next Generation Infrastructure LLC · Subscription Agreement</h1>
+        <div class="meta"><span><b>Law firm</b> Hartwell &amp; Crane LLP</span><span><b>Fund</b> Next Generation Infrastructure</span><span><b>Version</b> 2024 template, v2</span><span><b>Memory from</b> Master Fund 2019</span></div>
+      </div>
+      <div class="tools">
+        <button class="gate" id="gate" type="button"><svg class="i" aria-hidden="true"><use href="#lock"/></svg><span>Blocked — 3 reasons</span><svg class="i" aria-hidden="true"><use href="#chev"/></svg></button>
+      </div>
+    </div>
+    <div class="row1" style="justify-content:space-between;align-items:flex-end">
+      <nav class="tabs" aria-label="Workspace views" id="tabs">
+        <button type="button" data-other="Review workspace">Review</button>
+        <button type="button" aria-current="page">Structure</button>
+        <button type="button" data-other="Version compare">Compare</button>
+        <button type="button" data-other="Counsel query sheet">Counsel sheet <span class="cnt">1</span></button>
+      </nav>
+    </div>
+    <div class="row2">
+      <div class="sumline" id="sumline"></div>
+      <div class="repro"><svg class="i" aria-hidden="true"><use href="#check"/></svg><span>Reproducible: 3 reruns gave identical results (fingerprint <b>7c41e9a2</b>)</span></div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="pane" id="pane">
+      <!-- ===== STRUCTURE ===== -->
+      <section id="p-structure" aria-label="Structure view">
+        <h2 class="h">Document structure</h2>
+        <p class="lead">What the tool read from the document, as lists you can check. Every row comes from a rule, not a model. Select a row to see the facts behind it.</p>
+        <div class="lenses" id="lenses" role="tablist" aria-label="Structure lists"></div>
+        <div id="lensbody" role="tabpanel" aria-live="polite"></div>
+      </section>
+
+    </div>
+
+    <aside class="dp" id="detail" aria-label="Details" tabindex="-1"></aside>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span></div>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const ic=(n,c='')=>`<svg class="i ${c}" aria-hidden="true"><use href="#${n}"/></svg>`;
+const E=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const reduce=(window.matchMedia?matchMedia('(prefers-reduced-motion: reduce)').matches:false);
+
+/* ---------- storage (never required) ---------- */
+const KEY='subdocqa-structure-view';
+function load(){try{const t=window.localStorage.getItem(KEY);return t?JSON.parse(t):{};}catch(e){return {};}}
+function save(){try{window.localStorage.setItem(KEY,JSON.stringify({lens:S.lens}));}catch(e){}}
+
+/* ---------- data (fictional; same document as the review mockup) ---------- */
+// sections: id, depth, number, title, numbering scope, applies to, restarts
+const SEC=[
+ ['s1',0,'1','Instructions to Subscribers','Unnumbered paragraphs','All investor types',0],
+ ['s2',0,'2','Subscriber Information','Questions 1 to 4','All investor types',0],
+ ['s3',0,'3','Supporting Entity Documents','Questions 1 to 3','Trust, Corporation, Partnership or LLC, Other entity, ERISA plan',0],
+ ['s4',0,'4','Custodian Information','Questions 1 to 3','IRA / custodial only',0],
+ ['s5',0,'5','Plan Information','Questions 1 to 3','ERISA plan only',0],
+ ['s6',0,'6','Subscription','Parts A to D, restart inside this section','All investor types',1],
+ ['s6a',1,'A','Share Class','Part letter, scoped to Section 6','All investor types',0],
+ ['s6b',1,'B','Subscription Amount','Part letter, scoped to Section 6','All investor types',0],
+ ['s6c',1,'C','Payment Method','Part letter, scoped to Section 6','All investor types',0],
+ ['s6d',1,'D','Distribution Election','Part letter, scoped to Section 6','All investor types',0],
+ ['s7',0,'7','Beneficial Ownership','Questions 1 to 2, footnotes 1 to 2','Trust, Corporation, Partnership or LLC, Other entity',0],
+ ['s8',0,'8','Representations of the Subscriber','Letters (a) to (d), restart in this section','All investor types',1],
+ ['s9',0,'9','Payment Instructions','Unnumbered','All investor types',0],
+ ['s10',0,'10','Accredited Investor Status','Paragraphs 1 to 4, restart in this section','All investor types',1],
+ ['s11',0,'11','Tax Certifications','Questions 1 to 2','All investor types',0],
+ ['s12',0,'12','Qualified Client Representation','Paragraphs 1 to 6, restart in this section','Some paragraphs per type (see Investor types)',1]
+];
+const SECN={}; SEC.forEach(s=>SECN[s[0]]=s);
+const secName=id=>{const s=SECN[id];return s?(s[1]?`Part ${s[2]}, ${s[3]}`:`Section ${s[2]}, ${s[3]}`):''};
+
+// refs: id, text, location, from, to, target label, status, quote, expected, note, rule, finding
+const REFS=[
+ ['r1','Part B of Section 6','Section 1, paragraph 1','s1','s6b','Section 6, Part B (Subscription Amount)','sus','…must provide the name and address of the Custodian of the account in Part B of Section 6.','Section 4 (Custodian Information)','The target exists, but its heading does not fit the words around the reference. The heading “Custodian Information” is Section 4. This is one half of a swapped pair (see Part B of Section 4).','XREF-02','F-01'],
+ ['r2','Part B of Section 4','Section 1, paragraph 2','s1',null,'Section 4 has no Part B','un','…enter the amount of the subscription in Part B of Section 4 and attach any supporting entity documents…','Part B of Section 6 (Subscription Amount)','Section 4 has no Parts, so the target does not exist. The words “amount of the subscription” match the heading of Part B of Section 6. This is the other half of the swapped pair.','XREF-02','F-03'],
+ ['r3','this Section 11','Section 12, paragraph 5','s12','s11','Section 11 (Tax Certifications)','sus','…the Subscriber satisfies paragraphs 1 through 4 of this Section 11 and has attached the supporting certificate.','Section 12 (the section that contains the reference)','A “this Section N” reference must name the section that contains it. Paragraphs 1 to 4 exist only in Section 12.','XREF-03','F-02'],
+ ['r4','Section 3','Section 1, paragraph 2','s1','s3','Section 3 (Supporting Entity Documents)','ok','…attach any supporting entity documents requested in Section 3.'],
+ ['r5','Section 2','Section 1, paragraph 3','s1','s2','Section 2 (Subscriber Information)','ok','Complete Section 2 first; it decides which later sections you answer.'],
+ ['r6','Appendix B (Investor Questionnaire)','Section 1, paragraph 4','s1',null,'Appendix B (Investor Questionnaire)','ok','…complete the Investor Questionnaire attached as Appendix B.','','Appendix B is outside the numbered sections. Its heading matches the reference. Counsel confirmed this in Master Fund 2019.'],
+ ['r7','Section 8','Section 6, Part A','s6a','s8','Section 8 (Representations of the Subscriber)','ok','The Subscriber makes the representations in Section 8 for the class selected.'],
+ ['r8','Part A of Section 6','Section 6, Part B','s6b','s6a','Section 6, Part A (Share Class)','ok','The minimum depends on the class selected in Part A of Section 6.'],
+ ['r9','Part B of this Section','Section 6, Part D','s6d','s6b','Section 6, Part B (Subscription Amount)','ok','Distributions are based on the amount in Part B of this Section.'],
+ ['r10','Section 9','Section 6, Part C','s6c','s9','Section 9 (Payment Instructions)','ok','Wire instructions are in Section 9.'],
+ ['r11','Section 4','Section 2, question 1','s2','s4','Section 4 (Custodian Information)','ok','Individual retirement account: also complete Section 4.'],
+ ['r12','Section 5','Section 2, question 1','s2','s5','Section 5 (Plan Information)','ok','Employee benefit plan: also complete Section 5.'],
+ ['r13','Section 3','Section 2, question 1','s2','s3','Section 3 (Supporting Entity Documents)','ok','Entity or trust: also complete Section 3.'],
+ ['r14','Section 7','Section 3, question 3','s3','s7','Section 7 (Beneficial Ownership)','ok','Then continue with Section 7.'],
+ ['r15','Section 6','Section 4, signature block','s4','s6','Section 6 (Subscription)','ok','The Custodian signs after the Subscriber completes Section 6.'],
+ ['r16','Section 12','Section 10, paragraph 4','s10','s12','Section 12 (Qualified Client Representation)','ok','Qualified client status is confirmed in Section 12.'],
+ ['r17','Section 11','Section 9','s9','s11','Section 11 (Tax Certifications)','ok','Tax certifications are made in Section 11.'],
+ ['r18','Section 1','Section 9','s9','s1','Section 1 (Instructions to Subscribers)','ok','…returned to the Distributor at the address in Section 1.'],
+ ['r19','Section 5','Section 7, question 2','s7','s5','Section 5 (Plan Information)','ok','Plans report plan-asset status in Section 5 instead.'],
+ ['r20','paragraph 1 above','Section 12, paragraph 3','s12','s12','Section 12, paragraph 1','ok','The Subscriber is a trust whose settlor satisfies paragraph 1 above.'],
+ ['r21','paragraph 5 of this Section 12','Section 12, paragraph 5','s12','s12','Section 12, paragraph 5','ok','If the Subscriber checked paragraph 5 of this Section 12, then…'],
+ ['r22','Section 8(c)','Section 10, paragraph 2','s10','s8','Section 8, letter (c)','ok','See the transfer restrictions in Section 8(c).'],
+ ['r23','Section 6','Section 9','s9','s6','Section 6 (Subscription)','ok','The wired amount must equal the subscription amount in Section 6.'],
+ ['r24','Schedule 2','Section 5, question 3','s5',null,'No “Schedule 2” found in the document','un','…attach a copy of Schedule 2 (Plan Asset Certificate).','A schedule or appendix with that name','No schedule, appendix or exhibit named “Schedule 2” exists. Either the attachment is missing from this version or the name is wrong.','XREF-01','']
+];
+const EXT=[
+ ['x1','Section 3(c)(1) of the 1940 Act','Section 10, paragraph 1','Investment Company Act of 1940'],
+ ['x2','Section 3(c)(7) of the 1940 Act','Section 10, paragraph 1','Investment Company Act of 1940'],
+ ['x3','Securities Act of 1933','Section 8(c)','Securities Act of 1933'],
+ ['x4','Rule 205-3 under the Advisers Act','Section 12, paragraph 1','Investment Advisers Act of 1940'],
+ ['x5','Section 4975 of the Code','Section 5, question 1','Internal Revenue Code'],
+ ['x6','Section 3(42) of ERISA','Section 5, question 2','ERISA'],
+ ['x7','IRS Form W-8','Section 11, question 2','IRS form (outside this document)']
+];
+// conditions: id, kind, instruction, location, from, condition, target text, target section, target ok, rule, note
+const KIND={wl:['Whitelist','check'],rr:['Role routing','pin'],sk:['Skip','branch'],ng:['Negative gate','stop']};
+const CONDS=[
+ ['c1','wl','“IRA Subscribers only”','Section 4 heading','s4','Subscriber type is IRA / custodial','Section 4 applies','s4',1,'COND-01',''],
+ ['c2','wl','“Complete if the Subscriber is an entity or trust”','Section 3 heading','s3','Subscriber type is Trust, Corporation, Partnership or LLC, Other entity or ERISA plan','Section 3 applies','s3',1,'COND-01',''],
+ ['c3','wl','“Employee benefit plans only”','Section 5 heading','s5','Subscriber type is ERISA plan','Section 5 applies','s5',1,'COND-01',''],
+ ['c4','rr','“To be completed by the Custodian”','Section 4, signature block','s4','Role is Custodian (not the Subscriber)','Custodian signature block, Section 4','s4',1,'COND-02',''],
+ ['c5','rr','“To be completed by the placement agent”','Section 6, Part D','s6d','Role is placement agent','Part D (Distribution Election)','s6d',1,'COND-02',''],
+ ['c6','sk','“Individuals and joint tenants: skip Sections 3, 4, 5 and 7 and go to Section 6”','Section 2, below question 1','s2','Subscriber type is Individual or Joint tenants','Go to Section 6; Sections 3, 4, 5, 7 are skipped','s6',1,'COND-03',''],
+ ['c7','ng','“If the Subscriber is a United States person, do not complete IRS Form W-8”','Section 11, question 2','s11','Tax status is U.S. person','Form W-8 is not completed','s11',1,'COND-04',''],
+ ['c8','ng','“Benefit plan investors may not subscribe for Class S Shares”','Section 6, Part A','s6a','Subscriber type is ERISA plan or IRA / custodial','Class S Shares option is not available','s6a',1,'COND-04','The form still shows the Class S box to these types; the digitized form must hide or disable it.'],
+ ['c9','ng','“If paragraph 5 is checked, paragraphs 1 through 4 of this Section 11 must be satisfied”','Section 12, paragraph 5','s12','Paragraph 5 is checked','Paragraphs 1 to 4, but the text says “Section 11”','s11',0,'COND-04','The target is unclear because the reference says “this Section 11” inside Section 12 (see finding F-02).']
+];
+// option groups: id, question, location, from, options, cue, cue known
+const OPTS=[
+ ['o1','Type of Subscriber','Section 2, question 1','s2','Individual · Joint tenants · Trust · IRA / custodial · Corporation · Partnership or LLC · Other entity · ERISA plan','one','stated','“(check one)”'],
+ ['o2','Share class','Section 6, Part A','s6a','Class A Shares · Class S Shares','one','stated','“(check one)”'],
+ ['o3','Payment method','Section 6, Part C','s6c','Wire transfer · Check · Other','one','inferred','No cue printed. Inferred from a single payment line.'],
+ ['o4','Distribution election','Section 6, Part D','s6d','Pay in cash · Reinvest','one','stated','“(check one)”'],
+ ['o5','Accredited investor status','Section 10, paragraphs 1 to 4','s10','Four boxes, one per paragraph','all','stated','“(check all that apply)”'],
+ ['o6','Tax status','Section 11, question 1','s11','U.S. person · Non-U.S. person','one','stated','“(check one)”'],
+ ['o7','Qualified client basis','Section 12, paragraphs 1 to 5','s12','Five paragraphs, each with a box','all','inferred','No cue printed. Paragraph 5 refers to “checked” paragraphs, so more than one box is allowed.']
+];
+// defined terms: id, term, defined at, uses, status, note
+const TERMS=[
+ ['t1','Subscriber','Section 1, paragraph 1',41,'ok','Defined once, in Section 1.'],
+ ['t2','Shares','Section 8, closing line',14,'ok','Defined once, at the end of Section 8.'],
+ ['t3','Class A Shares','Section 6, Part A',9,'ok','Defined once.'],
+ ['t4','Qualified Client','Section 12, paragraph 1',5,'ok','Defined once.'],
+ ['t5','Benefit Plan Investor','Section 5, question 1',4,'ok','Defined once.'],
+ ['t6','Distributor','Section 2',3,'early','First used in Section 1, paragraph 1, before its definition in Section 2.'],
+ ['t7','Eligible Investor','Section 2 and Appendix A',6,'twice','Two definitions with different wording.'],
+ ['t8','Units','Not defined',1,'none','Used in Section 8(c). The closest defined term is “Shares”.','Section 8(c)','Shares'],
+ ['t9','Shareholders','Not defined',2,'none','Used in Section 8(d). The closest defined term is “Shares”.','Section 8(d)','Shares'],
+ ['t10','Board','Not defined',3,'none','Used in Section 8(d). Probably meant in the ordinary sense; confirm with counsel.','Section 8(d)','none']
+];
+const TSTAT={ok:['b-ok','check','Defined'],early:['b-fix','warn','Used before defined'],twice:['b-fix','warn','Defined twice'],none:['b-block','stop','Not defined']};
+const RSTAT={ok:['b-ok','check','Resolved'],sus:['b-fix','warn','Suspicious'],un:['b-block','stop','Unresolved']};
+
+// investor matrix
+const TYPES=['Individual','Joint tenants','Trust','IRA / custodial','Corporation','Partnership or LLC','Other entity','ERISA plan'];
+const MSEC=[['s1','Instr.'],['s2','Investor'],['s3','Entity'],['s4','Custodian'],['s5','ERISA'],['s6','Subscr.'],['s7','Owners'],['s8','Reps'],['s9','Payment'],['s10','Accred.'],['s11','Tax'],['s12','Qual. client']];
+const MSECROWS=['yynnnynyyyyc','yynnnynyyyyc','yyynnyyyyyyc','yynynynyyyyc','yyynnyyyyyyc','yyynnygyyyyc','yyynnyyyyyyc','yyynyynyyyyc'];
+const MQ=[
+ ['Custodian name and address','Section 4, question 1'],
+ ['Evidence of authority to sign','Section 3, question 1'],
+ ['Co-owner signature','Section 2, question 4'],
+ ['Formation date and place','Section 3, question 2'],
+ ['Entity documents (footnote 2)','Section 7, question 1'],
+ ['Plan-asset percentage','Section 5, question 2'],
+ ['Net worth with spouse','Section 12, paragraph 1'],
+ ['Company owned by qualified clients','Section 12, paragraph 2'],
+ ['Form W-8 if non-U.S.','Section 11, question 2']
+];
+const MQROWS=['nnnnnnync','nnynnnync','nynyyncnc','ynnnnccnc','nynyynnyc','nynygnnyc','nynyynnyc','nynnnynnc'];
+const CODE={y:['k-y','check','Yes','Applies'],c:['k-c','half','Partly','Some questions apply'],n:['k-n','skip','n/a','Not asked'],g:['k-g','warn','Gap','Applies, but a question that peers carry is missing']};
+
+/* ---------- state ---------- */
+const saved=load();
+const S={lens:saved.lens||'sections',ref:'all',sel:'s6',flow:false,type:0};
+if(!['sections','refs','conds','opts','terms','inv'].includes(S.lens))S.lens='sections';
+
+/* ---------- derived ---------- */
+const refsOut=id=>REFS.filter(r=>r[3]===id).length;
+const refsIn=id=>REFS.filter(r=>r[4]===id).length;
+const flagged=id=>REFS.filter(r=>r[3]===id&&r[6]!=='ok');
+const LENSES=[
+ ['sections','Sections',SEC.filter(x=>!x[1]).length,0],
+ ['refs','Cross-references',REFS.length,REFS.filter(r=>r[6]!=='ok').length],
+ ['conds','Conditional instructions',CONDS.length,CONDS.filter(c=>!c[8]).length],
+ ['opts','Option groups',OPTS.length,OPTS.filter(o=>o[6]==='inferred').length],
+ ['terms','Defined terms',TERMS.length,TERMS.filter(t=>t[4]!=='ok').length],
+ ['inv','Investor types',null,MQROWS.filter(r=>r.includes('g')).length]
+];
+function renderSum(){
+  $('#sumline').innerHTML=`<span><b>12</b>sections</span><span><b>${REFS.length+EXT.length}</b>references (${EXT.length} external)</span><span><b>${CONDS.length}</b>conditional instructions</span><span><b>${OPTS.length}</b>option groups</span><span><b>${TERMS.length}</b>defined terms</span>`;
+}
+
+/* ---------- lens renderers ---------- */
+function renderLenses(){
+  $('#lenses').innerHTML=LENSES.map(([k,l,n,f])=>`<button class="lens" type="button" role="tab" id="lens-${k}" data-lens="${k}" aria-selected="${S.lens===k}" tabindex="${S.lens===k?0:-1}">${l}${n==null?'':` <span class="n">${n}</span>`}${f?`<span class="fl" title="${f} to look at">${ic('warn')}${f}<span class="sr"> to look at</span></span>`:''}</button>`).join('');
+}
+function rowAttrs(id){return `data-id="${id}" class="${S.sel===id?'sel':''}"`}
+function secTable(){
+  const scopes=SEC.filter(s=>s[6]).map(s=>`Section ${s[2]}`);
+  return `<div class="scopes"><span class="badge b-note">${ic('restart')}4 numbering scopes restart</span><span class="dim" style="align-self:center">${scopes.join(', ')}. Parts A to D belong to Section 6 only, so “Part B” alone is ambiguous.</span></div>
+  <div class="twrap"><table class="t"><thead><tr><th scope="col">Section</th><th scope="col">Numbering</th><th scope="col">Applies to</th><th scope="col">References</th><th scope="col">Flags</th></tr></thead><tbody>
+  ${SEC.map(s=>{const f=flagged(s[0]);return `<tr ${rowAttrs(s[0])}><td><button type="button" class="rb" style="padding-left:${s[1]*22}px"><span class="num">${E(s[2])}</span><span>${E(s[3])}</span></button></td>
+    <td>${s[6]?`<span class="badge b-note">${ic('restart')}Restarts</span> `:''}<span class="dim">${E(s[4])}</span></td>
+    <td class="dim">${E(s[5])}</td>
+    <td class="dim">${refsIn(s[0])} in · ${refsOut(s[0])} out</td>
+    <td>${f.length?`<span class="badge b-fix">${ic('warn')}${f.length} to check</span>`:'<span class="dim">None</span>'}</td></tr>`}).join('')}
+  </tbody></table></div>`;
+}
+function refTable(){
+  const c={all:REFS.length,ok:0,sus:0,un:0};REFS.forEach(r=>c[r[6]]++);
+  const list=REFS.filter(r=>S.ref==='all'||r[6]===S.ref);
+  const chips=[['all','All',null],['un','Unresolved','stop'],['sus','Suspicious','warn'],['ok','Resolved','check']];
+  return `<div class="chips" role="group" aria-label="Filter by status">${chips.map(([k,l,i])=>`<button class="chip" type="button" data-ref="${k}" aria-pressed="${S.ref===k}">${i?ic(i):''}${l} <span class="n">${c[k]}</span></button>`).join('')}</div>
+  <div class="twrap"><table class="t"><thead><tr><th scope="col">Reference text</th><th scope="col">Where it is</th><th scope="col">Points to</th><th scope="col">Status</th></tr></thead><tbody>
+  ${list.map(r=>{const s=RSTAT[r[6]];return `<tr ${rowAttrs(r[0])}><td><button type="button" class="rb q">${E(r[1])}</button></td><td class="dim">${E(r[2])}</td><td>${E(r[5])}</td><td><span class="badge ${s[0]}">${ic(s[1])}${s[2]}</span></td></tr>`}).join('')}
+  </tbody></table></div>
+  <div class="sechead"><h3>External, not checked</h3><span class="dim">${EXT.length} citations</span></div>
+  <p class="lead" style="margin:0 0 8px">Laws, rules and forms outside this document. They are not internal references, so the tool does not try to resolve them.</p>
+  <div class="twrap"><table class="t"><thead><tr><th scope="col">Citation</th><th scope="col">Where it is</th><th scope="col">Source</th><th scope="col">Status</th></tr></thead><tbody>
+  ${EXT.map(x=>`<tr ${rowAttrs(x[0])}><td><button type="button" class="rb q">${E(x[1])}</button></td><td class="dim">${E(x[2])}</td><td>${E(x[3])}</td><td><span class="badge b-st">${ic('ext')}External, not checked</span></td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+const FLOW=`<svg viewBox="0 0 780 258" role="img" aria-labelledby="flowT flowD"><title id="flowT">Flow of conditional paths between sections</title><desc id="flowD">Section 1 leads to Section 2. From Section 2, entity types go to Section 3 then 7, IRA goes to Section 4, ERISA plans go to Section 5, all join at Section 6 and then Sections 8 to 12. Individuals and joint tenants skip directly to Section 6.</desc>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M1 1l8 4-8 4z" fill="#434A50"/></marker></defs>
+<g fill="none">
+ <path class="ed" d="M100 122H116" marker-end="url(#ah)"/>
+ <path class="ed" d="M228 122H246"/>
+ <path class="ed d" d="M246 122V52H264" marker-end="url(#ah)"/>
+ <path class="ed d" d="M246 122H264" marker-end="url(#ah)"/>
+ <path class="ed d" d="M246 122V192H264" marker-end="url(#ah)"/>
+ <path class="ed" d="M384 52H402" marker-end="url(#ah)"/>
+ <path class="ed" d="M516 52H590V98" marker-end="url(#ah)"/>
+ <path class="ed" d="M384 122H534" marker-end="url(#ah)"/>
+ <path class="ed" d="M384 192H460V122"/>
+ <path class="ed" d="M644 122H662" marker-end="url(#ah)"/>
+ <path class="ed d" d="M173 144V244H590V146" marker-end="url(#ah)"/>
+</g>
+<g class="nd" tabindex="0" role="button" data-node="s1" aria-label="Section 1, Instructions"><rect x="0" y="100" width="100" height="44" rx="4"/><text x="8" y="119">1 Instructions</text><text class="s" x="8" y="136">all types</text></g>
+<g class="nd" tabindex="0" role="button" data-node="s2" aria-label="Section 2, Investor type"><rect x="118" y="100" width="110" height="44" rx="4"/><text x="126" y="119">2 Investor</text><text class="s" x="126" y="136">check one type</text></g>
+<g class="nd" tabindex="0" role="button" data-node="s3" aria-label="Section 3, Entity documents"><rect x="266" y="30" width="118" height="44" rx="4"/><text x="274" y="49">3 Entity docs</text><text class="s" x="274" y="66">entities only</text></g>
+<g class="nd" tabindex="0" role="button" data-node="s4" aria-label="Section 4, Custodian"><rect x="266" y="100" width="118" height="44" rx="4"/><text x="274" y="119">4 Custodian</text><text class="s" x="274" y="136">IRA only</text></g>
+<g class="nd" tabindex="0" role="button" data-node="s5" aria-label="Section 5, Plan details"><rect x="266" y="170" width="118" height="44" rx="4"/><text x="274" y="189">5 Plan details</text><text class="s" x="274" y="206">ERISA plan only</text></g>
+<g class="nd" tabindex="0" role="button" data-node="s7" aria-label="Section 7, Ownership"><rect x="404" y="30" width="112" height="44" rx="4"/><text x="412" y="49">7 Ownership</text><text class="s" x="412" y="66">entity, trust</text></g>
+<g class="nd" tabindex="0" role="button" data-node="s6" aria-label="Section 6, Subscription"><rect x="536" y="100" width="108" height="44" rx="4"/><text x="544" y="119">6 Subscription</text><text class="s" x="544" y="136">Parts A to D</text></g>
+<g class="nd" tabindex="0" role="button" data-node="s8" aria-label="Sections 8 to 12"><rect x="664" y="100" width="116" height="44" rx="4"/><text x="672" y="119">8–12 Remaining</text><text class="s" x="672" y="136">reps, wire, tax</text></g>
+<g class="lbl" tabindex="0" role="button" data-node="c6" aria-label="Skip rule: individuals and joint tenants skip Sections 3, 4, 5 and 7"><text x="382" y="236" text-anchor="middle">Individual or joint: skip 3, 4, 5, 7</text></g>
+</svg>`;
+function condTable(){
+  return `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 10px"><span class="dim">Instructions that change who answers what. “Target” is where the instruction leads.</span><button type="button" class="btn" id="flowBtn" aria-expanded="${S.flow}" aria-controls="flowbox">${ic('branch')}${S.flow?'Hide':'Show'} flow diagram</button></div>
+  <div class="flowbox" id="flowbox" ${S.flow?'':'hidden'}><div class="cap">Paths between sections (optional view of the rows below)</div><div class="flowscroll">${FLOW}</div>
+   <div class="flowleg"><span><svg viewBox="0 0 34 8" aria-hidden="true"><path d="M0 4H34" stroke="#434A50" stroke-width="1.6"/></svg>Always follows</span><span><svg viewBox="0 0 34 8" aria-hidden="true"><path d="M0 4H34" stroke="#434A50" stroke-width="1.6" stroke-dasharray="6 4"/></svg>Only when a condition holds (the box says which)</span><span>Select a box to see its section</span></div></div>
+  <div class="twrap"><table class="t"><thead><tr><th scope="col">Type</th><th scope="col">Instruction</th><th scope="col">Condition</th><th scope="col">Target</th></tr></thead><tbody>
+  ${CONDS.map(c=>{const k=KIND[c[1]];return `<tr ${rowAttrs(c[0])}><td><span class="badge b-st">${ic(k[1])}${k[0]}</span></td><td><button type="button" class="rb q">${E(c[2])}</button><div class="dim">${E(c[3])}</div></td><td>${E(c[5])}</td><td>${E(c[6])}<div style="margin-top:4px">${c[8]?`<span class="badge b-ok">${ic('check')}Target found</span>`:`<span class="badge b-fix">${ic('warn')}Target unclear</span>`}</div></td></tr>`}).join('')}
+  </tbody></table></div>`;
+}
+function optTable(){
+  return `<p class="lead" style="margin:0 0 10px">Groups of boxes and how many may be ticked. The cue is read from the printed text; where none is printed the tool says so.</p>
+  <div class="twrap"><table class="t"><thead><tr><th scope="col">Question</th><th scope="col">Where</th><th scope="col">Options</th><th scope="col">How many</th></tr></thead><tbody>
+  ${OPTS.map(o=>`<tr ${rowAttrs(o[0])}><td><button type="button" class="rb">${E(o[1])}</button></td><td class="dim">${E(o[2])}</td><td>${E(o[4])}</td><td><span class="badge b-st">${ic(o[5]==='one'?'radio':'boxes')}${o[5]==='one'?'Check one':'All that apply'}</span><div style="margin-top:4px">${o[6]==='stated'?`<span class="dim">Cue printed</span>`:`<span class="badge b-fix">${ic('warn')}Cue inferred</span>`}</div></td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+function termTable(){
+  return `<p class="lead" style="margin:0 0 10px">Terms the document defines, and words used like defined terms but never defined.</p>
+  <div class="twrap"><table class="t"><thead><tr><th scope="col">Term</th><th scope="col">Defined at</th><th scope="col">Uses</th><th scope="col">Status</th></tr></thead><tbody>
+  ${TERMS.map(t=>{const s=TSTAT[t[4]];return `<tr ${rowAttrs(t[0])}><td><button type="button" class="rb q">${E(t[1])}</button></td><td class="dim">${E(t[2])}</td><td>${t[3]}</td><td><span class="badge ${s[0]}">${ic(s[1])}${s[2]}</span></td></tr>`}).join('')}
+  </tbody></table></div>`;
+}
+function renderLens(){
+  renderLenses();
+  const b={sections:secTable,refs:refTable,conds:condTable,opts:optTable,terms:termTable,inv:invView}[S.lens]();
+  $('#lensbody').setAttribute('aria-labelledby','lens-'+S.lens);
+  $('#lensbody').innerHTML=b;
+}
+
+/* ---------- investor types ---------- */
+const QSEC=['s4','s3','s2','s3','s7','s5','s12','s12','s11'];
+const gapType=()=>Math.max(0,MQROWS.findIndex(r=>r.includes('g')));
+const gapSel=tp=>{const c=MQROWS[tp].indexOf('g');return c>=0?`pq:${tp}:${c}`:'s2';};
+function pathHTML(tp){
+  const sr=MSECROWS[tp], q=MQROWS[tp];let out='',skip=[],nq=0,ns=0;
+  const flush=()=>{if(skip.length){out+=`<div class="skipline">${ic('skip')}Skipped: ${skip.join(', ')}</div>`;skip=[];}};
+  MSEC.forEach(([id,short],i)=>{
+    const sc=SECN[id];
+    if(sr[i]==='n'){skip.push(sc[2]+' '+short);return;}
+    flush();ns++;
+    const qs=[];[...q].forEach((ch,qi)=>{if(QSEC[qi]===id&&ch!=='n')qs.push(qi);});
+    const hasGap=qs.some(qi=>q[qi]==='g');
+    out+=`<div class="prow${S.sel===id?' sel':''}" data-id="${id}"><button type="button" class="rb"><span class="num">${E(sc[2])}</span><span>${E(sc[3])}</span></button>${sr[i]==='c'?`<span class="badge b-note">${ic('half')}Some questions</span>`:''}${hasGap?`<span class="badge b-fix">${ic('warn')}1 gap</span>`:''}</div>`;
+    qs.forEach(qi=>{
+      const pid=`pq:${tp}:${qi}`;nq++;
+      if(q[qi]==='g')out+=`<div class="prow q2 gaprow${S.sel===pid?' sel':''}" data-id="${pid}">${ic('warn')}<div class="lab"><b>Footnote 2 (attach entity documents) is missing here</b> — Corporation, Trust and Other entity have it.<small>Rule PATH-04 · deterministic · ${E(MQ[qi][1])}</small></div><button type="button" class="btn" data-show="${E(MQ[qi][1])}">${ic('doc')}Show in document</button></div>`;
+      else out+=`<div class="prow q2${S.sel===pid?' sel':''}" data-id="${pid}"><span class="lab">${E(MQ[qi][0])}${q[qi]==='c'?' <span class="dim">(depends on a later answer)</span>':''}<span class="dim" style="display:block">${E(MQ[qi][1])}</span></span></div>`;
+    });
+  });
+  flush();
+  return {html:out,ns,nq};
+}
+function invView(){
+  const list=TYPES.map((t,i)=>{const n=[...MSECROWS[i]].filter(c=>c!=='n').length,g=MQROWS[i].includes('g');
+    return `<button type="button" class="tl" data-type="${i}" aria-pressed="${S.type===i}"><span class="tn">${E(t)}</span><span class="dim">${n} of 12 sections</span>${g?`<span class="badge b-fix">${ic('warn')}1 gap</span>`:''}</button>`;}).join('');
+  const p=pathHTML(S.type);
+  return `<p class="lead" style="margin:0 0 12px">Pick the option chosen in “Type of Subscriber” (Section 2) to see exactly what that investor fills in, in document order.</p>
+  <div class="inv"><div class="tlist" role="group" aria-label="Investor types">${list}</div>
+  <div><div class="pathhead"><h3>${E(TYPES[S.type])}: path through the document</h3><div class="dim">${p.ns} sections and ${p.nq} listed questions apply. Same result on every run.</div></div><div class="path">${p.html}</div></div></div>`;
+}
+
+/* ---------- detail panel ---------- */
+const facts=p=>`<dl class="facts">${p.filter(x=>x[1]!==''&&x[1]!=null).map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
+const prov=(rule,extra)=>`<div class="prov"><span>${ic('rule')}Rule ${rule} · deterministic</span><span>${ic('check')}Same result on every run</span>${extra||''}</div>`;
+const showBtn=loc=>`<div class="acts"><button type="button" class="btn pri" data-show="${E(loc)}">${ic('doc')}Show in document</button></div>`;
+function panel(inner){$('#detail').innerHTML=inner}
+function dSection(id){
+  const s=SECN[id], f=flagged(id);
+  const nm=s[1]?`Part ${s[2]}. ${s[3]}`:`${s[2]}. ${s[3]}`;
+  const outs=REFS.filter(r=>r[3]===id), ins=REFS.filter(r=>r[4]===id);
+  const conds=CONDS.filter(c=>c[4]===id);
+  panel(`<p class="k0">${s[1]?'Part':'Section'}</p><h2>${E(nm)}</h2>
+   <div class="brow">${s[6]?`<span class="badge b-note">${ic('restart')}Numbering restarts here</span>`:''}${f.length?`<span class="badge b-fix">${ic('warn')}${f.length} reference${f.length>1?'s':''} to check</span>`:`<span class="badge b-ok">${ic('check')}No flags</span>`}</div>
+   ${facts([['Numbering',E(s[4])],['Applies to',E(s[5])],['Refers to others',outs.length?outs.map(r=>E(r[1])).join(', '):'None'],['Referred to by',ins.length?`${ins.length} reference${ins.length>1?'s':''}: ${ins.map(r=>E(r[3]===id?'itself':secName(r[3]))).join('; ')}`:'None'],['Instructions',conds.length?`${conds.length}: ${conds.map(c=>KIND[c[1]][0]).join(', ')}`:'None']])}
+   ${s[6]?`<p class="why">Numbering inside this section starts again from the beginning, so “${s[0]==='s6'?'Part B':s[0]==='s8'?'(c)':'paragraph 1'}” can mean different things in different sections. References must say which section they mean.</p>`:''}
+   ${prov('STRUCT-01')}${showBtn(nm)}`);
+}
+function dRef(id){
+  const r=REFS.find(x=>x[0]===id), s=RSTAT[r[6]];
+  panel(`<p class="k0">Cross-reference</p><h2 class="q">“${E(r[1])}”</h2>
+   <div class="brow"><span class="badge ${s[0]}">${ic(s[1])}${s[2]}</span>${r[11]?`<span class="tag">${ic('pin')}Finding ${r[11]}</span>`:''}</div>
+   <blockquote class="ev">${E(r[7])}<cite>${E(r[2])}</cite></blockquote>
+   ${r[6]!=='ok'?`<div class="ef"><div><div class="k">Expected</div><div class="v">${E(r[8])}</div></div><div><div class="k">Found</div><div class="v">${E(r[5])}</div></div></div>`:''}
+   ${facts([['Reference text',E(r[1])],['Where',E(r[2])],['Points to',E(r[5])],['Status',s[2]]])}
+   ${r[9]?`<p class="why">${E(r[9])}</p>`:`<p class="why">The target exists and its heading fits the sentence around the reference.</p>`}
+   ${prov(r[10]||'XREF-01')}${showBtn(r[2])}`);
+}
+function dExt(id){
+  const x=EXT.find(v=>v[0]===id);
+  panel(`<p class="k0">External citation</p><h2 class="q">“${E(x[1])}”</h2>
+   <div class="brow"><span class="badge b-st">${ic('ext')}External, not checked</span></div>
+   ${facts([['Citation',E(x[1])],['Where',E(x[2])],['Source',E(x[3])],['Status','Listed, not resolved']])}
+   <p class="why">This points to a law, rule or form outside the document. It is not an internal reference, so it cannot be broken or swapped. It is listed so you can see everything the text cites.</p>
+   ${prov('XREF-04')}${showBtn(x[2])}`);
+}
+function dCond(id){
+  const c=CONDS.find(x=>x[0]===id), k=KIND[c[1]];
+  panel(`<p class="k0">Conditional instruction</p><h2 class="q">${E(c[2])}</h2>
+   <div class="brow"><span class="badge b-st">${ic(k[1])}${k[0]}</span>${c[8]?`<span class="badge b-ok">${ic('check')}Target found</span>`:`<span class="badge b-fix">${ic('warn')}Target unclear</span>`}</div>
+   ${facts([['Type',k[0]],['Where',E(c[3])],['When','Condition: '+E(c[5])],['Then',E(c[6])],['Target section',E(secName(c[7]))]])}
+   ${c[10]?`<p class="why" style="background:var(--fix-bg);color:#3F2A00;padding:8px 10px;border-radius:var(--r)">${E(c[10])}</p>`:''}
+   ${prov(c[9])}${showBtn(c[3])}`);
+}
+function dOpt(id){
+  const o=OPTS.find(x=>x[0]===id);
+  panel(`<p class="k0">Option group</p><h2>${E(o[1])}</h2>
+   <div class="brow"><span class="badge b-st">${ic(o[5]==='one'?'radio':'boxes')}${o[5]==='one'?'Check one':'All that apply'}</span>${o[6]==='stated'?`<span class="badge b-ok">${ic('check')}Cue printed</span>`:`<span class="badge b-fix">${ic('warn')}Cue inferred</span>`}</div>
+   ${facts([['Where',E(o[2])],['Options',E(o[4])],['How many',o[5]==='one'?'Exactly one':'One or more'],['How we know',E(o[7])]])}
+   ${o[6]==='inferred'?`<p class="why">No exclusivity cue is printed. The digitized form needs a rule here, so confirm it with counsel before building.</p>`:''}
+   ${prov('OPT-01')}${showBtn(o[2])}`);
+}
+function dTerm(id){
+  const t=TERMS.find(x=>x[0]===id), s=TSTAT[t[4]];
+  panel(`<p class="k0">Defined term</p><h2 class="q">“${E(t[1])}”</h2>
+   <div class="brow"><span class="badge ${s[0]}">${ic(s[1])}${s[2]}</span></div>
+   ${facts([['Defined at',E(t[2])],['Uses',t[3]+(t[3]===1?' use':' uses')],['Used at',t[6]?E(t[6]):''],['Closest defined term',t[7]?(t[7]==='none'?'None':E(t[7])):''],['Status',s[2]]])}
+   ${t[4]==='none'&&t[7]==='Shares'?`<div class="ef"><div><div class="k">Expected</div><div class="v">Shares</div></div><div><div class="k">Found</div><div class="v">${E(t[1])}</div></div></div>`:''}
+   <p class="why">${E(t[5])}</p>
+   ${prov('TERM-01')}${showBtn(t[6]||t[2])}`);
+}
+function dQ(tp,i){
+  const code=MQROWS[tp][i], c=CODE[code];
+  let why;
+  if(code==='g') why='Corporation, Trust and Other entity all carry footnote 2 in Section 7, question 1 (attach entity documents). Partnership or LLC reaches Section 7 but its question has no footnote 2. Either the footnote was left off, or this type is meant to answer differently. Counsel decides.';
+  else if(code==='y') why=`This investor type answers this question. Section 2 routes “${TYPES[tp]}” here.`;
+  else why=`Only some versions of this question apply to “${TYPES[tp]}”, depending on a later answer.`;
+  const peers=code==='g'?['Corporation','Trust','Other entity']:[];
+  panel(`<p class="k0">Question for ${E(TYPES[tp])}</p><h2>${E(MQ[i][0])}</h2>
+   <div class="brow"><span class="badge ${code==='y'?'b-ok':code==='g'?'b-fix':'b-note'}">${ic(c[1])}${c[2]==='n/a'?'Not asked':c[2]==='Gap'?'Gap: missing here':c[2]}</span></div>
+   ${facts([['Investor type',E(TYPES[tp])],['Question',E(MQ[i][0])],['Where',E(MQ[i][1])],['Result',c[3]],['Peers that have it',peers.length?peers.join(', '):'']])}
+   <p class="why">${why}</p>
+   ${prov(code==='g'?'PATH-04':'PATH-01')}${showBtn(MQ[i][1])}`);
+}
+function renderDetail(){
+  const id=S.sel||'';
+  if(id.startsWith('pq:')){const [,tp,qi]=id.split(':');return dQ(+tp,+qi);}
+  if(SECN[id])return dSection(id);
+  if(id[0]==='r')return dRef(id);
+  if(id[0]==='x')return dExt(id);
+  if(id[0]==='c')return dCond(id);
+  if(id[0]==='o')return dOpt(id);
+  if(id[0]==='t')return dTerm(id);
+  panel('<div class="empty">Select a row to see the facts behind it.</div>');
+}
+
+/* ---------- selection ---------- */
+const firstOf=l=>l==='inv'?gapSel(S.type):({sections:'s6',refs:'r1',conds:'c1',opts:'o1',terms:'t8'}[l]);
+function mark(id){
+  S.sel=id;
+  $$('#lensbody [data-id]').forEach(el=>el.classList.toggle('sel',el.dataset.id===id));
+  $$('.nd').forEach(g=>g.classList.toggle('sel',g.dataset.node===id));
+  renderDetail();
+}
+function toast(msg){
+  const t=$('#toast');$('#toastMsg').textContent=msg;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2800);
+}
+function setLens(k,focus){
+  S.lens=k;if(k==='inv')S.type=gapType();S.sel=firstOf(k);renderLens();renderDetail();save();
+  if(focus){const b=$('#lens-'+k);b&&b.focus();}
+}
+
+document.addEventListener('click',e=>{
+  const t=e.target;
+  const oth=t.closest('[data-other]');if(oth){toast(oth.dataset.other+' is designed in a separate mockup.');return;}
+  if(t.closest('#gate')){toast('The digitization gate is shown in the Review tab.');return;}
+  const ln=t.closest('[data-lens]');if(ln){setLens(ln.dataset.lens);return;}
+  const ty=t.closest('[data-type]');if(ty){S.type=+ty.dataset.type;S.sel=gapSel(S.type);renderLens();renderDetail();const b=$(`[data-type="${S.type}"]`);b&&b.focus();return;}
+  const rf=t.closest('[data-ref]');if(rf){S.ref=rf.dataset.ref;renderLens();const b=$(`[data-ref="${S.ref}"]`);b&&b.focus();return;}
+  if(t.closest('#flowBtn')){S.flow=!S.flow;renderLens();const b=$('#flowBtn');b&&b.focus();return;}
+  const nd=t.closest('[data-node]');if(nd){mark(nd.dataset.node);return;}
+  const sh=t.closest('[data-show]');if(sh){toast('Opens the Review tab at “'+sh.dataset.show+'” (separate mockup).');return;}
+  const tr=t.closest('[data-id]');if(tr){mark(tr.dataset.id);return;}
+});
+document.addEventListener('keydown',e=>{
+  const nd=e.target.closest&&e.target.closest('[data-node]');
+  if(nd&&(e.key==='Enter'||e.key===' ')){e.preventDefault();mark(nd.dataset.node);return;}
+  const ln=e.target.closest&&e.target.closest('[data-lens]');
+  if(ln&&(e.key==='ArrowRight'||e.key==='ArrowLeft')){
+    const ks=LENSES.map(l=>l[0]);let i=ks.indexOf(ln.dataset.lens);
+    i=e.key==='ArrowRight'?(i+1)%ks.length:(i-1+ks.length)%ks.length;setLens(ks[i],true);e.preventDefault();
+  }
+});
+
+renderSum();
+if(S.lens==='inv')S.type=gapType();
+S.sel=firstOf(S.lens);
+renderLens();renderDetail();
+})();
+</script>
+</body>
+</html>

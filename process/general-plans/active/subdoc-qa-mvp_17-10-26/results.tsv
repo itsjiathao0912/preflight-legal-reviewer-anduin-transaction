@@ -1,0 +1,23 @@
+iteration	timestamp	gaps_found	fail_count	concern_count	applied	saturation_status	loop_status	notes
+0	2026-10-17	TBD	0	0	0	ACTIVE	baseline	program baseline (outer PVL M1: 00,01,03,04a)
+1	2026-10-17	8	0	8	0	ACTIVE	CONTINUE	phase=03 pvl first-pass CONDITIONAL; supplement requested
+2	2026-10-17	6	0	6	0	ACTIVE	CONTINUE	phase=00 pvl first-pass CONDITIONAL; supplement requested
+3	2026-10-17	6	0	6	6	ACTIVE	CONTINUE	phase=00 supplement cycle 1 applied (6 gaps); re-validate from V1
+4	2026-10-17	8	0	8	8	ACTIVE	CONTINUE	phase=03 supplement cycle 1 applied (8 gaps); re-validate from V1
+5	2026-10-17	10	0	10	0	ACTIVE	CONTINUE	phase=04a pvl first-pass CONDITIONAL; supplement requested
+6	2026-10-17	10	0	9	0	ACTIVE	CONTINUE	phase=01 pvl first-pass CONDITIONAL (9 concerns rolled into 10 gaps); supplement requested
+7	2026-10-17	10	0	10	10	ACTIVE	CONTINUE	phase=04a supplement cycle 1 applied (10 gaps); re-validate after 01 supplement
+8	2026-10-17	3	0	3	0	ACTIVE	CONTINUE	phase=03 re-validate cycle 1: 8 gaps closed, 3 new (mockup values, web test scripts, drift); supplement cycle 2
+9	2026-10-17	10	0	9	10	ACTIVE	CONTINUE	phase=01 supplement cycle 1 applied; orchestrator added SessionClaims v; re-validate
+10	2026-10-17	3	0	3	3	ACTIVE	CONTINUE	phase=03 supplement cycle 2 applied; re-validate
+11	2026-10-17	0	0	0	6	SATURATED	HALTED_SUCCESS	phase=00 Gate: PASS after 1 supplement cycle
+12	2026-10-17	5	0	5	0	ACTIVE	CONTINUE	phase=04a re-validate cycle 1: 10 gaps resolved/folded, 5 new (claims text, v keying, frozen contracts reuse, turnstile gate, tooling); supplement cycle 2
+13	2026-10-17	5	0	5	7	ACTIVE	CONTINUE	phase=04a supplement cycle 2 applied (7 gaps); re-validate
+14	2026-10-17	2	0	2	0	ACTIVE	CONTINUE	phase=03 re-validate cycle 2: G1-G3 closed, 2 new (gate -- form, fingerprint flow); cycle 3 deferred until app.html approval (hold)
+15	2026-10-17	4	0	4	0	ACTIVE	CONTINUE	phase=01 re-validate cycle 1: G1-G10 present; 4 new (H table-bold #5, L window order, R this-Section-9 #1, mask vector); supplement cycle 2; umbrella row3 + registry P01 fixed by orchestrator
+16	2026-10-17	4	0	4	5	ACTIVE	CONTINUE	phase=01 supplement cycle 2 applied; re-validate
+17	2026-10-17	3	0	3	0	ACTIVE	CONTINUE	phase=04a re-validate cycle 2: 7 gaps resolved; 3 new (03-hold split closure, no-dash gates, quota reason carrier); supplement cycle 3
+18	2026-10-17	3	0	3	3	ACTIVE	CONTINUE	phase=04a supplement cycle 3 applied; re-validate
+19	2026-10-17	0	0	0	5	SATURATED	HALTED_SUCCESS	phase=01 Gate: PASS after 2 supplement cycles (E1-E8 execute instructions)
+20	2026-10-17	0	0	0	3	SATURATED	HALTED_SUCCESS	phase=04a Gate: PASS after 3 supplement cycles; validator also applied 8 probe-verified minor plan fixes (E12-E17)
+21	2026-10-17	2	0	2	0	ACTIVE	CONTINUE	phase=03 hold released (app.html approved); supplement cycle 3 = re-target to app.html + deferred G4/G5

@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compare · Sub-doc QA (design trial)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
+<style>
+/* ===== Tokens (copied verbatim from review-workspace.html) ===== */
+:root{
+  --ground:#E9ECE9;      /* app ground: low-chroma cool stone */
+  --panel:#F4F6F3;       /* panels one tone step above ground */
+  --card:#FBFCFA;        /* cards one step above panel */
+  --paper:#FDFEFD;       /* document page */
+  --ink:#15181B;
+  --ink-2:#434A50;       /* 8.0:1 on panel */
+  --ink-3:#5C646B;       /* 5.6:1 on panel */
+  --accent:#1D5C57;      /* the single accent: deep teal */
+  --accent-tint:#D9E8E5;
+  --step:#DDE2DD;        /* tone step used instead of rules */
+  --block-fg:#8A1C1C; --block-bg:#F7E2DF;
+  --fix-fg:#734400;   --fix-bg:#F5E8C8;
+  --note-fg:#38454F;  --note-bg:#DFE6EA;
+  --ok-fg:#1B5632;    --ok-bg:#DAEEDF;
+  --mark:#F3D676;
+  --r:4px;
+  --sans:'Geist',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --serif:'Newsreader',Georgia,'Times New Roman',serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--ground);color:var(--ink);font:400 14px/1.5 var(--sans);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+button,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+svg.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.skip{position:absolute;left:8px;top:-48px;background:var(--ink);color:#fff;padding:8px 13px;border-radius:var(--r);z-index:50}
+.skip:focus{top:8px}
+
+/* ===== Shell ===== */
+.app{height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr);min-width:1000px}
+header.top{padding:14px 24px 0;display:grid;gap:13px}
+.row1{display:flex;align-items:center;gap:20px;min-width:0}
+.brand{display:flex;align-items:center;gap:10px;font:500 20px/1 var(--serif);letter-spacing:-.01em;white-space:nowrap}
+.brand svg{width:28px;height:28px}
+.docid{min-width:0;flex:1;padding-left:20px;margin-left:2px;position:relative}
+.docid::before{content:"";position:absolute;left:0;top:4px;bottom:4px;width:2px;background:var(--step)}
+.docid h1{margin:0;font:500 14px/1.3 var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.docid .meta{display:flex;gap:18px;color:var(--ink-3);font-size:13px;white-space:nowrap;overflow:hidden}
+.docid .meta b{font-weight:500;color:var(--ink-2)}
+.seg{display:inline-flex;background:var(--step);border-radius:var(--r);padding:2px}
+.seg button{border:0;background:transparent;padding:6px 12px;border-radius:3px;font-size:13px;font-weight:500;color:var(--ink-2)}
+.seg button[aria-pressed=true]{background:var(--card);color:var(--ink)}
+.tabs{display:flex;gap:4px;align-items:flex-end}
+.tabs button{border:0;background:transparent;padding:8px 13px;font-size:14px;color:var(--ink-3);border-radius:var(--r) var(--r) 0 0;display:flex;gap:6px;align-items:center}
+.tabs button[aria-current=page]{background:var(--panel);color:var(--ink);font-weight:500}
+.tabs button:not([aria-current]):hover{color:var(--ink)}
+.cnt{background:var(--accent);color:#fff;border-radius:999px;font-size:13px;padding:0 6px;min-width:18px;text-align:center}
+
+/* ===== Band: one comparison bar + one stats row ===== */
+.band{background:var(--panel);margin:0 -24px;padding:10px 24px 12px;display:grid;gap:10px}
+.cbar{display:flex;align-items:center;justify-content:space-between;gap:13px;flex-wrap:wrap}
+.sent{display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:wrap}
+.sent select{width:auto;max-width:300px;background-color:var(--card);padding:7px 30px 7px 12px;font-size:14px;font-weight:500;border-radius:var(--r)}
+.sent select:hover{background-color:#fff}
+.iconbtn{border:0;background:transparent;width:32px;height:32px;border-radius:var(--r);display:grid;place-items:center;color:var(--ink-2)}
+.iconbtn:hover{background:var(--step);color:var(--ink)}
+.cap{margin:0;font:600 13px/1.2 var(--sans);color:var(--ink-3)}
+.stats{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px}
+.gcap{font-weight:600;color:var(--ink-3);margin-right:2px}
+.sdiv{width:2px;align-self:stretch;min-height:22px;background:var(--step);margin:0 10px}
+.chip{border:0;background:var(--card);border-radius:var(--r);padding:4px 10px;display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--ink-2);white-space:nowrap}
+.chip svg{width:14px;height:14px}
+.chip b{font-weight:600;color:var(--ink)}
+button.chip:hover{background:#fff}
+.chip[aria-pressed=true]{background:var(--ink);color:#fff}
+.chip[aria-pressed=true] b{color:#fff}
+.chip:disabled{background:transparent;color:var(--ink-3);cursor:default}
+.chip:disabled b{color:var(--ink-3)}
+.chip.static{background:transparent;color:var(--ink-3)}
+.clear{border:0;background:transparent;color:var(--ink-2);text-decoration:underline;text-underline-offset:3px;font-size:13px;font-weight:500;padding:4px 6px;margin-left:4px}
+.clear[hidden]{display:none}
+
+/* ===== Workspace ===== */
+.main{display:grid;grid-template-columns:440px minmax(0,1fr);min-height:0}
+.lp{background:var(--card);display:grid;grid-template-rows:auto minmax(0,1fr);min-height:0}
+.lh{padding:16px 20px 10px;display:grid;gap:8px}
+.lh .ft{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.lh h2{margin:0;font:500 20px/1.2 var(--serif);letter-spacing:-.01em}
+.lh .sum{color:var(--ink-3);font-size:13px}
+.hint{font-size:13px;color:var(--ink-2);background:var(--panel);border-radius:var(--r);padding:8px 10px;margin:0}
+kbd{font:500 13px var(--sans);background:var(--step);border-radius:3px;padding:0 5px;color:var(--ink-2)}
+.kbdhint{font-size:13px;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.scroll{overflow:auto;min-height:0}
+.llist{padding:4px 20px 40px}
+.grp{margin:0 0 20px}
+.grp.muted{opacity:.85}
+.grp>h3{margin:0 0 8px;font:600 13px/1.2 var(--sans);color:var(--ink-3);display:flex;gap:6px}
+ul.cards{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.card{background:var(--panel);border-radius:var(--r);transition:background .2s}
+.card.sel{background:var(--paper);border-left:3px solid var(--accent);outline:2px solid var(--accent-tint)}
+.chead{width:100%;border:0;background:transparent;text-align:left;padding:12px 14px;display:grid;gap:6px;border-radius:var(--r)}
+.chead:hover{background:rgba(21,24,27,.03)}
+.l1{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.badge{display:inline-flex;gap:5px;align-items:center;font-size:13px;font-weight:600;padding:2px 8px 2px 6px;border-radius:3px}
+.badge svg{width:14px;height:14px}
+.b-block{background:var(--block-bg);color:var(--block-fg)}
+.b-fix{background:var(--fix-bg);color:var(--fix-fg)}
+.b-note{background:var(--note-bg);color:var(--note-fg)}
+.b-ok{background:var(--ok-bg);color:var(--ok-fg)}
+.b-st{background:var(--step);color:var(--ink-2)}
+.b-new{background:var(--accent-tint);color:var(--accent)}
+.b-low{background:var(--paper);color:var(--ink-2);outline:1px dashed var(--ink-3);outline-offset:-1px}
+.ttl{font-weight:500;font-size:14px;line-height:1.4}
+.l3{display:flex;gap:13px;color:var(--ink-3);font-size:13px;flex-wrap:wrap;align-items:center}
+.l3 span{display:inline-flex;gap:4px;align-items:center}
+.l3 svg{width:13px;height:13px}
+.tag{font-size:13px;font-weight:500;padding:1px 7px;border-radius:3px;display:inline-flex;gap:4px;align-items:center;background:var(--step);color:var(--ink-2)}
+.tag svg{width:13px;height:13px}
+
+/* rename table */
+table.rt{width:100%;border-collapse:separate;border-spacing:0 2px;font-size:14px}
+table.rt th{font:600 13px var(--sans);color:var(--ink-3);text-align:left;padding:2px 10px}
+table.rt th.num,table.rt td.num{text-align:right}
+table.rt td{background:var(--panel);padding:4px 10px}
+table.rt td:first-child{border-radius:var(--r) 0 0 var(--r);padding:0}
+table.rt td:last-child{border-radius:0 var(--r) var(--r) 0}
+table.rt tr.sel td{background:var(--paper)}
+table.rt tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.rb{border:0;background:transparent;width:100%;text-align:left;padding:8px 10px;display:flex;gap:6px;align-items:center;font-size:14px;border-radius:var(--r) 0 0 var(--r)}
+.rb:hover{background:rgba(21,24,27,.04)}
+table.rt tfoot td{background:transparent;color:var(--ink-3);font-size:13px;padding:4px 10px}
+
+/* diff pane */
+.dp{background:var(--panel);padding:20px 32px 80px;min-height:0}
+.dpin{max-width:980px;margin:0 auto;display:grid;gap:16px}
+.dh{display:flex;justify-content:space-between;gap:13px;align-items:flex-start;flex-wrap:wrap}
+.dh h2{margin:8px 0 0;font:500 20px/1.25 var(--serif);letter-spacing:-.01em}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);align-items:center}
+.blk{display:grid;gap:8px}
+.bh{display:flex;justify-content:space-between;gap:13px;font-size:13px;color:var(--ink-2);flex-wrap:wrap}
+.bh b{font-weight:600}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.col{display:grid;gap:6px;align-content:start}
+.ch{font-size:13px;color:var(--ink-3);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.ch b{color:var(--ink-2);font-weight:600}
+.ch svg{width:13px;height:13px}
+.doc{background:var(--paper);border-radius:var(--r);padding:16px 20px;font:400 16px/1.72 var(--serif);color:#1b1e21;margin:0}
+.doc.void{background:var(--step);color:var(--ink-2);font:400 14px/1.5 var(--sans);display:flex;align-items:center;gap:8px}
+ins{background:var(--ok-bg);color:var(--ok-fg);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;padding:0 2px;border-radius:2px}
+del{background:var(--block-bg);color:var(--block-fg);text-decoration:line-through;text-decoration-thickness:2px;padding:0 2px;border-radius:2px}
+ins::before{content:"+ ";font:600 13px var(--sans);text-decoration:none;display:inline-block}
+del::before{content:"\2212 ";font:600 13px var(--sans);display:inline-block}
+.fl{background:rgba(56,69,79,.1);text-decoration:underline dotted var(--ink-3);text-decoration-thickness:2px;text-underline-offset:3px;padding:0 2px;border-radius:2px}
+.note{background:var(--card);border-radius:var(--r);padding:13px 14px;display:grid;gap:10px}
+.note p{margin:0;font-size:14px;color:var(--ink-2)}
+.prov{display:flex;gap:13px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);align-items:center}
+.prov span{display:inline-flex;gap:5px;align-items:center}
+.occ{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:0;padding:0;list-style:none}
+.occ li{background:var(--panel);border-radius:var(--r);padding:6px 10px;font-size:13px;display:flex;justify-content:space-between;gap:8px}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.btn{border:0;border-radius:var(--r);padding:8px 13px;font-size:13px;font-weight:500;display:inline-flex;gap:6px;align-items:center;background:var(--step);color:var(--ink)}
+.btn:hover{background:#D1D8D2}
+.btn:active{transform:scale(.98)}
+.btn[aria-pressed=true]{background:var(--accent);color:#fff}
+.btn svg{width:14px;height:14px}
+table.ot{width:100%;border-collapse:separate;border-spacing:0 2px;font-size:14px}
+table.ot th{font:600 13px var(--sans);color:var(--ink-3);text-align:left;padding:2px 10px}
+table.ot td{background:var(--paper);padding:6px 10px}
+table.ot td:first-child{border-radius:var(--r) 0 0 var(--r)}
+table.ot td:last-child{border-radius:0 var(--r) var(--r) 0}
+table.ot .same{color:var(--ink-2)}
+.empty{padding:28px 8px;color:var(--ink-3);text-align:center;display:grid;gap:6px;justify-items:center}
+.empty svg{width:22px;height:22px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:var(--r);padding:10px 14px;display:none;gap:14px;align-items:center;z-index:60;font-size:13px}
+.toast.on{display:flex}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* narrow desktop (1024) */
+@media (max-width:1279px){
+  .main{grid-template-columns:360px minmax(0,1fr)}
+  .dp{padding:20px 20px 80px}
+  .doc{padding:14px 14px}
+  .docid .meta{gap:13px}
+  .brand span{display:none}
+}
+@media (max-width:1100px){.docid .meta span:nth-child(n+3){display:none}}
+</style>
+</head>
+<body>
+<a class="skip" href="#changes">Skip to the change list</a>
+
+<!-- ===== Icon sprite (bespoke, one stroke weight; same family as the review workspace) ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="logo" viewBox="0 0 28 28"><rect x="2" y="2" width="24" height="24" rx="5" fill="#15181B"/><path d="M8 9.5h7M8 14h4.5M8 18.5h5" stroke="#E9ECE9" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M15.5 17l2.6 2.6L22 14.6" stroke="#8FD0C6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M7.8 12.4l2.9 2.9 5.6-6"/></symbol>
+  <symbol id="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="spark" viewBox="0 0 24 24"><path d="M12 3c.6 4.800 2.200 6.400 7 7-4.800.6-6.400 2.200-7 7-.6-4.800-2.200-6.400-7-7 4.800-.6 6.400-2.200 7-7z"/></symbol>
+  <symbol id="rule" viewBox="0 0 24 24"><path d="M8 4H6.500A1.500 1.500 0 005 5.500v13A1.500 1.500 0 006.500 20H8M16 4h1.500A1.500 1.500 0 0119 5.500v13a1.500 1.500 0 01-1.500 1.500H16"/><path d="M9.500 12h5"/></symbol>
+  <symbol id="counsel" viewBox="0 0 24 24"><path d="M4 5.500A1.500 1.500 0 015.500 4h13A1.500 1.500 0 0120 5.500v9a1.500 1.500 0 01-1.500 1.500H11l-4.500 4v-4h-1A1.500 1.500 0 014 14.500z"/><path d="M10.200 8.800a1.900 1.900 0 113 1.500c-.7.500-1.200.8-1.200 1.600M12 13.700h.01"/></symbol>
+  <symbol id="pin" viewBox="0 0 24 24"><path d="M12 21s6.500-5.800 6.500-11A6.500 6.500 0 005.500 10c0 5.200 6.500 11 6.500 11z"/><circle cx="12" cy="10" r="2.200"/></symbol>
+  <symbol id="undo" viewBox="0 0 24 24"><path d="M9 7L4.500 11.500 9 16"/><path d="M5 11.500h8.500A5.500 5.500 0 0119 17v1"/></symbol>
+  <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.300l3.200 2"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="rename" viewBox="0 0 24 24"><path d="M4 8h13l-3-3M20 16H7l3 3"/></symbol>
+  <symbol id="edit" viewBox="0 0 24 24"><path d="M5 19l1-4L16 5l3 3L9 18z"/><path d="M14 7l3 3"/></symbol>
+  <symbol id="same" viewBox="0 0 24 24"><path d="M5 9h14M5 15h14"/></symbol>
+  <symbol id="neq" viewBox="0 0 24 24"><path d="M5 8h14M5 16h14M9.500 20L14.500 4"/></symbol>
+  <symbol id="swap" viewBox="0 0 24 24"><path d="M7 4L3.500 7.500 7 11M3.500 7.500H15M17 13l3.500 3.500L17 20M20.500 16.500H9"/></symbol>
+  <symbol id="help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.700 9.500a2.400 2.400 0 114 1.700c-.8.600-1.700 1-1.700 2.100M12 16.800h.01"/></symbol>
+  <symbol id="only" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></symbol>
+  <symbol id="docs" viewBox="0 0 24 24"><path d="M7 3.500h8l4 4V20.500H7z"/><path d="M15 3.500v4h4M10 12h6M10 15.500h6"/></symbol>
+</svg>
+
+<div class="app">
+  <header class="top">
+    <div class="row1">
+      <div class="brand"><svg class="i" style="stroke:none;fill:none" aria-hidden="true"><use href="#logo"/></svg><span>Sub-doc QA</span></div>
+      <div class="docid">
+        <h1>Version compare · Partners Group Next Generation Infrastructure LLC</h1>
+        <div class="meta" id="meta"></div>
+      </div>
+    </div>
+    <div class="row1" style="justify-content:space-between;align-items:flex-end">
+      <nav class="tabs" aria-label="Workspace views">
+        <button type="button" data-other="Review workspace">Review</button>
+        <button type="button" data-other="Structure view">Structure</button>
+        <button type="button" aria-current="page">Compare</button>
+        <button type="button" data-other="Counsel query sheet">Counsel sheet <span class="cnt" id="counselCount" hidden>0</span></button>
+      </nav>
+    </div>
+    <div class="band">
+      <div class="cbar">
+        <div class="sent" role="group" aria-label="Documents being compared">
+          <select id="pBase" aria-label="Base version"></select>
+          <button class="iconbtn" id="swapBtn" type="button" aria-label="Swap base and compare" title="Swap base and compare"><svg class="i" aria-hidden="true"><use href="#swap"/></svg></button>
+          <select id="pCmp" aria-label="Compare version"></select>
+        </div>
+        <div class="seg" role="group" aria-label="Comparison type">
+          <button type="button" data-mode="version" aria-pressed="true">Versions</button>
+          <button type="button" data-mode="sibling" aria-pressed="false" title="Sibling documents (feeder/parallel)">Siblings</button>
+        </div>
+      </div>
+      <div class="stats" id="strip" aria-label="Summary"></div>
+    </div>
+  </header>
+
+  <main class="main">
+    <aside class="lp" id="changes" aria-label="Changes" tabindex="-1">
+      <div class="lh">
+        <div class="ft"><h2 id="lt">Changes</h2><span class="sum" id="sum"></span></div>
+        <p class="hint" id="modehint" hidden></p>
+        <div class="kbdhint"><kbd>J</kbd><kbd>K</kbd> next or previous change</div>
+      </div>
+      <div class="scroll llist" id="llist" tabindex="-1"></div>
+    </aside>
+    <section class="scroll dp" id="dp" aria-label="Clause comparison" tabindex="-1"><div class="dpin" id="dpin"></div></section>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span></div>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const ic=(n,c='')=>`<svg class="i ${c}" aria-hidden="true"><use href="#${n}"/></svg>`;
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+/* ---------- storage (always guarded) ---------- */
+const store='subdocqa-compare-trial';
+function safeGet(k){try{return window.localStorage.getItem(k);}catch(e){return null;}}
+function safeSet(k,v){try{window.localStorage.setItem(k,v);}catch(e){}}
+function safeParse(t){try{return t?JSON.parse(t):{};}catch(e){return {};}}
+
+/* ---------- documents (fictional) ---------- */
+const FIRM='Hartwell & Crane LLP', FUND='Next Generation Infrastructure';
+const MODES={
+ version:{docs:{
+   v24:{short:'2024 template',opt:'2024 template · Units wording',meta:'Hartwell & Crane LLP · Next Generation Infrastructure · uploaded 3 Feb 2026 · 12 sections'},
+   v26:{short:'2026 template',opt:'2026 template · Shares wording',meta:'Hartwell & Crane LLP · Next Generation Infrastructure · uploaded 9 Mar 2026 · 11 sections + 2 appendices'}},
+   order:['v24','v26'],lBase:'Base version',lCmp:'Compare version',
+   meta:'Comparing 2024 template with 2026 template'},
+ sibling:{docs:{
+   A:{short:'Onshore feeder',opt:'Onshore feeder · 2026 template',meta:'Hartwell & Crane LLP · NGI Onshore Feeder LLC · seeded sibling fixture · 12 sections'},
+   B:{short:'Offshore feeder',opt:'Offshore feeder · 2026 template',meta:'Hartwell & Crane LLP · NGI Offshore Feeder Ltd · seeded sibling fixture · 13 sections'}},
+   order:['A','B'],lBase:'Document A',lCmp:'Document B',
+   meta:'Comparing the onshore and offshore feeder documents'}
+};
+
+/* ---------- diff text mini-markup:  {-removed-}  {+added+}  {?flagged unchanged?} ---------- */
+const L26='2026 template';
+const OUT=[['1','Instructions to Subscribers'],['2','Subscriber Information'],['3','Entity Documents'],['4','Custodian Information'],['5','Investor Status'],['6','Subscription'],['7','Fees'],['8','Representations of the Subscriber'],['9','Payment Instructions'],['10','Anti-Money Laundering'],['11','Tax Certifications'],['12','Qualified Client Representation']];
+const PARTS=[['A','Share Class'],['B','Subscription Amount'],['C','Payment Method'],['D','Acknowledgements']];
+const D1=[{head:'Section 6, Part B',loc:['Section 6, Part B, page 10','Section 6, Part B, page 9'],t:'The minimum initial subscription is US$ 50,000 for Class A. {-[NTD: Partners Group to confirm the Class S minimum with tax counsel before filing.]-}'}];
+const R1B=[
+ {head:'Section 8(c)',loc:['Section 8(c), page 14','Section 8(c), page 13'],t:'(c) The Subscriber understands that the offered {-Units-}{+Shares+} will not be registered under the Securities Act of 1933 and may not be resold except in a transaction that complies with that Act.'},
+ {head:'Section 6, Part A',loc:['Section 6, Part A, page 9','Section 6, Part A, page 9'],t:'Class A {-Units-}{+Shares+} / Class S {-Units-}{+Shares+} (check one)'}];
+const ITEMS={
+version:[
+ {id:'C1',g:'structure',kind:'removed',title:'Appendix C removed',titleRev:'Appendix C added',
+  sub:'Base: Appendix C, pages 31 to 32 · Compare: not present',subRev:'Base: not present · Compare: Appendix C, pages 31 to 32',
+  blocks:[{head:'Appendix C. Subscriber Wire Confirmation Form',loc:['Appendix C, pages 31 to 32','Not present'],t:'{-Appendix C. Subscriber Wire Confirmation Form. The Subscriber confirms that the subscription proceeds were wired from an account held in the Subscriber’s own name. Name of sending bank: ____________ Date of wire: ____________-}'}],
+  why:'The whole appendix is gone and nothing in the compare version still points to it: references to Appendix C fell from 2 to 0. The numbered sections are untouched.',
+  prov:'Rule DIFF-SEC-01 · deterministic',conf:'High (heading and body fully absent)'},
+ {id:'R1',g:'terms',kind:'renamed',from:'Units',to:'Shares',n:38,secs:11,blocks:R1B,
+  why:'Rule DIFF-TERM-01 found the same word swapped in 38 places. The 2024 form had one leftover “Units” that the review had flagged (earlier finding F-04); this rename closes it.',prov:'Rule DIFF-TERM-01 · deterministic',conf:'High (consistent whole-word replacement)'},
+ {id:'R2',g:'terms',kind:'renamed',from:'Member',to:'Shareholder',n:21,secs:7,blocks:[
+  {head:'Section 8(d)',loc:['Section 8(d), page 14','Section 8(d), page 13'],t:'(d) The Subscriber agrees that the Company may, in its discretion, suspend repurchases for a reasonable period if the Board determines it is in the interest of the {-Members-}{+Shareholders+}.'},
+  {head:'Section 11',loc:['Section 11, page 20','Section 11, page 19'],t:'Each {-Member-}{+Shareholder+} is responsible for its own tax filings.'}],
+  why:'Rule DIFF-TERM-01: 21 occurrences, singular and plural, all replaced.',prov:'Rule DIFF-TERM-01 · deterministic',conf:'High'},
+ {id:'R3',g:'terms',kind:'renamed',from:'Memorandum',to:'Prospectus',n:9,secs:3,blocks:[
+  {head:'Section 2',loc:['Section 2, page 4','Section 2, page 4'],t:'The Subscriber acknowledges that it has received and read the {-Confidential Memorandum-}{+Prospectus+} of the Company and the Company’s LLC Agreement.'},
+  {head:'Section 8(a)',loc:['Section 8(a), page 13','Section 8(a), page 12'],t:'The Subscriber is relying only on the {-Memorandum-}{+Prospectus+} in making this investment decision.'}],
+  why:'Rule DIFF-TERM-01: 9 occurrences. Note the “LLC Agreement” in the first clause was not renamed (see the low-confidence item below).',prov:'Rule DIFF-TERM-01 · deterministic',conf:'High'},
+ {id:'R4',g:'terms',kind:'renamed',from:'placement agent',to:'distributor',n:6,secs:2,blocks:[
+  {head:'Section 1, paragraph 1',loc:['Section 1, paragraph 1, page 2','Section 1, paragraph 1, page 2'],t:'Each prospective investor must complete, sign and return this Subscription Agreement to the {-placement agent-}{+distributor+}.'},
+  {head:'Section 9',loc:['Section 9, page 17','Section 9, page 16'],t:'Fees are payable to the {-placement agent-}{+distributor+} only through the escrow account.'}],
+  why:'Rule DIFF-TERM-01: 6 occurrences. The compare version uses lower-case “distributor” in running text and keeps the capitalised defined term “Distributor” elsewhere.',prov:'Rule DIFF-TERM-01 · deterministic',conf:'High'},
+ {id:'R5',g:'terms',kind:'renamed',from:'Placement Fee',to:'Sales Load',n:4,secs:2,blocks:[
+  {head:'Section 7, heading line',loc:['Section 7, page 15','Section 7, page 14'],t:'7. Fees. The {-Placement Fee-}{+Sales Load+} and how it is charged.'},
+  {head:'Section 7, paragraph 3',loc:['Section 7, page 15','Section 7, page 15'],t:'No {-Placement Fee-}{+Sales Load+} is charged on reinvested distributions.'}],
+  why:'Rule DIFF-TERM-01: 4 occurrences, all in Section 7 and the fee table.',prov:'Rule DIFF-TERM-01 · deterministic',conf:'High'},
+ {id:'F1',g:'fees',kind:'changed',title:'Sales Load now set per share class',sub:'Section 7, paragraph 1 · 3.5% Class A, 1.5% Class S',
+  blocks:[{head:'Section 7, paragraph 1',loc:['Section 7, paragraph 1, page 15','Section 7, paragraph 1, page 14'],t:'A {-Placement Fee of up to 3.5% of the subscription amount-}{+Sales Load of 3.5% for Class A Shares and 1.5% for Class S Shares+} is deducted from each subscription before it is invested.'}],
+  why:'One fee line became two. The “up to” ceiling is gone and the rate now depends on the share class chosen in Section 6, Part A, so a digitized form needs a conditional fee field for each class.',prov:'Rule DIFF-FEE-01 · deterministic',conf:'High (percentages parsed from both versions)'},
+ {id:'D1',g:'drafting',kind:'changed',title:'Drafting note removed',sub:'Section 6, Part B',blocks:D1,
+  why:'The bracketed “NTD:” note is gone, which closes earlier finding F-05. The compare version states no Class S minimum; the tool does not judge whether one is needed.',prov:'Rule DIFF-DRAFT-01 · deterministic',conf:'High (literal match)'},
+ {id:'D2',g:'drafting',kind:'changed',title:'3 bracketed placeholders removed',sub:'Section 3, Section 5 and signature page',blocks:[
+  {head:'Section 3',loc:['Section 3, page 5','Section 3, page 5'],t:'Attach {-[list of entity documents TBC]-}{+the entity documents listed in this Section 3+} before returning this form.'},
+  {head:'Section 5',loc:['Section 5, page 8','Section 5, page 7'],t:'Date of this Agreement: {-[●]-}{+____________+}'},
+  {head:'Signature page',loc:['Signature page, page 29','Signature page, page 27'],t:'Effective {-[date]-}{+on the date the Company accepts this subscription+}.'}],
+  why:'Each bracketed placeholder was replaced by wording or a blank to fill in. None remain in the compare version.',prov:'Rule DIFF-DRAFT-01 · deterministic',conf:'High'},
+ {id:'U1',g:'unchanged',kind:'unchanged',title:'Section list 1 to 12 and Parts A to D unchanged',sub:'Same titles, same order',outline:true,
+  why:'All 12 section titles and the four Parts of Section 6 match in order and name. The only structural difference is Appendix C.',prov:'Rule DIFF-SEC-02 · deterministic',conf:'High'},
+ {id:'X1',g:'findings',kind:'fixed',title:'Custodian details point to the wrong section',sub:'Section 1, paragraph 1 · was Blocks digitization',blocks:[
+  {head:'Section 1, paragraph 1',loc:['Section 1, paragraph 1, page 2','Section 1, paragraph 1, page 2'],t:'Subscribers investing through an individual retirement account must provide the name and address of the Custodian of the account in {-Part B of Section 6-}{+Section 4+}.'}],
+  why:'The reference now points to Section 4, “Custodian Information”. The base version pointed to Part B of Section 6, “Subscription Amount”. Earlier finding F-01.',prov:'Rule XREF-02 · deterministic',conf:'High (exact heading match)'},
+ {id:'X2',g:'findings',kind:'fixed',title:'Subscription amount points to the wrong section',sub:'Section 1, paragraph 2 · was Blocks digitization',blocks:[
+  {head:'Section 1, paragraph 2',loc:['Section 1, paragraph 2, page 2','Section 1, paragraph 2, page 2'],t:'The Subscriber should enter the amount of the subscription in {-Part B of Section 4-}{+Part B of Section 6+} and attach any supporting entity documents requested in Section 3.'}],
+  why:'Both swapped references are now correct. Section 4 has no Part B; the amount lives in Part B of Section 6. Earlier finding F-03.',prov:'Rule XREF-02 · deterministic',conf:'High (exact heading match)'},
+ {id:'X3',g:'findings',kind:'fixed',title:'“Units” used but the defined term is “Shares”',sub:'Section 8(c) · was Fix before build',blocks:[R1B[0]],
+  why:'Fixed by the Units to Shares rename. Earlier finding F-04.',prov:'Rule TERM-01 · deterministic',conf:'High'},
+ {id:'X4',g:'findings',kind:'fixed',title:'Drafting note “NTD:” left in the text',sub:'Section 6, Part B · was Fix before build',blocks:D1,
+  why:'The note is no longer in the document. Earlier finding F-05.',prov:'Rule DRAFT-01 · deterministic',conf:'High (literal match)'},
+ {id:'Y1',g:'findings',kind:'still',title:'“this Section 11” written inside Section 12',sub:'Section 12, paragraph 5 · Blocks digitization',blocks:[
+  {head:'Section 12, paragraph 5',loc:['Section 12, paragraph 5, page 22','Section 12, paragraph 5, page 21'],t:'If the Subscriber checked paragraph 5 of this Section 12, then the Subscriber satisfies paragraphs 1 through 4 of {?this Section 11?} and has attached the supporting certificate.'}],
+  why:'The clause is unchanged, so earlier finding F-02 still applies: a “this Section N” reference must name the section that contains it.',prov:'Rule XREF-03 · deterministic',conf:'High (target has no such paragraphs)'},
+ {id:'Y2',g:'findings',kind:'still',title:'Bank routing number appears in the document',sub:'Section 9 · Note',blocks:[
+  {head:'Section 9, wire instructions',loc:['Section 9, page 17','Section 9, page 16'],t:'Bank: Northern Fiduciary Trust. ABA routing number: {?••••• 8097?}'}],
+  why:'The value is unchanged and still masked here. Earlier finding F-06.',prov:'Rule SENS-01 · deterministic',conf:'High (checksum pattern)'},
+ {id:'Y3',g:'findings',kind:'still',title:'“a reasonable period” has no limit',sub:'Section 8(d) · Note · AI, from cache',blocks:[
+  {head:'Section 8(d)',loc:['Section 8(d), page 14','Section 8(d), page 13'],t:'(d) The Subscriber agrees that the Company may, in its discretion, {?suspend repurchases for a reasonable period?} if the Board determines it is in the interest of the {-Members-}{+Shareholders+}.'}],
+  why:'Only the defined term changed; the open-ended wording is the same. Earlier finding F-07.',prov:'AI · gemma-4 (free) · from cache',conf:'Medium'},
+ {id:'N1',g:'findings',kind:'new',title:'“Prospectus” is named but not attached',sub:'Section 2 · Note · new in the compare version',blocks:[
+  {head:'Section 2',loc:['Section 2, page 4','Section 2, page 4'],t:'The Subscriber acknowledges that it has received and read the {-Confidential Memorandum-}{+Prospectus+} of the Company.'}],
+  why:'Rule XREF-06 fires on “Prospectus” because no definition, attachment or link is found. The same sentence did not fire in the base version.',prov:'Rule XREF-06 · deterministic',conf:'Medium (document may be delivered separately)'},
+ {id:'L1',g:'low',kind:'low',title:'“LLC Agreement” kept 10 times after Units became Shares',sub:'Low confidence · not asserted · not counted in the totals',
+  blocks:[
+   {head:'Section 8(c)',loc:['Section 8(c), page 14','Section 8(c), page 13'],t:'Transfers are governed by the {?LLC Agreement?} for the {-Units-}{+Shares+} offered hereby.'},
+   {head:'Section 11',loc:['Section 11, page 20','Section 11, page 19'],t:'Allocations are made as provided in the {?LLC Agreement?}.'}],
+  occ:[['Section 2',2],['Section 6',1],['Section 8',3],['Section 9',1],['Section 11',1],['Section 12',1],['Signature page',1]],
+  why:'The count is exact: “LLC Agreement” appears 10 times in the compare version, in clauses where Units became Shares. That may be correct (the Company can still be an LLC whose governing document keeps its name) or a missed update. The tool cannot tell, so it raises no finding and leaves this out of the totals. Counsel decides.',
+  prov:'Rule TERM-CARRY-01 · deterministic count only; meaning not judged',conf:'Low'}
+],
+sibling:[
+ {id:'S3',g:'differ',kind:'differ',title:'Share class names differ',sub:'Section 6, Part A · both documents',blocks:[
+  {head:'Section 6, Part A',loc:['Section 6, Part A, page 9','Section 6, Part A, page 9'],t:'Share class: Class {-A-}{+A-O+} Shares / Class {-S-}{+S-O+} Shares (check one)'}],
+  why:'Same structure, different class labels. Needs a per-entity variant in an Omnibus form.',prov:'Rule SIB-CLAUSE-01 · deterministic',conf:'High'},
+ {id:'S4',g:'differ',kind:'differ',title:'Sales Load differs for Class A',sub:'Section 7 · both documents',blocks:[
+  {head:'Section 7, paragraph 1',loc:['Section 7, paragraph 1, page 15','Section 7, paragraph 1, page 15'],t:'A Sales Load of {-3.5%-}{+3.0%+} for Class {-A-}{+A-O+} Shares and 1.5% for Class {-S-}{+S-O+} Shares is deducted from each subscription.'}],
+  why:'The Class S rate is common; the Class A rate is not.',prov:'Rule SIB-CLAUSE-01 · deterministic',conf:'High'},
+ {id:'S5',g:'differ',kind:'differ',title:'Offshore adds a Regulation S statement',sub:'Section 8(c) · both documents',blocks:[
+  {head:'Section 8(c)',loc:['Section 8(c), page 14','Section 8(c), page 15'],t:'(c) The Subscriber understands that the offered Shares will not be registered under the Securities Act of 1933{+ and are not offered to any U.S. person, as defined in Regulation S+}, and may not be resold except as that Act permits.'}],
+  why:'One added clause in the offshore document; the rest of the sentence is common.',prov:'Rule SIB-CLAUSE-01 · deterministic',conf:'High'},
+ {id:'S7',g:'differ',kind:'differ',title:'Tax form differs',sub:'Section 11 · both documents',blocks:[
+  {head:'Section 11',loc:['Section 11, page 20','Section 11, page 21'],t:'Under penalties of perjury, the Subscriber certifies that it will provide IRS {-Form W-9-}{+Form W-8BEN or Form W-8BEN-E+}.'}],
+  why:'Expected for an onshore and offshore pair. Becomes an investor-type condition in the form.',prov:'Rule SIB-CLAUSE-01 · deterministic',conf:'High'},
+ {id:'S10',g:'only',kind:'only',onlyDoc:'B',title:'FATCA and CRS self-certification',sub:'Section 13 · offshore feeder only',blocks:[
+  {head:'Section 13',loc:['Not present','Section 13, page 23'],t:'{+13. FATCA and CRS Self-Certification. The Subscriber certifies its tax residence and, if it is a financial institution, its status under FATCA and the Common Reporting Standard, as set out in Section 14.+}'}],
+  why:'A whole section exists in one document only.',prov:'Rule SIB-SEC-01 · deterministic',conf:'High'},
+ {id:'SF1',g:'findings',kind:'fonly',onlyDoc:'A',title:'Drafting note left in Section 6',sub:'Onshore feeder only · Fix before build',blocks:[
+  {head:'Section 6, Part B',loc:['Section 6, Part B, page 10','Not present'],t:'Minimum initial subscription is US$ 50,000. {-[NTD: confirm the Class S minimum with tax counsel.]-}'}],
+  why:'Raised on the onshore document only; the offshore document has no such note.',prov:'Rule DRAFT-01 · deterministic',conf:'High (literal match)'},
+ {id:'SF2',g:'findings',kind:'fonly',onlyDoc:'B',title:'Section 13 points to a Section 14 that does not exist',sub:'Offshore feeder only · Blocks digitization',blocks:[
+  {head:'Section 13',loc:['Not present','Section 13, page 23'],t:'{+The declaration form is set out in Section 14.+}'}],
+  why:'The offshore document ends at Section 13, so the reference has no target.',prov:'Rule XREF-01 · deterministic',conf:'High'},
+ {id:'S1',g:'common',kind:'common',title:'Instructions to Subscribers',sub:'Section 1',blocks:[
+  {head:'Section 1, paragraph 1',loc:['Section 1, page 2','Section 1, page 2'],t:'Each prospective investor must complete, sign and return this Subscription Agreement to the distributor.'}],
+  why:'Identical in both documents. Candidate for the shared part of an Omnibus form.',prov:'Rule SIB-CLAUSE-01 · deterministic',conf:'High'},
+ {id:'S2',g:'common',kind:'common',title:'Custodian Information',sub:'Section 4',blocks:[
+  {head:'Section 4',loc:['Section 4, page 7','Section 4, page 7'],t:'Name of Custodian, custodian address and custodian account number are required for IRA Subscribers only.'}],
+  why:'Identical in both documents.',prov:'Rule SIB-CLAUSE-01 · deterministic',conf:'High'},
+ {id:'S6',g:'common',kind:'common',title:'Payment Instructions',sub:'Section 9',blocks:[
+  {head:'Section 9',loc:['Section 9, page 17','Section 9, page 18'],t:'Subscription proceeds must be wired to the Company’s escrow account.'}],
+  why:'Identical wording; page positions differ because of the added clauses.',prov:'Rule SIB-CLAUSE-01 · deterministic',conf:'High'},
+ {id:'S9',g:'common',kind:'common',title:'Anti-Money Laundering',sub:'Section 10',blocks:[
+  {head:'Section 10',loc:['Section 10, page 19','Section 10, page 20'],t:'The Subscriber will provide any information the Company requests to comply with anti-money laundering law.'}],
+  why:'Identical in both documents.',prov:'Rule SIB-CLAUSE-01 · deterministic',conf:'High'},
+ {id:'S8',g:'common',kind:'common',title:'Qualified Client Representation',sub:'Section 12',blocks:[
+  {head:'Section 12, paragraph 1',loc:['Section 12, page 22','Section 12, page 23'],t:'The Subscriber is a natural person who has a net worth, with spouse, of more than US$ 2,200,000.'}],
+  why:'Identical in both documents.',prov:'Rule SIB-CLAUSE-01 · deterministic',conf:'High'}
+]};
+const GROUPS={
+ version:[{id:'structure',t:'Structure'},{id:'terms',t:'Terminology renames',table:true},{id:'fees',t:'Fees and amounts'},{id:'drafting',t:'Drafting notes and placeholders'},{id:'unchanged',t:'Unchanged'},{id:'findings',t:'Earlier findings'},{id:'low',t:'Low confidence, not counted'}],
+ sibling:[{id:'differ',t:'Differing clauses'},{id:'only',t:'Only in one document'},{id:'findings',t:'Findings that differ between documents'},{id:'common',t:'Common clauses'}]
+};
+const FLIP={removed:'added',added:'removed',fixed:'new',new:'fixed'};
+const KIND={
+ removed:['Removed','minus','b-block'],added:['Added','plus','b-ok'],renamed:['Renamed','rename','b-note'],changed:['Changed','edit','b-fix'],
+ unchanged:['Unchanged','same','b-st'],fixed:['Fixed','check','b-ok'],still:['Still present','clock','b-fix'],new:['New','spark','b-new'],
+ low:['Low confidence','help','b-low'],common:['Common','same','b-st'],differ:['Differing','neq','b-fix'],only:['Only in','only','b-new'],fonly:['Only in','only','b-new']
+};
+
+/* ---------- state ---------- */
+const saved=safeParse(safeGet(store));
+const S={mode:'version',view:saved.view==='inline'?'inline':'side',base:'v24',cmp:'v26',filter:null,sel:'C1'};
+const reviewed={},counsel={};
+let toastT=null;
+const M=()=>MODES[S.mode];
+const items=()=>ITEMS[S.mode];
+const same=()=>S.base===S.cmp;
+const rev=()=>{const o=M().order;return S.base===o[1]&&S.cmp===o[0];};
+const kindOf=it=>{let k=it.kind;if(rev()&&FLIP[k])k=FLIP[k];return k;};
+const byId=id=>items().find(i=>i.id===id);
+const doc=id=>M().docs[id];
+
+/* ---------- diff helpers ---------- */
+function parse(s){const out=[],re=/\{([-+?])([\s\S]*?)\1\}/g;let m,last=0;
+  while((m=re.exec(s))){if(m.index>last)out.push(['=',s.slice(last,m.index)]);out.push([m[1],m[2]]);last=re.lastIndex;}
+  if(last<s.length)out.push(['=',s.slice(last)]);return out;}
+const swapT=t=>t.map(([k,s])=>[k==='-'?'+':k==='+'?'-':k,s]);
+const words=s=>s.trim().split(/\s+/).filter(Boolean).length;
+function side(tokens,sd){return tokens.map(([k,s])=>{
+  if(k==='=')return esc(s);
+  if(k==='?')return `<span class="fl">${esc(s)}</span>`;
+  if(k==='-'&&sd==='L')return `<del><span class="sr">[removed: </span>${esc(s)}<span class="sr">]</span></del>`;
+  if(k==='+'&&sd==='R')return `<ins><span class="sr">[added: </span>${esc(s)}<span class="sr">]</span></ins>`;
+  return '';}).join('');}
+function inline(tokens){return tokens.map(([k,s])=>{
+  if(k==='=')return esc(s);
+  if(k==='?')return `<span class="fl">${esc(s)}</span>`;
+  if(k==='-')return `<del><span class="sr">[removed: </span>${esc(s)}<span class="sr">]</span></del>`;
+  return `<ins><span class="sr">[added: </span>${esc(s)}<span class="sr">]</span></ins>`;}).join('');}
+function countText(tk){const r=tk.filter(t=>t[0]==='-').reduce((a,t)=>a+words(t[1]),0),a=tk.filter(t=>t[0]==='+').reduce((x,t)=>x+words(t[1]),0);
+  const p=[];if(r)p.push(`${r} word${r>1?'s':''} removed`);if(a)p.push(`${a} word${a>1?'s':''} added`);
+  if(p.length)return p.join(' · ');return tk.some(t=>t[0]==='?')?'Wording unchanged':'Identical';}
+function blockHTML(b){
+  let tk=parse(b.t),loc=b.loc.slice();if(rev()){tk=swapT(tk);loc.reverse();}
+  const dl=doc(S.base).short,dr=doc(S.cmp).short;
+  const head=`<div class="bh"><b>${esc(b.head)}</b><span>${countText(tk)}</span></div>`;
+  if(S.view==='inline'){
+    return `<div class="blk">${head}<div class="col"><div class="ch">${ic('pin')}<b>Base</b> ${esc(loc[0])} <span aria-hidden="true">→</span> <b>Compare</b> ${esc(loc[1])}</div><p class="doc">${inline(tk)}</p></div></div>`;}
+  const lh=tk.some(t=>t[0]==='='||t[0]==='?'||t[0]==='-'),rh=tk.some(t=>t[0]==='='||t[0]==='?'||t[0]==='+');
+  const col=(sd,name,l,has,tag)=>`<div class="col"><div class="ch"><b>${tag}</b> ${esc(name)} ${ic('pin')}${esc(l)}</div>${has?`<p class="doc">${side(tk,sd)}</p>`:`<p class="doc void">${ic('minus')}Not in ${esc(name)}</p>`}</div>`;
+  return `<div class="blk">${head}<div class="cols">${col('L',dl,loc[0],lh,'Base')}${col('R',dr,loc[1],rh,'Compare')}</div></div>`;}
+
+/* ---------- strip cells ---------- */
+function cellDefs(){
+  if(S.mode==='version')return[
+   {cap:'Changes',cells:[
+    {k:'added',l:'added',icon:'plus',m:i=>kindOf(i)==='added'},
+    {k:'removed',l:'removed',icon:'minus',m:i=>kindOf(i)==='removed'},
+    {k:'renamed',l:'renamed',icon:'rename',m:i=>kindOf(i)==='renamed'},
+    {k:'changed',l:'changed',icon:'edit',m:i=>kindOf(i)==='changed'}]},
+   {cap:'Earlier findings',cells:[
+    {k:'fixed',l:'fixed',icon:'check',m:i=>kindOf(i)==='fixed'},
+    {k:'still',l:'still present',icon:'clock',m:i=>kindOf(i)==='still'},
+    {k:'new',l:'new',icon:'spark',m:i=>kindOf(i)==='new'}]}];
+  const A=doc('A').short,B=doc('B').short;
+  return[
+   {cap:'Clauses',cells:[
+    {k:'common',l:'common',icon:'same',m:i=>i.kind==='common'},
+    {k:'differ',l:'differing',icon:'neq',m:i=>i.kind==='differ'},
+    {k:'only',l:'only in '+B,icon:'only',m:i=>i.kind==='only'}]},
+   {cap:'Findings delta',cells:[
+    {k:'fboth',l:'in both',icon:'check',stat:5,m:()=>false},
+    {k:'fA',l:'only in '+A,icon:'only',m:i=>i.kind==='fonly'&&i.onlyDoc==='A'},
+    {k:'fB',l:'only in '+B,icon:'only',m:i=>i.kind==='fonly'&&i.onlyDoc==='B'}]}];}
+const allCells=()=>cellDefs().flatMap(g=>g.cells);
+function renderStrip(){
+  const its=same()?[]:items();
+  const groups=cellDefs().map((g,gi)=>`${gi?'<span class="sdiv" aria-hidden="true"></span>':''}<span class="gcap">${g.cap}</span>${g.cells.map(c=>{
+    const n=c.stat!=null?c.stat:its.filter(c.m).length;
+    const inner=`${ic(c.icon)}<b>${n}</b> ${c.l}`;
+    if(c.stat!=null)return `<span class="chip static">${inner}</span>`;
+    if(!n)return `<button type="button" class="chip" disabled>${inner}</button>`;
+    return `<button type="button" class="chip" data-cell="${c.k}" aria-pressed="${S.filter===c.k}">${inner}</button>`;}).join('')}`).join('');
+  $('#strip').innerHTML=groups+`<button type="button" class="clear" id="clearf"${S.filter?'':' hidden'}>Clear</button>`;
+}
+
+/* ---------- list ---------- */
+function visible(){
+  if(same())return[];
+  let l=items();
+  if(S.filter){const c=allCells().find(x=>x.k===S.filter);if(c)l=l.filter(c.m);}
+  return l;}
+function badge(it){const k=kindOf(it),m=KIND[k];let lab=m[0];if(k==='only'||k==='fonly')lab='Only in '+doc(it.onlyDoc).short;
+  return `<span class="badge ${m[2]}">${ic(m[1])}${esc(lab)}</span>`;}
+const titleOf=it=>it.kind==='renamed'?`${it.from} to ${it.to}`:(rev()&&it.titleRev?it.titleRev:it.title);
+function cardHTML(it){
+  const sel=it.id===S.sel,sub=rev()&&it.subRev?it.subRev:it.sub;
+  const tags=(reviewed[it.id]?`<span class="tag">${ic('check')}Reviewed</span>`:'')+(counsel[it.id]?`<span class="tag">${ic('counsel')}Needs counsel</span>`:'');
+  return `<li class="card${sel?' sel':''}"><button class="chead" type="button" data-sel="${it.id}" aria-current="${sel}"><span class="l1">${badge(it)}${tags}</span><span class="ttl">${esc(titleOf(it))}</span><span class="l3"><span>${ic('pin')}${esc(sub)}</span></span></button></li>`;}
+function tableHTML(list){
+  const r=rev(),tot=list.reduce((a,i)=>a+i.n,0);
+  return `<table class="rt"><caption class="sr">Terminology renames with occurrence counts</caption><thead><tr><th scope="col">${r?'Was in compare':'Before'}</th><th scope="col">${r?'Now':'After'}</th><th scope="col" class="num">Uses</th></tr></thead><tbody>${list.map(i=>{
+    const a=r?i.to:i.from,b=r?i.from:i.to,sel=i.id===S.sel;
+    return `<tr class="${sel?'sel':''}"><td><button type="button" class="rb" data-sel="${i.id}" aria-current="${sel}"><span class="sr">Renamed </span>${esc(a)}${reviewed[i.id]?ic('check'):''}</button></td><td>${ic('rename')} ${esc(b)}</td><td class="num">${i.n}</td></tr>`;}).join('')}</tbody><tfoot><tr><td colspan="3">${tot} uses in the ${r?'compare':'base'} version across ${list.length} terms</td></tr></tfoot></table>`;}
+function renderList(){
+  const vis=visible(),sm=same();
+  let h='';
+  if(sm){h=`<div class="empty">${ic('check')}<b>No differences</b><span>Both sides are the same document. Pick two different documents to compare.</span></div>`;}
+  else if(!vis.length){h=`<div class="empty"><b>Nothing matches this filter.</b></div>`;}
+  else GROUPS[S.mode].forEach(g=>{
+    const l=vis.filter(i=>i.g===g.id);if(!l.length)return;
+    h+=`<section class="grp${g.id==='low'?' muted':''}" aria-label="${esc(g.t)}"><h3>${esc(g.t)} <span>(${l.length})</span></h3>${g.table?tableHTML(l):`<ul class="cards">${l.map(cardHTML).join('')}</ul>`}</section>`;});
+  $('#llist').innerHTML=h;
+  $('#sum').textContent=sm?'0 changes':`${vis.length} shown · ${Object.keys(reviewed).filter(k=>reviewed[k]).length} reviewed`;
+  const hint=$('#modehint');
+  hint.hidden=S.mode!=='sibling'||sm;
+  hint.textContent='Omnibus view: common clauses can live once in a shared form; differing clauses become entity-specific variants.';
+  $('#lt').textContent=S.mode==='sibling'?'Clauses':'Changes';
+}
+
+/* ---------- diff pane ---------- */
+function outlineHTML(){
+  const r=rev();
+  const row=(a,b,res)=>`<tr><td>${esc(a)}</td><td>${b}</td><td class="${res==='Same'?'same':''}">${ic(res==='Same'?'same':res==='Added'?'plus':'minus')} ${res}</td></tr>`;
+  const sec=OUT.map(([n,t])=>row(`Section ${n}`,esc(t),'Same')).join('');
+  const parts=PARTS.map(([n,t])=>row(`Section 6, Part ${n}`,esc(t),'Same')).join('');
+  const app=row('Appendix A','Eligible Investor Criteria','Same')+row('Appendix B','Investor Questionnaire','Same')+row('Appendix C','Subscriber Wire Confirmation Form',r?'Added':'Removed');
+  return `<div class="note"><table class="ot"><caption class="sr">Section list in both versions</caption><thead><tr><th scope="col">Where</th><th scope="col">Title in both versions</th><th scope="col">Result</th></tr></thead><tbody>${sec}${parts}${app}</tbody></table></div>`;}
+function renderDiff(){
+  const el=$('#dpin');
+  if(same()){el.innerHTML=`<div class="empty">${ic('check')}<b>No differences</b><span>The base and compare documents are the same. Nothing to show.</span></div>`;return;}
+  const it=byId(S.sel);
+  if(!it||!visible().includes(it)){el.innerHTML=`<div class="empty"><b>Select a change to see the clauses side by side.</b></div>`;return;}
+  const k=kindOf(it);
+  let sub='';
+  if(it.kind==='renamed'){const a=rev()?it.to:it.from,b=rev()?it.from:it.to;sub=`<span class="tag">${ic('rename')}${esc(a)} → ${esc(b)}</span><span class="tag">${it.n} uses in ${it.secs} sections</span>`;}
+  const lowNote=k==='low'?`<p class="note" style="background:var(--paper)"><span><b>Low confidence, not asserted.</b> This is not a finding and is not counted in the summary.</span></p>`:'';
+  el.innerHTML=`
+   <div class="dh"><div><span class="l1">${badge(it)}${sub}</span><h2>${esc(titleOf(it))}</h2></div>
+    <div class="seg" role="group" aria-label="Diff layout"><button type="button" data-view="side" aria-pressed="${S.view==='side'}">Side by side</button><button type="button" data-view="inline" aria-pressed="${S.view==='inline'}">Inline</button></div></div>
+   <div class="legend" aria-label="Legend"><span><ins>added words</ins></span><span><del>removed words</del></span><span><span class="fl">flagged, unchanged</span></span></div>
+   ${lowNote}
+   ${it.outline?outlineHTML():it.blocks.map(blockHTML).join('')}
+   <div class="note">
+    <p>${esc(it.why)}</p>
+    ${it.occ?`<ul class="occ" aria-label="Where the phrase appears">${it.occ.map(o=>`<li><span>${esc(o[0])}</span><b>×${o[1]}</b></li>`).join('')}</ul>`:''}
+    <div class="prov"><span>${ic(/^AI/.test(it.prov)?'spark':'rule')}${esc(it.prov)}</span><span>${ic(k==='low'?'help':'check')}Confidence: ${esc(it.conf)}</span></div>
+    <div class="acts"><button type="button" class="btn" data-act="review" data-id="${it.id}" aria-pressed="${!!reviewed[it.id]}">${ic('check')}${reviewed[it.id]?'Reviewed':'Mark reviewed'}</button>
+    <button type="button" class="btn" data-act="counsel" data-id="${it.id}" aria-pressed="${!!counsel[it.id]}">${ic('counsel')}Needs counsel</button></div>
+   </div>`;
+}
+
+/* ---------- band / header ---------- */
+function fillPickers(){
+  const m=M(),opts=m.order.map(id=>`<option value="${id}">${esc(m.docs[id].opt)}</option>`).join('');
+  $('#pBase').innerHTML=opts;$('#pCmp').innerHTML=opts;
+  $('#pBase').value=S.base;$('#pCmp').value=S.cmp;
+  $('#pBase').setAttribute('aria-label',m.lBase);$('#pCmp').setAttribute('aria-label',m.lCmp);}
+function renderBand(){
+  $$('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===S.mode));
+  $('#pBase').title=doc(S.base).meta;$('#pCmp').title=doc(S.cmp).meta;
+  $('#meta').innerHTML=`<span><b>Law firm</b> ${esc(FIRM)}</span><span><b>Fund</b> ${esc(FUND)}</span><span><b>Comparing</b> ${esc(doc(S.base).short)} with ${esc(doc(S.cmp).short)}${rev()?' (direction reversed)':''}</span><span><b>Result</b> from cache</span>`;
+  renderStrip();}
+function counselBadge(){const n=Object.keys(counsel).filter(k=>counsel[k]).length,c=$('#counselCount');c.hidden=!n;c.textContent=n;}
+function render(o={}){
+  renderBand();renderList();renderDiff();counselBadge();
+  safeSet(store,JSON.stringify({view:S.view}));
+  if(o.focus){const b=document.querySelector(`[data-sel="${o.focus}"]`);b&&b.focus({preventScroll:true});}
+  if(o.focusSel){const e=$(o.focusSel);e&&e.focus();}
+}
+function toast(msg){$('#toastMsg').textContent=msg;$('#toast').classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>$('#toast').classList.remove('on'),2600);}
+function ensureSel(){const v=visible();if(!v.includes(byId(S.sel)))S.sel=v.length?v[0].id:S.sel;}
+function select(id,focus){S.sel=id;render({focus:focus?id:null});$('#dp').scrollTop=0;}
+function setMode(m){if(S.mode===m)return;S.mode=m;S.base=MODES[m].order[0];S.cmp=MODES[m].order[1];S.filter=null;S.sel=m==='version'?'C1':'S3';fillPickers();render();}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button');if(!t)return;
+  if(t.dataset.other){toast(t.dataset.other+' is designed in a separate mockup.');return;}
+  if(t.dataset.mode){setMode(t.dataset.mode);return;}
+  if(t.dataset.sel){select(t.dataset.sel,true);return;}
+  if(t.dataset.cell){S.filter=S.filter===t.dataset.cell?null:t.dataset.cell;ensureSel();render({focusSel:S.filter?`[data-cell="${S.filter}"]`:null});return;}
+  if(t.id==='clearf'){S.filter=null;render();return;}
+  if(t.id==='swapBtn'){const b=S.base;S.base=S.cmp;S.cmp=b;$('#pBase').value=S.base;$('#pCmp').value=S.cmp;ensureSel();render({focusSel:'#swapBtn'});return;}
+  if(t.dataset.view){S.view=t.dataset.view;render({focusSel:`[data-view="${S.view}"]`});return;}
+  const a=t.dataset.act,id=t.dataset.id;
+  if(a==='review'){reviewed[id]=!reviewed[id];render({focusSel:`[data-act="review"]`});toast(reviewed[id]?'Marked as reviewed.':'Review mark removed.');}
+  if(a==='counsel'){counsel[id]=!counsel[id];render({focusSel:`[data-act="counsel"]`});toast(counsel[id]?'Added to the counsel sheet draft.':'Removed from the counsel sheet draft.');}
+});
+document.addEventListener('change',e=>{
+  if(e.target.id==='pBase'||e.target.id==='pCmp'){S.base=$('#pBase').value;S.cmp=$('#pCmp').value;ensureSel();render();}
+});
+document.addEventListener('keydown',e=>{
+  if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)||e.metaKey||e.ctrlKey||e.altKey)return;
+  if(e.key==='Escape'&&S.filter){S.filter=null;render();return;}
+  if(e.key==='j'||e.key==='k'){
+    const ids=GROUPS[S.mode].flatMap(g=>visible().filter(i=>i.g===g.id)).map(i=>i.id);if(!ids.length)return;
+    let i=ids.indexOf(S.sel);i=e.key==='j'?Math.min(ids.length-1,i+1):Math.max(0,i<0?0:i-1);
+    select(ids[i],true);e.preventDefault();}
+});
+
+fillPickers();render();
+})();
+</script>
+</body>
+</html>

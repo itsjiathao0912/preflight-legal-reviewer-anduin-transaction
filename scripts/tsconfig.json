@@ -1,0 +1,6 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": { "lib": ["ES2022", "DOM", "DOM.Iterable"], "types": ["node"] },
+  "include": ["src", "test", "spikes", "vitest.config.ts"],
+  "exclude": ["spikes/s01-s02/worker.ts", "src/spikes/s06-local/entry.ts"]
+}

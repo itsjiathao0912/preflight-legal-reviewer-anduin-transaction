@@ -1,0 +1,16 @@
+process/
+docs/
+design/
+samples/
+.claude/
+.codex/
+.agents/
+.vibecode-backup*/
+pnpm-lock.yaml
+CLAUDE.md
+AGENTS.md
+**/dist/
+**/.wrangler/
+playwright-report/
+test-results/
+apps/worker/worker-configuration.d.ts

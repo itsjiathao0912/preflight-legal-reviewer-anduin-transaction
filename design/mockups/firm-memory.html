@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Firm memory and audit trail · Sub-doc QA (design trial)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
+<style>
+/* ===== Tokens (verbatim from review-workspace.html) ===== */
+:root{
+  --ground:#E9ECE9;      /* app ground: low-chroma cool stone */
+  --panel:#F4F6F3;       /* panels one tone step above ground */
+  --card:#FBFCFA;        /* cards one step above panel */
+  --paper:#FDFEFD;       /* document page */
+  --ink:#15181B;
+  --ink-2:#434A50;       /* 8.0:1 on panel */
+  --ink-3:#5C646B;       /* 5.6:1 on panel */
+  --accent:#1D5C57;      /* the single accent: deep teal */
+  --accent-tint:#D9E8E5;
+  --step:#DDE2DD;        /* tone step used instead of rules */
+  --block-fg:#8A1C1C; --block-bg:#F7E2DF;
+  --fix-fg:#734400;   --fix-bg:#F5E8C8;
+  --note-fg:#38454F;  --note-bg:#DFE6EA;
+  --ok-fg:#1B5632;    --ok-bg:#DAEEDF;
+  --mark:#F3D676;
+  --r:4px;
+  --sans:'Geist',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --serif:'Newsreader',Georgia,'Times New Roman',serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--ground);color:var(--ink);font:400 14px/1.5 var(--sans);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+button,select,textarea,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+svg.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.skip{position:absolute;left:8px;top:-48px;background:var(--ink);color:#fff;padding:8px 13px;border-radius:var(--r);z-index:50}
+.skip:focus{top:8px}
+
+/* ===== Shell ===== */
+.app{height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr) auto;min-width:1000px}
+header.top{padding:14px 24px 0;display:grid;gap:13px}
+.row1{display:flex;align-items:center;gap:20px;min-width:0}
+.brand{display:flex;align-items:center;gap:10px;font:500 20px/1 var(--serif);letter-spacing:-.01em;white-space:nowrap}
+.brand svg{width:28px;height:28px}
+.docid{min-width:0;flex:1;padding-left:20px;margin-left:2px;position:relative}
+.docid::before{content:"";position:absolute;left:0;top:4px;bottom:4px;width:2px;background:var(--step)}
+.docid h1{margin:0;font:500 14px/1.3 var(--sans)}
+.docid .meta{display:flex;gap:4px 18px;color:var(--ink-3);font-size:13px;flex-wrap:wrap}
+.docid .meta b{font-weight:500;color:var(--ink-2)}
+.tools{display:flex;align-items:center;gap:13px}
+.tabs{display:flex;gap:4px;align-items:flex-end}
+.tabs button{border:0;background:transparent;padding:8px 13px;font-size:14px;color:var(--ink-3);border-radius:var(--r) var(--r) 0 0;display:flex;gap:6px;align-items:center}
+.tabs button[aria-selected=true]{background:var(--panel);color:var(--ink);font-weight:500}
+.tabs button[aria-selected=false]:hover{color:var(--ink)}
+.cnt{background:var(--accent);color:#fff;border-radius:999px;font-size:13px;padding:0 6px;min-width:18px;text-align:center}
+.cnt.quiet{background:var(--step);color:var(--ink-2)}
+
+/* ===== Page body ===== */
+main.page{background:var(--panel);overflow:auto;min-height:0}
+.wrap{padding:20px 24px 32px;display:grid;gap:20px;max-width:1440px}
+.band{display:grid;grid-template-columns:minmax(0,1fr) minmax(400px,560px);gap:20px;align-items:stretch}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-content:start}
+.stat{background:var(--card);border-radius:var(--r);padding:10px 14px;display:grid;gap:2px;align-content:start}
+.stat .k{font-size:13px;color:var(--ink-3)}
+.stat .n{font:500 28px/1.15 var(--serif);letter-spacing:-.02em}
+.stat .s{font-size:13px;color:var(--ink-2)}
+.metric{background:var(--accent-tint);color:#12302D;border-radius:var(--r);padding:16px 18px;display:grid;gap:10px;align-content:start}
+.metric .top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.metric .big{font:500 28px/1.1 var(--serif);letter-spacing:-.02em;color:var(--accent)}
+.metric .lab{font-weight:600;font-size:14px}
+.metric p{margin:0;font-size:14px;color:#1E3F3B}
+.bar{display:grid;grid-template-columns:repeat(11,1fr);gap:3px}
+.bar span{height:10px;border-radius:2px;background:#B9CFCB}
+.bar span.on{background:var(--accent)}
+.legend{list-style:none;margin:0;padding:0;display:grid;gap:3px;font-size:13px;color:#1E3F3B}
+.legend li{display:grid;grid-template-columns:14px 1fr;gap:8px;align-items:start}
+.legend .sw{width:12px;height:10px;border-radius:2px;background:#B9CFCB;margin-top:5px}
+.legend .sw.on{background:var(--accent)}
+
+.panel[hidden]{display:none}
+.phead{display:grid;gap:2px;margin-bottom:13px}
+.phead h2{margin:0;font:500 20px/1.2 var(--serif);letter-spacing:-.01em}
+.phead p{margin:0;color:var(--ink-3);font-size:14px;max-width:78ch}
+h3.sec{margin:0 0 8px;font:600 14px/1.3 var(--sans);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* controls */
+.filters{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
+.filters label,.field label{display:grid;gap:2px;font-size:13px;color:var(--ink-3)}
+select{appearance:none;-webkit-appearance:none;background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23434A50' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") right 8px center no-repeat;border:0;border-radius:var(--r);padding:7px 26px 7px 10px;font-size:14px;min-width:210px;color:var(--ink)}
+.seg{display:inline-flex;background:var(--step);border-radius:var(--r);padding:2px}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:3px;font-size:13px;font-weight:500;color:var(--ink-2)}
+.seg button[aria-pressed=true]{background:var(--card);color:var(--ink)}
+.shown{margin-left:auto;color:var(--ink-3);font-size:13px}
+.btn{border:0;border-radius:var(--r);padding:7px 13px;font-size:13px;font-weight:500;display:inline-flex;gap:6px;align-items:center;background:var(--step);color:var(--ink)}
+.btn:hover{background:#D1D8D2}
+.btn:active{transform:scale(.98)}
+.btn.pri{background:var(--ink);color:#fff}
+.btn.pri:hover{background:#2c3238}
+.btn.lnk{background:transparent;padding:2px 4px;text-decoration:underline;text-underline-offset:3px;color:var(--ink-2)}
+.btn svg{width:14px;height:14px}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+
+/* tags + badges */
+.badge{white-space:nowrap;display:inline-flex;gap:5px;align-items:center;font-size:13px;font-weight:600;padding:2px 8px 2px 6px;border-radius:3px}
+.badge svg{width:14px;height:14px}
+.b-ok{background:var(--ok-bg);color:var(--ok-fg)}
+.b-note{background:var(--note-bg);color:var(--note-fg)}
+.b-ans{background:var(--accent-tint);color:var(--accent)}
+.b-rule{background:var(--step);color:var(--ink-2)}
+.tag{white-space:nowrap;font-size:13px;font-weight:500;padding:1px 7px;border-radius:3px;display:inline-flex;gap:4px;align-items:center}
+.tag svg{width:13px;height:13px}
+.t-new{background:var(--accent-tint);color:var(--accent)}
+.t-re{background:var(--block-bg);color:var(--block-fg)}
+.t-st{background:var(--step);color:var(--ink-2)}
+.mask{font-family:var(--sans);font-size:14px;background:var(--step);padding:1px 6px;border-radius:3px;letter-spacing:.04em}
+.muted{color:var(--ink-3);font-size:13px}
+
+/* tables: single-line rows, tone steps, no rules */
+table.t{width:100%;border-collapse:separate;border-spacing:0 3px;table-layout:fixed}
+table.t th{text-align:left;font:600 13px/1.3 var(--sans);color:var(--ink-3);padding:0 12px 2px;white-space:nowrap}
+table.t td{background:var(--card);padding:0 12px;height:46px;vertical-align:middle;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+table.t td:first-child{border-radius:var(--r) 0 0 var(--r)}
+table.t td:last-child{border-radius:0 var(--r) var(--r) 0}
+table.t tr.hl td{background:var(--accent-tint)}
+table.t tr:focus{outline:none}
+table.t tr:focus-visible td{outline:2px solid var(--accent);outline-offset:-2px}
+table.t.wrapok td{white-space:normal;height:auto;padding:10px 12px;vertical-align:top}
+q.s{quotes:"\201C" "\201D";font:400 15px/1.5 var(--serif)}
+td.pass q.s{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr.revoked td.pass q.s{text-decoration:line-through;text-decoration-thickness:1px;color:var(--ink-3)}
+.exp{border:0;background:transparent;padding:4px;border-radius:3px;display:inline-flex;vertical-align:middle;color:var(--ink-2);margin-right:4px}
+.exp:hover{background:var(--step)}
+.exp svg{transition:transform .2s var(--ease)}
+.exp[aria-expanded=true] svg{transform:rotate(90deg)}
+tr.detail td{height:auto;white-space:normal;padding:12px 16px 14px 44px;background:var(--paper);border-radius:var(--r)}
+.dgrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+.dgrid .k{font-size:13px;color:var(--ink-3);display:block}
+.empty{padding:28px 8px;color:var(--ink-3);text-align:center;background:var(--card);border-radius:var(--r)}
+.c-dec{width:168px}.c-cls{width:150px}.c-fund{width:140px}.c-who{width:150px}.c-st{width:176px}
+.linkbtn{border:0;background:transparent;padding:2px 4px;font-size:13px;text-decoration:underline;text-underline-offset:3px;color:var(--ink-2);border-radius:3px}
+.linkbtn:hover{color:var(--ink)}
+
+/* rules: scanning layout */
+.strip{background:var(--accent-tint);border-radius:var(--r);padding:8px 8px 8px 16px;display:grid;gap:4px;margin-bottom:20px}
+.strip .sh{font-weight:600;font-size:14px;color:#12302D;padding:4px 0}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:14px;align-items:center;min-height:44px;padding-right:0}
+.srow .rule{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;color:#12302D}
+.srow .linkbtn{color:#1E3F3B}
+.rhead{display:flex;align-items:center;gap:12px;margin:0 0 6px}
+.rhead h3{margin:0;font:600 14px/1.3 var(--sans)}
+.rhead .muted{flex:1}
+.menuwrap{position:relative;display:inline-block}
+.dots{border:0;background:transparent;padding:6px;border-radius:3px;color:var(--ink-2);display:inline-flex}
+.dots:hover,.dots[aria-expanded=true]{background:var(--step)}
+.menu{position:absolute;right:0;top:calc(100% + 2px);background:var(--card);border-radius:var(--r);padding:4px;z-index:20;min-width:150px;display:grid;gap:1px;box-shadow:0 10px 30px -13px rgba(21,24,27,.22)}
+.menu button{border:0;background:transparent;text-align:left;padding:7px 10px;border-radius:3px;font-size:14px;display:flex;gap:8px;align-items:center}
+.menu button:hover{background:var(--panel)}
+table.t td.act{overflow:visible;text-align:right;width:56px}
+
+/* audit */
+.lockbar{display:flex;gap:10px;align-items:center;background:var(--note-bg);color:var(--note-fg);border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:14px}
+.lockbar b{font-weight:600}
+table.a td.n{color:var(--ink-3);width:56px}
+
+/* modal dialog */
+dialog{border:0;padding:0;border-radius:var(--r);background:var(--card);color:var(--ink);width:min(560px,calc(100vw - 48px));max-height:calc(100dvh - 48px);overflow:auto}
+dialog::backdrop{background:rgba(21,24,27,.45)}
+.dlg{display:grid;gap:14px;padding:20px}
+.dlg .dh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.dlg h2{margin:0;font:600 16px/1.35 var(--sans)}
+.dlg .xb{border:0;background:transparent;padding:4px;border-radius:3px;color:var(--ink-2);display:inline-flex}
+.dlg .xb:hover{background:var(--step)}
+.dlg .sum{background:var(--panel);border-radius:var(--r);padding:10px 12px;display:grid;gap:4px}
+.dlg .sum .l1{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--ink-3)}
+.dlg p{margin:0;font-size:14px;color:var(--ink-2)}
+.dlg label.l{font-weight:600;font-size:13px;display:grid;gap:4px}
+.dlg label.l .opt{font-weight:400;color:var(--ink-3)}
+.dlg textarea,.dlg input[type=text]{width:100%;border:0;border-radius:var(--r);padding:8px 10px;font-size:16px;background:var(--panel);resize:vertical}
+.dlg textarea{min-height:64px}
+.dlg .acts{justify-content:flex-end;gap:8px}
+.err{color:var(--block-fg);font-weight:600;font-size:13px;display:none;gap:6px;align-items:center}
+.err.on{display:flex}
+ul.ev{list-style:none;margin:0;padding:0;display:grid;gap:4px;max-height:220px;overflow:auto}
+ul.ev li{background:var(--panel);border-radius:var(--r);padding:8px 12px;display:grid;gap:2px}
+ul.ev .l1{font-size:13px;color:var(--ink-3);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.callout{display:flex;gap:10px;align-items:flex-start;background:var(--fix-bg);color:#3F2A00;border-radius:var(--r);padding:8px 12px;font-size:13px}
+.callout svg{margin-top:2px;color:var(--fix-fg)}
+.btn.warn{background:var(--block-bg);color:var(--block-fg)}
+
+/* footer: one muted line + tooltip */
+footer.kept{background:var(--ground);padding:8px 24px;display:flex;gap:6px;align-items:center;font-size:13px;color:var(--ink-3);position:relative}
+.tipwrap{position:relative;display:inline-flex}
+.tipbtn{border:0;background:transparent;padding:3px;border-radius:3px;color:var(--ink-3);display:inline-flex}
+.tipbtn:hover{color:var(--ink)}
+.tipbox{position:absolute;left:-8px;bottom:calc(100% + 6px);width:380px;background:var(--ink);color:#fff;border-radius:var(--r);padding:10px 12px;font-size:13px;line-height:1.45;display:none;z-index:40}
+.tipwrap:hover .tipbox,.tipwrap:focus-within .tipbox{display:block}
+
+.toast{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:var(--r);padding:10px 14px;display:none;gap:14px;align-items:center;z-index:60;font-size:13px}
+.toast.on{display:flex}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* narrow desktop (1024) */
+@media (max-width:1279px){
+  .band{grid-template-columns:minmax(0,1fr)}
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .brand span{display:none}
+  .c-cls{display:none}.c-dec{width:150px}.c-who{width:130px}.c-st{width:168px}
+  .dgrid{grid-template-columns:1fr 1fr}
+  select{min-width:180px}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ===== Icon sprite (same bespoke style and stroke weight as the review workspace) ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="logo" viewBox="0 0 28 28"><rect x="2" y="2" width="24" height="24" rx="5" fill="#15181B"/><path d="M8 9.5h7M8 14h4.5M8 18.5h5" stroke="#E9ECE9" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M15.5 17l2.6 2.6L22 14.6" stroke="#8FD0C6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="stop" viewBox="0 0 24 24"><path d="M8.2 3h7.6L21 8.2v7.6L15.8 21H8.2L3 15.8V8.2z"/><path d="M12 7.5v5.2M12 16h.01"/></symbol>
+  <symbol id="warn" viewBox="0 0 24 24"><path d="M12 3.5l9.2 16H2.8z"/><path d="M12 10v4.4M12 17.2h.01"/></symbol>
+  <symbol id="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.2M12 7.8h.01"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M7.8 12.4l2.9 2.9 5.6-6"/></symbol>
+  <symbol id="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="spark" viewBox="0 0 24 24"><path d="M12 3c.6 4.800 2.200 6.400 7 7-4.800.6-6.400 2.200-7 7-.6-4.800-2.200-6.400-7-7 4.800-.6 6.400-2.200 7-7z"/></symbol>
+  <symbol id="rule" viewBox="0 0 24 24"><path d="M8 4H6.500A1.500 1.500 0 005 5.500v13A1.500 1.500 0 006.500 20H8M16 4h1.500A1.500 1.500 0 0119 5.500v13a1.500 1.500 0 01-1.500 1.500H16"/><path d="M9.500 12h5"/></symbol>
+  <symbol id="memory" viewBox="0 0 24 24"><path d="M4 12a8 8 0 108-8 8 8 0 00-6 2.700"/><path d="M4 4v3.500h3.500M12 8v4.200l2.800 1.700"/></symbol>
+  <symbol id="counsel" viewBox="0 0 24 24"><path d="M4 5.500A1.500 1.500 0 015.500 4h13A1.500 1.500 0 0120 5.500v9a1.500 1.500 0 01-1.500 1.500H11l-4.500 4v-4h-1A1.500 1.500 0 014 14.500z"/><path d="M10.200 8.800a1.900 1.900 0 113 1.500c-.7.500-1.200.8-1.200 1.600M12 13.700h.01"/></symbol>
+  <symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="10.500" width="14" height="9.500" rx="2"/><path d="M8.500 10.500V8a3.500 3.500 0 017 0v2.500M12 14.500v2"/></symbol>
+  <symbol id="pin" viewBox="0 0 24 24"><path d="M12 21s6.500-5.800 6.500-11A6.500 6.500 0 005.500 10c0 5.200 6.500 11 6.500 11z"/><circle cx="12" cy="10" r="2.200"/></symbol>
+  <symbol id="undo" viewBox="0 0 24 24"><path d="M9 7L4.500 11.500 9 16"/><path d="M5 11.500h8.500A5.500 5.500 0 0119 17v1"/></symbol>
+  <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.300l3.200 2"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="log" viewBox="0 0 24 24"><path d="M6 4h12v16H6z"/><path d="M9 8.500h6M9 12h6M9 15.500h3.500"/></symbol>
+  <symbol id="dots" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18" cy="12" r="1.2"/></symbol>
+  <symbol id="pencil" viewBox="0 0 24 24"><path d="M5 19l1-4L16.500 4.500a2 2 0 013 3L9 18z"/><path d="M14.500 6.500l3 3"/></symbol>
+  <symbol id="hash" viewBox="0 0 24 24"><path d="M9.500 4L8 20M16 4l-1.500 16M4.500 9h16M3.500 15h16"/></symbol>
+</svg>
+
+<div class="app">
+  <header class="top">
+    <div class="row1">
+      <div class="brand"><svg class="i" style="stroke:none;fill:none" aria-hidden="true"><use href="#logo"/></svg><span>Sub-doc QA</span></div>
+      <div class="docid">
+        <h1>Hartwell &amp; Crane LLP · Firm memory</h1>
+        <div class="meta"><span><b>Also known as</b> Hartwell Crane · H&amp;C LLP · Hartwell &amp; Crane (Delaware) LLP</span><span><b>Funds reviewed</b> Master Fund 2019 · NGI 2024 (Fund II)</span></div>
+      </div>
+      <div class="tools"><button class="btn" type="button" id="back"><svg class="i" aria-hidden="true"><use href="#back"/></svg>Back to review</button></div>
+    </div>
+    <div class="row1" style="justify-content:space-between;align-items:flex-end">
+      <div class="tabs" role="tablist" aria-label="Firm memory views" id="tablist">
+        <button type="button" role="tab" id="tab-decisions" aria-controls="p-decisions" aria-selected="true" data-tab="decisions"><svg class="i" aria-hidden="true"><use href="#memory"/></svg>Decisions <span class="cnt quiet" id="cDec">0</span></button>
+        <button type="button" role="tab" id="tab-rules" aria-controls="p-rules" aria-selected="false" tabindex="-1" data-tab="rules"><svg class="i" aria-hidden="true"><use href="#rule"/></svg>Rules <span class="cnt quiet" id="cRule">0</span><span class="cnt" id="cProp" hidden>0</span></button>
+        <button type="button" role="tab" id="tab-audit" aria-controls="p-audit" aria-selected="false" tabindex="-1" data-tab="audit"><svg class="i" aria-hidden="true"><use href="#log"/></svg>Audit trail <span class="cnt quiet" id="cAud">0</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page" id="main" tabindex="-1">
+    <div class="wrap">
+      <section class="band" aria-label="Firm summary">
+        <div class="stats">
+          <div class="stat"><span class="n" id="sDec">0</span><span class="k">Decisions</span><span class="s" id="sDecS"></span></div>
+          <div class="stat"><span class="n" id="sRule">0</span><span class="k">Active rules</span><span class="s">AI context only</span></div>
+          <div class="stat"><span class="n" id="sProp">0</span><span class="k">Pending proposals</span><span class="s">No effect until approved</span></div>
+        </div>
+        <section class="metric" aria-label="Time saved by memory on Fund II">
+          <div class="top"><span class="big">55% less work</span><span class="lab">Fund II (NGI 2024) review</span></div>
+          <p>6 of 11 findings were already handled in Master Fund 2019, so the analyst reviews 5 instead of 11.</p>
+          <div class="bar" role="img" aria-label="11 findings in total: 6 already handled, 5 still need review"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span><span></span><span></span><span></span></div>
+          <ul class="legend">
+            <li><span class="sw on"></span><span><b>6 already handled:</b> same wording, same firm, decision reused.</span></li>
+            <li><span class="sw"></span><span><b>5 still need you:</b> 2 new defects, 1 edited passage (“Section 4” became “Section 5”), 2 blocking items kept for re-confirmation.</span></li>
+          </ul>
+        </section>
+      </section>
+
+      <section class="panel" id="p-decisions" role="tabpanel" aria-labelledby="tab-decisions"></section>
+      <section class="panel" id="p-rules" role="tabpanel" aria-labelledby="tab-rules" hidden></section>
+      <section class="panel" id="p-audit" role="tabpanel" aria-labelledby="tab-audit" hidden></section>
+    </div>
+  </main>
+
+  <footer class="kept" aria-label="Data kept">
+    <span>Memory keeps snippets, hashes and metadata only.</span>
+    <span class="tipwrap"><button class="tipbtn" type="button" aria-describedby="tip" aria-label="What memory keeps and for how long"><svg class="i" aria-hidden="true"><use href="#info"/></svg></button><span class="tipbox" id="tip" role="tooltip"><b>Data kept for memory:</b> short quoted snippets, hashes and metadata, never the full document. Sensitive values such as bank and routing numbers are masked before they are stored. <b>Retention:</b> 30 days in sandbox workspaces (proposed default, stated in the privacy notice). The shared demo workspace is not purged.</span></span>
+  </footer>
+</div>
+<dialog id="dlg" aria-labelledby="dlgT" aria-modal="true"></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span></div>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const ic=(n,c='')=>`<svg class="i ${c}" aria-hidden="true"><use href="#${n}"/></svg>`;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const reduce=(window.matchMedia?matchMedia('(prefers-reduced-motion: reduce)').matches:false);
+const FIRM='Hartwell & Crane LLP', ME='Priya Raman';
+
+/* ----- data (fictional) ----- */
+const D=[
+ {id:'D-01',cls:'Undefined term',dec:'dismissed',fund:'Master Fund 2019',sec:'Section 1',quote:'…returned to the Distributor at the address in Section 1…',reason:"Law firm's standard wording",who:'Duc Pham',when:'3 Feb 2026, 11:02',status:'active'},
+ {id:'D-02',cls:'Undefined term',dec:'dismissed',fund:'Master Fund 2019',sec:'Section 3',quote:'…the Distributor may reject any subscription in whole or in part…',reason:"Law firm's standard wording",who:'Duc Pham',when:'3 Feb 2026, 11:05',status:'active'},
+ {id:'D-03',cls:'Broken cross-reference',dec:'dismissed',fund:'Master Fund 2019',sec:'Section 1',quote:'…enter the amount of the subscription in Part B of Section 4…',reason:"Law firm's standard wording",who:'Duc Pham',when:'3 Feb 2026, 11:09',status:'active'},
+ {id:'D-04',cls:'Drafting note',dec:'accepted',fund:'Master Fund 2019',sec:'Section 6, Part B',quote:'[NTD: confirm the Class S minimum with tax counsel before filing.]',reason:'Will be removed in the source document',who:'Minh Anh Nguyen',when:'5 Feb 2026, 14:30',status:'active'},
+ {id:'D-05',cls:'Undefined term',dec:'dismissed',fund:'Master Fund 2019',sec:'Section 5',quote:'…on the Closing Date, the Subscriber’s funds are released to the Company…',reason:'Does not affect the form',who:'Duc Pham',when:'9 Feb 2026, 09:48',status:'active'},
+ {id:'D-06',cls:'Undefined term',dec:'dismissed',fund:'Master Fund 2019',sec:'Section 5',quote:'…the Closing Date may be extended by the Company on notice…',reason:'Does not affect the form',who:'Duc Pham',when:'9 Feb 2026, 09:51',status:'active'},
+ {id:'D-07',cls:'Broken cross-reference',dec:'answered',fund:'Master Fund 2019',sec:'Section 2',quote:'…complete the Investor Questionnaire attached as Appendix B…',answer:'Counsel chose A',note:'Appendix B is the Investor Questionnaire; the heading is correct.',who:'Minh Anh Nguyen',when:'12 Feb 2026, 10:14',status:'active'},
+ {id:'D-08',cls:'Term inconsistency',dec:'dismissed',fund:'Master Fund 2019',sec:'Section 8(c)',quote:'…understands that the offered Units will not be registered…',reason:'Tool false alarm',who:'Duc Pham',when:'17 Feb 2026, 15:40',status:'revoked',rev:{who:'Priya Raman',when:'9 Oct 2026, 09:30',why:'The 2024 template renamed Units to Shares; this one is a real leftover.'}},
+ {id:'D-09',cls:'Sensitive data',dec:'dismissed',fund:'NGI 2024',sec:'Section 9',quote:'ABA routing number: ',mask:'••••• 8097',reason:'Does not affect the form',who:'Priya Raman',when:'12 Oct 2026, 10:05',status:'active'},
+ {id:'D-10',cls:'Undefined term',dec:'dismissed',fund:'NGI 2024',sec:'Section 9',quote:'…wire funds as directed by the Distributor…',reason:"Law firm's standard wording",who:'Priya Raman',when:'14 Oct 2026, 11:30',status:'active'},
+ {id:'D-11',cls:'Ambiguity (AI)',dec:'answered',fund:'NGI 2024',sec:'Section 8(d)',quote:'…suspend repurchases for a reasonable period if the Board determines…',answer:'Counsel chose B',note:'Suspension is limited to one quarterly repurchase cycle.',who:'Priya Raman',when:'15 Oct 2026, 16:12',status:'active'},
+];
+const A=[
+ {who:'Duc Pham',when:'3 Feb 2026, 11:02',action:'Dismissed',grp:'decision',target:'D-01 · Undefined term',why:"Law firm's standard wording"},
+ {who:'Duc Pham',when:'3 Feb 2026, 11:05',action:'Dismissed',grp:'decision',target:'D-02 · Undefined term',why:"Law firm's standard wording"},
+ {who:'Duc Pham',when:'3 Feb 2026, 11:09',action:'Dismissed',grp:'decision',target:'D-03 · Broken cross-reference',why:"Law firm's standard wording"},
+ {who:'Minh Anh Nguyen',when:'5 Feb 2026, 14:30',action:'Accepted',grp:'decision',target:'D-04 · Drafting note',why:'Will be removed in the source document'},
+ {who:'Duc Pham',when:'9 Feb 2026, 09:48',action:'Dismissed',grp:'decision',target:'D-05 · Undefined term',why:'Does not affect the form'},
+ {who:'Duc Pham',when:'9 Feb 2026, 09:51',action:'Dismissed',grp:'decision',target:'D-06 · Undefined term',why:'Does not affect the form'},
+ {who:'Minh Anh Nguyen',when:'12 Feb 2026, 10:14',action:'Answered',grp:'decision',target:'D-07 · Broken cross-reference',why:'Counsel chose A: Appendix B is the Investor Questionnaire.'},
+ {who:'Duc Pham',when:'17 Feb 2026, 15:40',action:'Dismissed',grp:'decision',target:'D-08 · Term inconsistency',why:'Tool false alarm'},
+ {who:'Duc Pham',when:'20 Feb 2026, 13:05',action:'Rule created',grp:'rule',target:'R-1 · “Subscriber” instead of “Investor”',why:'Standard wording across the firm’s templates'},
+ {who:'Minh Anh Nguyen',when:'2 Mar 2026, 09:20',action:'Rule created',grp:'rule',target:'R-2 · “Schedule” and “Appendix”',why:'Counsel confirmed the two words are used interchangeably'},
+ {who:ME,when:'9 Oct 2026, 09:30',action:'Reopened',grp:'reopen',target:'D-08 · Term inconsistency',why:'The 2024 template renamed Units to Shares; this one is a real leftover.'},
+ {who:ME,when:'12 Oct 2026, 10:05',action:'Dismissed',grp:'decision',target:'D-09 · Sensitive data',why:'Does not affect the form'},
+ {who:ME,when:'14 Oct 2026, 11:30',action:'Dismissed',grp:'decision',target:'D-10 · Undefined term',why:"Law firm's standard wording"},
+ {who:'Rule engine',when:'14 Oct 2026, 11:30',action:'Rule proposed',grp:'rule',target:'P-1 · “Distributor” used before it is defined',why:'3 dismissals with the same reason (D-01, D-02, D-10). No effect until approved.'},
+ {who:ME,when:'15 Oct 2026, 16:12',action:'Answered',grp:'decision',target:'D-11 · Ambiguity (AI)',why:'Counsel chose B: suspension limited to one quarterly cycle.'},
+].map((e,i)=>Object.assign({n:i+1},e));
+let R=[
+ {id:'R-1',text:'“Subscriber” is used instead of “Investor”. Not an error.',who:'Duc Pham',when:'20 Feb 2026'},
+ {id:'R-2',text:'“Schedule” and “Appendix” are used interchangeably. Not an error.',who:'Minh Anh Nguyen',when:'2 Mar 2026'},
+];
+let nextR=3;
+let P=[{id:'P-1',text:'“Distributor” used before it is defined is not an error.',ev:['D-01','D-02','D-10'],reason:"Law firm's standard wording",when:'14 Oct 2026',status:'pending'}];
+
+/* ----- state ----- */
+const store='subdocqa-firm-memory-view';
+function safeGet(k){try{return window.localStorage.getItem(k);}catch(e){return null;}}
+function safeSet(k,v){try{window.localStorage.setItem(k,v);}catch(e){}}
+function safeParse(t){try{return t?JSON.parse(t):{};}catch(e){return {};}}
+const S=Object.assign({tab:'decisions',cls:'all',st:'all',au:'all'},safeParse(safeGet(store)));
+if(!['decisions','rules','audit'].includes(S.tab))S.tab='decisions';
+const expanded=new Set();
+let menuOpen=null, dlgState=null, toastT=null;
+const dById=id=>D.find(d=>d.id===id), rById=id=>R.find(r=>r.id===id);
+const nowStr=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return `17 Oct 2026, ${p(d.getHours())}:${p(d.getMinutes())}`;};
+function logAudit(action,grp,target,why){const e={n:A.length+1,who:ME,when:nowStr(),action,grp,target,why,isNew:true};A.push(e);return e.n;}
+const shortDate=w=>w.split(',')[0];
+
+/* ----- chrome ----- */
+function chrome(){
+  const act=D.filter(d=>d.status==='active').length, rev=D.length-act, pend=P.filter(p=>p.status==='pending').length;
+  $('#cDec').textContent=D.length;$('#cRule').textContent=R.length;$('#cAud').textContent=A.length;
+  const cp=$('#cProp');cp.hidden=!pend;cp.textContent=pend;cp.setAttribute('aria-label',pend+' pending suggestion'+(pend>1?'s':''));
+  $('#sDec').textContent=D.length;$('#sDecS').textContent=`${act} active, ${rev} revoked`;
+  $('#sRule').textContent=R.length;$('#sProp').textContent=pend;
+}
+function setTabs(){
+  $$('#tablist [role=tab]').forEach(b=>{const on=b.dataset.tab===S.tab;b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1;});
+  ['decisions','rules','audit'].forEach(t=>{$('#p-'+t).hidden=(t!==S.tab);});
+}
+
+/* ----- decisions ----- */
+function decBadge(d){
+  if(d.dec==='accepted')return `<span class="badge b-ok">${ic('check')}Accepted</span>`;
+  if(d.dec==='answered')return `<span class="badge b-ans">${ic('counsel')}Answered</span>`;
+  return `<span class="badge b-note">${ic('x')}Dismissed</span>`;
+}
+const qhtml=d=>`<q class="s">${esc(d.quote)}${d.mask?`<span class="mask" aria-label="Value masked before storage">${esc(d.mask)}</span>`:''}</q>`;
+function detailHTML(d){
+  const why=d.dec==='answered'?`${esc(d.answer)}. ${esc(d.note)}`:esc(d.reason);
+  return `<tr class="detail" data-detail="${d.id}"><td colspan="6"><div class="dgrid">
+    <div><span class="k">Quoted passage · ${esc(d.fund)}, ${esc(d.sec)}</span><div style="white-space:normal">${qhtml(d)}</div></div>
+    <div><span class="k">${d.dec==='answered'?'Counsel answer':d.dec==='accepted'?'Note':'Reason'}</span>${why}</div>
+    <div><span class="k">Decided</span>${esc(d.who)}, ${esc(d.when)}${d.status==='revoked'?`<span class="k" style="margin-top:8px">Revoked</span>${esc(d.rev.who)}, ${esc(d.rev.when)}: “${esc(d.rev.why)}”`:''}</div>
+  </div></td></tr>`;
+}
+function decRow(d){
+  const revd=d.status==='revoked', open=expanded.has(d.id);
+  const st=revd?`<span class="tag t-re">${ic('undo')} Revoked</span>`
+     :`<span class="tag t-new">${ic('check')} Active</span> <button class="linkbtn" type="button" data-reopen="${d.id}" aria-label="Reopen decision ${d.id}">Reopen…</button>`;
+  return `<tr data-d="${d.id}" tabindex="-1" class="${revd?'revoked':''}">
+    <td><button class="exp" type="button" data-exp="${d.id}" aria-expanded="${open}" aria-label="Details for ${d.id}">${ic('chev')}</button>${decBadge(d)}</td>
+    <td class="pass">${qhtml(d)}</td>
+    <td class="c-cls" title="${esc(d.cls)}">${esc(d.cls)}</td>
+    <td title="${esc(d.fund)}">${esc(d.fund)}</td>
+    <td title="${esc(d.who)}, ${esc(d.when)}">${esc(d.who)}</td>
+    <td>${st}</td></tr>${open?detailHTML(d):''}`;
+}
+function renderDecisions(){
+  const classes=[...new Set(D.map(d=>d.cls))].sort();
+  if(S.cls!=='all'&&!classes.includes(S.cls))S.cls='all';
+  const list=D.filter(d=>(S.cls==='all'||d.cls===S.cls)&&(S.st==='all'||d.status===S.st));
+  $('#p-decisions').innerHTML=`
+   <div class="filters">
+     <label>Issue class<select id="fCls" aria-label="Filter by issue class"><option value="all">All classes (${D.length})</option>${classes.map(c=>`<option value="${esc(c)}" ${S.cls===c?'selected':''}>${esc(c)} (${D.filter(d=>d.cls===c).length})</option>`).join('')}</select></label>
+     <div><span class="sr" id="stl">Filter by status</span><div class="seg" role="group" aria-labelledby="stl">${[['all','All'],['active','Active'],['revoked','Revoked']].map(([v,l])=>`<button type="button" data-st="${v}" aria-pressed="${S.st===v}">${l}</button>`).join('')}</div></div>
+     <span class="shown" role="status" aria-live="polite">${list.length} of ${D.length} decisions · never deleted, only revoked</span>
+   </div>
+   ${list.length?`<table class="t"><caption class="sr">Decisions for ${esc(FIRM)}</caption><thead><tr><th class="c-dec" scope="col">Decision</th><th scope="col">Quoted passage</th><th class="c-cls" scope="col">Issue class</th><th class="c-fund" scope="col">Fund</th><th class="c-who" scope="col">Decided by</th><th class="c-st" scope="col">Status</th></tr></thead><tbody>${list.map(decRow).join('')}</tbody></table>`
+     :`<div class="empty">No decisions match these filters.</div>`}`;
+}
+
+/* ----- rules ----- */
+function renderRules(){
+  const pend=P.filter(p=>p.status==='pending'), rej=P.filter(p=>p.status==='rejected');
+  $('#p-rules').innerHTML=`
+   <section class="strip" aria-label="Suggested rules">
+     <div class="sh" id="hProp">${pend.length?`${pend.length} suggested rule · from 3 dismissals with the same reason`:'No suggested rules'}</div>
+     ${pend.map(p=>`<div class="srow"><span class="rule" title="${esc(p.text)}">${esc(p.text)}</span><button class="linkbtn" type="button" data-review="${p.id}" aria-label="3 decisions behind this suggestion">3 decisions</button><button class="btn pri" type="button" data-review="${p.id}" data-main="1">Review</button></div>`).join('')}
+     <div class="muted" style="color:#1E3F3B;padding:2px 0 4px">“Closing Date” has 2 dismissals so far. A suggestion needs 3 with the same reason.${rej.length?` ${rej.length} rejected suggestion stays inactive.`:''}</div>
+   </section>
+   <section aria-labelledby="hAct">
+     <div class="rhead"><h3 id="hAct">Active rules (${R.length})</h3><span class="muted">AI context only, never a filter. This firm only.</span><button class="btn" type="button" id="addRule">${ic('plus')}Add rule</button></div>
+     ${R.length?`<table class="t"><caption class="sr">Active rules for ${esc(FIRM)}</caption><thead><tr><th scope="col">Rule</th><th style="width:170px" scope="col">Added by</th><th style="width:120px" scope="col">Date</th><th style="width:56px" scope="col"><span class="sr">Actions</span></th></tr></thead><tbody>
+       ${R.map(r=>`<tr data-r="${r.id}"><td title="${esc(r.text)}">${esc(r.text)}</td><td>${esc(r.who)}</td><td>${esc(r.when)}</td><td class="act"><span class="menuwrap"><button class="dots" type="button" data-menu="${r.id}" aria-haspopup="menu" aria-expanded="${menuOpen===r.id}" aria-label="Actions for rule ${r.id}">${ic('dots')}</button>${menuOpen===r.id?`<div class="menu" role="menu" aria-label="Rule actions"><button type="button" role="menuitem" data-ract="edit" data-id="${r.id}">${ic('pencil')}Edit…</button><button type="button" role="menuitem" data-ract="deact" data-id="${r.id}">${ic('x')}Deactivate…</button></div>`:''}</span></td></tr>`).join('')}
+     </tbody></table>`:`<div class="empty">No active rules.</div>`}
+   </section>`;
+}
+
+/* ----- audit ----- */
+function renderAudit(){
+  const GR={all:'All actions',decision:'Decisions',reopen:'Reopened decisions',rule:'Rules'};
+  const list=[...A].reverse().filter(e=>S.au==='all'||e.grp===S.au);
+  const act=e=>({Dismissed:['x','b-note'],Accepted:['check','b-ok'],Answered:['counsel','b-ans'],Reopened:['undo','b-rule'],'Rule created':['rule','b-rule'],'Rule proposed':['spark','b-rule'],'Rule approved':['check','b-ok'],'Rule rejected':['x','b-note'],'Rule edited':['pencil','b-rule'],'Rule deactivated':['x','b-note']}[e.action]||['info','b-rule']);
+  $('#p-audit').innerHTML=`
+   <div class="lockbar">${ic('lock')}<span><b>Entries cannot be edited or removed.</b> Append-only log. New actions add an entry; old ones never change.</span></div>
+   <div class="filters"><label>Show<select id="fAud" aria-label="Filter audit entries">${Object.entries(GR).map(([v,l])=>`<option value="${v}" ${S.au===v?'selected':''}>${l}</option>`).join('')}</select></label><span class="shown" role="status" aria-live="polite">${list.length} of ${A.length} entries, newest first</span></div>
+   <table class="t a wrapok"><caption class="sr">Append-only audit log, newest first</caption><thead><tr><th style="width:64px" scope="col">Entry</th><th style="width:150px" scope="col">When</th><th style="width:140px" scope="col">Who</th><th style="width:160px" scope="col">Action</th><th scope="col">Target</th><th scope="col">Why</th></tr></thead>
+   <tbody>${list.map(e=>{const a=act(e);return `<tr><td class="n">#${String(e.n).padStart(3,'0')}</td><td>${esc(e.when)}</td><td>${esc(e.who)}</td><td><span class="badge ${a[1]}">${ic(a[0])}${esc(e.action)}</span>${e.isNew?` <span class="tag t-new">New</span>`:''}</td><td>${esc(e.target)}</td><td>${esc(e.why)}</td></tr>`;}).join('')}</tbody></table>`;
+}
+
+/* ----- render ----- */
+function renderAll(o={}){
+  chrome();setTabs();renderDecisions();renderRules();renderAudit();
+  safeSet(store,JSON.stringify({tab:S.tab,cls:S.cls,st:S.st,au:S.au}));
+  if(o.focus)focusSel(o.focus);
+}
+function focusSel(sel){const list=Array.isArray(sel)?sel:[sel];for(const s of list){const el=$(s);if(el){el.focus({preventScroll:false});return true;}}return false;}
+function toast(m){$('#toastMsg').textContent=m;$('#toast').classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>$('#toast').classList.remove('on'),3600);}
+const pad=n=>'#'+String(n).padStart(3,'0');
+function goTab(t,focus){S.tab=t;menuOpen=null;renderAll();if(focus){const b=$('#tab-'+t);b&&b.focus();}}
+
+/* ----- modal dialog ----- */
+const dlg=$('#dlg');
+function head(title){return `<div class="dh"><h2 id="dlgT">${title}</h2><button class="xb" type="button" data-act="dlgCancel" aria-label="Close dialog">${ic('x')}</button></div>`;}
+function decSummary(d){return `<div class="sum"><div class="l1"><b style="color:var(--ink)">${d.id}</b>${decBadge(d)}<span>${esc(d.cls)}</span></div>${qhtml(d)}<div class="l1">${ic('pin')}${esc(d.fund)} · ${esc(d.sec)}</div></div>`;}
+function dlgHTML(st){
+  const err=m=>`<div class="err" id="dlgErr" role="alert">${ic('warn')}${m}</div>`;
+  if(st.kind==='reopen'){const d=dById(st.id);return `<form class="dlg" id="dlgForm" novalidate>${head('Reopen this decision?')}${decSummary(d)}
+    <p>It stays listed as revoked, and the finding shows as New the next time ${esc(FIRM)} documents are reviewed. This is recorded in the audit trail.</p>
+    <label class="l">Why are you reopening it? <span class="opt">(required)</span><textarea id="dlgWhy" rows="2" placeholder="For example: counsel changed their answer"></textarea></label>${err('Enter a reason before reopening. The audit trail needs one.')}
+    <div class="acts"><button class="btn" type="button" data-act="dlgCancel">Cancel</button><button class="btn pri" type="submit">${ic('undo')}Reopen decision</button></div></form>`;}
+  if(st.kind==='review'){const p=P.find(x=>x.id===st.id);return `<form class="dlg" id="dlgForm" novalidate>${head('Review suggested rule')}
+    <div class="sum"><b style="font-size:14px;font-weight:600">${esc(p.text)}</b><span class="muted">For ${esc(FIRM)}. Suggested ${esc(p.when)}. Same reason each time: ${esc(p.reason)}.</span></div>
+    <div class="callout">${ic('info')}<span><b>No effect until approved.</b> A suggestion does not change findings or the AI’s context.</span></div>
+    <div><div class="muted" style="margin-bottom:4px;font-weight:600">Evidence: ${p.ev.length} decisions</div><ul class="ev">${p.ev.map(id=>{const d=dById(id);return `<li><span class="l1"><b style="color:var(--ink-2)">${id}</b>${decBadge(d)}${esc(d.fund)} · ${esc(d.who)}, ${esc(shortDate(d.when))}</span>${qhtml(d)}</li>`;}).join('')}</ul></div>
+    <label class="l">Note for the audit trail <span class="opt">(optional to approve, required to reject)</span><textarea id="dlgWhy" rows="2"></textarea></label>${err('Enter a reason before rejecting.')}
+    <div class="acts"><button class="btn" type="button" data-act="dlgCancel">Cancel</button><button class="btn warn" type="submit" data-mode="reject">${ic('x')}Reject</button><button class="btn pri" type="submit" data-mode="approve">${ic('check')}Approve rule</button></div></form>`;}
+  if(st.kind==='add'){return `<form class="dlg" id="dlgForm" novalidate>${head('Add a rule')}
+    <p>Given to the AI as context when it reviews ${esc(FIRM)} documents. It never hides or filters a finding.</p>
+    <label class="l">Rule <span class="opt">(required)</span><input id="dlgText" type="text" autocomplete="off" enterkeyhint="done" placeholder="For example: “Units” is used for “Shares” in side letters. Not an error."></label>
+    <label class="l">Why <span class="opt">(optional)</span><input id="dlgWhy" type="text" autocomplete="off" enterkeyhint="done" placeholder="Entered by analyst"></label>${err('Enter the rule text first.')}
+    <div class="acts"><button class="btn" type="button" data-act="dlgCancel">Cancel</button><button class="btn pri" type="submit">${ic('plus')}Add rule</button></div></form>`;}
+  if(st.kind==='edit'){const r=rById(st.id);return `<form class="dlg" id="dlgForm" novalidate>${head('Edit rule '+r.id)}
+    <label class="l">Rule <span class="opt">(required)</span><input id="dlgText" type="text" autocomplete="off" value="${esc(r.text)}"></label>
+    <label class="l">Why are you changing it? <span class="opt">(required)</span><input id="dlgWhy" type="text" autocomplete="off" enterkeyhint="done"></label>${err('Enter the rule text and a reason.')}
+    <div class="acts"><button class="btn" type="button" data-act="dlgCancel">Cancel</button><button class="btn pri" type="submit">${ic('check')}Save change</button></div></form>`;}
+  if(st.kind==='deact'){const r=rById(st.id);return `<form class="dlg" id="dlgForm" novalidate>${head('Deactivate rule '+r.id+'?')}
+    <div class="sum"><b style="font-size:14px;font-weight:600">${esc(r.text)}</b></div>
+    <p>It stops being given to the AI as context. It stays in the audit trail.</p>
+    <label class="l">Why are you deactivating it? <span class="opt">(required)</span><textarea id="dlgWhy" rows="2"></textarea></label>${err('Enter a reason before deactivating.')}
+    <div class="acts"><button class="btn" type="button" data-act="dlgCancel">Cancel</button><button class="btn pri" type="submit">Deactivate rule</button></div></form>`;}
+}
+function openDlg(st,ret){
+  dlgState=Object.assign({ret},st);dlg.innerHTML=dlgHTML(dlgState);
+  if(!dlg.open)dlg.showModal();
+  const f=$('#dlgText')||$('#dlgWhy');f&&f.focus();
+}
+function closeDlg(ret){if(dlgState&&ret)dlgState.ret=ret;if(dlg.open)dlg.close();}
+dlg.addEventListener('close',()=>{const r=dlgState&&dlgState.ret;dlgState=null;dlg.innerHTML='';if(r)focusSel(r);});
+function dlgErr(on){const e=$('#dlgErr');e&&e.classList.toggle('on',on);}
+
+/* ----- events ----- */
+document.addEventListener('click',e=>{
+  if(menuOpen&&!e.target.closest('.menuwrap')){menuOpen=null;renderRules();}
+  const t=e.target.closest('button');if(!t)return;
+  if(t.dataset.tab){goTab(t.dataset.tab);return;}
+  if(t.id==='back'){toast('The review workspace is designed in a separate mockup.');return;}
+  if(t.dataset.st){S.st=t.dataset.st;renderAll({focus:`[data-st="${S.st}"]`});return;}
+  if(t.dataset.exp){const id=t.dataset.exp;expanded.has(id)?expanded.delete(id):expanded.add(id);renderDecisions();focusSel(`[data-exp="${id}"]`);return;}
+  if(t.dataset.reopen){openDlg({kind:'reopen',id:t.dataset.reopen},[`[data-reopen="${t.dataset.reopen}"]`]);return;}
+  if(t.dataset.review){openDlg({kind:'review',id:t.dataset.review},[`[data-review="${t.dataset.review}"][data-main]`]);return;}
+  if(t.id==='addRule'){openDlg({kind:'add'},['#addRule']);return;}
+  if(t.dataset.menu){const id=t.dataset.menu;menuOpen=menuOpen===id?null:id;renderRules();focusSel(menuOpen?'.menu button':`[data-menu="${id}"]`);return;}
+  if(t.dataset.ract){const id=t.dataset.id;menuOpen=null;renderRules();openDlg({kind:t.dataset.ract,id},[`[data-menu="${id}"]`,'#addRule']);return;}
+  if(t.dataset.act==='dlgCancel'){closeDlg();return;}
+});
+dlg.addEventListener('click',e=>{if(e.target===dlg)closeDlg();});
+dlg.addEventListener('keydown',e=>{
+  if(e.key!=='Tab')return;
+  const f=[...dlg.querySelectorAll('button,input,textarea,select')].filter(x=>!x.disabled&&x.offsetParent!==null);
+  if(!f.length)return;
+  const first=f[0],last=f[f.length-1];
+  if(e.shiftKey&&(document.activeElement===first||!dlg.contains(document.activeElement))){last.focus();e.preventDefault();}
+  else if(!e.shiftKey&&(document.activeElement===last||!dlg.contains(document.activeElement))){first.focus();e.preventDefault();}
+});
+document.addEventListener('change',e=>{
+  if(e.target.id==='fCls'){S.cls=e.target.value;renderAll({focus:'#fCls'});}
+  if(e.target.id==='fAud'){S.au=e.target.value;renderAll({focus:'#fAud'});}
+});
+document.addEventListener('input',e=>{
+  if(e.target.closest&&e.target.closest('#dlg')&&e.target.value.trim())dlgErr(false);
+});
+document.addEventListener('submit',e=>{
+  e.preventDefault();if(e.target.id!=='dlgForm'||!dlgState)return;
+  const st=dlgState,why=($('#dlgWhy')||{value:''}).value.trim(),txt=($('#dlgText')||{value:''}).value.trim();
+  if(st.kind==='reopen'){
+    if(!why){dlgErr(true);$('#dlgWhy').focus();return;}
+    const d=dById(st.id);d.status='revoked';d.rev={who:ME,when:nowStr(),why};
+    const n=logAudit('Reopened','reopen',`${d.id} · ${d.cls}`,why);
+    renderAll();closeDlg([`tr[data-d="${d.id}"]`]);toast(`${d.id} reopened and kept as revoked. Audit entry ${pad(n)} written.`);return;}
+  if(st.kind==='review'){
+    const p=P.find(x=>x.id===st.id),mode=(e.submitter&&e.submitter.dataset.mode)||'approve';
+    if(mode==='reject'&&!why){dlgErr(true);$('#dlgWhy').focus();return;}
+    const label=p.text.replace(/ is not an error\.$/,'');let n;
+    if(mode==='approve'){const rid='R-'+(nextR++);R.push({id:rid,text:p.text.replace(/is not an error\./,'Not an error.'),who:ME,when:'17 Oct 2026'});p.status='approved';
+      n=logAudit('Rule approved','rule',`${rid} · ${label}`,why||`Approved from 3 matching dismissals (${p.ev.join(', ')})`);}
+    else{p.status='rejected';n=logAudit('Rule rejected','rule',`${p.id} · ${label}`,why);}
+    renderAll();closeDlg(['#hAct','#addRule']);const h=$('#hProp');if(h){h.tabIndex=-1;}
+    toast(mode==='approve'?`Rule approved and now active. Audit entry ${pad(n)} written.`:`Suggestion rejected and kept inactive. Audit entry ${pad(n)} written.`);return;}
+  if(st.kind==='add'){
+    if(!txt){dlgErr(true);$('#dlgText').focus();return;}
+    const rid='R-'+(nextR++);R.push({id:rid,text:txt,who:ME,when:'17 Oct 2026'});
+    const n=logAudit('Rule created','rule',`${rid} · ${txt.length>48?txt.slice(0,48)+'…':txt}`,why||'Entered by analyst');
+    renderAll();closeDlg(['#addRule']);toast(`Rule added. Audit entry ${pad(n)} written.`);return;}
+  if(st.kind==='edit'){
+    if(!txt||!why){dlgErr(true);(txt?$('#dlgWhy'):$('#dlgText')).focus();return;}
+    const r=rById(st.id);r.text=txt;const n=logAudit('Rule edited','rule',`${r.id} · ${txt.length>48?txt.slice(0,48)+'…':txt}`,why);
+    renderAll();closeDlg([`[data-menu="${r.id}"]`]);toast(`Rule ${r.id} updated. Audit entry ${pad(n)} written.`);return;}
+  if(st.kind==='deact'){
+    if(!why){dlgErr(true);$('#dlgWhy').focus();return;}
+    const r=rById(st.id);R=R.filter(x=>x!==r);const n=logAudit('Rule deactivated','rule',`${r.id} · ${r.text.slice(0,48)}`,why);
+    renderAll();closeDlg(['#addRule']);toast(`Rule ${r.id} deactivated. Audit entry ${pad(n)} written.`);return;}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&menuOpen){const id=menuOpen;menuOpen=null;renderRules();focusSel(`[data-menu="${id}"]`);return;}
+  const tab=e.target.closest&&e.target.closest('[role=tab]');
+  if(tab&&(e.key==='ArrowRight'||e.key==='ArrowLeft'||e.key==='Home'||e.key==='End')){
+    const order=['decisions','rules','audit'];let i=order.indexOf(S.tab);
+    i=e.key==='ArrowRight'?(i+1)%3:e.key==='ArrowLeft'?(i+2)%3:e.key==='Home'?0:2;
+    goTab(order[i],true);e.preventDefault();
+  }
+});
+
+renderAll();
+})();
+</script>
+
+</body>
+</html>

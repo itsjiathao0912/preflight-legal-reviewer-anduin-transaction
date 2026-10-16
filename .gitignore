@@ -6,3 +6,11 @@
 .codex/hooks/.logs/
 samples/sub-docs/raw/_full-prospectus/
 samples/sub-docs/raw/14-ilpa-*
+# Phase 00 scaffold
+node_modules/
+.wrangler/
+dist/
+playwright-report/
+test-results/
+fixtures/llm-recordings/_live/
+*.tsbuildinfo

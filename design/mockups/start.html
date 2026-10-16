@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Start · Sub-doc QA (design trial)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
+<style>
+/* ===== Tokens (verbatim from review-workspace.html) ===== */
+:root{
+  --ground:#E9ECE9;      /* app ground: low-chroma cool stone */
+  --panel:#F4F6F3;       /* panels one tone step above ground */
+  --card:#FBFCFA;        /* cards one step above panel */
+  --paper:#FDFEFD;       /* document page */
+  --ink:#15181B;
+  --ink-2:#434A50;       /* 8.0:1 on panel */
+  --ink-3:#5C646B;       /* 5.6:1 on panel */
+  --accent:#1D5C57;      /* the single accent: deep teal */
+  --accent-tint:#D9E8E5;
+  --step:#DDE2DD;        /* tone step used instead of rules */
+  --block-fg:#8A1C1C; --block-bg:#F7E2DF;
+  --fix-fg:#734400;   --fix-bg:#F5E8C8;
+  --note-fg:#38454F;  --note-bg:#DFE6EA;
+  --ok-fg:#1B5632;    --ok-bg:#DAEEDF;
+  --mark:#F3D676;
+  --r:4px;
+  --sans:'Geist',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --serif:'Newsreader',Georgia,'Times New Roman',serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box}
+html{min-height:100%}
+body{margin:0;min-height:100dvh;background:var(--ground);color:var(--ink);font:400 14px/1.5 var(--sans);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+svg.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.skip{position:absolute;left:8px;top:-48px;background:var(--ink);color:#fff;padding:8px 13px;border-radius:var(--r);z-index:50}
+.skip:focus{top:8px}
+h1,h2,h3,p{margin:0}
+
+/* ===== Top bar ===== */
+header.top{padding:14px 24px;display:flex;align-items:center;gap:20px;max-width:1408px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;font:500 20px/1 var(--serif);letter-spacing:-.01em;white-space:nowrap}
+.brand svg{width:28px;height:28px}
+.crumb{padding-left:20px;position:relative;color:var(--ink-3);font-size:14px;white-space:nowrap}
+.crumb::before{content:"";position:absolute;left:0;top:2px;bottom:2px;width:2px;background:var(--step)}
+.crumb b{font-weight:500;color:var(--ink)}
+.status{margin-left:auto;display:flex;gap:18px;align-items:center;color:var(--ink-3);font-size:13px;min-width:0;flex-wrap:wrap;justify-content:flex-end}
+.status span{display:inline-flex;gap:6px;align-items:center;white-space:nowrap}
+.status b{font-weight:500;color:var(--ink)}
+
+/* ===== Layout ===== */
+.wrap{max-width:1408px;margin:0 auto;padding:12px 24px 56px;display:grid;grid-template-columns:minmax(0,1fr) 416px;gap:24px;align-items:start}
+.lead{padding:12px 0 24px;max-width:66ch}
+.lead h1{font:500 28px/1.15 var(--serif);letter-spacing:-.02em;text-wrap:balance;margin-bottom:8px}
+.lead p{font-size:16px;color:var(--ink-2)}
+.stage{background:var(--panel);border-radius:var(--r);padding:20px 24px 28px}
+
+/* choices */
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px}
+.choice{border:0;background:var(--step);border-radius:var(--r);padding:14px 16px;display:grid;grid-template-columns:24px 1fr;gap:4px 12px;text-align:left;align-items:start}
+.choice svg{width:22px;height:22px;grid-row:1/3;margin-top:2px;color:var(--ink-2)}
+.choice .t{font:500 16px/1.3 var(--sans)}
+.choice .s{font-size:13px;color:var(--ink-2);line-height:1.4}
+.choice:hover{background:#D1D8D2}
+.choice{position:relative}
+.choice[aria-selected=true]{background:var(--card)}
+.choice[aria-selected=true]::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);border-radius:var(--r) 0 0 var(--r)}
+.choice[aria-selected=true] svg{color:var(--accent)}
+
+h2.sec{font:500 20px/1.2 var(--serif);letter-spacing:-.01em;margin:0 0 4px}
+.help{color:var(--ink-3);font-size:13px}
+.block{display:grid;gap:12px}
+.block+.block{margin-top:28px}
+
+/* dropzone */
+.drop{width:100%;border:2px dashed #9AA39E;background:var(--card);border-radius:var(--r);padding:26px 24px;text-align:left;display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:center;align-content:center;min-height:132px;transition:background .2s}
+.drop svg{width:28px;height:28px;grid-row:1/3;color:var(--accent)}
+.drop .t{font:500 20px/1.25 var(--serif)}
+.drop .s{color:var(--ink-2);font-size:14px}
+.drop .s u{text-underline-offset:3px;font-weight:500;color:var(--ink)}
+.drop:hover{background:var(--paper)}
+.drop.over{background:var(--accent-tint);border-color:var(--accent)}
+.types{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0;padding:0}
+.types li{display:inline-flex;gap:5px;align-items:center;background:var(--step);border-radius:3px;padding:2px 8px;font-size:13px;color:var(--ink-2);font-weight:500}
+.types svg{width:14px;height:14px}
+.limits{display:flex;gap:6px 18px;flex-wrap:wrap;color:var(--ink-2);font-size:13px}
+.limits span{display:inline-flex;gap:6px;align-items:center}
+.limits b{font-weight:600;color:var(--ink)}
+
+.alert{display:grid;grid-template-columns:18px 1fr;gap:4px 10px;background:var(--block-bg);color:#5E1313;padding:12px 14px;border-radius:var(--r)}
+.alert[hidden]{display:none}
+.alert svg{width:18px;height:18px;margin-top:1px;color:var(--block-fg)}
+.alert b{font-weight:600;color:var(--block-fg)}
+.alert p{grid-column:2;font-size:14px}
+.alert .acts{grid-column:2;margin-top:4px}
+.filerow{display:grid;grid-template-columns:20px 1fr auto;gap:12px;align-items:center;background:var(--card);border-radius:var(--r);padding:10px 12px 10px 14px;box-shadow:inset 3px 0 0 var(--accent)}
+.filerow[hidden]{display:none}
+.filerow svg{width:20px;height:20px;color:var(--accent)}
+.filerow .n{font-weight:500;overflow-wrap:anywhere}
+.filerow .m{color:var(--ink-3);font-size:13px}
+
+.democtl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--step);border-radius:var(--r);padding:8px 12px;font-size:13px;color:var(--ink-2)}
+.democtl b{font-weight:600;color:var(--ink)}
+.democtl select{width:auto;max-width:100%;min-width:0;flex:1 1 260px}
+
+/* form fields */
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:16px 16px}
+.field{display:grid;gap:6px;align-content:start;min-width:0}
+.field.wide{grid-column:1/-1}
+.field>label,.field>.lab{font-weight:500;font-size:14px}
+.field .req{color:var(--ink-3);font-weight:400;font-size:13px;margin-left:4px}
+input[type=text],select{width:100%;height:42px;border:0;border-radius:var(--r);background:var(--card);padding:0 12px;font-size:16px;color:var(--ink);box-shadow:inset 0 0 0 1px #C7CEC8}
+input[type=text]::placeholder{color:#6B737A}
+input[type=text]:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-radius:var(--r)}
+input[aria-invalid=true]{box-shadow:inset 0 0 0 2px var(--block-fg)}
+select{appearance:none;-webkit-appearance:none;background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23434A50' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") right 12px center no-repeat;padding-right:32px}
+.democtl select{height:34px;font-size:14px;background-color:var(--card)}
+.ferr{display:none;gap:6px;align-items:center;color:var(--block-fg);font-weight:600;font-size:13px}
+.ferr.on{display:flex}
+.ferr svg{width:14px;height:14px}
+
+/* combobox */
+.combo{position:relative}
+.combo input{padding-right:36px}
+.combo .chv{position:absolute;right:11px;top:13px;width:16px;height:16px;color:var(--ink-2);pointer-events:none;transform:rotate(90deg)}
+.listbox{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--card);border-radius:var(--r);padding:4px;z-index:20;margin:0;list-style:none;box-shadow:0 10px 30px -13px rgba(21,24,27,.22);max-height:280px;overflow:auto}
+.listbox[hidden]{display:none}
+.listbox li{padding:8px 10px;border-radius:var(--r);display:grid;gap:1px;cursor:pointer}
+.listbox li[aria-selected=true],.listbox li:hover{background:var(--panel)}
+.listbox li.act{background:var(--accent-tint)}
+.listbox li .al{font-size:13px;color:var(--ink-3)}
+.listbox li.none{color:var(--ink-2);margin-top:2px;background:var(--panel)}
+.listbox li.empty{cursor:default;color:var(--ink-3)}
+
+/* memory note */
+.note{display:grid;grid-template-columns:18px 1fr;gap:10px;padding:10px 14px;border-radius:var(--r);font-size:14px}
+.note svg{width:18px;height:18px;margin-top:1px}
+.note.warn{background:var(--fix-bg);color:#3F2A00}.note.warn svg{color:var(--fix-fg)}
+.note.ok{background:var(--ok-bg);color:#123D23}.note.ok svg{color:var(--ok-fg)}
+.note.info{background:var(--note-bg);color:#27323A}.note.info svg{color:var(--note-fg)}
+.note b{font-weight:600}
+.note small{display:block;font-size:13px;opacity:.9}
+
+/* buttons */
+.btn{border:0;border-radius:var(--r);padding:8px 14px;min-height:36px;font-size:14px;font-weight:500;display:inline-flex;gap:6px;align-items:center;justify-content:center;background:var(--step);color:var(--ink)}
+.btn:hover{background:#D1D8D2}
+.btn:active{transform:scale(.98)}
+.btn.pri{background:var(--ink);color:#fff}
+.btn.pri:hover{background:#2c3238}
+.btn.lg{min-height:44px;padding:10px 20px;font-size:16px}
+.btn.lnk{background:transparent;padding:4px 6px;text-decoration:underline;text-underline-offset:3px;color:var(--ink-2);min-height:0}
+.btn svg{width:14px;height:14px}
+.btn.lg svg{width:16px;height:16px}
+.startrow{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.startrow .help{max-width:46ch}
+.summary{display:none;background:var(--block-bg);color:#5E1313;border-radius:var(--r);padding:10px 14px}
+.summary.on{display:block}
+.summary b{font-weight:600;color:var(--block-fg)}
+.summary ul{margin:4px 0 0;padding:0;list-style:none;display:grid;gap:2px}
+.summary button{border:0;background:transparent;padding:2px 0;text-decoration:underline;text-underline-offset:3px;color:#5E1313;text-align:left;font-size:14px}
+
+/* samples */
+.grp{margin-bottom:28px}
+.grp:last-child{margin-bottom:0}
+.grp h3{font:500 20px/1.2 var(--serif);letter-spacing:-.01em;display:flex;gap:8px;align-items:baseline;margin-bottom:4px}
+.grp h3 .cn{font:400 13px var(--sans);color:var(--ink-3)}
+.grp>p{color:var(--ink-3);font-size:13px;margin-bottom:10px;max-width:70ch}
+ul.rows{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.srow{background:var(--card);border-radius:var(--r);padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;align-items:start}
+.srow .ttl{font-weight:500;font-size:14px;line-height:1.4}
+.srow .ttl span{font-weight:400;color:var(--ink-3);font-size:13px;margin-left:6px}
+.srow .desc{color:var(--ink-2);font-size:13px;margin-top:2px}
+.srow dl{margin:8px 0 0;display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:13px}
+.srow dt{color:var(--ink-3)}
+.srow dd{margin:0;color:var(--ink-2);overflow-wrap:anywhere}
+.srow .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tag{font-size:13px;font-weight:500;padding:1px 7px 1px 5px;border-radius:3px;display:inline-flex;gap:4px;align-items:center}
+.tag svg{width:13px;height:13px}
+.t-st{background:var(--step);color:var(--ink-2)}
+.t-mem{background:var(--accent-tint);color:var(--accent)}
+.t-warn{background:var(--fix-bg);color:var(--fix-fg)}
+.srow .btn{align-self:start}
+
+/* loading */
+.loadp{display:grid;gap:20px}
+.loadp[hidden]{display:none}
+.loadp h2{font:500 28px/1.15 var(--serif);letter-spacing:-.02em}
+.loadmeta{display:flex;gap:6px 20px;flex-wrap:wrap;color:var(--ink-2);font-size:14px}
+.loadmeta b{font-weight:500;color:var(--ink-3)}
+ol.lst{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+ol.lst li{display:grid;grid-template-columns:22px 1fr;gap:0 12px;background:var(--card);border-radius:var(--r);padding:12px 16px}
+ol.lst svg{width:20px;height:20px;margin-top:1px}
+ol.lst .lab{font-weight:500;font-size:16px;line-height:22px}
+ol.lst .sub{grid-column:2;font-size:13px;color:var(--ink-3)}
+ol.lst .done svg{color:var(--accent)}
+ol.lst .run svg{color:#8A5A00}
+ol.lst .todo{background:transparent;color:var(--ink-3)}
+ol.lst .skipd svg{color:var(--ink-3)}
+ol.lst .skipd{background:transparent}
+.ring-pulse{transform-origin:center}
+@media (prefers-reduced-motion:no-preference){.ring-pulse{animation:spin 2.4s linear infinite}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loadmsg:focus{outline:none}
+[hidden]{display:none!important}
+
+/* ===== Rail ===== */
+aside.rail{background:var(--card);border-radius:var(--r);padding:20px 20px 24px;display:grid;gap:28px}
+.rsec{display:grid;gap:10px}
+.rsec h2{font:500 16px/1.3 var(--serif);display:flex;gap:8px;align-items:center}
+.rsec h2 svg{width:16px;height:16px;color:var(--ink-2)}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+.wsopt{display:grid;gap:8px}
+.ws{display:grid;grid-template-columns:18px 1fr;gap:2px 10px;background:var(--panel);border-radius:var(--r);padding:11px 12px;cursor:pointer}
+.ws input{accent-color:var(--accent);width:16px;height:16px;margin:3px 0 0}
+.ws .t{font-weight:500;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.ws .d{grid-column:2;font-size:13px;color:var(--ink-3)}
+.ws:has(input:checked){background:var(--paper);box-shadow:inset 3px 0 0 var(--accent)}
+.ws:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.tag.ro{background:var(--note-bg);color:var(--note-fg)}
+.sw{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:center;background:var(--panel);border-radius:var(--r);padding:11px 12px}
+.sw .t{font-weight:500}
+.track{width:40px;height:24px;border-radius:999px;background:#8A939A;position:relative;border:0;padding:0;transition:background .2s}
+.track::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s var(--ease)}
+.track[aria-checked=true]{background:var(--accent)}
+.track[aria-checked=true]::after{transform:translateX(16px)}
+@media (prefers-reduced-motion:reduce){.track,.track::after{transition:none}}
+.sw .d{grid-column:1/-1;font-size:13px;color:var(--ink-3)}
+.allow{display:grid;gap:4px;font-size:13px;color:var(--ink-2);background:var(--panel);border-radius:var(--r);padding:10px 12px}
+.allow div{display:flex;gap:8px;align-items:center}
+.allow b{font-weight:600;color:var(--ink)}
+.priv{background:var(--panel);border-radius:var(--r);padding:14px 14px 12px;display:grid;gap:12px}
+.priv ul{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.priv li{display:grid;grid-template-columns:16px 1fr;gap:10px;font-size:14px;color:var(--ink-2)}
+.priv li svg{margin-top:3px;color:var(--ink-2)}
+.priv li b{font-weight:600;color:var(--ink)}
+.ack{display:grid;grid-template-columns:18px 1fr;gap:10px;align-items:start;background:var(--card);border-radius:var(--r);padding:10px 12px;cursor:pointer;font-weight:500}
+.ack input{accent-color:var(--accent);width:18px;height:18px;margin:1px 0 0}
+.ack:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.ack.bad{box-shadow:inset 0 0 0 2px var(--block-fg)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:var(--r);padding:10px 14px;display:none;gap:14px;align-items:center;z-index:60;font-size:13px}
+.toast.on{display:flex}
+
+/* narrow desktop (1024) */
+@media (max-width:1180px){
+  .wrap{grid-template-columns:minmax(0,1fr)}
+  aside.rail{grid-template-columns:1fr 1fr;gap:24px}
+  .rsec.priv-sec{grid-column:1/-1}
+  .status .opt{display:none}
+}
+@media (max-width:820px){
+  aside.rail{grid-template-columns:1fr}
+  .choices,.fields{grid-template-columns:1fr}
+  .crumb,.status{display:none}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to start options</a>
+
+<!-- ===== Icon sprite (bespoke, one stroke weight; first 17 shared with review-workspace) ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="logo" viewBox="0 0 28 28"><rect x="2" y="2" width="24" height="24" rx="5" fill="#15181B"/><path d="M8 9.5h7M8 14h4.5M8 18.5h5" stroke="#E9ECE9" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M15.5 17l2.6 2.6L22 14.6" stroke="#8FD0C6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="stop" viewBox="0 0 24 24"><path d="M8.2 3h7.6L21 8.2v7.6L15.8 21H8.2L3 15.8V8.2z"/><path d="M12 7.5v5.2M12 16h.01"/></symbol>
+  <symbol id="warn" viewBox="0 0 24 24"><path d="M12 3.5l9.2 16H2.8z"/><path d="M12 10v4.4M12 17.2h.01"/></symbol>
+  <symbol id="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.2M12 7.8h.01"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M7.8 12.4l2.9 2.9 5.6-6"/></symbol>
+  <symbol id="ring" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-dasharray="14 8"/></symbol>
+  <symbol id="todo" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-dasharray="1.5 4.5"/></symbol>
+  <symbol id="skip" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></symbol>
+  <symbol id="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="spark" viewBox="0 0 24 24"><path d="M12 3c.6 4.800 2.200 6.400 7 7-4.800.6-6.400 2.200-7 7-.6-4.800-2.200-6.400-7-7 4.800-.6 6.400-2.200 7-7z"/></symbol>
+  <symbol id="rule" viewBox="0 0 24 24"><path d="M8 4H6.500A1.500 1.500 0 005 5.500v13A1.500 1.500 0 006.500 20H8M16 4h1.500A1.500 1.500 0 0119 5.500v13a1.500 1.500 0 01-1.500 1.500H16"/><path d="M9.500 12h5"/></symbol>
+  <symbol id="memory" viewBox="0 0 24 24"><path d="M4 12a8 8 0 108-8 8 8 0 00-6 2.700"/><path d="M4 4v3.500h3.500M12 8v4.200l2.800 1.700"/></symbol>
+  <symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="10.500" width="14" height="9.500" rx="2"/><path d="M8.500 10.500V8a3.500 3.500 0 017 0v2.500M12 14.500v2"/></symbol>
+  <symbol id="pin" viewBox="0 0 24 24"><path d="M12 21s6.500-5.800 6.500-11A6.500 6.500 0 005.500 10c0 5.200 6.500 11 6.500 11z"/><circle cx="12" cy="10" r="2.200"/></symbol>
+  <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.300l3.200 2"/></symbol>
+  <!-- new for the start screen -->
+  <symbol id="upload" viewBox="0 0 24 24"><path d="M12 15.500V4.500M7.500 9L12 4.500 16.500 9"/><path d="M4.500 15.500V18a1.500 1.500 0 001.500 1.500h12a1.500 1.500 0 001.500-1.500v-2.500"/></symbol>
+  <symbol id="file" viewBox="0 0 24 24"><path d="M7 3.500h6.500L18.500 8.500v10A1.500 1.500 0 0117 20H7a1.500 1.500 0 01-1.500-1.500v-13A1.500 1.500 0 017 3.500z"/><path d="M13.500 3.500v5h5M8.500 13h7M8.500 16.500h5"/></symbol>
+  <symbol id="pages" viewBox="0 0 24 24"><rect x="4" y="4" width="12" height="16" rx="1.500"/><path d="M8 8.500h4.500M8 12h4.500M8 15.500h2.500M19.500 7.500v11"/></symbol>
+  <symbol id="scan" viewBox="0 0 24 24"><path d="M4 8V5.500A1.500 1.500 0 015.500 4H8M16 4h2.500A1.500 1.500 0 0120 5.500V8M20 16v2.500a1.500 1.500 0 01-1.500 1.500H16M8 20H5.500A1.500 1.500 0 014 18.500V16"/><path d="M4 12h16"/></symbol>
+  <symbol id="shield" viewBox="0 0 24 24"><path d="M12 3.500l7 2.500v5.500c0 4.200-3 7.500-7 9-4-1.500-7-4.800-7-9V6z"/><path d="M9 12l2.200 2.200L15.200 10"/></symbol>
+  <symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8.500" r="3.500"/><path d="M5 20c.5-3.600 3.400-5.500 7-5.500s6.500 1.900 7 5.500"/></symbol>
+  <symbol id="folder" viewBox="0 0 24 24"><path d="M3.500 7A1.500 1.500 0 015 5.500h4l2 2.500h8A1.500 1.500 0 0120.500 9.500v8A1.500 1.500 0 0119 19H5a1.500 1.500 0 01-1.500-1.500z"/></symbol>
+  <symbol id="scale" viewBox="0 0 24 24"><path d="M12 4v16M7 20h10M5 8h14"/><path d="M5 8l-2.500 6a3 3 0 005 0zM19 8l-2.500 6a3 3 0 005 0z"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="brand"><svg class="i" style="stroke:none;fill:none" aria-hidden="true"><use href="#logo"/></svg><span>Sub-doc QA</span></div>
+  <div class="crumb"><b>Start</b> · choose a document</div>
+  <div class="status" id="status" aria-label="Current session settings"></div>
+</header>
+
+<div class="wrap" id="main" tabindex="-1">
+  <section aria-label="Start a review">
+    <div class="lead">
+      <h1>Check a subscription document before it is digitized</h1>
+      <p>Upload a fund subscription document, or open a public sample. The tool reads it, checks cross-references, skip logic and defined terms, and lists what counsel should confirm.</p>
+    </div>
+
+    <div class="stage" id="stage">
+      <div id="choiceArea">
+        <div class="choices" role="tablist" aria-label="How do you want to start?">
+          <button class="choice" type="button" role="tab" id="tabUpload" aria-controls="pUpload" aria-selected="true" data-tab="upload">
+            <svg class="i" aria-hidden="true"><use href="#upload"/></svg>
+            <span class="t">Upload a document</span>
+            <span class="s">Your own file: HTML, PDF, DOCX or scanned pages</span>
+          </button>
+          <button class="choice" type="button" role="tab" id="tabSample" aria-controls="pSample" aria-selected="false" tabindex="-1" data-tab="sample">
+            <svg class="i" aria-hidden="true"><use href="#pages"/></svg>
+            <span class="t">Try a sample</span>
+            <span class="s" id="sampleCount">Public SEC subscription documents, ready tagged</span>
+          </button>
+        </div>
+
+        <!-- Upload -->
+        <div id="pUpload" role="tabpanel" aria-labelledby="tabUpload" tabindex="-1">
+          <form id="upForm" novalidate>
+            <div class="block">
+              <div>
+                <h2 class="sec">File</h2>
+                <p class="help">We detect text versus scanned PDFs when we read the file.</p>
+              </div>
+              <input class="sr" type="file" id="fileIn" tabindex="-1" aria-hidden="true" multiple accept=".html,.htm,.pdf,.docx,.jpg,.jpeg,.png,.tif,.tiff">
+              <button class="drop" type="button" id="drop" aria-describedby="limits">
+                <svg class="i" aria-hidden="true"><use href="#upload"/></svg>
+                <span class="t">Drop a subscription document here</span>
+                <span class="s">or <u>choose a file</u> from your computer</span>
+              </button>
+              <ul class="types" aria-label="Accepted file types">
+                <li><svg class="i" aria-hidden="true"><use href="#file"/></svg>HTML</li>
+                <li><svg class="i" aria-hidden="true"><use href="#file"/></svg>Text PDF</li>
+                <li><svg class="i" aria-hidden="true"><use href="#file"/></svg>DOCX</li>
+                <li><svg class="i" aria-hidden="true"><use href="#scan"/></svg>Scanned PDF</li>
+                <li><svg class="i" aria-hidden="true"><use href="#scan"/></svg>Images (JPG, PNG, TIFF)</li>
+              </ul>
+              <div class="limits" id="limits">
+                <span>Max <b>10 MB</b> per file</span>
+                <span>Max <b>30 pages</b> for a scan</span>
+                <span>One document per review, or all page images of one scan together</span>
+                <span>Checked before any AI call is spent</span>
+              </div>
+              <div class="alert" id="fileErr" role="alert" hidden>
+                <svg class="i" aria-hidden="true"><use href="#stop"/></svg>
+                <b id="fileErrT"></b>
+                <p id="fileErrB"></p>
+                <div class="acts"><button class="btn" type="button" id="fileErrBtn"><svg class="i" aria-hidden="true"><use href="#upload"/></svg>Choose another file</button></div>
+              </div>
+              <div class="filerow" id="fileRow" hidden>
+                <svg class="i" aria-hidden="true"><use href="#file"/></svg>
+                <div><div class="n" id="fileN"></div><div class="m" id="fileM"></div></div>
+                <button class="btn" type="button" id="fileRm"><svg class="i" aria-hidden="true"><use href="#x"/></svg>Remove</button>
+              </div>
+              <div class="democtl" role="group" aria-label="Demo control, not part of the product">
+                <b>Demo control</b>
+                <label for="simSel" class="sr">Simulate a file</label>
+                <select id="simSel">
+                  <option value="docx">Simulate: DOCX, 3.2 MB (accepted)</option>
+                  <option value="scan">Simulate: scanned PDF, 18 pages, 8.4 MB (accepted)</option>
+                  <option value="type">Simulate: wrong file type (.xlsx)</option>
+                  <option value="big">Simulate: oversized file (14.8 MB)</option>
+                  <option value="pages">Simulate: scan with 41 pages</option>
+                </select>
+                <button class="btn" type="button" id="simBtn">Load this file</button>
+              </div>
+            </div>
+
+            <div class="block">
+              <div>
+                <h2 class="sec">About this document</h2>
+                <p class="help">The law firm decides which earlier decisions can be reused. Fund and version are saved with the review.</p>
+              </div>
+              <div class="fields">
+                <div class="field wide">
+                  <label for="firm" id="firmLab">Law firm</label>
+                  <div class="combo" id="combo">
+                    <input type="text" id="firm" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="firmList" aria-describedby="firmHelp" autocomplete="off" spellcheck="false" placeholder="Search by firm name or alias, then pick from the list" enterkeyhint="next">
+                    <svg class="i chv" aria-hidden="true"><use href="#chev"/></svg>
+                    <ul class="listbox" id="firmList" role="listbox" aria-labelledby="firmLab" hidden></ul>
+                  </div>
+                  <div class="help" id="firmHelp">Pick a firm from the list. Typed text that is not a listed firm or alias is not accepted.</div>
+                  <div class="ferr" id="firmErr" role="alert"><svg class="i" aria-hidden="true"><use href="#warn"/></svg><span></span></div>
+                </div>
+                <div class="field">
+                  <label for="fund">Fund name <span class="req">required</span></label>
+                  <input type="text" id="fund" autocomplete="off" placeholder="e.g. Next Generation Infrastructure LLC" enterkeyhint="next" aria-describedby="fundErr" maxlength="120">
+                  <div class="ferr" id="fundErr"><svg class="i" aria-hidden="true"><use href="#warn"/></svg><span>Enter the fund name.</span></div>
+                </div>
+                <div class="field">
+                  <label for="ver">Version or template label</label>
+                  <input type="text" id="ver" autocomplete="off" placeholder="e.g. 2024 template, v2" enterkeyhint="go" maxlength="60">
+                </div>
+                <div class="field wide"><div class="note warn" id="memNote" aria-live="polite"></div></div>
+              </div>
+            </div>
+
+            <div class="block">
+              <div class="summary" id="summary" role="alert" tabindex="-1"></div>
+              <div class="startrow">
+                <button class="btn pri lg" type="submit" id="startBtn"><svg class="i" aria-hidden="true"><use href="#chev"/></svg>Start review</button>
+                <span class="help" id="startHelp"></span>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Samples -->
+        <div id="pSample" role="tabpanel" aria-labelledby="tabSample" tabindex="-1" hidden>
+          <div class="block" style="margin-bottom:24px">
+            <div>
+              <h2 class="sec">Open a sample</h2>
+              <p class="help" id="sampleHelp" style="max-width:72ch"></p>
+            </div>
+          </div>
+          <div id="sampleGroups"></div>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div class="loadp" id="loadp" hidden>
+        <div>
+          <h2 id="loadT" tabindex="-1" class="loadmsg"></h2>
+        </div>
+        <div class="loadmeta" id="loadMeta"></div>
+        <ol class="lst" id="lst" aria-label="Review stages"></ol>
+        <div class="note info" id="loadNote" aria-live="polite"></div>
+        <div class="startrow" id="loadActs"></div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="rail" aria-label="Session settings and privacy">
+    <div class="rsec">
+      <h2><svg class="i" aria-hidden="true"><use href="#folder"/></svg>Workspace</h2>
+      <fieldset>
+        <legend class="sr">Workspace</legend>
+        <div class="wsopt">
+          <label class="ws"><input type="radio" name="ws" value="demo" checked>
+            <span class="t">Demo workspace <span class="tag ro"><svg class="i" aria-hidden="true"><use href="#lock"/></svg>Read-only</span></span>
+            <span class="d">Seeded with earlier decisions on a Partners Group document, so memory shows at once. Your actions apply to your own copy and are never saved to the shared demo.</span></label>
+          <label class="ws"><input type="radio" name="ws" value="sandbox">
+            <span class="t">My sandbox</span>
+            <span class="d">Starts empty. Uploads and decisions stay private to you and are deleted after the retention period.</span></label>
+        </div>
+      </fieldset>
+      <div class="help" id="wsNote"></div>
+    </div>
+
+    <div class="rsec">
+      <h2><svg class="i" aria-hidden="true"><use href="#user"/></svg>Analyst</h2>
+      <div class="field">
+        <label for="analyst" class="sr">Analyst name</label>
+        <select id="analyst"><option>Duc Pham</option><option>Minh Anh Nguyen</option><option>Sofia Marek</option><option value="__other">Another name…</option></select>
+        <input type="text" id="analystOther" placeholder="Type a name" maxlength="40" aria-label="Another analyst name" hidden>
+      </div>
+      <div class="help">A simulated name for the audit trail. There are no accounts. Each browser gets its own sandbox.</div>
+    </div>
+
+    <div class="rsec">
+      <h2><svg class="i" aria-hidden="true"><use href="#spark"/></svg>AI review</h2>
+      <div class="sw">
+        <span class="t" id="swLab">Turn AI off for this session</span>
+        <button type="button" class="track" id="aiSw" role="switch" aria-checked="false" aria-labelledby="swLab"><span class="sr">Off</span></button>
+        <span class="d" id="swDesc"></span>
+      </div>
+      <div class="allow" id="allow"></div>
+    </div>
+
+    <div class="rsec priv-sec">
+      <h2><svg class="i" aria-hidden="true"><use href="#shield"/></svg>Privacy notice</h2>
+      <div class="priv">
+        <ul>
+          <li><svg class="i" aria-hidden="true"><use href="#lock"/></svg><span><b>Not for confidential documents.</b> Use public or invented forms only.</span></li>
+          <li><svg class="i" aria-hidden="true"><use href="#clock"/></svg><span><b>Uploads are deleted after 24 hours.</b> Sandbox memory is purged after 30 days.</span></li>
+          <li><svg class="i" aria-hidden="true"><use href="#spark"/></svg><span><b>While AI is on, document text is sent to a third-party AI provider.</b> Turn AI off above and nothing leaves the service.</span></li>
+          <li><svg class="i" aria-hidden="true"><use href="#memory"/></svg><span><b>Memory keeps only short quoted snippets, hashes and metadata,</b> never the full document. Bank and routing numbers are masked.</span></li>
+        </ul>
+        <label class="ack" id="ackL"><input type="checkbox" id="ack" aria-describedby="ackErr"><span>I understand and accept this notice</span></label>
+        <div class="ferr" id="ackErr" role="alert"><svg class="i" aria-hidden="true"><use href="#warn"/></svg><span>Accept the notice before the first upload or AI use.</span></div>
+      </div>
+    </div>
+  </aside>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span></div>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const ic=(n,c='')=>`<svg class="i ${c}" aria-hidden="true"><use href="#${n}"/></svg>`;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const reduce=(window.matchMedia?matchMedia('(prefers-reduced-motion: reduce)').matches:false);
+
+/* ----- storage (never required) ----- */
+const KEY='subdocqa-start';
+function safeGet(k){try{return window.localStorage.getItem(k);}catch(e){return null;}}
+function safeSet(k,v){try{window.localStorage.setItem(k,v);}catch(e){}}
+function safeParse(t){try{return t?JSON.parse(t):{};}catch(e){return {};}}
+
+/* ----- data (fictional firms; samples are real public SEC documents, tags are demo data) ----- */
+const FIRMS=[
+ {id:'hc',name:'Hartwell & Crane LLP',aliases:['Hartwell & Crane','HC LLP','Hartwell and Crane LLP']},
+ {id:'op',name:'Ostrander Pell LLP',aliases:['Ostrander Pell','OP LLP']}
+];
+const HC='Hartwell & Crane LLP', OP='Ostrander Pell LLP';
+const SAMPLES=[
+ {n:3,g:'pg',title:'Partners Group Private Equity (Master Fund)',filing:'2019',desc:'Account type decides which parts of Sections 2 and 4 apply. Appendices A and B.',firm:HC,fund:'Partners Group Private Equity (Master Fund)',ver:'2019 template',seed:'self'},
+ {n:4,g:'pg',title:'Partners Group Private Equity (TEI)',filing:'2016',desc:'Same template, older layout. A footnote sends ERISA investors to another feeder.',firm:HC,fund:'Partners Group Private Equity (TEI)',ver:'2016 template',seed:'from3'},
+ {n:5,g:'pg',title:'Partners Group Next Generation Infrastructure',filing:'2024',desc:'Adds Appendix C. Contains an internal drafting note.',firm:HC,fund:'Next Generation Infrastructure',ver:'2024 template',seed:'from3'},
+ {n:6,g:'pg',title:'Partners Group Next Generation Infrastructure',filing:'June 2026',desc:'Appendix C removed and class fees changed. The version-drift pair to sample 5.',firm:HC,fund:'Next Generation Infrastructure',ver:'June 2026 version',seed:'from3'},
+ {n:1,g:'oth',title:'Franklin Lexington Private Markets Fund',filing:'2024',desc:'Initial versus subsequent investor path, custodial branch, entity type drives required documents.',firm:OP,fund:'Franklin Lexington Private Markets Fund',ver:'2024 template'},
+ {n:2,g:'oth',title:'Coatue Innovation Fund',filing:'2025',desc:'Advisor and broker-dealer versions in one file. Opting out of reinvestment leads to Sections 8 and 9.',firm:OP,fund:'Coatue Innovation Fund',ver:'2025 template'},
+ {n:7,g:'oth',title:'Cottonwood Multifamily REIT II',filing:'2016',desc:'Ownership checkboxes, retirement account types, individual versus entity branch.',firm:OP,fund:'Cottonwood Multifamily REIT II',ver:'2016 template'},
+ {n:8,g:'oth',title:'Modiv (formerly RW Holdings NNN REIT)',filing:'2021',desc:'"SAME" shortcuts, custodial routing, suitability totals must equal 100%.',firm:OP,fund:'Modiv Inc.',ver:'2021 template'},
+ {n:10,g:'oth',title:'CrowdStreet REIT I',filing:'2022',desc:'About 16 investor types, qualified purchaser appendix, ERISA and CFIUS questions.',firm:'',fund:'CrowdStreet REIT I',ver:'2022 template'},
+ {n:11,g:'oth',title:'Medalist Diversified REIT',filing:'2016',desc:'One-of ownership type. The funding path depends on the minimum offering.',firm:OP,fund:'Medalist Diversified REIT',ver:'2016 template'},
+ {n:12,g:'oth',title:'Fortress Net Lease REIT',filing:'2024',desc:'Institutional style, share classes A to F. Already filled in for one subscriber.',firm:'',fund:'Fortress Net Lease REIT',ver:'2024 template'},
+ {n:13,g:'oth',title:'Blackstone Real Estate Income Trust, Appendix B',filing:'2024',desc:'Share class selection with minimums, investor and account types.',firm:'',fund:'Blackstone Real Estate Income Trust',ver:'2024 appendix'},
+ {n:9,g:'scan',scan:true,pages:22,title:'RW Holdings NNN REIT, appendices A-1, A-2 and B',filing:'2019',desc:'22 scanned page images with no text layer: direct investors (8 pages), advisor (10 pages), transfer-on-death designation (4 pages). Reading uses OCR.',firm:OP,fund:'RW Holdings NNN REIT',ver:'2019 appendices'}
+];
+const GROUPS=[
+ {id:'pg',h:'Partners Group template family',p:'Samples 3 to 6 are tagged as one firm and one template family, so memory carries across them. Open sample 5 or 6 in the demo workspace to see Previously handled items from sample 3.'},
+ {id:'oth',h:'Other HTML samples',p:'Samples without a firm tag open with memory off, which shows the no-firm case.'},
+ {id:'scan',h:'Scanned set (OCR)',p:'The only image-based input. Pages are read by an AI vision model, so this one is slower.'}
+];
+const SIM={
+ docx:{name:'Ostrander-Pell_Sub-Agreement_2025.docx',size:3.2*1048576,ext:'docx'},
+ scan:{name:'Fund-III_signed-scan.pdf',size:8.4*1048576,ext:'pdf',pages:18,scan:true},
+ type:{name:'investor-questionnaire.xlsx',size:410*1024,ext:'xlsx'},
+ big:{name:'NGI_full-scan.pdf',size:14.8*1048576,ext:'pdf',pages:26,scan:true},
+ pages:{name:'Appendix-set_all-pages.pdf',size:9.1*1048576,ext:'pdf',pages:41,scan:true}
+};
+const OKEXT=['html','htm','pdf','docx','jpg','jpeg','png','tif','tiff'], IMGEXT=['jpg','jpeg','png','tif','tiff'];
+const MAXB=10*1048576, MAXP=30;
+
+/* ----- state ----- */
+const saved=safeParse(safeGet(KEY));
+const S={tab:'upload',ws:saved.ws==='sandbox'?'sandbox':'demo',analyst:saved.analyst||'Duc Pham',ai:saved.ai!==false,ack:!!saved.ack,
+  firm:'',file:null,visitorLeft:2,visitorMax:3,globalLeft:12,globalMax:50,timers:[]};
+function persist(){safeSet(KEY,JSON.stringify({ws:S.ws,analyst:S.analyst,ai:S.ai,ack:S.ack}));}
+const wsName=()=>S.ws==='demo'?'Demo workspace':'My sandbox';
+const fmt=b=>b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
+
+/* ----- status + rail ----- */
+function renderStatus(){
+  const ai=S.ai?`AI on`:`AI off`;
+  $('#status').innerHTML=`<span>${ic('folder')}<b>${esc(wsName())}</b></span><span>${ic('user')}<b>${esc(S.analyst)}</b></span><span>${ic('spark')}<b>${ai}</b></span>`+
+   (S.ai?`<span class="opt">AI today: <b>${S.globalLeft} of ${S.globalMax}</b> left · yours: <b>${S.visitorLeft} of ${S.visitorMax}</b></span>`:'');
+}
+function renderRail(){
+  $$('input[name=ws]').forEach(r=>r.checked=r.value===S.ws);
+  $('#wsNote').textContent=S.ws==='demo'
+    ?'Uploads always go to your own sandbox, even from here. Decisions you make on seeded documents stay in your copy.'
+    :'Samples open with empty memory here. Switch to the demo workspace to see seeded decisions.';
+  const sw=$('#aiSw');sw.setAttribute('aria-checked',S.ai?'false':'true');
+  sw.firstElementChild.textContent=S.ai?'Off':'On';
+  $('#swDesc').textContent=S.ai?'AI is on. Rule checks, structure and memory run first; AI reviews wording that rules cannot judge.'
+    :'AI is off. Rule checks, structure, memory and the digitization gate still work. Ambiguity, contradiction and typo passes are skipped.';
+  const a=$('#allow');
+  a.innerHTML=S.ai
+    ?`<div>${ic('spark')}<span>Shared AI allowance today: <b>${S.globalLeft} of ${S.globalMax}</b> left</span></div><div>${ic('user')}<span>Your AI runs today: <b>${S.visitorLeft} of ${S.visitorMax}</b> documents left</span></div>`
+    :`<div>${ic('skip')}<span>No AI runs are started in this session, so no allowance is used.</span></div>`;
+  $('#ack').checked=S.ack;
+  renderStatus();renderMem();renderStartHelp();
+}
+function setAck(v){S.ack=v;$('#ack').checked=v;$('#ackL').classList.remove('bad');$('#ackErr').classList.remove('on');persist();}
+function requireAck(){
+  if(S.ack)return true;
+  $('#ackErr').classList.add('on');$('#ackL').classList.add('bad');
+  const el=$('#ack');el.scrollIntoView({block:'center',behavior:reduce?'auto':'smooth'});el.focus({preventScroll:true});
+  toast('Accept the privacy notice first. It is in the panel on the right.');return false;
+}
+
+/* ----- tabs ----- */
+function setTab(t,focus){
+  S.tab=t;
+  $$('.choice').forEach(b=>{const on=b.dataset.tab===t;b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1;if(on&&focus)b.focus();});
+  $('#pUpload').hidden=t!=='upload';$('#pSample').hidden=t!=='sample';
+}
+$$('.choice').forEach(b=>{
+  b.addEventListener('click',()=>setTab(b.dataset.tab));
+  b.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='ArrowLeft'||e.key==='Home'||e.key==='End'){
+      e.preventDefault();setTab(e.key==='ArrowRight'||e.key==='End'?'sample':'upload',true);
+    }
+  });
+});
+
+/* ----- memory note ----- */
+function renderMem(){
+  const n=$('#memNote'),f=S.firm;
+  if(!f){
+    n.className='note warn';
+    n.innerHTML=`${ic('warn')}<div><b>No law firm selected: memory will not be applied.</b><small>Every finding will show as New and earlier decisions are not reused. You can still review the document.</small></div>`;
+  }else if(S.ws==='demo'){
+    n.className='note ok';
+    n.innerHTML=`${ic('memory')}<div><b>Memory for ${esc(f)} will be applied.</b><small>In the demo workspace, seeded decisions appear as Previously handled. Anything you decide is kept in your own copy, not the shared demo.</small></div>`;
+  }else{
+    n.className='note info';
+    n.innerHTML=`${ic('memory')}<div><b>Memory for ${esc(f)} applies from your sandbox.</b><small>It is empty until you record decisions. It never crosses to another law firm.</small></div>`;
+  }
+}
+function renderStartHelp(){
+  const h=$('#startHelp');
+  if(!S.ai)h.textContent='AI is off for this session. No document text leaves the service.';
+  else if(S.visitorLeft<1)h.textContent=`Your daily AI limit is used (${S.visitorMax} of ${S.visitorMax}). You get rule checks and memory only.`;
+  else h.textContent=`Uses 1 of your ${S.visitorLeft} remaining AI runs today. Document text goes to a third-party AI provider.`;
+}
+
+/* ----- law firm combobox (list only, aliases resolve) ----- */
+const norm=s=>s.toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+const firmIn=$('#firm'), list=$('#firmList');
+let opts=[], actIdx=-1, firmNote='';
+function matchFirms(q){
+  const nq=norm(q);
+  return FIRMS.map(f=>{
+    const nameHit=!nq||norm(f.name).includes(nq);
+    const al=f.aliases.find(a=>nq&&norm(a).includes(nq)&&!norm(f.name).includes(nq));
+    return (nameHit||al)?{firm:f,alias:al||null}:null;
+  }).filter(Boolean);
+}
+function exact(q){
+  const nq=norm(q);if(!nq)return null;
+  for(const f of FIRMS){if(norm(f.name)===nq)return {firm:f,alias:null};const a=f.aliases.find(x=>norm(x)===nq);if(a)return {firm:f,alias:a};}
+  return null;
+}
+function openList(){
+  const m=matchFirms(firmIn.value===(S.firm||'')&&S.firm?'':firmIn.value);
+  opts=m.map(x=>({kind:'firm',firm:x.firm,alias:x.alias}));
+  opts.push({kind:'none'});
+  list.innerHTML=m.length?'':'';
+  list.innerHTML=opts.map((o,i)=>{
+    if(o.kind==='none')return `<li role="option" id="fo-${i}" class="none" data-i="${i}">My firm is not listed: continue without a firm<span class="al">Memory will not be applied</span></li>`;
+    const sel=S.firm===o.firm.name;
+    return `<li role="option" id="fo-${i}" data-i="${i}" aria-selected="${sel}">${esc(o.firm.name)}${o.alias?`<span class="al">Matches alias “${esc(o.alias)}”</span>`:`<span class="al">Also known as ${o.firm.aliases.map(esc).join(', ')}</span>`}</li>`;
+  }).join('');
+  if(!m.length)list.insertAdjacentHTML('afterbegin',`<li class="empty" role="presentation">No listed firm or alias matches “${esc(firmIn.value)}”.</li>`);
+  list.hidden=false;firmIn.setAttribute('aria-expanded','true');
+  setAct(m.length?0:-1);
+}
+function closeList(){list.hidden=true;firmIn.setAttribute('aria-expanded','false');firmIn.removeAttribute('aria-activedescendant');actIdx=-1;}
+function setAct(i){
+  actIdx=i;$$('#firmList li[role=option]').forEach(li=>li.classList.toggle('act',+li.dataset.i===i));
+  if(i>=0){firmIn.setAttribute('aria-activedescendant','fo-'+i);const li=$('#fo-'+i);li&&li.scrollIntoView({block:'nearest'});}else firmIn.removeAttribute('aria-activedescendant');
+}
+function showFirmErr(msg){const e=$('#firmErr');e.classList.toggle('on',!!msg);e.querySelector('span').textContent=msg||'';firmIn.setAttribute('aria-invalid',!!msg);}
+function chooseFirm(o){
+  if(o.kind==='none'){S.firm='';firmIn.value='';firmNote='Continuing without a firm.';}
+  else{S.firm=o.firm.name;firmIn.value=o.firm.name;firmNote=o.alias?`“${o.alias}” was resolved to ${o.firm.name}. Also recognized as: ${[o.firm.name,...o.firm.aliases].filter(a=>a!==o.alias&&a!==o.firm.name).join(', ')||'no other aliases'}.`:`Also recognized as: ${o.firm.aliases.join(', ')}.`;}
+  $('#firmHelp').textContent=firmNote||'Pick a firm from the list. Typed text that is not a listed firm or alias is not accepted.';
+  showFirmErr('');closeList();renderMem();
+}
+let reverted=false;
+function commitFirm(){
+  const v=firmIn.value.trim();
+  if(!v&&reverted){reverted=false;return;}
+  if(!v){S.firm='';firmNote='';$('#firmHelp').textContent='Pick a firm from the list. Typed text that is not a listed firm or alias is not accepted.';showFirmErr('');renderMem();return;}
+  if(v===S.firm){showFirmErr('');return;}
+  const ex=exact(v);
+  if(ex){chooseFirm({kind:'firm',firm:ex.firm,alias:ex.alias});return;}
+  showFirmErr(`“${v}” is not a listed firm or alias, so it was not accepted. Pick one from the list.`);
+  firmIn.value=S.firm;reverted=!S.firm;
+}
+firmIn.addEventListener('input',()=>{reverted=false;showFirmErr('');openList();});
+firmIn.addEventListener('focus',()=>{firmIn.select();if(list.hidden)openList();});
+firmIn.addEventListener('click',()=>{if(list.hidden)openList();});
+firmIn.addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'){e.preventDefault();if(list.hidden)openList();else setAct(Math.min(opts.length-1,actIdx+1));}
+  else if(e.key==='ArrowUp'){e.preventDefault();if(!list.hidden)setAct(Math.max(0,actIdx-1));}
+  else if(e.key==='Escape'){if(!list.hidden){e.preventDefault();closeList();firmIn.value=S.firm;}}
+  else if(e.key==='Enter'){
+    if(!list.hidden){e.preventDefault();if(actIdx>=0&&opts[actIdx])chooseFirm(opts[actIdx]);else commitFirm();closeList();if(S.firm||firmNote)$('#fund').focus();}
+  }
+});
+firmIn.addEventListener('blur',()=>{setTimeout(()=>{if(document.activeElement!==firmIn&&!list.hidden){commitFirm();closeList();}else if(document.activeElement!==firmIn){commitFirm();}},120);});
+list.addEventListener('mousedown',e=>e.preventDefault());
+list.addEventListener('click',e=>{const li=e.target.closest('li[role=option]');if(li){chooseFirm(opts[+li.dataset.i]);firmIn.focus();closeList();}});
+
+/* ----- file handling ----- */
+function clearFileErr(){$('#fileErr').hidden=true;}
+function showFileErr(t,b){$('#fileErrT').textContent=t;$('#fileErrB').textContent=b;$('#fileErr').hidden=false;S.file=null;renderFile();}
+function renderFile(){
+  const f=S.file;$('#fileRow').hidden=!f;
+  if(f){
+    $('#fileN').textContent=f.name;
+    const type=f.ext==='pdf'?(f.scan?'Scanned PDF':'PDF (text or scanned, detected on read)'):f.ext==='docx'?'DOCX':f.img?'Page images':'HTML';
+    $('#fileM').textContent=`${type} · ${fmt(f.size)}${f.pages?` · ${f.pages} page${f.pages>1?'s':''}`:''} · accepted, no AI call used`;
+  }
+  const fn=$('#drop');
+}
+function accept(f){
+  clearFileErr();
+  if(!OKEXT.includes(f.ext))return showFileErr(`Wrong file type: ${f.name}`,`Accepted types are HTML, text PDF, DOCX, scanned PDF and images (JPG, PNG, TIFF). ${f.ext==='doc'?'Save the file as DOCX and try again. ':''}Nothing was uploaded and no AI call was spent.`);
+  if(f.size>MAXB)return showFileErr(`File too large: ${f.name} is ${fmt(f.size)}`,`The limit is 10 MB per file. Split the document or export a smaller copy. Nothing was uploaded and no AI call was spent.`);
+  if(f.pages&&f.pages>MAXP)return showFileErr(`Too many pages: ${f.name} has ${f.pages} pages`,`Scans are limited to 30 pages. Upload the pages you need to check. Nothing was uploaded and no AI call was spent.`);
+  S.file=f;renderFile();$('#summary').classList.remove('on');
+}
+function fromFileList(fl){
+  const files=[...fl];if(!files.length)return;
+  const ext=n=>(n.split('.').pop()||'').toLowerCase();
+  const allImg=files.every(x=>IMGEXT.includes(ext(x.name)));
+  if(files.length>1&&!allImg)return showFileErr('Select one document at a time','Several files are accepted only when they are all page images of one scan (JPG, PNG or TIFF).');
+  if(allImg&&files.length>1){const size=files.reduce((a,x)=>a+x.size,0);return accept({name:`${files.length} page images`,size,ext:ext(files[0].name),pages:files.length,img:true,scan:true});}
+  const x=files[0];accept({name:x.name,size:x.size,ext:ext(x.name),img:IMGEXT.includes(ext(x.name)),pages:IMGEXT.includes(ext(x.name))?1:null});
+}
+const drop=$('#drop'), fileIn=$('#fileIn');
+drop.addEventListener('click',()=>fileIn.click());
+fileIn.addEventListener('change',()=>{fromFileList(fileIn.files);fileIn.value='';});
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over');}));
+drop.addEventListener('drop',e=>{if(e.dataTransfer&&e.dataTransfer.files)fromFileList(e.dataTransfer.files);});
+$('#fileRm').addEventListener('click',()=>{S.file=null;renderFile();clearFileErr();drop.focus();});
+$('#fileErrBtn').addEventListener('click',()=>{clearFileErr();fileIn.click();});
+$('#simBtn').addEventListener('click',()=>accept(Object.assign({},SIM[$('#simSel').value])));
+
+/* ----- upload submit ----- */
+$('#fund').addEventListener('input',e=>{e.target.setAttribute('aria-invalid','false');$('#fundErr').classList.remove('on');});
+$('#upForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const probs=[];
+  if(!S.file)probs.push(['Choose a file to review.','#drop']);
+  if(!$('#fund').value.trim()){probs.push(['Enter the fund name.','#fund']);$('#fund').setAttribute('aria-invalid','true');$('#fundErr').classList.add('on');}
+  if(!S.ack){probs.push(['Accept the privacy notice.','#ack']);$('#ackErr').classList.add('on');$('#ackL').classList.add('bad');}
+  const sm=$('#summary');
+  if(probs.length){
+    sm.innerHTML=`<b>${probs.length===1?'One thing needs attention':probs.length+' things need attention'} before the review can start</b><ul>${probs.map((p,i)=>`<li><button type="button" data-f="${p[1]}">${esc(p[0])}</button></li>`).join('')}</ul>`;
+    sm.classList.add('on');sm.focus();return;
+  }
+  sm.classList.remove('on');
+  const useAI=S.ai&&S.visitorLeft>0;
+  startLoad({title:S.file.name,fund:$('#fund').value.trim(),ver:$('#ver').value.trim(),firm:S.firm,scan:!!S.file.scan||!!S.file.img,pages:S.file.pages||0,cached:false,useAI,seed:null});
+});
+$('#summary').addEventListener('click',e=>{const b=e.target.closest('button[data-f]');if(!b)return;const t=$(b.dataset.f);t&&(t.scrollIntoView({block:'center',behavior:reduce?'auto':'smooth'}),t.focus({preventScroll:true}));});
+
+/* ----- samples ----- */
+function memTag(s){
+  if(!s.firm)return `<span class="tag t-warn">${ic('warn')}No firm: memory off</span>`;
+  if(S.ws==='sandbox')return `<span class="tag t-st">${ic('memory')}Memory empty in your sandbox</span>`;
+  if(s.seed==='self')return `<span class="tag t-mem">${ic('memory')}Seeded with prior decisions</span>`;
+  if(s.seed==='from3')return `<span class="tag t-mem">${ic('memory')}Memory from sample 3</span>`;
+  return `<span class="tag t-st">${ic('memory')}No decisions yet</span>`;
+}
+function renderSamples(){
+  const html=SAMPLES.filter(s=>!s.scan).length, scans=SAMPLES.filter(s=>s.scan).length;
+  $('#sampleCount').textContent=`${html} HTML samples and ${scans} scanned set, ready tagged`;
+  $('#sampleHelp').textContent=`Public SEC subscription documents. Each opens pre-tagged with a law firm, fund and version, and AI results are reused from cache where possible. Firm tags are invented demo data.`;
+  $('#sampleGroups').innerHTML=GROUPS.map(g=>{
+    const items=SAMPLES.filter(s=>s.g===g.id);
+    return `<section class="grp" aria-labelledby="g-${g.id}"><h3 id="g-${g.id}">${esc(g.h)}<span class="cn">${items.length} ${items.length>1?'documents':'document'}</span></h3><p>${esc(g.p)}</p><ul class="rows">${items.map(s=>`
+      <li class="srow"><div>
+        <div class="ttl">${esc(s.title)}<span>${esc(s.filing)} · sample ${s.n}</span></div>
+        <div class="desc">${esc(s.desc)}</div>
+        <dl><dt>Law firm</dt><dd>${s.firm?esc(s.firm):'Not tagged'}</dd><dt>Fund</dt><dd>${esc(s.fund)}</dd><dt>Version</dt><dd>${esc(s.ver)}</dd></dl>
+        <div class="tags">${s.scan?`<span class="tag t-st">${ic('scan')}Scanned, ${s.pages} pages</span>`:`<span class="tag t-st">${ic('file')}HTML</span>`}${memTag(s)}</div>
+      </div><button class="btn pri" type="button" data-sample="${s.n}" aria-label="Open sample ${s.n}: ${esc(s.title)}, ${esc(s.filing)}">Open sample${ic('chev')}</button></li>`).join('')}</ul></section>`;
+  }).join('');
+}
+$('#sampleGroups').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-sample]');if(!b)return;
+  if(!requireAck())return;
+  const s=SAMPLES.find(x=>x.n===+b.dataset.sample);
+  startLoad({title:s.title+' ('+s.filing+')',fund:s.fund,ver:s.ver,firm:s.firm,scan:!!s.scan,pages:s.pages||0,cached:true,useAI:S.ai,seed:s.seed||null,sample:s.n});
+});
+
+/* ----- loading (does not navigate) ----- */
+function clearTimers(){S.timers.forEach(t=>{clearTimeout(t);clearInterval(t);});S.timers=[];}
+function later(fn,ms){const t=setTimeout(fn,ms);S.timers.push(t);return t;}
+function startLoad(p){
+  clearTimers();
+  $('#choiceArea').hidden=true;$('#loadp').hidden=false;
+  $('#loadT').textContent='Preparing '+p.title;
+  $('#loadMeta').innerHTML=`<span><b>Law firm</b> ${p.firm?esc(p.firm):'None selected'}</span><span><b>Fund</b> ${esc(p.fund)}</span><span><b>Version</b> ${esc(p.ver||'Not given')}</span><span><b>Workspace</b> ${esc(wsName())}</span><span><b>Analyst</b> ${esc(S.analyst)}</span>`;
+  const aiReason=!S.ai?'Skipped · AI is off for this session':(!p.useAI?`Skipped · your daily AI limit is used (${S.visitorMax} of ${S.visitorMax})`:null);
+  const st=[
+   {k:'Reading',run:p.scan?'Reading page images with OCR':'Extracting text and layout',done:p.scan?`Done · ${p.pages||22} pages read`:'Done · text and sections extracted'},
+   {k:'Structuring',run:'Building the section and reference map',done:'Done · sections, references and skips mapped'},
+   {k:'Checks',run:'Running rule checks: references, skips, terms, drafting notes',done:'Done · all rule checks complete'},
+   {k:'AI review',run:p.cached?'Reusing cached AI results':'Asking the AI to review wording rules cannot judge',done:p.cached?'Done · from cache, no allowance used':'Done · used 1 of your daily AI runs',skip:aiReason}
+  ];
+  const el=$('#lst');
+  const state=st.map(()=> 'todo');
+  const sub=st.map(()=> 'Waiting');
+  function draw(){
+    el.innerHTML=st.map((s,i)=>{
+      const c=state[i];const icon=c==='done'?'check':c==='run'?'ring':c==='skip'?'skip':'todo';
+      const cls=c==='skip'?'skipd':c;
+      return `<li class="${cls}"${c==='run'?' aria-current="step"':''}>${ic(icon,c==='run'?'ring-pulse':'')}<span class="lab">${s.k}</span><span class="sub">${esc(sub[i])}</span></li>`;
+    }).join('');
+  }
+  $('#loadNote').className='note info';
+  $('#loadNote').innerHTML=`${ic('info')}<div><b>Working.</b><small>${S.ai?'Rule checks always come first; AI findings are labelled when they arrive.':'AI is off, so this review is deterministic: reproducible from the rules alone.'}</small></div>`;
+  $('#loadActs').innerHTML=`<button class="btn" type="button" id="cancelLoad">Cancel and go back</button>`;
+  let i=0;
+  const durs=[p.scan?0:1000,900,1100,1500];
+  function step(){
+    if(i>=st.length)return finish();
+    const s=st[i];
+    if(s.skip){state[i]='skip';sub[i]=s.skip;draw();announce(`${s.k}: ${s.skip}`);i++;return later(step,350);}
+    state[i]='run';sub[i]=s.run;draw();announce(`${s.k}: ${s.run}`);
+    if(i===0&&p.scan){
+      const total=p.pages||22;let k=0;
+      const t=setInterval(()=>{k++;sub[0]=`OCR page ${Math.min(k,total)} of ${total}`;draw();if(k>=total){clearInterval(t);state[0]='done';sub[0]=s.done;draw();announce(`${s.k}: done`);i++;later(step,300);}},reduce?30:110);
+      S.timers.push(t);return;
+    }
+    later(()=>{state[i]='done';sub[i]=s.done;draw();announce(`${s.k}: done`);i++;step();},durs[i]);
+  }
+  function finish(){
+    if(p.useAI&&!p.cached&&S.ai){S.visitorLeft=Math.max(0,S.visitorLeft-1);S.globalLeft=Math.max(0,S.globalLeft-1);renderRail();}
+    let mem;
+    if(!p.firm)mem='No law firm: memory was not applied. Every finding will show as New.';
+    else if(S.ws==='sandbox')mem=`Memory for ${p.firm} applied from your sandbox (empty so far).`;
+    else if(p.seed==='from3')mem=`Memory for ${p.firm} applied: Previously handled items from sample 3 will be set aside in the review.`;
+    else if(p.seed==='self')mem=`Memory for ${p.firm} applied: this document holds the seeded prior decisions.`;
+    else mem=`Memory for ${p.firm} applied: no earlier decisions for this fund yet.`;
+    $('#loadNote').className='note ok';
+    $('#loadNote').innerHTML=`${ic('check')}<div><b>Ready to review.</b><small>${esc(mem)} In the product this opens the review workspace; this mockup stops here.</small></div>`;
+    $('#loadActs').innerHTML=`<a class="btn pri lg" href="review-workspace.html" style="text-decoration:none">${ic('chev')}Open the review workspace mockup</a><button class="btn" type="button" id="backBtn">Back to start</button>`;
+    $('#loadT').textContent='Ready: '+p.title;
+    announce('Review ready');
+    const b=$('#backBtn');b&&b.focus();
+  }
+  draw();step();
+  $('#loadT').focus();
+}
+function announce(m){$('#loadNote').setAttribute('data-last',m);}
+$('#loadActs').addEventListener('click',e=>{
+  if(e.target.closest('#cancelLoad')||e.target.closest('#backBtn')){clearTimers();$('#loadp').hidden=true;$('#choiceArea').hidden=false;const t=S.tab==='upload'?$('#tabUpload'):$('#tabSample');t.focus();}
+});
+
+/* ----- rail interactions ----- */
+$$('input[name=ws]').forEach(r=>r.addEventListener('change',()=>{S.ws=r.value;persist();renderRail();renderSamples();toast(S.ws==='demo'?'Demo workspace: read-only, seeded memory.':'My sandbox: private, starts empty.');}));
+const an=$('#analyst'),ao=$('#analystOther');
+(function initAnalyst(){
+  const known=[...an.options].some(o=>o.value===S.analyst||o.text===S.analyst);
+  if(known)an.value=S.analyst;else{an.value='__other';ao.hidden=false;ao.value=S.analyst;}
+})();
+an.addEventListener('change',()=>{
+  if(an.value==='__other'){ao.hidden=false;ao.focus();S.analyst=ao.value.trim()||'Visitor';}
+  else{ao.hidden=true;S.analyst=an.value;}
+  persist();renderStatus();
+});
+ao.addEventListener('input',()=>{S.analyst=ao.value.trim()||'Visitor';renderStatus();});
+ao.addEventListener('change',()=>{persist();});
+$('#aiSw').addEventListener('click',()=>{S.ai=!S.ai;persist();renderRail();toast(S.ai?'AI is on for this session.':'AI is off for this session. Nothing is sent to a third party.');});
+$('#ack').addEventListener('change',e=>setAck(e.target.checked));
+
+let toastT=null;
+function toast(msg){$('#toastMsg').textContent=msg;$('#toast').classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>$('#toast').classList.remove('on'),3200);}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#loadp').hidden){/* keep explicit Cancel button; no accidental exit */}});
+
+renderRail();renderSamples();renderFile();
+})();
+</script>
+</body>
+</html>

@@ -24,7 +24,7 @@ Append-only: later agents add a `## Phase N` revision note, never overwrite. Umb
 Creates: root config, `packages/*` and `apps/*` skeletons, `scripts/` package, `fixtures/` dirs, guards, seam stubs, spike scripts for S1, S2, S6, S7, `THIRD_PARTY_NOTICES.md`. Edits: `.gitignore`.
 
 ## Phase 01
-Owns: `packages/core/**` (model, adapters/html, structure, graph, findings, detectors golden, memory, session/cookie, config/limits, contracts, engine), `fixtures/fingerprint-vectors.json`, `fixtures/memory/law-firms.json`.
+Owns: `packages/core/src/{model,adapters/html,structure,graph,findings,detectors (golden files only),memory,session,config,contracts,engine}` + their tests, `fixtures/fingerprint-vectors.json`, `fixtures/memory/law-firms.json`. NOT owned (later phases): `llm`, `diff`, `counsel`, `outline`, `investor`, `adapters/{pdf,docx,ocr}`. Seams (append-only): `packages/core/src/index.ts`, `detectors/registry.ts`. Phase-00-owned manifests/lint edited only via the serialized F0 seam step (2026-10-17 revision).
 
 ## Phase 02
 Owns: `packages/core/src/{detectors (new files), investor, memory/patternKey.ts}`, `packages/core/test/**` (new), `fixtures/html-seeded`, `fixtures/memory/{fund-*,demo-seed-spec.json}`, `scripts/src/fixtures`, `apps/web/src/features/investor-paths`, 2 web e2e specs. Disjoint from 04b.
@@ -71,3 +71,22 @@ Owns: `scripts/src/{deploy,conformance,precompute/precompute-all.ts}`, final `ap
 ## Potential Blast Radius Conflicts
 
 None unresolved. Known shared-write points are the seam files above; mitigation is orchestrator-serialized single-line edits.
+
+## Revision note 17-10-26 (Phase 03 PVL supplement)
+
+- Phase 06 EXTENDS `apps/web/src/engine` (created by Phase 03: `engine.worker.ts`, `client.ts`); it does not create it. Only `engine.worker.ts` may import parse/structure internals.
+- Phase 03 seam edits serialized by the orchestrator against Phase 04a: `pnpm-lock.yaml`, `THIRD_PARTY_NOTICES.md`, `.gitignore`. Phase 03 edits only `apps/web/package.json` among manifests.
+- `apps/web/e2e/slice.spec.ts` stays Phase 04a's; Phase 03 Playwright config defines projects `preview` (P03 specs) and `stack` (04a slice spec).
+
+## Revision note 17-10-26 (Phase 04a PVL supplement)
+
+- Phase 04a OWNS `apps/web/e2e/slice.spec.ts` and `scripts/src/slice-check.ts` (orchestrator decision); Phase 03 proves real findings via its own finding-highlight spec.
+- Phase 04a adds `apps/worker/src/proxy/log.ts` (redactor, reused by Phase 04b), `limits/prelimit.ts`, `test/fakes/{openrouter-stub,turnstile-stub}.ts`, and `harness/` evidence pack; drops `routes/proxy/cache.ts`.
+- `apps/worker/wrangler.jsonc`: 04a owns proxy vars only (one-key serialized edits). Phase 00 B4 pre-wires mountProxyRoutes/mountMemoryRoutes; 04a fills proxy stubs only; `app.ts` seam = TurnstilePort only.
+
+## Revision note 17-10-26 (Phase 00 EXECUTE — seam rule D2)
+
+- Seam rule: later phases APPEND to barrel/registry seam files only (`packages/core/src/index.ts`, `apps/web/src/features/registry.ts`, `packages/core/src/detectors/registry.ts`); the orchestrator serializes those edits.
+- `apps/worker/src/app.ts`: route-mount lines (`mountProxyRoutes(app, deps)`, `mountMemoryRoutes(app, deps)`) are pre-wired by Phase 00 and are never edited; deps-wiring lines (real TurnstilePort in 04a, `createD1Platform` in 04b) are single-line edits serialized by the orchestrator.
+- `apps/worker/wrangler.jsonc` (Phase 00 owns the skeleton): Phase 04b owns `triggers.crons` and purge-related `vars`; Phase 04a owns proxy `vars`; each a serialized one-key edit. Carry into Phase 04b PVL.
+- Phase 00 added (beyond the touchpoint list): `.prettierignore`, `scripts/tsconfig.worker.json`, `scripts/src/guards/scan-files.ts`, `scripts/src/slice-check-stub.ts` (stub for `pnpm slice:check`; Phase 04a creates `scripts/src/slice-check.ts` and repoints the script), `scripts/spikes/s01-s02/{worker.ts,wrangler.jsonc,cf-api.ts}`.

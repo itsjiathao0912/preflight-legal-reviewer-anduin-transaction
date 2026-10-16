@@ -1,0 +1,938 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-doc QA · App shell and Findings (design trial)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
+<style>
+/* ===== Tokens (verbatim from review-workspace.html) ===== */
+:root{
+  --ground:#E9ECE9;      /* app ground: low-chroma cool stone */
+  --panel:#F4F6F3;       /* panels one tone step above ground */
+  --card:#FBFCFA;        /* cards one step above panel */
+  --paper:#FDFEFD;       /* document page */
+  --ink:#15181B;
+  --ink-2:#434A50;       /* 8.0:1 on panel */
+  --ink-3:#5C646B;       /* 5.6:1 on panel */
+  --accent:#1D5C57;      /* the single accent: deep teal */
+  --accent-tint:#D9E8E5;
+  --step:#DDE2DD;        /* tone step used instead of rules */
+  --block-fg:#8A1C1C; --block-bg:#F7E2DF;
+  --fix-fg:#734400;   --fix-bg:#F5E8C8;
+  --note-fg:#38454F;  --note-bg:#DFE6EA;
+  --ok-fg:#1B5632;    --ok-bg:#DAEEDF;
+  --mark:#F3D676;
+  --r:4px;
+  --sans:'Geist',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --serif:'Newsreader',Georgia,'Times New Roman',serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--ground);color:var(--ink);font:400 14px/1.5 var(--sans);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+button,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+svg.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.skip{position:absolute;left:8px;top:-48px;background:var(--ink);color:#fff;padding:8px 13px;border-radius:var(--r);z-index:80}
+.skip:focus{top:8px}
+
+/* ===== Shell ===== */
+.app{--sbw:232px;height:100dvh;display:grid;grid-template-columns:var(--sbw) minmax(0,1fr);min-width:960px}
+.app.rail{--sbw:56px}
+aside.side{background:var(--ground);display:flex;flex-direction:column;gap:14px;padding:12px 8px;min-height:0;min-width:0}
+.sbtop{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 2px}
+.brand{display:flex;align-items:center;gap:10px;font:500 20px/1 var(--serif);letter-spacing:-.01em;white-space:nowrap;padding-left:4px}
+.brand svg{width:28px;height:28px}
+.ibtn{border:0;background:transparent;width:32px;height:32px;border-radius:var(--r);display:inline-grid;place-items:center;color:var(--ink-2);flex:none}
+.ibtn:hover{background:var(--step)}
+.app.rail .sbtop{flex-direction:column;gap:10px;padding:0}
+.app.rail .brand{padding:0}
+.app.rail .brand span{display:none}
+
+.docsw{width:100%;border:0;background:var(--panel);border-radius:var(--r);padding:8px 10px;display:grid;grid-template-columns:16px minmax(0,1fr) 16px;gap:10px;align-items:center;text-align:left}
+.docsw:hover{background:var(--card)}
+.docsw .dn{display:block;font-weight:500;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.docsw .df{display:block;font-size:13px;color:var(--ink-3);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app.rail .docsw{grid-template-columns:1fr;justify-items:center;padding:8px 0}
+.app.rail .docsw .dt,.app.rail .docsw>.i:last-child{display:none}
+
+nav.snav{display:grid;gap:16px;overflow:auto;min-height:0}
+.gl{margin:0 0 4px;padding:0 10px;font:600 13px/1.4 var(--sans);color:var(--ink-3)}
+nav.snav ul{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.ni{position:relative;width:100%;border:0;background:transparent;height:36px;padding:0 8px;border-radius:var(--r);display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:8px;align-items:center;text-align:left;color:var(--ink-2)}
+.ni .lbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ni:hover{background:var(--step);color:var(--ink)}
+.ni[aria-current=page]{background:var(--card);color:var(--ink);font-weight:500}
+.ni[aria-current=page]::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:2px;background:var(--accent)}
+.ni[aria-current=page]>.i{color:var(--accent)}
+.nc{font-size:13px;font-weight:500;color:var(--ink-2);display:inline-flex;gap:4px;align-items:center}
+.nc svg{width:13px;height:13px;color:var(--fix-fg)}
+.app.rail .gl{height:0;padding:0;margin:0;overflow:hidden;visibility:hidden}
+.app.rail nav.snav{gap:10px}
+.app.rail .ni{grid-template-columns:1fr;justify-items:center;padding:0}
+.app.rail .lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.app.rail .nc{position:absolute;top:1px;right:3px;background:var(--ink);color:#fff;border-radius:999px;min-width:16px;height:16px;justify-content:center;padding:0 4px;font-size:13px;line-height:16px}
+.app.rail .nc svg{display:none}
+.app.rail .nc:empty{display:none}
+
+.sbbot{margin-top:auto;display:grid;gap:10px}
+.gate{width:100%;display:grid;grid-template-columns:18px minmax(0,1fr) 16px;gap:10px;align-items:center;border:0;border-radius:var(--r);padding:9px 10px;font-weight:600;font-size:14px;background:var(--block-bg);color:var(--block-fg);text-align:left;position:relative}
+.gate.ready{background:var(--ok-bg);color:var(--ok-fg)}
+.gate svg:first-child{width:18px;height:18px}
+.gate:hover{filter:brightness(.97)}
+.gate .gn{display:none}
+.app.rail .gate{grid-template-columns:1fr;justify-items:center;padding:9px 0}
+.app.rail .gate .lbl~svg{display:none}
+.app.rail .gate .gn{display:inline-grid;position:absolute;top:-3px;right:2px;background:var(--block-fg);color:#fff;border-radius:999px;min-width:16px;height:16px;place-items:center;font-size:13px;line-height:16px;padding:0 4px}
+.app.rail .gate.ready .gn{display:none}
+.airow{display:grid;gap:4px;padding:0 2px}
+.seg{display:inline-flex;background:var(--step);border-radius:var(--r);padding:2px;width:max-content}
+.seg button{border:0;background:transparent;padding:3px 10px;border-radius:3px;font-size:13px;font-weight:500;color:var(--ink-2)}
+.seg button[aria-pressed=true]{background:var(--card);color:var(--ink)}
+.allow{font-size:13px;color:var(--ink-3);display:flex;align-items:center;gap:6px}
+.allow b{color:var(--ink);font-weight:500}
+.aimini{display:none}
+.app.rail .airow{display:none}
+.app.rail .aimini{display:grid;position:relative;margin:0 auto}
+.aimini[aria-pressed=true]{color:var(--accent)}
+.aimini[aria-pressed=false]{color:var(--ink-3)}
+.aimini[aria-pressed=false]::after{content:"";position:absolute;left:8px;right:8px;top:50%;height:2px;background:currentColor;transform:rotate(-40deg)}
+.me{display:flex;align-items:center;gap:10px;padding:2px 2px 0}
+.av{width:28px;height:28px;border-radius:999px;background:var(--step);display:grid;place-items:center;font-size:13px;font-weight:600;color:var(--ink-2);flex:none}
+.me .nm{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app.rail .me{justify-content:center;padding:0}
+.app.rail .me .nm{display:none}
+
+/* ===== Main area ===== */
+.stagearea{background:var(--panel);display:grid;grid-template-rows:minmax(0,1fr);grid-template-columns:minmax(0,1fr);min-height:0;min-width:0}
+.view{display:flex;flex-direction:column;min-height:0;min-width:0}
+.view>.work{flex:1 1 0}
+.pagehead{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 24px 14px}
+.pagehead .tt{display:flex;align-items:baseline;gap:14px;min-width:0}
+.pagehead h1{margin:0;font:500 20px/1.2 var(--serif);letter-spacing:-.01em;outline:none}
+.pagehead .meta{margin:0;color:var(--ink-3);font-size:14px;white-space:nowrap}
+.stagebtn{border:0;background:var(--card);border-radius:var(--r);padding:6px 10px 6px 11px;display:inline-flex;gap:8px;align-items:center;font-size:13px;color:var(--ink-2);white-space:nowrap}
+.stagebtn:hover{background:var(--step)}
+.stagebtn svg:first-child{color:#8A5A00}
+.ring-pulse{transform-origin:center}
+@media (prefers-reduced-motion:no-preference){.ring-pulse{animation:spin 2.4s linear infinite}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.banner{margin:0 24px 12px;display:none;gap:12px;align-items:flex-start;background:var(--fix-bg);color:#3F2A00;padding:9px 14px;border-radius:var(--r)}
+.banner.on{display:flex}
+.banner svg{margin-top:2px;color:var(--fix-fg)}
+.banner b{font-weight:600}
+
+.work{display:grid;grid-template-columns:minmax(0,1fr) 400px;min-height:0;grid-template-rows:minmax(0,1fr)}
+.docpane{display:grid;grid-template-rows:auto minmax(0,1fr);min-height:0;min-width:0}
+.docbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:0 24px 10px;color:var(--ink-3);font-size:13px}
+.scroll{overflow:auto;min-height:0}
+.docscroll{padding:0 24px 80px}
+.paper{background:var(--paper);max-width:700px;margin:0 auto;padding:52px 60px 72px;border-radius:var(--r);font:400 16px/1.72 var(--serif);color:#1b1e21}
+.paper h1{font:500 28px/1.15 var(--serif);letter-spacing:-.02em;margin:0 0 4px;text-wrap:balance}
+.paper .sub{color:var(--ink-3);margin:0 0 36px;font-size:16px}
+.paper h2{font:600 17px/1.3 var(--serif);letter-spacing:.005em;margin:38px 0 10px;scroll-margin-top:24px}
+.paper h2 small{font-weight:400;color:var(--ink-3);font-size:15px;margin-left:6px}
+.paper h3{font:600 15px/1.3 var(--serif);margin:20px 0 6px;color:var(--ink-2)}
+.paper p{margin:0 0 13px;max-width:62ch}
+.paper .fields{background:var(--panel);padding:14px 16px;border-radius:var(--r);font:400 14px/1.9 var(--sans);color:var(--ink-2)}
+.paper .opt{display:flex;gap:10px;align-items:center;font:400 14px/1.9 var(--sans)}
+.box{width:13px;height:13px;border-radius:2px;background:var(--step);display:inline-block}
+.paper ol.p{padding-left:22px;margin:0 0 13px}
+.paper ol.p li{margin:0 0 6px;max-width:60ch}
+.paper .fold{color:var(--ink-3);font-size:14px;font-family:var(--sans)}
+mark.q{background:transparent;color:inherit;padding:0 1px;border-radius:2px;text-decoration-thickness:2px;text-underline-offset:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone;cursor:pointer;transition:background .2s}
+mark.q.sev-block{text-decoration-line:underline;text-decoration-style:solid;text-decoration-color:var(--block-fg);background:rgba(138,28,28,.07)}
+mark.q.sev-fix{text-decoration-line:underline;text-decoration-style:wavy;text-decoration-color:#9A6200;background:rgba(154,98,0,.08)}
+mark.q.sev-note{text-decoration-line:underline;text-decoration-style:dotted;text-decoration-color:var(--ink-3);background:rgba(56,69,79,.07)}
+mark.q.on{background:var(--mark);outline:3px solid var(--mark)}
+mark.q.flash{animation:flash 1.1s var(--ease)}
+@keyframes flash{0%{outline-width:10px;outline-color:rgba(243,214,118,.55)}100%{outline-width:3px;outline-color:var(--mark)}}
+@media (prefers-reduced-motion:reduce){mark.q.flash{animation:none}}
+.mask{font-family:var(--sans);font-size:14px;background:var(--step);padding:1px 6px;border-radius:3px;letter-spacing:.04em}
+
+/* buttons */
+.btn{border:0;border-radius:var(--r);padding:7px 13px;font-size:13px;font-weight:500;display:inline-flex;gap:6px;align-items:center;background:var(--step);color:var(--ink)}
+.btn:hover{background:#D1D8D2}
+.btn:active{transform:scale(.98)}
+.btn.pri{background:var(--ink);color:#fff}
+.btn.pri:hover{background:#2c3238}
+.btn[aria-pressed=true]{background:var(--accent);color:#fff}
+.btn.sm{padding:4px 9px}
+.btn svg{width:14px;height:14px}
+.btn.ghost{background:transparent}
+.btn.ghost:hover{background:var(--step)}
+
+/* ===== Findings column ===== */
+aside.fp{background:var(--card);display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;min-height:0;min-width:0}
+.fhead{padding:14px 12px 8px 16px;display:flex;gap:6px;align-items:center}
+.chip{border:0;background:var(--panel);border-radius:var(--r);padding:5px 8px;display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--ink-2)}
+.chip[aria-pressed=true]{background:var(--ink);color:#fff}
+.chip svg{width:14px;height:14px}
+.chip .n{font-weight:600}
+.fhead .btn{margin-left:auto;background:transparent}
+.fhead .btn:hover{background:var(--step)}
+.fhead .btn .fc{background:var(--accent);color:#fff;border-radius:999px;min-width:16px;height:16px;font-size:13px;line-height:16px;text-align:center;padding:0 4px}
+.flist{padding:2px 8px 24px}
+ul.rows{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.row{position:relative;border-radius:var(--r)}
+.rowb{width:100%;border:0;background:transparent;text-align:left;padding:10px 10px 10px 12px;min-height:44px;display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:10px;align-items:center;border-radius:var(--r)}
+.rowb:hover{background:var(--panel)}
+.row .si{display:inline-flex}
+.sv-block{color:var(--block-fg)}.sv-fix{color:#8A5A00}.sv-note{color:var(--note-fg)}
+.rowb .t{font-weight:500;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rm{display:inline-flex;gap:8px;align-items:center;color:var(--ink-3);font-size:13px;white-space:nowrap}
+.rm svg{width:14px;height:14px}
+.rm .re{color:var(--block-fg)}
+.row.sel{background:var(--paper)}
+.row.sel::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);border-radius:var(--r) 0 0 var(--r)}
+.row.sel .rowb:hover{background:transparent}
+.row.sel .rowb .t{white-space:normal;overflow:visible}
+.row.sel .rowb{align-items:start}
+.row.sel .si{padding-top:2px}
+.row.done{opacity:.7}
+.rbody{padding:0 12px 12px 38px;display:grid;gap:10px;animation:in .3s var(--ease)}
+@keyframes in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.rbody{animation:none}}
+.sub2{margin:0;font-size:13px;color:var(--ink-3)}
+.sub2 b{font-weight:600;color:var(--ink-2)}
+blockquote.ev{margin:0;font:400 15px/1.6 var(--serif);background:var(--panel);padding:9px 12px;border-radius:var(--r);border-left:3px solid var(--step)}
+.ef{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ef>div{background:var(--panel);border-radius:var(--r);padding:7px 10px}
+.ef .k{font-size:13px;color:var(--ink-3)}
+.ef .v{font-weight:600;line-height:1.35}
+.prov{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);align-items:center}
+.prov span{display:inline-flex;gap:5px;align-items:center}
+.prov svg{width:14px;height:14px}
+.tag{font-size:13px;font-weight:500;padding:1px 7px;border-radius:3px;display:inline-flex;gap:4px;align-items:center}
+.t-new{background:var(--accent-tint);color:var(--accent)}
+.t-re{background:var(--block-bg);color:var(--block-fg)}
+.t-ai{background:#E6E3F0;color:#3D3566}
+.t-st{background:var(--step);color:var(--ink-2)}
+.memnote{margin:0;font-size:13px;background:var(--block-bg);color:#5E1313;padding:8px 10px;border-radius:var(--r)}
+details.more summary{list-style:none;cursor:pointer;display:inline-flex;gap:4px;align-items:center;font-size:13px;color:var(--ink-2);border-radius:var(--r);padding:2px 0}
+details.more summary::-webkit-details-marker{display:none}
+details.more summary svg{width:13px;height:13px;transition:transform .2s var(--ease)}
+details.more[open] summary svg{transform:rotate(90deg)}
+details.more .dd{display:grid;gap:8px;margin-top:6px;font-size:13px;color:var(--ink-2)}
+details.more .dd p{margin:0}
+.interp{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.interp li{display:grid;grid-template-columns:20px 1fr;gap:6px;background:var(--panel);padding:7px 10px;border-radius:var(--r)}
+.interp b{font-weight:600}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.revealbtn{border:0;background:var(--step);border-radius:3px;padding:1px 8px;font-size:13px;display:inline-flex;gap:4px;align-items:center;margin-left:8px;vertical-align:1px}
+.revealbtn svg{width:13px;height:13px}
+.empty{padding:28px 8px;color:var(--ink-3);text-align:center}
+
+/* previously handled (pinned bottom row) */
+.prevwrap{background:var(--panel)}
+.prevbtn{width:100%;border:0;background:transparent;display:flex;align-items:center;gap:8px;padding:11px 16px;font-weight:500;font-size:14px;text-align:left}
+.prevbtn svg{transition:transform .2s var(--ease)}
+.prevbtn[aria-expanded=true] svg{transform:rotate(90deg)}
+.prevbtn .help{font-weight:400;color:var(--ink-3);font-size:13px;margin-left:auto}
+.prevlist{display:grid;gap:6px;padding:0 12px 12px;max-height:260px;overflow:auto}
+.pcard{background:var(--card);border-radius:var(--r);padding:10px 12px;display:grid;gap:4px}
+.pcard .pt{font-weight:500}
+.pcard .pm{font-size:13px;color:var(--ink-3)}
+.pcard .pa{font-size:13px;color:var(--ink-2)}
+.pcard .acts{margin-top:2px}
+
+/* popovers, modal, toast */
+.pop{position:fixed;z-index:40;background:var(--card);border-radius:var(--r);padding:14px;box-shadow:0 10px 30px -13px rgba(21,24,27,.22);max-width:calc(100vw - 16px);outline:none}
+.pop h2{margin:0 0 4px;font:500 16px/1.3 var(--serif)}
+.pop p{margin:0 0 12px;color:var(--ink-3);font-size:13px}
+.pop ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+#gatepop{width:360px}
+.gli{width:100%;text-align:left;border:0;background:var(--panel);border-radius:var(--r);padding:8px 10px;display:grid;grid-template-columns:16px 1fr;gap:8px;align-items:start}
+.gli:hover{background:var(--step)}
+.gli .why{font-size:13px;color:var(--ink-3);display:block}
+#stagepop{width:320px}
+.stages{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.stages li{display:grid;grid-template-columns:18px auto;column-gap:10px}
+.stages .lab{font-weight:500;line-height:20px}
+.stages .sub{grid-column:2;font-size:13px;color:var(--ink-3);line-height:16px}
+.stages svg{width:18px;height:18px;margin-top:1px}
+.stages .done svg{color:var(--accent)}
+.stages .pend svg{color:#8A5A00}
+.stages .todo{color:var(--ink-3)}
+.stages .skipd svg{color:var(--ink-3)}
+#filtpop{width:272px;display:grid;gap:10px}
+#filtpop label{display:grid;gap:3px;font-size:13px;color:var(--ink-3)}
+select{appearance:none;-webkit-appearance:none;background:var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23434A50' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") right 8px center no-repeat;border:0;border-radius:var(--r);padding:7px 26px 7px 8px;font-size:14px;width:100%;color:var(--ink)}
+.fnote{margin:0;font-size:13px;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+kbd{font:500 13px var(--sans);background:var(--step);border-radius:3px;padding:0 5px;color:var(--ink-2)}
+#jumppop{width:244px}
+#jumppop button,#docpop button.di{width:100%;text-align:left;border:0;background:transparent;border-radius:var(--r);padding:7px 8px;display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--ink-2)}
+#jumppop button:hover,#docpop button.di:hover{background:var(--panel);color:var(--ink)}
+#jumppop .dots{display:inline-flex;gap:8px;color:var(--block-fg);font-size:13px}
+#jumppop .dots span{display:inline-flex;gap:2px;align-items:center}
+#jumppop .dots svg{width:13px;height:13px}
+#docpop{width:272px;padding:8px}
+#docpop button.di{display:grid;grid-template-columns:minmax(0,1fr) 16px}
+#docpop .df{display:block;font-size:13px;color:var(--ink-3)}
+#docpop .di[aria-current=true]{color:var(--ink)}
+#docpop .more1{margin-top:4px;background:var(--panel)!important}
+
+.scrim{position:fixed;inset:0;background:rgba(21,24,27,.32);display:grid;place-items:center;z-index:70;padding:16px}
+.modal{background:var(--card);border-radius:var(--r);width:min(440px,100%);padding:20px;display:grid;gap:12px;box-shadow:0 18px 44px -16px rgba(21,24,27,.3)}
+.modal h2{margin:0;font:500 20px/1.25 var(--serif);letter-spacing:-.01em}
+.modal .mq{margin:0;color:var(--ink-3);font-size:13px}
+.modal fieldset{border:0;margin:0;padding:0;display:grid;gap:4px}
+.modal legend{font-weight:600;font-size:13px;margin-bottom:4px;padding:0}
+.modal legend span{font-weight:400;color:var(--ink-3)}
+.modal label.r{display:flex;gap:8px;align-items:center;padding:7px 10px;border-radius:var(--r);background:var(--panel);font-size:14px;cursor:pointer}
+.modal label.r:hover{background:var(--step)}
+.modal input[type=radio]{accent-color:var(--accent);width:16px;height:16px;margin:0}
+.modal textarea{width:100%;min-height:58px;border:0;border-radius:var(--r);padding:8px 10px;font-size:16px;background:var(--panel);resize:vertical}
+.modal .nl{font-size:13px;font-weight:600;display:grid;gap:4px}
+.modal .nl span{font-weight:400;color:var(--ink-3)}
+.modal .err{color:var(--block-fg);font-weight:600;font-size:13px;display:none;gap:6px;align-items:center}
+.modal .err.on{display:flex}
+.modal .acts{justify-content:flex-end}
+
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:var(--r);padding:10px 14px;display:none;gap:14px;align-items:center;z-index:90;font-size:13px}
+.toast.on{display:flex}
+.toast button{background:transparent;border:0;color:#fff;text-decoration:underline;text-underline-offset:3px;font-weight:600}
+.toast button:focus-visible{outline-color:#fff}
+
+/* placeholder views */
+.ph{padding:8px 24px;display:grid;gap:12px;align-content:start}
+.view>div:empty{display:none}
+.ph p{margin:0;color:var(--ink-3)}
+.ph a.btn{width:max-content;text-decoration:none}
+
+/* narrow desktop (1024) */
+@media (max-width:1279px){
+  .work{grid-template-columns:minmax(0,1fr) 380px}
+  .docscroll{padding:0 16px 80px}
+  .docbar{padding:0 16px 10px}
+  .paper{padding:40px 36px 56px}
+  .pagehead{padding:14px 16px 12px}
+  .banner{margin:0 16px 12px}
+}
+@media (max-width:1100px){.pagehead .meta{display:none}}
+</style>
+</head>
+<body>
+<a class="skip" href="#findingsList">Skip to findings</a>
+
+<!-- ===== Icon sprite (bespoke, one stroke weight) ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="logo" viewBox="0 0 28 28"><rect x="2" y="2" width="24" height="24" rx="5" fill="#15181B"/><path d="M8 9.5h7M8 14h4.5M8 18.5h5" stroke="#E9ECE9" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M15.5 17l2.6 2.6L22 14.6" stroke="#8FD0C6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="stop" viewBox="0 0 24 24"><path d="M8.2 3h7.6L21 8.2v7.6L15.8 21H8.2L3 15.8V8.2z"/><path d="M12 7.5v5.2M12 16h.01"/></symbol>
+  <symbol id="warn" viewBox="0 0 24 24"><path d="M12 3.5l9.2 16H2.8z"/><path d="M12 10v4.4M12 17.2h.01"/></symbol>
+  <symbol id="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.2M12 7.8h.01"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M7.8 12.4l2.9 2.9 5.6-6"/></symbol>
+  <symbol id="tick" viewBox="0 0 24 24"><path d="M5.500 12.500l4.200 4.200 8.800-9.200"/></symbol>
+  <symbol id="ring" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-dasharray="14 8"/></symbol>
+  <symbol id="todo" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-dasharray="1.5 4.5"/></symbol>
+  <symbol id="skip" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></symbol>
+  <symbol id="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="chevd" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></symbol>
+  <symbol id="eyeoff" viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10 6a9 9 0 012-.5c6 0 9.500 6.500 9.500 6.500a15 15 0 01-3 3.800M6.200 7.600A15 15 0 002.500 12S6 18.500 12 18.500c1.200 0 2.300-.3 3.300-.7"/></symbol>
+  <symbol id="spark" viewBox="0 0 24 24"><path d="M12 3c.6 4.800 2.200 6.400 7 7-4.800.6-6.400 2.200-7 7-.6-4.800-2.200-6.400-7-7 4.800-.6 6.400-2.200 7-7z"/></symbol>
+  <symbol id="rule" viewBox="0 0 24 24"><path d="M8 4H6.500A1.500 1.500 0 005 5.500v13A1.500 1.500 0 006.500 20H8M16 4h1.500A1.500 1.500 0 0119 5.500v13a1.500 1.500 0 01-1.500 1.500H16"/><path d="M9.500 12h5"/></symbol>
+  <symbol id="memory" viewBox="0 0 24 24"><path d="M4 12a8 8 0 108-8 8 8 0 00-6 2.700"/><path d="M4 4v3.500h3.500M12 8v4.200l2.800 1.700"/></symbol>
+  <symbol id="counsel" viewBox="0 0 24 24"><path d="M4 5.500A1.500 1.500 0 015.500 4h13A1.500 1.500 0 0120 5.500v9a1.500 1.500 0 01-1.500 1.500H11l-4.500 4v-4h-1A1.500 1.500 0 014 14.500z"/><path d="M10.200 8.800a1.900 1.900 0 113 1.500c-.7.500-1.200.8-1.200 1.600M12 13.700h.01"/></symbol>
+  <symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="10.500" width="14" height="9.500" rx="2"/><path d="M8.500 10.500V8a3.500 3.500 0 017 0v2.500M12 14.500v2"/></symbol>
+  <symbol id="unlock" viewBox="0 0 24 24"><rect x="5" y="10.500" width="14" height="9.500" rx="2"/><path d="M8.500 10.500V8a3.500 3.500 0 016.700-1.400M12 14.500v2"/></symbol>
+  <symbol id="undo" viewBox="0 0 24 24"><path d="M9 7L4.500 11.500 9 16"/><path d="M5 11.500h8.500A5.500 5.500 0 0119 17v1"/></symbol>
+  <!-- shell icons -->
+  <symbol id="list" viewBox="0 0 24 24"><path d="M4 7h2M9 7h11M4 12h2M9 12h11M4 17h2M9 17h7"/></symbol>
+  <symbol id="tree" viewBox="0 0 24 24"><rect x="4" y="3.500" width="7" height="5" rx="1.200"/><rect x="13" y="10" width="7" height="4.500" rx="1.200"/><rect x="13" y="16.500" width="7" height="4.500" rx="1.200"/><path d="M7.500 8.500v9.200a1 1 0 001 1H13M7.500 12.200H13"/></symbol>
+  <symbol id="compare" viewBox="0 0 24 24"><rect x="3.500" y="4.500" width="7" height="15" rx="1.500"/><rect x="13.500" y="4.500" width="7" height="15" rx="1.500"/><path d="M6 9.500h2M16 9.500h2M16 13h2"/></symbol>
+  <symbol id="doc" viewBox="0 0 24 24"><path d="M7 3.500h6.500L19 9v10.500a1 1 0 01-1 1H7a1 1 0 01-1-1v-15a1 1 0 011-1z"/><path d="M13.500 3.500V9H19M9 13h6M9 16.500h6"/></symbol>
+  <symbol id="panel" viewBox="0 0 24 24"><rect x="3.500" y="4.500" width="17" height="15" rx="2"/><path d="M9.500 4.500v15"/></symbol>
+  <symbol id="filter" viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.200"/><circle cx="8" cy="17" r="2.200"/></symbol>
+  <symbol id="jump" viewBox="0 0 24 24"><path d="M5 5h9M5 10h14M5 15h9M5 20h14"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="out" viewBox="0 0 24 24"><path d="M14 5h5v5M19 5l-8 8"/><path d="M17 14v4a1 1 0 01-1 1H6a1 1 0 01-1-1V8a1 1 0 011-1h4"/></symbol>
+</svg>
+
+<div class="app" id="app">
+  <aside class="side" id="side">
+    <div class="sbtop">
+      <div class="brand"><svg class="i" style="stroke:none;fill:none" aria-hidden="true"><use href="#logo"/></svg><span>Sub-doc QA</span></div>
+      <button class="ibtn" id="sbToggle" type="button" aria-label="Collapse sidebar" aria-expanded="true" aria-controls="snav"><svg class="i" aria-hidden="true"><use href="#panel"/></svg></button>
+    </div>
+
+    <div>
+      <button class="docsw" id="docBtn" type="button" aria-expanded="false" aria-controls="docpop" aria-label="Switch document. Current: NGI 2024, Hartwell and Crane LLP">
+        <svg class="i" aria-hidden="true"><use href="#doc"/></svg>
+        <span class="dt"><span class="dn">NGI 2024</span><span class="df">Hartwell &amp; Crane LLP</span></span>
+        <svg class="i" aria-hidden="true"><use href="#chevd"/></svg>
+      </button>
+    </div>
+
+    <nav class="snav" id="snav" aria-label="Main">
+      <div>
+        <p class="gl" id="g-review">Review</p>
+        <ul aria-labelledby="g-review">
+          <li><button class="ni" type="button" data-view="findings" aria-current="page"><svg class="i" aria-hidden="true"><use href="#list"/></svg><span class="lbl">Findings</span><span class="nc" id="ncFindings"></span></button></li>
+          <li><button class="ni" type="button" data-view="counsel"><svg class="i" aria-hidden="true"><use href="#counsel"/></svg><span class="lbl">Counsel questions</span><span class="nc" id="ncCounsel"></span></button></li>
+        </ul>
+      </div>
+      <div>
+        <p class="gl" id="g-check">Check</p>
+        <ul aria-labelledby="g-check">
+          <li><button class="ni" type="button" data-view="structure"><svg class="i" aria-hidden="true"><use href="#tree"/></svg><span class="lbl">Structure</span><span class="nc"><svg class="i" aria-hidden="true"><use href="#warn"/></svg><span class="sr">Issues: </span>9</span></button></li>
+          <li><button class="ni" type="button" data-view="compare"><svg class="i" aria-hidden="true"><use href="#compare"/></svg><span class="lbl">Compare versions</span></button></li>
+        </ul>
+      </div>
+      <div>
+        <p class="gl" id="g-firm">Firm</p>
+        <ul aria-labelledby="g-firm">
+          <li><button class="ni" type="button" data-view="memory"><svg class="i" aria-hidden="true"><use href="#memory"/></svg><span class="lbl">Hartwell &amp; Crane memory</span></button></li>
+          <li><button class="ni" type="button" data-view="docs"><svg class="i" aria-hidden="true"><use href="#doc"/></svg><span class="lbl">Documents</span></button></li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="sbbot">
+      <button class="gate" id="gate" type="button" aria-expanded="false" aria-controls="gatepop"></button>
+      <div class="airow">
+        <div class="seg" role="group" aria-label="AI mode (demo control)">
+          <button type="button" id="aiOn" aria-pressed="true">AI on</button>
+          <button type="button" id="aiOff" aria-pressed="false">No AI</button>
+        </div>
+        <div class="allow" id="allow"></div>
+      </div>
+      <button class="ibtn aimini" id="aiMini" type="button" aria-pressed="true" aria-label="AI review on. Switch off (demo control)"><svg class="i" aria-hidden="true"><use href="#spark"/></svg></button>
+      <div class="me"><span class="av" aria-hidden="true">LT</span><span class="nm">Linh Tran</span><span class="sr">Signed in as Linh Tran, digitization analyst</span></div>
+    </div>
+  </aside>
+
+  <main class="stagearea" id="stage">
+    <!-- ===== FINDINGS ===== -->
+    <section class="view" data-pane="findings" aria-labelledby="h-findings">
+      <header class="pagehead">
+        <div class="tt"><h1 id="h-findings" tabindex="-1">Findings</h1><p class="meta" id="hmeta"></p></div>
+        <button class="stagebtn" id="stageBtn" type="button" aria-expanded="false" aria-controls="stagepop"></button>
+      </header>
+      <div class="banner" id="banner" role="status">
+        <svg class="i" aria-hidden="true"><use href="#warn"/></svg>
+        <p style="margin:0"><b>AI review is off: today's shared allowance is used up (50 of 50).</b> Rules, memory and the gate still work; ambiguity, contradiction and typo passes are skipped. AI resumes at 00:00 UTC.</p>
+      </div>
+      <div class="work">
+        <section class="docpane" aria-label="Document reading view">
+          <div class="docbar"><span>Reading view · text extracted from HTML</span>
+            <button class="btn sm" id="jumpBtn" type="button" aria-expanded="false" aria-controls="jumppop"><svg class="i" aria-hidden="true"><use href="#jump"/></svg>Jump to section<svg class="i" aria-hidden="true"><use href="#chevd"/></svg></button>
+          </div>
+          <div class="scroll docscroll" id="docscroll" tabindex="-1">
+            <article class="paper" id="paper">
+              <h1>Partners Group Next Generation Infrastructure LLC</h1>
+              <p class="sub">Subscription Agreement for Class A and Class S Shares</p>
+
+              <h2 id="sec-1">1. Instructions to Subscribers</h2>
+              <p>Each prospective investor (a "Subscriber") must complete, sign and return this Subscription Agreement to the Distributor. Subscribers investing through an individual retirement account must provide <mark class="q sev-block" data-f="F-01">the name and address of the Custodian of the account in Part B of Section 6</mark>.</p>
+              <p>The Subscriber should enter <mark class="q sev-block" data-f="F-03">the amount of the subscription in Part B of Section 4</mark> and attach any supporting entity documents requested in Section 3.</p>
+
+              <h2 id="sec-4">4. Custodian Information <small>IRA Subscribers only</small></h2>
+              <div class="fields">Name of Custodian: ______________________<br>Custodian address: ______________________<br>Custodian account number: ______________________</div>
+
+              <h2 id="sec-6">6. Subscription</h2>
+              <h3>Part A. Share Class</h3>
+              <div class="opt"><span class="box"></span> Class A Shares &nbsp;&nbsp; <span class="box"></span> Class S Shares <span class="fold">(check one)</span></div>
+              <h3>Part B. Subscription Amount</h3>
+              <p>Amount of subscription: US$ ______________. The minimum initial subscription is US$ 50,000 for Class A. <mark class="q sev-fix" data-f="F-05">[NTD: Partners Group to confirm the Class S minimum with tax counsel before filing.]</mark></p>
+
+              <h2 id="sec-8">8. Representations of the Subscriber</h2>
+              <p>(c) The Subscriber understands that <mark class="q sev-fix" data-f="F-04">the offered Units</mark> will not be registered under the Securities Act of 1933 and may not be resold except in a transaction that complies with that Act and with the Company's limited liability company agreement.</p>
+              <p>(d) The Subscriber agrees that the Company may, in its discretion, <mark class="q sev-note" data-f="F-07">suspend repurchases for a reasonable period if the Board determines it is in the interest of the Shareholders</mark>.</p>
+              <p class="fold">"Shares" means the Class A and Class S shares of limited liability company interest in the Company.</p>
+
+              <h2 id="sec-9">9. Payment Instructions</h2>
+              <p>Subscription proceeds must be wired to the Company's escrow account.<br>
+                Bank: Northern Fiduciary Trust &nbsp;·&nbsp; ABA routing number: <mark class="q sev-note" data-f="F-06"><span class="mask" id="maskDoc" data-full="264 158 097">••••• 8097</span></mark><br>
+                Account name: PG NGI LLC Subscription Escrow</p>
+
+              <h2 id="sec-11">11. Tax Certifications</h2>
+              <p>Under penalties of perjury, the Subscriber certifies that the taxpayer identification number supplied below is correct, and that the Subscriber is not subject to backup withholding. Subscribers that are not United States persons must also complete the applicable IRS Form W-8.</p>
+
+              <h2 id="sec-12">12. Qualified Client Representation</h2>
+              <ol class="p">
+                <li>The Subscriber is a natural person who has a net worth, with spouse, of more than US$ 2,200,000.</li>
+                <li>The Subscriber is a company that is not an investment company and is owned only by qualified clients.</li>
+                <li>The Subscriber is a trust whose settlor satisfies paragraph 1 above.</li>
+                <li class="fold">Paragraph 4 (employee benefit plans) continues on the next page.</li>
+                <li>If the Subscriber checked paragraph 5 of this Section 12, then <mark class="q sev-block" data-f="F-02">the Subscriber satisfies paragraphs 1 through 4 of this Section 11</mark> and has attached the supporting certificate.</li>
+                <li>The Subscriber will promptly notify the Company if any representation in this Section 12 ceases to be true.</li>
+              </ol>
+            </article>
+          </div>
+        </section>
+
+        <aside class="fp" aria-label="Findings list">
+          <div class="fhead" id="fhead">
+            <div id="chips" style="display:contents" role="group" aria-label="Filter by severity"></div>
+            <button class="btn sm" id="filtBtn" type="button" aria-expanded="false" aria-controls="filtpop"><svg class="i" aria-hidden="true"><use href="#filter"/></svg>Filter<svg class="i" aria-hidden="true"><use href="#chevd"/></svg></button>
+          </div>
+          <div class="scroll flist" id="findingsList" tabindex="-1">
+            <ul class="rows" id="rows"></ul>
+          </div>
+          <section class="prevwrap" aria-label="Previously handled">
+            <button class="prevbtn" id="prevbtn" type="button" aria-expanded="false" aria-controls="prevlist"><svg class="i" aria-hidden="true"><use href="#chev"/></svg><span>Previously handled (<span id="prevN">3</span>)</span><span class="help">Master Fund 2019</span></button>
+            <div class="prevlist" id="prevlist" hidden></div>
+          </section>
+        </aside>
+      </div>
+    </section>
+
+    <!-- placeholder panes are inserted by script -->
+  </main>
+</div>
+
+<!-- popovers -->
+<div class="pop" id="docpop" role="dialog" aria-label="Switch document" tabindex="-1" hidden></div>
+<div class="pop" id="gatepop" role="dialog" aria-label="Digitization gate" tabindex="-1" hidden>
+  <h2 id="gt">Digitization is blocked</h2>
+  <p id="gp"></p>
+  <ul id="gl"></ul>
+</div>
+<div class="pop" id="stagepop" role="dialog" aria-label="Processing stages" tabindex="-1" hidden>
+  <h2>Processing stages</h2>
+  <ol class="stages" id="stages"></ol>
+</div>
+<div class="pop" id="filtpop" role="dialog" aria-label="Filter and sort findings" tabindex="-1" hidden>
+  <label>Class<select id="fClass"></select></label>
+  <label>Status<select id="fStatus"></select></label>
+  <label>Sort by<select id="fSort"></select></label>
+  <p class="fnote" style="margin:0"><kbd>J</kbd><kbd>K</kbd> next or previous finding</p>
+  <button class="btn" type="button" id="fReset" style="width:max-content">Reset filters</button>
+</div>
+<div class="pop" id="jumppop" role="dialog" aria-label="Jump to section" tabindex="-1" hidden><ul id="jumplist"></ul></div>
+
+<!-- dismiss modal -->
+<div class="scrim" id="scrim" hidden>
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mt">
+    <form id="dform" novalidate>
+      <div style="display:grid;gap:12px">
+        <div><h2 id="mt">Dismiss this finding</h2><p class="mq" id="mq"></p></div>
+        <fieldset><legend>Why are you dismissing it? <span>(required)</span></legend><div id="reasons" style="display:grid;gap:4px"></div></fieldset>
+        <label class="nl" for="note">Note <span>(optional, kept in the audit trail)</span></label>
+        <textarea id="note" rows="2"></textarea>
+        <div class="err" id="derr" role="alert"></div>
+        <div class="acts"><button type="button" class="btn" id="dcancel">Cancel</button><button type="submit" class="btn pri" id="dsave">Save dismissal</button></div>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button type="button" id="toastUndo" hidden>Undo</button></div>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const ic=(n,c='')=>`<svg class="i ${c}" aria-hidden="true"><use href="#${n}"/></svg>`;
+const reduce=(window.matchMedia?matchMedia('(prefers-reduced-motion: reduce)').matches:false);
+const SEV={block:{label:'Blocks digitization',short:'Blocks',icon:'stop',rank:0},fix:{label:'Fix before build',short:'Fix',icon:'warn',rank:1},note:{label:'Note',short:'Note',icon:'info',rank:2}};
+const REASONS=["Law firm's standard wording","Does not affect the form","Tool false alarm","Other"];
+
+/* ----- guarded storage: only the sidebar collapse preference is persisted ----- */
+const KEY='subdocqa-app-sidebar';
+function safeGet(k){try{return window.localStorage.getItem(k);}catch(e){return null;}}
+function safeSet(k,v){try{window.localStorage.setItem(k,v);}catch(e){}}
+
+/* ----- data (same document and findings as review-workspace.html) ----- */
+let F=[
+ {id:'F-01',order:1,sec:'1',ref:'§1 ¶1',cls:'Broken cross-reference',sev:'block',title:'Custodian details point to the wrong section',
+  quote:'…must provide the name and address of the Custodian of the account in Part B of Section 6.',loc:'Section 1, paragraph 1',
+  expected:'Section 4',found:'Part B of Section 6',why:'Rule XREF-02 resolved the target. Part B of Section 6 is "Subscription Amount". The heading "Custodian Information" is Section 4.',
+  prov:{t:'rule',id:'XREF-02'},conf:'High (exact heading match)',status:'open'},
+ {id:'F-02',order:2,sec:'12',ref:'§12 ¶5',cls:'Broken cross-reference',sev:'block',title:'"this Section 11" is written inside Section 12',
+  quote:'…the Subscriber satisfies paragraphs 1 through 4 of this Section 11 and has attached the supporting certificate.',loc:'Section 12, paragraph 5',
+  expected:'Section 12',found:'this Section 11',why:'Rule XREF-03: a "this Section N" reference must name the section that contains it. Paragraphs 1 to 4 exist only in Section 12; Section 11 has no numbered paragraphs.',
+  prov:{t:'rule',id:'XREF-03'},conf:'High (target has no such paragraphs)',status:'open'},
+ {id:'F-03',order:3,sec:'1',ref:'§1 ¶2',cls:'Broken cross-reference',sev:'block',title:'Subscription amount points to the wrong section',
+  quote:'…enter the amount of the subscription in Part B of Section 4 and attach any supporting entity documents…',loc:'Section 1, paragraph 2',
+  expected:'Part B of Section 6',found:'Part B of Section 4',why:'Rule XREF-02. Section 4 has no Part B. The subscription amount is in Part B of Section 6.',
+  prov:{t:'rule',id:'XREF-02'},conf:'High (exact heading match)',status:'open',
+  memory:{label:'Dismissed in Master Fund 2019, re-confirm',fund:'Master Fund 2019',reason:"Law firm's standard wording",who:'Duc Pham',when:'3 Feb 2026',note:'Blocks digitization, so it stays in the main list until you re-confirm.'}},
+ {id:'F-04',order:4,sec:'8',ref:'§8(c)',cls:'Undefined term',sev:'fix',title:'"Units" is used but the defined term is "Shares"',
+  quote:'…understands that the offered Units will not be registered under the Securities Act of 1933…',loc:'Section 8(c)',
+  expected:'Shares',found:'Units',why:'Rule TERM-01: "Units" has no definition in this document. "Shares" is defined at the end of Section 8. A leftover from the earlier template (see the 2019 to 2024 rename).',
+  prov:{t:'rule',id:'TERM-01'},conf:'High (0 definitions, 1 near match)',status:'open'},
+ {id:'F-05',order:5,sec:'6',ref:'§6 B',cls:'Drafting note',sev:'fix',title:'Drafting note "NTD:" left in the text',
+  quote:'[NTD: Partners Group to confirm the Class S minimum with tax counsel before filing.]',loc:'Section 6, Part B',
+  expected:'Removed before digitization',found:'Bracketed NTD',why:'Rule DRAFT-01 matches "NTD:" and bracketed instructions. The form would otherwise show internal drafting text to investors.',
+  prov:{t:'rule',id:'DRAFT-01'},conf:'High (literal match)',status:'open'},
+ {id:'F-06',order:6,sec:'9',ref:'§9',cls:'Sensitive data',sev:'note',title:'Bank routing number appears in the document',
+  quote:'ABA routing number: ',mask:true,loc:'Section 9, wire instructions',
+  expected:'Masked in review and in stored snippets',found:'9-digit routing number',why:'Rule SENS-01 detects ABA and account numbers. The value is masked here and in anything saved to memory.',
+  prov:{t:'rule',id:'SENS-01'},conf:'High (checksum pattern)',status:'open'},
+ {id:'F-07',order:7,sec:'8',ref:'§8(d)',cls:'Ambiguity (AI)',sev:'note',title:'"a reasonable period" has no limit',
+  quote:'…suspend repurchases for a reasonable period if the Board determines it is in the interest of the Shareholders.',loc:'Section 8(d)',
+  expected:'A stated period or a rule for ending the suspension',found:'Open-ended wording',why:'The model flagged wording that a form builder cannot turn into a field or a date check. Counsel decides.',
+  prov:{t:'ai',model:'gemma-4 (free)',cache:true},conf:'Medium',status:'counsel',
+  interp:[['A','Suspension lasts until the Board ends it, with no fixed limit.'],['B','Suspension is limited to one quarterly repurchase cycle.']]},
+];
+let H=[
+ {id:'H-1',label:'Already answered',title:'"Appendix B (Investor Questionnaire)"',fund:'Master Fund 2019',who:'Minh Anh Nguyen',when:'12 Feb 2026',reason:null,answer:'Counsel chose A: the heading is correct.'},
+ {id:'H-2',label:'Previously dismissed',title:'"Distributor" used before it is defined',fund:'Master Fund 2019',who:'Duc Pham',when:'3 Feb 2026',reason:"Law firm's standard wording",answer:null},
+ {id:'H-3',label:'Awaiting counsel',title:'"Eligible Investor" defined twice',fund:'Master Fund 2019',who:'Minh Anh Nguyen',when:'20 Feb 2026',reason:null,answer:null},
+];
+const SECS=[['1','1. Instructions'],['4','4. Custodian'],['6','6. Subscription'],['8','8. Representations'],['9','9. Payment'],['11','11. Tax'],['12','12. Qualified Client']];
+const DOCS=[['NGI 2024','Hartwell & Crane LLP',true],['Master Fund 2019','Hartwell & Crane LLP',false],['Growth Equity II 2025','Brightwater Law LLP',false]];
+const PH={
+  counsel:{t:'Counsel questions',f:'counsel-sheet.html'},
+  structure:{t:'Structure',f:'structure.html'},
+  compare:{t:'Compare versions',f:'compare.html'},
+  memory:{t:'Hartwell & Crane memory',f:'firm-memory.html'},
+  docs:{t:'Documents',f:'start.html'}
+};
+
+/* ----- state (nothing here is persisted except sidebar collapse) ----- */
+let S={sev:'all',cls:'all',status:'active',sort:'sev'};
+let view='findings', sel='F-01', modalFor=null, revealed=false, aiOn=true, undoFn=null, toastT=null, modalOpener=null;
+let collapsed=safeGet(KEY)==='1', narrow=false;
+const byId=id=>F.find(f=>f.id===id);
+const active=f=>f.status!=='dismissed';
+const unresolved=()=>F.filter(f=>f.sev==='block'&&f.status!=='dismissed');
+function passes(f){
+  if(S.sev!=='all'&&f.sev!==S.sev)return false;
+  if(S.cls!=='all'&&f.cls!==S.cls)return false;
+  if(S.status==='active')return active(f);
+  if(S.status==='all')return true;
+  return f.status===S.status;
+}
+function sorted(list){
+  const a=[...list];
+  if(S.sort==='sev')a.sort((x,y)=>SEV[x.sev].rank-SEV[y.sev].rank||x.order-y.order);
+  else if(S.sort==='doc')a.sort((x,y)=>x.order-y.order);
+  else a.sort((x,y)=>x.cls.localeCompare(y.cls)||x.order-y.order);
+  return a;
+}
+const visibleIds=()=>sorted(F.filter(passes)).map(f=>f.id);
+
+/* ===== placeholders ===== */
+(function buildPlaceholders(){
+  const host=$('#stage');
+  Object.keys(PH).forEach(k=>{
+    const p=PH[k],s=document.createElement('section');
+    s.className='view';s.dataset.pane=k;s.hidden=true;s.setAttribute('aria-labelledby','h-'+k);
+    s.innerHTML=`<header class="pagehead"><div class="tt"><h1 id="h-${k}" tabindex="-1">${p.t}</h1></div></header>
+      <div></div>
+      <div class="ph"><p>${p.t} — coming in next iteration.</p><a class="btn" href="${p.f}" target="_blank" rel="noopener">${ic('out')}Open the standalone mockup</a></div>`;
+    host.appendChild(s);
+  });
+})();
+
+/* ===== shell: sidebar rail ===== */
+function applyRail(){
+  const rail=collapsed||narrow;
+  $('#app').classList.toggle('rail',rail);
+  const t=$('#sbToggle');
+  t.hidden=narrow;
+  t.setAttribute('aria-expanded',String(!rail));
+  t.setAttribute('aria-label',rail?'Expand sidebar':'Collapse sidebar');
+  // tooltips only needed on the rail
+  $$('.ni').forEach(b=>{const l=b.querySelector('.lbl');if(l){rail?b.setAttribute('title',l.textContent):b.removeAttribute('title');}});
+  rail?$('#docBtn').setAttribute('title','Switch document: NGI 2024'):$('#docBtn').removeAttribute('title');
+  rail?$('.me').setAttribute('title','Linh Tran'):$('.me').removeAttribute('title');
+  closePop();
+}
+const mq=window.matchMedia?matchMedia('(max-width:1199px)'):null;
+function onMq(){narrow=!!(mq&&mq.matches);applyRail();}
+if(mq){mq.addEventListener?mq.addEventListener('change',onMq):mq.addListener(onMq);}
+
+function setView(v,focusHead){
+  view=v;closePop();
+  $$('[data-pane]').forEach(p=>p.hidden=p.dataset.pane!==v);
+  $$('.ni').forEach(b=>{if(b.dataset.view===v)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
+  if(focusHead){const h=$('#h-'+v);h&&h.focus({preventScroll:true});}
+}
+
+/* ===== render: sidebar, header, gate ===== */
+function renderStages(){
+  const ai=aiOn?{c:'pend',i:'ring',spin:true,sub:'Pending · 1 of 3 passes from cache'}:{c:'skipd',i:'skip',spin:false,sub:'Skipped · AI is off'};
+  $('#stages').innerHTML=`
+   <li class="done">${ic('check')}<span class="lab">Reading</span><span class="sub">Done · 12 sections</span></li>
+   <li class="done">${ic('check')}<span class="lab">Structuring</span><span class="sub">Done · 31 references</span></li>
+   <li class="done">${ic('check')}<span class="lab">Checks</span><span class="sub">Done · 14 rules, 6 findings</span></li>
+   <li class="${ai.c}"${aiOn?' aria-current="step"':''}>${ic(ai.i,ai.spin?'ring-pulse':'')}<span class="lab">AI review</span><span class="sub">${ai.sub}</span></li>
+   <li class="todo">${ic('todo')}<span class="lab">Done</span><span class="sub">Not started</span></li>`;
+  $('#stageBtn').innerHTML=`${aiOn?ic('ring','ring-pulse'):ic('skip')}<span>Checks done · AI review ${aiOn?'pending':'off'}</span>${ic('chevd')}`;
+  $('#allow').innerHTML=`${ic('spark')}<span><b>${aiOn?'12':'0'} of 50</b> AI left today</span>`;
+  $('#banner').classList.toggle('on',!aiOn);
+  const on=$('#aiOn'),off=$('#aiOff'),mini=$('#aiMini');
+  on.setAttribute('aria-pressed',aiOn);off.setAttribute('aria-pressed',!aiOn);
+  mini.setAttribute('aria-pressed',aiOn);
+  mini.setAttribute('aria-label',aiOn?'AI review on. Switch off (demo control)':'AI review off. Switch on (demo control)');
+}
+function renderGate(){
+  const u=unresolved(), g=$('#gate');
+  if(u.length){
+    g.className='gate';
+    g.innerHTML=`${ic('lock')}<span class="lbl">Blocked · ${u.length}</span><span class="gn" aria-hidden="true">${u.length}</span>${ic('chev')}`;
+    $('#gt').textContent='Digitization is blocked';
+    $('#gp').textContent='These critical items are not resolved. Select one to go to it.';
+  }else{
+    g.className='gate ready';
+    g.innerHTML=`${ic('unlock')}<span class="lbl">Ready to digitize</span>${ic('chev')}`;
+    $('#gt').textContent='All critical items are resolved';
+    $('#gp').textContent='Every item that blocks digitization has been dismissed with a reason.';
+  }
+  $('#gl').innerHTML=u.map(f=>`<li><button class="gli" type="button" data-goto="${f.id}">${ic('stop')}<span><b>${f.title}</b><span class="why">${f.loc}${f.memory?' · needs re-confirmation':''}${f.status==='accepted'?' · accepted, still open':''}</span></span></button></li>`).join('');
+}
+function renderChrome(){
+  const act=F.filter(active), open=F.filter(f=>f.status==='open').length, nc=F.filter(f=>f.status==='counsel').length, bl=unresolved().length;
+  $('#hmeta').textContent=`${open} open · ${bl} block digitization`;
+  $('#ncFindings').textContent=open||'';
+  $('#ncFindings').innerHTML=open?`<span class="sr">Open: </span>${open}`:'';
+  $('#ncCounsel').innerHTML=nc?`<span class="sr">Questions: </span>${nc}`:'';
+  renderGate();
+}
+
+/* ===== render: findings ===== */
+function provHTML(f){
+  if(f.prov.t==='rule')return `<span>${ic('rule')}Rule ${f.prov.id} · deterministic</span>`;
+  return `<span class="tag t-ai">${ic('spark')}AI</span><span>${f.prov.model} · ${f.prov.cache?'from cache':'fresh'}</span>`;
+}
+function quoteHTML(f){
+  if(f.mask)return `${f.quote}<span class="mask" aria-label="Routing number, masked">${revealed?'264 158 097':'••••• 8097'}</span><button type="button" class="revealbtn" id="reveal" aria-pressed="${revealed}">${ic(revealed?'eyeoff':'eye')}${revealed?'Hide':'Reveal'}</button>`;
+  return f.quote;
+}
+function rowIcons(f){
+  let h='';
+  if(f.memory)h+=`<span class="re" title="${f.memory.label}">${ic('memory')}<span class="sr">${f.memory.label}. </span></span>`;
+  if(f.prov.t==='ai')h+=`<span title="AI finding">${ic('spark')}<span class="sr">AI finding. </span></span>`;
+  if(f.status==='accepted')h+=`<span title="Accepted">${ic('check')}<span class="sr">Accepted. </span></span>`;
+  if(f.status==='counsel')h+=`<span title="Needs counsel">${ic('counsel')}<span class="sr">Needs counsel. </span></span>`;
+  if(f.status==='dismissed')h+=`<span title="Dismissed">${ic('x')}<span class="sr">Dismissed. </span></span>`;
+  return h;
+}
+function bodyHTML(f){
+  const tag=f.memory?`<span class="tag t-re">${ic('memory')}${f.memory.label}</span>`:`<span class="tag t-new">New</span>`;
+  return `<div class="rbody">
+    <p class="sub2"><b>${SEV[f.sev].label}</b> · ${f.cls} · ${f.loc}</p>
+    <blockquote class="ev">${quoteHTML(f)}</blockquote>
+    <div class="ef"><div><div class="k">Expected</div><div class="v">${f.expected}</div></div><div><div class="k">Found</div><div class="v">${f.found}</div></div></div>
+    <div class="prov">${tag}${provHTML(f)}</div>
+    ${f.memory?`<p class="memnote"><b>${f.memory.who}</b> dismissed this in ${f.memory.fund} on ${f.memory.when} (${f.memory.reason}). ${f.memory.note}</p>`:''}
+    <details class="more"><summary>${ic('chev')}Why it was flagged</summary><div class="dd"><p>${f.why}</p>
+      ${f.interp?`<ul class="interp" aria-label="Possible readings">${f.interp.map(i=>`<li><b>${i[0]}</b><span>${i[1]}</span></li>`).join('')}</ul>`:''}
+      <p>Confidence: ${f.conf}</p></div></details>
+    ${f.status==='dismissed'
+      ?`<div class="acts"><button class="btn" data-act="undo" data-id="${f.id}">${ic('undo')}Restore finding</button></div>`
+      :`<div class="acts">
+        <button class="btn pri" data-act="accept" data-id="${f.id}" ${f.status==='accepted'?'aria-pressed="true"':''}>${ic('check')}${f.status==='accepted'?'Accepted':'Accept'}</button>
+        <button class="btn" data-act="dismiss" data-id="${f.id}">${ic('x')}${f.memory?'Re-confirm dismissal…':'Dismiss…'}</button>
+        <button class="btn" data-act="counsel" data-id="${f.id}" aria-pressed="${f.status==='counsel'}">${ic('counsel')}Needs counsel</button>
+      </div>`}
+  </div>`;
+}
+function rowHTML(f){
+  const isSel=f.id===sel;
+  return `<li class="row${isSel?' sel':''}${f.status==='dismissed'?' done':''}" data-id="${f.id}">
+    <button class="rowb" type="button" data-sel="${f.id}" aria-expanded="${isSel}">
+      <span class="si sv-${f.sev}">${ic(SEV[f.sev].icon)}<span class="sr">${SEV[f.sev].label}: </span></span>
+      <span class="t" title="${f.title.replace(/"/g,'&quot;')}">${f.title}</span>
+      <span class="rm">${rowIcons(f)}<span>${f.ref}</span></span>
+    </button>${isSel?bodyHTML(f):''}</li>`;
+}
+function renderList(opts={}){
+  const act=F.filter(active);
+  const cnt={block:act.filter(f=>f.sev==='block').length,fix:act.filter(f=>f.sev==='fix').length,note:act.filter(f=>f.sev==='note').length};
+  $('#chips').innerHTML=['block','fix','note'].map(k=>`<button class="chip" type="button" data-sev="${k}" aria-pressed="${S.sev===k}"><span class="sv-${k}" style="display:inline-flex;${S.sev===k?'color:inherit':''}">${ic(SEV[k].icon)}</span>${SEV[k].short} <span class="n">${cnt[k]}</span></button>`).join('');
+  const nf=(S.cls!=='all')+(S.status!=='active')+(S.sort!=='sev');
+  $('#filtBtn').innerHTML=`${ic('filter')}Filter${nf?` <span class="fc"><span class="sr">${nf} active: </span>${nf}</span>`:''}${ic('chevd')}`;
+  const list=sorted(F.filter(passes));
+  $('#rows').innerHTML=list.length?list.map(rowHTML).join(''):`<li class="empty">No findings match these filters.</li>`;
+  renderChrome();
+  $$('mark.q').forEach(m=>{const f=byId(m.dataset.f);m.classList.toggle('on',m.dataset.f===sel&&view==='findings');m.style.opacity=(f&&f.status==='dismissed')?.55:'';});
+  $('#maskDoc').textContent=revealed?$('#maskDoc').dataset.full:'••••• 8097';
+  if(opts.focus){const b=document.querySelector(`.row[data-id="${opts.focus}"] .rowb`);b&&b.focus({preventScroll:true});}
+  if(opts.focusSel){const el=$(opts.focusSel);el&&el.focus();}
+}
+function fillSelects(){
+  const classes=[...new Set(F.map(f=>f.cls))];
+  $('#fClass').innerHTML=`<option value="all">All classes</option>`+classes.map(c=>`<option ${S.cls===c?'selected':''}>${c}</option>`).join('');
+  $('#fStatus').innerHTML=[['active','Active'],['open','Open'],['accepted','Accepted'],['counsel','Needs counsel'],['dismissed','Dismissed'],['all','All']].map(([v,l])=>`<option value="${v}" ${S.status===v?'selected':''}>${l}</option>`).join('');
+  $('#fSort').innerHTML=[['sev','Severity'],['doc','Document order'],['cls','Class']].map(([v,l])=>`<option value="${v}" ${S.sort===v?'selected':''}>${l}</option>`).join('');
+}
+function renderPrev(){
+  $('#prevN').textContent=H.length;
+  $('#prevlist').innerHTML=H.length?H.map(h=>`<div class="pcard"><div class="pt">${h.title}</div>
+    <div class="pm">${h.label} · ${h.who} · ${h.fund} · ${h.when}</div>
+    ${h.reason?`<div class="pa">Reason: ${h.reason}</div>`:''}${h.answer?`<div class="pa">Prior answer: ${h.answer}</div>`:''}
+    <div class="acts"><button class="btn sm" data-reopen="${h.id}">${ic('undo')}Reopen decision</button></div></div>`).join(''):`<div class="empty">Nothing from memory is set aside for this document.</div>`;
+}
+function renderDocMenus(){
+  $('#jumplist').innerHTML=SECS.map(([k,l])=>{
+    const fs=F.filter(f=>f.sec===k&&active(f)),b=fs.filter(f=>f.sev==='block').length,o=fs.length-b;
+    return `<li><button type="button" data-sec="${k}"><span>${l}</span><span class="dots">${b?`<span title="${b} blocking">${ic('stop')}${b}<span class="sr"> blocking</span></span>`:''}${o?`<span style="color:var(--ink-3)" title="${o} other">${ic('info')}${o}<span class="sr"> other</span></span>`:''}</span></button></li>`;}).join('');
+  $('#docpop').innerHTML=DOCS.map(d=>`<button class="di" type="button" data-doc="${d[0]}" ${d[2]?'aria-current="true"':''}><span><b style="font-weight:500">${d[0]}</b><span class="df">${d[1]}</span></span>${d[2]?ic('tick'):''}</button>`).join('')+`<button class="di more1" type="button" data-doc="open"><span>Open another document…</span>${ic('plus')}</button>`;
+}
+
+/* ===== popovers ===== */
+let cur=null;
+function placePop(pop,anchor,place){
+  const r=anchor.getBoundingClientRect();
+  pop.style.visibility='hidden';pop.hidden=false;
+  const w=pop.offsetWidth,h=pop.offsetHeight;
+  let l,t;
+  if(place==='right-up'){l=r.right+8;t=r.bottom-h;}
+  else if(place==='right-down'){l=r.right+8;t=r.top;}
+  else if(place==='below-end'){l=r.right-w;t=r.bottom+6;}
+  else{l=r.left;t=r.bottom+6;}
+  l=Math.max(8,Math.min(l,innerWidth-w-8));t=Math.max(8,Math.min(t,innerHeight-h-8));
+  pop.style.left=l+'px';pop.style.top=t+'px';pop.style.visibility='';
+}
+function openPop(pop,anchor,place){
+  if(cur&&cur.pop===pop){closePop(true);return;}
+  closePop();
+  placePop(pop,anchor,place);
+  anchor.setAttribute('aria-expanded','true');
+  cur={pop,anchor};
+  const f=pop.querySelector('button,select,[href]');(f||pop).focus({preventScroll:true});
+}
+function closePop(refocus){
+  if(!cur)return;
+  cur.pop.hidden=true;cur.anchor.setAttribute('aria-expanded','false');
+  const a=cur.anchor;cur=null;
+  if(refocus)a.focus({preventScroll:true});
+}
+const railNow=()=>$('#app').classList.contains('rail');
+
+/* ===== toast ===== */
+function toast(msg,undo){
+  $('#toastMsg').textContent=msg;undoFn=undo||null;$('#toastUndo').hidden=!undo;$('#toast').classList.add('on');
+  clearTimeout(toastT);toastT=setTimeout(()=>$('#toast').classList.remove('on'),undo?7000:2600);
+}
+
+/* ===== selection ===== */
+function scrollDoc(id){
+  const m=document.querySelector(`mark.q[data-f="${id}"]`);if(!m)return;
+  m.scrollIntoView({block:'center',behavior:reduce?'auto':'smooth'});
+  m.classList.remove('flash');void m.offsetWidth;m.classList.add('flash');
+}
+function select(id,o={}){
+  sel=id;renderList({focus:o.focus?id:null});
+  if(o.scroll!==false)scrollDoc(id);
+  const c=document.querySelector(`.row[data-id="${id}"]`);c&&c.scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});
+}
+function setStatus(id,status,extra={}){
+  const f=byId(id),prev={status:f.status,reason:f.reason,note:f.note};
+  Object.assign(f,{status},extra);
+  return ()=>{Object.assign(f,prev);sel=id;renderList({focus:id});};
+}
+
+/* ===== dismiss modal ===== */
+function openModal(id,opener){
+  const f=byId(id);modalFor=id;modalOpener=opener||null;closePop();
+  $('#mt').textContent=f.memory?'Re-confirm this dismissal':'Dismiss this finding';
+  $('#mq').textContent=f.title;
+  $('#reasons').innerHTML=REASONS.map((r,i)=>`<label class="r"><input type="radio" name="reason" value="${r}" ${i===0?'id="firstReason"':''}> ${r}</label>`).join('');
+  $('#note').value='';$('#derr').className='err';$('#derr').textContent='';
+  $('#scrim').hidden=false;$('#app').inert=true;
+  $('#firstReason').focus();
+}
+function closeModal(ok){
+  if(!modalFor)return;
+  const id=modalFor;modalFor=null;
+  $('#scrim').hidden=true;$('#app').inert=false;
+  if(!ok){renderList({focus:id});}
+}
+$('#dform').addEventListener('submit',e=>{
+  e.preventDefault();
+  const r=document.querySelector('#dform input[name=reason]:checked');
+  if(!r){const er=$('#derr');er.className='err on';er.innerHTML=ic('warn')+'Choose a reason before saving. Dismissing without a reason is not allowed.';$('#firstReason').focus();return;}
+  const id=modalFor,wasRe=!!byId(id).memory;
+  const ids=visibleIds(),idx=ids.indexOf(id);
+  const u=setStatus(id,'dismissed',{reason:r.value,note:$('#note').value});
+  closeModal(true);
+  const rest=visibleIds();
+  const next=rest.length?rest[Math.min(Math.max(idx,0),rest.length-1)]:null;
+  sel=next||id;
+  renderList({focus:next});
+  if(next)scrollDoc(next);
+  const left=unresolved().length;
+  toast((wasRe?'Re-confirmed. ':'Dismissed. ')+(left?`${left} blocking reason${left>1?'s':''} left.`:'The gate is now Ready.'),u);
+});
+$('#dcancel').addEventListener('click',()=>closeModal(false));
+$('#scrim').addEventListener('mousedown',e=>{if(e.target===$('#scrim'))closeModal(false);});
+$('#dform').addEventListener('change',e=>{if(e.target.name==='reason'){const er=$('#derr');er.className='err';er.textContent='';}});
+
+/* ===== events ===== */
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button,mark.q,a');
+  // outside click closes popovers
+  if(cur&&!e.target.closest('.pop')&&!(t&&t===cur.anchor))closePop();
+  if(!t)return;
+  if(t.matches('mark.q')){select(t.dataset.f,{focus:true});return;}
+  if(t.dataset.view){setView(t.dataset.view,true);return;}
+  if(t.id==='sbToggle'){collapsed=!collapsed;safeSet(KEY,collapsed?'1':'0');applyRail();return;}
+  if(t.id==='docBtn'){openPop($('#docpop'),t,railNow()?'right-down':'below-start');return;}
+  if(t.dataset.doc){closePop();if(t.dataset.doc==='open'){setView('docs',true);}else if(t.getAttribute('aria-current')!=='true'){toast('Switching documents is not part of this prototype.');}return;}
+  if(t.id==='gate'){openPop($('#gatepop'),t,'right-up');return;}
+  if(t.id==='stageBtn'){openPop($('#stagepop'),t,'below-end');return;}
+  if(t.id==='filtBtn'){openPop($('#filtpop'),t,'below-end');return;}
+  if(t.id==='jumpBtn'){openPop($('#jumppop'),t,'below-end');return;}
+  if(t.dataset.sec){closePop();const h=$('#sec-'+t.dataset.sec);h&&h.scrollIntoView({block:'start',behavior:reduce?'auto':'smooth'});return;}
+  if(t.dataset.goto){closePop();setView('findings');S={sev:'all',cls:'all',status:'active',sort:'sev'};fillSelects();select(t.dataset.goto,{focus:true});return;}
+  if(t.dataset.sel){select(t.dataset.sel,{focus:true});return;}
+  if(t.dataset.sev){S.sev=S.sev===t.dataset.sev?'all':t.dataset.sev;renderList({focusSel:`[data-sev="${t.dataset.sev}"]`});return;}
+  if(t.dataset.reopen){const h=H.find(x=>x.id===t.dataset.reopen);H=H.filter(x=>x!==h);renderPrev();toast('Decision reopened. It is kept in the audit trail and the finding is New again.');return;}
+  if(t.id==='reveal'){revealed=!revealed;renderList({focusSel:'#reveal'});return;}
+  if(t.id==='prevbtn'){const o=t.getAttribute('aria-expanded')==='true';t.setAttribute('aria-expanded',!o);$('#prevlist').hidden=o;return;}
+  if(t.id==='toastUndo'){undoFn&&undoFn();undoFn=null;$('#toast').classList.remove('on');return;}
+  if(t.id==='fReset'){S={sev:'all',cls:'all',status:'active',sort:'sev'};fillSelects();renderList();return;}
+  if(t.id==='aiOn'||t.id==='aiOff'){setAI(t.id==='aiOn');return;}
+  if(t.id==='aiMini'){setAI(!aiOn);return;}
+  const a=t.dataset.act,id=t.dataset.id||sel;
+  if(a==='accept'){const f=byId(id);const was=f.status==='accepted';const u=setStatus(id,was?'open':'accepted');renderList({focus:id});toast(was?'Accept removed.':'Finding accepted.',u);}
+  if(a==='counsel'){const f=byId(id);const on=f.status!=='counsel';const u=setStatus(id,on?'counsel':'open');renderList({focus:id});toast(on?'Added to the counsel questions draft.':'Removed from the counsel questions draft.',u);}
+  if(a==='dismiss'){openModal(id,t);}
+  if(a==='undo'){setStatus(id,'open',{reason:null});renderList({focus:id});toast('Finding restored.');}
+});
+document.addEventListener('change',e=>{
+  if(e.target.id==='fClass'){S.cls=e.target.value;renderList();}
+  if(e.target.id==='fStatus'){S.status=e.target.value;renderList();}
+  if(e.target.id==='fSort'){S.sort=e.target.value;renderList();}
+});
+document.addEventListener('keydown',e=>{
+  if(modalFor){
+    if(e.key==='Escape'){e.preventDefault();closeModal(false);return;}
+    if(e.key==='Tab'){
+      const fs=[...$('#modal').querySelectorAll('input,textarea,button:not([disabled])')].filter(x=>x.offsetParent!==null);
+      if(!fs.length)return;
+      const first=fs[0],last=fs[fs.length-1];
+      if(!$('#modal').contains(document.activeElement)){first.focus();e.preventDefault();}
+      else if(e.shiftKey&&document.activeElement===first){last.focus();e.preventDefault();}
+      else if(!e.shiftKey&&document.activeElement===last){first.focus();e.preventDefault();}
+    }
+    return;
+  }
+  if(e.key==='Escape'&&cur){closePop(true);return;}
+  if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)||e.metaKey||e.ctrlKey||e.altKey)return;
+  if((e.key==='j'||e.key==='k')&&view==='findings'){
+    const ids=visibleIds();if(!ids.length)return;
+    let i=ids.indexOf(sel);i=e.key==='j'?Math.min(ids.length-1,i+1):Math.max(0,i<0?0:i-1);
+    select(ids[i],{focus:true});e.preventDefault();
+  }
+});
+window.addEventListener('resize',()=>closePop());
+function setAI(v){
+  aiOn=v;renderStages();
+  const f=byId('F-07');
+  f.why=v?'The model flagged wording that a form builder cannot turn into a field or a date check. Counsel decides.':'This result was computed earlier and is shown from cache. No new AI passes run while AI is off.';
+  renderList();
+  toast(v?'AI mode on (demo control).':'No-AI mode: deterministic results, memory and gate unchanged.');
+}
+
+/* ===== init ===== */
+fillSelects();renderStages();renderPrev();renderDocMenus();renderList();
+onMq();applyRail();
+setTimeout(()=>scrollDoc('F-01'),250);
+})();
+</script>
+</body>
+</html>

@@ -159,7 +159,7 @@ Strategy tags: **FA** = Fully-Automated, **H** = Hybrid (automated plus recorded
 **AC1. Every supported input type opens.** HTML, text PDF, DOCX, and scanned PDF or image each load and reach a reviewable state; a corrupt or unsupported file gives a clear message, no crash. The upload step also asks for law firm, fund name and version/template label (see AC41).
 - proven by: `ingest-all-formats` (one fixture per format plus corrupt and empty files); strategy: FA
 
-**AC2. The bundled sample set is selectable and works end to end.** All 13 HTML samples and the 22-page scan set can be opened from the picker in one click, already tagged with law firm, fund and version (samples #3 to #6 as one firm and template family).
+**AC2. The bundled sample set is selectable and works end to end.** All 12 HTML samples (01–08, 10–13) and the 22-page scan set (09; the ILPA PDF #14 is local-only) [corrected 2026-10-17, user-approved] can be opened from the picker in one click, already tagged with law firm, fund and version (samples #3 to #6 as one firm and template family).
 - proven by: `sample-picker-smoke` (loops every sample through parse); strategy: FA
 
 **AC3. Progress is visible and honest.** Named stages are shown; a stage failure yields a partial result with the failing stage named; AI results show "pending" until done.

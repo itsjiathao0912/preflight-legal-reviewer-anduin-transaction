@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Counsel sheet and gate · Sub-doc QA (design trial)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
+<style>
+/* ===== Tokens (verbatim from review-workspace.html) ===== */
+:root{
+  --ground:#E9ECE9;      /* app ground: low-chroma cool stone */
+  --panel:#F4F6F3;       /* panels one tone step above ground */
+  --card:#FBFCFA;        /* cards one step above panel */
+  --paper:#FDFEFD;       /* document page */
+  --ink:#15181B;
+  --ink-2:#434A50;       /* 8.0:1 on panel */
+  --ink-3:#5C646B;       /* 5.6:1 on panel */
+  --accent:#1D5C57;      /* the single accent: deep teal */
+  --accent-tint:#D9E8E5;
+  --step:#DDE2DD;        /* tone step used instead of rules */
+  --block-fg:#8A1C1C; --block-bg:#F7E2DF;
+  --fix-fg:#734400;   --fix-bg:#F5E8C8;
+  --note-fg:#38454F;  --note-bg:#DFE6EA;
+  --ok-fg:#1B5632;    --ok-bg:#DAEEDF;
+  --mark:#F3D676;
+  --r:4px;
+  --sans:'Geist',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --serif:'Newsreader',Georgia,'Times New Roman',serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--ground);color:var(--ink);font:400 14px/1.5 var(--sans);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+button,select,textarea,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+svg.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.skip{position:absolute;left:8px;top:-48px;background:var(--ink);color:#fff;padding:8px 13px;border-radius:var(--r);z-index:50}
+.skip:focus{top:8px}
+
+/* ===== Shell ===== */
+.app{height:100dvh;display:grid;grid-template-rows:auto auto minmax(0,1fr);min-width:1000px}
+header.top{padding:14px 24px 0;display:grid;gap:13px}
+.row1{display:flex;align-items:center;gap:20px;min-width:0}
+.brand{display:flex;align-items:center;gap:10px;font:500 20px/1 var(--serif);letter-spacing:-.01em;white-space:nowrap}
+.brand svg{width:28px;height:28px}
+.docid{min-width:0;flex:1;padding-left:20px;margin-left:2px;position:relative}
+.docid::before{content:"";position:absolute;left:0;top:4px;bottom:4px;width:2px;background:var(--step)}
+.docid h1{margin:0;font:500 14px/1.3 var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.docid .meta{display:flex;gap:18px;color:var(--ink-3);font-size:13px;white-space:nowrap;overflow:hidden}
+.docid .meta b{font-weight:500;color:var(--ink-2)}
+.tools{display:flex;align-items:center;gap:13px}
+.seg{display:inline-flex;background:var(--step);border-radius:var(--r);padding:2px}
+.seg button{border:0;background:transparent;padding:4px 10px;border-radius:3px;font-size:13px;font-weight:500;color:var(--ink-2)}
+.seg button[aria-pressed=true]{background:var(--card);color:var(--ink)}
+.tabs{display:flex;gap:4px;align-items:flex-end}
+.tabs button,.tabs a{border:0;background:transparent;padding:8px 13px;font-size:14px;color:var(--ink-3);border-radius:var(--r) var(--r) 0 0;display:flex;gap:6px;align-items:center;text-decoration:none}
+.tabs [aria-current=page]{background:var(--panel);color:var(--ink);font-weight:500}
+.tabs :not([aria-current]):hover{color:var(--ink)}
+.cnt{background:var(--accent);color:#fff;border-radius:999px;font-size:13px;padding:0 6px;min-width:18px;text-align:center}
+
+/* gate pill + popover */
+.gatewrap{position:relative}
+.gate{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:8px 14px 8px 13px;font-weight:600;font-size:14px;background:var(--block-bg);color:var(--block-fg)}
+.gate.ready{background:var(--ok-bg);color:var(--ok-fg)}
+.gate svg{width:18px;height:18px}
+.gate:hover{filter:brightness(.97)}
+.gatepanel{position:absolute;right:0;top:calc(100% + 8px);width:380px;background:var(--card);border-radius:var(--r);padding:16px;z-index:30;box-shadow:0 10px 30px -13px rgba(21,24,27,.22)}
+.gatepanel[hidden]{display:none}
+.gatepanel h2{margin:0 0 4px;font:500 16px/1.3 var(--serif)}
+.gatepanel p{margin:0 0 13px;color:var(--ink-3);font-size:13px}
+.gatepanel ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.gatepanel li button{width:100%;text-align:left;border:0;background:var(--panel);border-radius:var(--r);padding:8px 10px;display:grid;grid-template-columns:16px 1fr;gap:8px;align-items:start}
+.gatepanel li button:hover{background:var(--step)}
+.gatepanel .why{font-size:13px;color:var(--ink-3)}
+
+/* banner */
+.banner{margin:0 24px;display:none;gap:13px;align-items:flex-start;background:var(--fix-bg);color:#3F2A00;padding:10px 14px;border-radius:var(--r);margin-top:13px}
+.banner.on{display:flex}
+.banner b{font-weight:600}
+.banner svg{margin-top:2px;color:var(--fix-fg)}
+.banner small{display:block;font-size:13px;color:#5A4000}
+
+/* ===== Page ===== */
+.scroll{overflow:auto;min-height:0;background:var(--panel)}
+.sheet{max-width:1040px;margin:0 auto;padding:24px 24px 96px;display:grid;gap:24px}
+.cap{margin:0 0 8px;font:600 13px/1.2 var(--sans);color:var(--ink-3)}
+.tag{font-size:13px;font-weight:500;padding:1px 7px;border-radius:3px;display:inline-flex;gap:4px;align-items:center}
+.tag svg{width:13px;height:13px}
+.t-new{background:var(--accent-tint);color:var(--accent)}
+.t-re{background:var(--block-bg);color:var(--block-fg)}
+.t-ai{background:#E6E3F0;color:#3D3566}
+.t-st{background:var(--step);color:var(--ink-2)}
+.t-ok{background:var(--ok-bg);color:var(--ok-fg)}
+.badge{display:inline-flex;gap:5px;align-items:center;font-size:13px;font-weight:600;padding:2px 8px 2px 6px;border-radius:3px}
+.badge svg{width:14px;height:14px}
+.b-block{background:var(--block-bg);color:var(--block-fg)}
+.b-fix{background:var(--fix-bg);color:var(--fix-fg)}
+.b-note{background:var(--note-bg);color:var(--note-fg)}
+.btn{border:0;border-radius:var(--r);padding:7px 13px;font-size:13px;font-weight:500;display:inline-flex;gap:6px;align-items:center;background:var(--step);color:var(--ink);min-height:32px}
+.btn:hover{background:#D1D8D2}
+.btn:active{transform:scale(.98)}
+.btn.pri{background:var(--ink);color:#fff}
+.btn.pri:hover{background:#2c3238}
+.btn.lnk{background:transparent;padding:4px 6px;text-decoration:underline;text-underline-offset:3px;color:var(--ink-2)}
+.btn svg{width:14px;height:14px}
+.acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+
+/* gate panel (page) */
+.gp{background:var(--card);border-radius:var(--r);padding:20px 24px;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:20px 32px;align-items:start}
+.gp:focus{outline-offset:-2px}
+.gp-l{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start}
+.gp-ic{width:44px;height:44px;border-radius:var(--r);display:grid;place-items:center;background:var(--block-bg);color:var(--block-fg)}
+.gp-ic svg{width:24px;height:24px}
+.gp.ready .gp-ic{background:var(--ok-bg);color:var(--ok-fg)}
+.gp h2{margin:0 0 2px;font:500 24px/1.2 var(--serif);letter-spacing:-.01em}
+.gp-l p{margin:0;color:var(--ink-2);font-size:14px}
+.gp-prog{margin-top:10px;font-size:13px;color:var(--ink-3)}
+.gp-prog b{color:var(--ink);font-weight:600}
+.gp ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.gp li button{width:100%;text-align:left;border:0;background:var(--panel);border-radius:var(--r);padding:9px 12px;display:grid;grid-template-columns:16px 1fr auto;gap:10px;align-items:start}
+.gp li button:hover{background:var(--step)}
+.gp li .t{font-weight:500;display:block}
+.gp li .w{font-size:13px;color:var(--ink-3);display:block}
+.gp li .go{color:var(--ink-3);align-self:center}
+.gp li svg.stp{color:var(--block-fg);margin-top:2px}
+.gp-note{grid-column:1/-1;margin:0;background:var(--panel);border-radius:var(--r);padding:9px 12px;font-size:13px;color:var(--ink-2);display:flex;gap:8px;align-items:flex-start}
+.gp-note svg{margin-top:2px;color:var(--ink-3)}
+.gp-ok{color:var(--ok-fg);font-weight:500;display:flex;gap:8px;align-items:center;margin:0}
+
+/* toolbar */
+.tb{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.tb h2{margin:0;font:500 20px/1.2 var(--serif);letter-spacing:-.01em}
+.tb .sub{color:var(--ink-3);font-size:13px;margin:2px 0 0}
+.tb .r{display:flex;gap:13px;align-items:center}
+
+/* question cards */
+ul.qs{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.q{background:var(--card);border-radius:var(--r);padding:18px 20px 16px;display:grid;gap:13px}
+.q.flash{animation:fl 1.2s var(--ease)}
+@keyframes fl{0%{background:var(--accent-tint)}100%{background:var(--card)}}
+@media (prefers-reduced-motion:reduce){.q.flash{animation:none}}
+.l1{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.qn{font-weight:600;color:var(--ink-2);font-size:13px;min-width:22px}
+.cls{font-size:13px;color:var(--ink-2)}
+.qt{margin:0;font:500 18px/1.45 var(--serif);max-width:68ch;text-wrap:pretty}
+.qt:focus-visible{outline-offset:4px}
+.prov{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);align-items:center}
+.prov svg{width:13px;height:13px}
+blockquote.ev{margin:0;font:400 15px/1.6 var(--serif);background:var(--panel);padding:10px 13px;border-radius:var(--r);border-left:3px solid var(--step)}
+blockquote.ev cite{display:block;font:400 13px/1.4 var(--sans);color:var(--ink-3);margin-top:4px;font-style:normal}
+.interp{margin:0;padding:0;list-style:none;display:grid;gap:6px;font-size:14px}
+.interp li{display:grid;grid-template-columns:20px 1fr;gap:6px;background:var(--panel);padding:8px 10px;border-radius:var(--r)}
+.interp b{font-weight:600}
+.edit{display:grid;gap:8px}
+.edit textarea,.rec textarea{width:100%;min-height:76px;border:0;border-radius:var(--r);padding:9px 11px;font-size:16px;line-height:1.5;background:var(--panel);resize:vertical}
+.edit textarea{font-family:var(--serif);font-size:17px}
+.hint{font-size:13px;color:var(--ink-3)}
+.rec{background:var(--panel);border-radius:var(--r);padding:14px;display:grid;gap:12px}
+.rec fieldset{border:0;margin:0;padding:0;display:grid;gap:4px}
+.rec legend{font-weight:600;font-size:13px;margin-bottom:4px;padding:0}
+.rec label.r{display:grid;grid-template-columns:16px 20px 1fr;gap:8px;align-items:start;padding:7px 9px;border-radius:var(--r);background:var(--card);font-size:14px}
+.rec label.r input{accent-color:var(--accent);width:16px;height:16px;margin:3px 0 0}
+.rec label.r b{font-weight:600}
+.rec .two{display:grid;grid-template-columns:1fr 180px;gap:10px}
+.rec label.f{display:grid;gap:3px;font-size:13px;color:var(--ink-3)}
+.rec input[type=text],.rec input[type=date]{width:100%;border:0;border-radius:var(--r);padding:8px 10px;font-size:16px;background:var(--card);color:var(--ink);min-height:38px}
+.rec .err{color:var(--block-fg);font-weight:600;font-size:13px;display:none;gap:6px;align-items:center}
+.rec .err.on{display:flex}
+.ans{border-radius:var(--r);padding:11px 13px;display:grid;gap:6px;font-size:14px;background:var(--ok-bg);color:#143F25}
+.ans.unclear{background:var(--fix-bg);color:#3F2A00}
+.ans .h{display:flex;gap:8px;align-items:center;font-weight:600}
+.ans dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 13px;font-size:13px}
+.ans dt{opacity:.85}
+.ans dd{margin:0}
+.empty{background:var(--card);border-radius:var(--r);padding:28px;color:var(--ink-3);text-align:center}
+
+/* excluded */
+.ex{background:var(--card);border-radius:var(--r)}
+.exbtn{width:100%;border:0;background:transparent;display:flex;align-items:center;gap:8px;padding:14px 20px;font-weight:600;font-size:14px;text-align:left;border-radius:var(--r)}
+.exbtn svg{transition:transform .2s var(--ease)}
+.exbtn[aria-expanded=true] svg{transform:rotate(90deg)}
+.exbtn .help{font-weight:400;color:var(--ink-3);font-size:13px;margin-left:auto}
+.exbody{padding:0 20px 20px;display:grid;gap:18px}
+.exbody[hidden]{display:none}
+.exgrp{display:grid;gap:8px}
+.xc{background:var(--panel);border-radius:var(--r);padding:13px 14px;display:grid;gap:8px}
+.xc h4{margin:0;font-weight:500;font-size:14px;line-height:1.4}
+.xc dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 13px;font-size:13px}
+.xc dt{color:var(--ink-3)}
+.xc dd{margin:0;color:var(--ink-2)}
+.xc .notx{font-size:13px;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.xc .rec{background:var(--card)}
+.xc .rec label.r{background:var(--panel)}
+.xc .rec input[type=text],.xc .rec input[type=date],.xc .rec textarea{background:var(--panel)}
+
+/* dialog */
+dialog.dlg{border:0;border-radius:var(--r);padding:0;background:var(--card);color:var(--ink);width:min(760px,calc(100vw - 48px));max-height:calc(100dvh - 64px);box-shadow:0 10px 30px -13px rgba(21,24,27,.3)}
+dialog.dlg::backdrop{background:rgba(21,24,27,.45)}
+.dlg-in{display:grid;grid-template-rows:auto minmax(0,1fr) auto;max-height:calc(100dvh - 64px)}
+.dlg header{padding:20px 24px 12px;display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.dlg header h2{margin:0;font:500 22px/1.2 var(--serif);letter-spacing:-.01em}
+.dlg header p{margin:2px 0 0;color:var(--ink-3);font-size:13px}
+.dlg .body{overflow:auto;padding:4px 24px 20px;display:grid;gap:14px}
+.dlg footer{padding:14px 24px;background:var(--panel);display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap;border-radius:0 0 var(--r) var(--r)}
+.dlg .warn{background:var(--fix-bg);color:#3F2A00;border-radius:var(--r);padding:9px 12px;font-size:13px;display:flex;gap:8px;align-items:flex-start}
+.dlg .warn svg{margin-top:2px;color:var(--fix-fg)}
+.pv{background:var(--paper);border-radius:var(--r);padding:20px 24px;display:grid;gap:16px;font:400 15px/1.6 var(--serif)}
+.pv h3{margin:0;font:600 16px/1.3 var(--serif)}
+.pv .item{display:grid;gap:5px}
+.pv .item .qq{font-weight:600}
+.pv .item .cit{font:400 13px/1.4 var(--sans);color:var(--ink-3)}
+.pv .item ol{margin:0;padding-left:22px;font-size:14px}
+.pv .item .ra{font:400 13px/1.4 var(--sans);color:var(--ink-2)}
+.pv .out{font:400 14px/1.5 var(--sans);color:var(--ink-2);display:grid;gap:4px}
+.pv .out li{margin-left:18px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:var(--r);padding:10px 14px;display:none;gap:14px;align-items:center;z-index:60;font-size:13px}
+.toast.on{display:flex}
+.toast button{background:transparent;border:0;color:#fff;text-decoration:underline;text-underline-offset:3px;font-weight:600}
+.toast button:focus-visible{outline-color:#fff}
+
+/* narrow desktop (1024) */
+@media (max-width:1279px){
+  .docid .meta{gap:13px}
+  .brand span{display:none}
+  .gp{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:1100px){.docid .meta span:nth-child(n+3){display:none}}
+</style>
+</head>
+<body>
+<a class="skip" href="#gatepanel2">Skip to gate and questions</a>
+
+<!-- ===== Icon sprite (bespoke, one stroke weight; same as review mockup + 4 additions) ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="logo" viewBox="0 0 28 28"><rect x="2" y="2" width="24" height="24" rx="5" fill="#15181B"/><path d="M8 9.5h7M8 14h4.5M8 18.5h5" stroke="#E9ECE9" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M15.5 17l2.6 2.6L22 14.6" stroke="#8FD0C6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="stop" viewBox="0 0 24 24"><path d="M8.2 3h7.6L21 8.2v7.6L15.8 21H8.2L3 15.8V8.2z"/><path d="M12 7.5v5.2M12 16h.01"/></symbol>
+  <symbol id="warn" viewBox="0 0 24 24"><path d="M12 3.5l9.2 16H2.8z"/><path d="M12 10v4.4M12 17.2h.01"/></symbol>
+  <symbol id="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.2M12 7.8h.01"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M7.8 12.4l2.9 2.9 5.6-6"/></symbol>
+  <symbol id="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="spark" viewBox="0 0 24 24"><path d="M12 3c.6 4.8 2.2 6.4 7 7-4.8.6-6.4 2.2-7 7-.6-4.8-2.2-6.4-7-7 4.8-.6 6.4-2.2 7-7z"/></symbol>
+  <symbol id="rule" viewBox="0 0 24 24"><path d="M8 4H6.500A1.500 1.500 0 005 5.500v13A1.500 1.500 0 006.500 20H8M16 4h1.500A1.500 1.500 0 0119 5.500v13a1.500 1.500 0 01-1.500 1.500H16"/><path d="M9.500 12h5"/></symbol>
+  <symbol id="memory" viewBox="0 0 24 24"><path d="M4 12a8 8 0 108-8 8 8 0 00-6 2.700"/><path d="M4 4v3.500h3.500M12 8v4.200l2.800 1.700"/></symbol>
+  <symbol id="counsel" viewBox="0 0 24 24"><path d="M4 5.500A1.500 1.500 0 015.500 4h13A1.500 1.500 0 0120 5.500v9a1.500 1.500 0 01-1.500 1.500H11l-4.500 4v-4h-1A1.500 1.500 0 014 14.500z"/><path d="M10.200 8.800a1.900 1.900 0 113 1.500c-.7.500-1.200.8-1.200 1.600M12 13.700h.01"/></symbol>
+  <symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="10.500" width="14" height="9.500" rx="2"/><path d="M8.500 10.500V8a3.500 3.500 0 017 0v2.500M12 14.500v2"/></symbol>
+  <symbol id="unlock" viewBox="0 0 24 24"><rect x="5" y="10.500" width="14" height="9.500" rx="2"/><path d="M8.500 10.500V8a3.500 3.500 0 016.700-1.400M12 14.500v2"/></symbol>
+  <symbol id="pin" viewBox="0 0 24 24"><path d="M12 21s6.500-5.800 6.500-11A6.500 6.500 0 005.500 10c0 5.200 6.500 11 6.500 11z"/><circle cx="12" cy="10" r="2.200"/></symbol>
+  <symbol id="undo" viewBox="0 0 24 24"><path d="M9 7L4.500 11.500 9 16"/><path d="M5 11.500h8.500A5.500 5.500 0 0119 17v1"/></symbol>
+  <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.300l3.200 2"/></symbol>
+  <symbol id="edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.100 2.100 0 00-3-3L5 17z"/><path d="M14 8l3 3"/></symbol>
+  <symbol id="doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M14 3v4h4M8.500 12h7M8.500 15.500h7M8.500 8.500H11"/></symbol>
+  <symbol id="down" viewBox="0 0 24 24"><path d="M12 4v11M7.500 11l4.500 4.500 4.500-4.500M5 20h14"/></symbol>
+  <symbol id="send" viewBox="0 0 24 24"><path d="M20.500 4L10 14M20.500 4l-6.500 16-4-6-6-4z"/></symbol>
+</svg>
+
+<div class="app">
+  <header class="top">
+    <div class="row1">
+      <div class="brand"><svg class="i" style="stroke:none;fill:none" aria-hidden="true"><use href="#logo"/></svg><span>Sub-doc QA</span></div>
+      <div class="docid">
+        <h1>Partners Group Next Generation Infrastructure LLC · Subscription Agreement</h1>
+        <div class="meta"><span><b>Law firm</b> Hartwell &amp; Crane LLP</span><span><b>Fund</b> Next Generation Infrastructure</span><span><b>Version</b> 2024 template, v2</span><span><b>Memory from</b> Master Fund 2019</span></div>
+      </div>
+      <div class="tools">
+        <div class="seg" role="group" aria-label="AI mode (demo control)">
+          <button type="button" id="aiOn" aria-pressed="true">AI on</button>
+          <button type="button" id="aiOff" aria-pressed="false">No AI</button>
+        </div>
+        <div class="gatewrap">
+          <button class="gate" id="gate" type="button" aria-expanded="false" aria-controls="gatepopover"></button>
+          <div class="gatepanel" id="gatepopover" role="dialog" aria-label="Digitization gate" hidden>
+            <h2 id="gt">Digitization is blocked</h2>
+            <p id="gp">These critical items are not resolved. Select one to go to it.</p>
+            <ul id="gl"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row1" style="justify-content:space-between;align-items:flex-end">
+      <nav class="tabs" aria-label="Workspace views">
+        <a href="review-workspace.html">Review</a>
+        <button type="button" data-other="Structure view">Structure</button>
+        <button type="button" data-other="Version compare">Compare</button>
+        <button type="button" aria-current="page">Counsel sheet <span class="cnt" id="counselCount" hidden>0</span></button>
+      </nav>
+    </div>
+  </header>
+
+  <div class="banner" id="banner" role="status">
+    <svg class="i" aria-hidden="true"><use href="#warn"/></svg>
+    <div><b>AI drafting is off: today's shared AI allowance is used up (50 of 50).</b> Every question uses template wording. Wording you edited is kept as you wrote it.
+      <small>One earlier AI draft would be shown from cache when AI is on. AI resumes automatically at 00:00 UTC. The gate and answer tracking work the same without AI.</small></div>
+  </div>
+
+  <main class="scroll" id="main">
+    <div class="sheet">
+      <section class="gp" id="gatepanel2" tabindex="-1" aria-labelledby="gpH"></section>
+
+      <section aria-label="Counsel query sheet">
+        <div class="tb">
+          <div>
+            <h2>Counsel query sheet</h2>
+            <p class="sub" id="tbSub"></p>
+          </div>
+          <div class="r">
+            <div class="seg" role="group" aria-label="Show questions">
+              <button type="button" data-filter="all" aria-pressed="true">All <span id="nAll"></span></button>
+              <button type="button" data-filter="open" aria-pressed="false">Unanswered <span id="nOpen"></span></button>
+            </div>
+            <button type="button" class="btn pri" id="exportBtn">
+              <svg class="i" aria-hidden="true"><use href="#doc"/></svg>Export DOCX
+            </button>
+          </div>
+        </div>
+        <ul class="qs" id="qs" style="margin-top:13px"></ul>
+      </section>
+
+      <section class="ex" aria-label="Excluded from the sheet">
+        <button class="exbtn" id="exbtn" type="button" aria-expanded="false" aria-controls="exbody"><svg class="i" aria-hidden="true"><use href="#chev"/></svg><span id="exTitle"></span><span class="help">Not exported to counsel</span></button>
+        <div class="exbody" id="exbody" hidden></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<dialog class="dlg" id="dlg" aria-labelledby="dlgT">
+  <div class="dlg-in">
+    <header>
+      <div><h2 id="dlgT">Export preview</h2><p id="dlgS"></p></div>
+      <button type="button" class="btn lnk" id="dlgX" aria-label="Close preview"><svg class="i" aria-hidden="true"><use href="#x"/></svg></button>
+    </header>
+    <div class="body" id="dlgB"></div>
+    <footer>
+      <span class="hint">DOCX is the only export format in this version.</span>
+      <span class="acts"><button type="button" class="btn" id="dlgC">Close</button><button type="button" class="btn pri" id="dlgD"><svg class="i" aria-hidden="true"><use href="#down"/></svg>Download DOCX</button></span>
+    </footer>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button type="button" id="toastUndo" hidden>Undo</button></div>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const ic=(n,c='')=>`<svg class="i ${c}" aria-hidden="true"><use href="#${n}"/></svg>`;
+const reduce=(window.matchMedia?matchMedia('(prefers-reduced-motion: reduce)').matches:false);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const SEV={block:{label:'Blocks digitization',icon:'stop',cls:'b-block'},fix:{label:'Fix before build',icon:'warn',cls:'b-fix'},note:{label:'Note',icon:'info',cls:'b-note'}};
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmt=iso=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||'');return m?(+m[3])+' '+MON[+m[2]-1]+' '+m[1]:'';};
+const TODAY='2026-10-17', FUND='Next Generation Infrastructure';
+
+/* ----- storage (always try/catch; page works with storage disabled) ----- */
+const KEY='subdocqa-counsel-edits';
+function safeGet(k){try{return window.localStorage.getItem(k);}catch(e){return null;}}
+function safeSet(k,v){try{window.localStorage.setItem(k,v);}catch(e){}}
+function safeParse(t){try{const o=t?JSON.parse(t):{};return o&&typeof o==='object'?o:{};}catch(e){return {};}}
+let edits=safeParse(safeGet(KEY));
+
+/* ----- data: same document and findings as the review mockup ----- */
+/* Questions = New or Accepted "needs counsel" findings. tpl = rule-based template wording; ai = cached AI draft (if any). */
+let Q=[
+ {id:'F-01',n:1,sec:'Section 1',cls:'Broken cross-reference',sev:'block',st:'new',prov:'XREF-02',
+  quote:'…must provide the name and address of the Custodian of the account in Part B of Section 6.',loc:'Section 1, paragraph 1',
+  tpl:'Section 1 tells IRA subscribers to give custodian details in "Part B of Section 6". The custodian fields are in Section 4. Which reference is correct?',
+  opts:[['A','Change the reference to "Section 4". The custodian fields stay where they are.'],['B','Keep "Part B of Section 6" and move the custodian fields into that Part.'],['C','Name the form ("Custodian Information") and drop the section number.']],ans:null},
+ {id:'F-02',n:2,sec:'Section 12',cls:'Broken cross-reference',sev:'block',st:'accepted',prov:'XREF-03',
+  quote:'…the Subscriber satisfies paragraphs 1 through 4 of this Section 11 and has attached the supporting certificate.',loc:'Section 12, paragraph 5',
+  tpl:'Section 12, paragraph 5 refers to "paragraphs 1 through 4 of this Section 11". Section 11 has no numbered paragraphs. Should it read "this Section 12"?',
+  opts:[['A','Yes. Change "Section 11" to "Section 12".'],['B','No. It points to the Section 11 tax certifications and the paragraph numbers are wrong.']],ans:null},
+ {id:'F-03',n:3,sec:'Section 1',cls:'Broken cross-reference',sev:'block',st:'new',prov:'XREF-02',
+  memory:'Dismissed in Master Fund 2019, re-confirm',
+  quote:'…enter the amount of the subscription in Part B of Section 4 and attach any supporting entity documents…',loc:'Section 1, paragraph 2',
+  tpl:'Section 1 sends the subscriber to "Part B of Section 4" for the subscription amount. The amount field is in Part B of Section 6. Please confirm the intended reference.',
+  opts:[['A','Change the reference to "Part B of Section 6".'],['B','Keep "Part B of Section 4" and add a Part B to Section 4.']],ans:null},
+ {id:'F-04',n:4,sec:'Section 8',cls:'Undefined term',sev:'fix',st:'new',prov:'TERM-01',
+  quote:'…understands that the offered Units will not be registered under the Securities Act of 1933…',loc:'Section 8(c)',
+  tpl:'Section 8(c) uses "Units", but the document defines "Shares" and has no definition of "Units". Should "Units" be replaced with "Shares"?',
+  opts:[['A','Yes. Replace "Units" with "Shares".'],['B','No. "Units" is a separate instrument and needs its own definition.']],ans:null},
+ {id:'F-07',n:5,sec:'Section 8',cls:'Ambiguity (AI)',sev:'note',st:'new',prov:null,
+  quote:'…suspend repurchases for a reasonable period if the Board determines it is in the interest of the Shareholders.',loc:'Section 8(d)',
+  tpl:'Section 8(d) allows suspension of repurchases "for a reasonable period". Please confirm whether a fixed limit or an end condition applies.',
+  ai:'In Section 8(d), how long may the Board suspend repurchases? Please state a maximum period, or the event that ends the suspension.',
+  model:'gemma-4 (free)',
+  opts:[['A','No fixed limit. The suspension lasts until the Board ends it.'],['B','Limited to one quarterly repurchase cycle.'],['C','A different limit. Counsel to specify in the note.']],ans:null},
+];
+/* Excluded: prior-fund answers and items still waiting on counsel. Never exported. */
+let X=[
+ {id:'H-1',kind:'answered',crit:false,cls:'Broken cross-reference',title:'"Appendix B (Investor Questionnaire)"',quote:'…complete the Investor Questionnaire attached as Appendix B…',
+  fund:'Master Fund 2019',who:'Minh Anh Nguyen',when:'12 Feb 2026',ans:{text:'Counsel chose A: Appendix B is the Investor Questionnaire; the heading is correct.'}},
+ {id:'H-4',kind:'answered',crit:true,cls:'Contradiction',title:'Net worth threshold stated with two different amounts',quote:'…net worth, with spouse, of more than US$ 2,200,000… (Section 12) · …more than US$ 2,100,000… (Appendix C)',
+  fund:'Master Fund 2019',who:'Minh Anh Nguyen',when:'12 Feb 2026',ans:{text:'Counsel chose B: US$ 2,200,000 is correct; Appendix C was updated.'}},
+ {id:'H-3',kind:'awaiting',crit:true,cls:'Ambiguity (AI)',title:'"Eligible Investor" is defined twice',quote:'…"Eligible Investor" has the meaning given in Section 2 and in Appendix A…',
+  fund:'Master Fund 2019',who:'Minh Anh Nguyen',when:'20 Feb 2026',ans:null,
+  opts:[['A','The Section 2 definition controls.'],['B','The Appendix A definition controls.'],['C','Neither. Counsel will supply one definition.']]},
+ {id:'H-5',kind:'awaiting',crit:false,cls:'Undefined term',title:'"Board" is used but not defined',quote:'…if the Board determines it is in the interest of the Shareholders…',
+  fund:'Master Fund 2019',who:'Duc Pham',when:'24 Feb 2026',ans:null,
+  opts:[['A','The Company\'s board of managers.'],['B','The board of the Master Fund.'],['C','Define it in the glossary. Counsel to supply wording.']]},
+];
+
+let aiOn=true, filter='all', exOpen=false, editing=null, answering=null, errFor=null, undoFn=null, toastT=null;
+const qById=id=>Q.find(q=>q.id===id), xById=id=>X.find(x=>x.id===id);
+const isAI=q=>!!(aiOn&&q.ai);
+const baseText=q=>isAI(q)?q.ai:q.tpl;
+const textOf=q=>Object.prototype.hasOwnProperty.call(edits,q.id)?edits[q.id]:baseText(q);
+const optText=(o,k)=>{const f=o.find(x=>x[0]===k);return f?f[1]:'';};
+
+/* ----- gate: derived from sheet state ----- */
+function reasons(){
+  const r=[];
+  Q.filter(q=>q.sev==='block').forEach(q=>{
+    if(!q.ans)r.push({id:q.id,kind:'q',title:q.tpl.length?titleOf(q):'',why:q.memory||'Unanswered by counsel',where:q.loc});
+    else if(q.ans.key==='unclear')r.push({id:q.id,kind:'q',title:titleOf(q),why:'Answered "unclear", needs a follow-up question',where:q.loc});
+  });
+  X.filter(x=>x.crit&&x.kind==='awaiting').forEach(x=>r.push({id:x.id,kind:'x',title:x.title,why:'Awaiting counsel',where:'Sent '+x.when+' in '+x.fund}));
+  return r;
+}
+const TITLES={'F-01':'Custodian details point to the wrong section','F-02':'"this Section 11" is written inside Section 12','F-03':'Subscription amount points to the wrong section','F-04':'"Units" is used but the defined term is "Shares"','F-07':'"a reasonable period" has no limit'};
+const titleOf=q=>TITLES[q.id]||q.id;
+const critTotal=()=>Q.filter(q=>q.sev==='block').length+X.filter(x=>x.crit).length;
+
+/* ----- render: header + gate ----- */
+function renderGate(){
+  const r=reasons(), g=$('#gate'), n=r.length, tot=critTotal(), done=tot-n;
+  const ready=!n;
+  g.className='gate'+(ready?' ready':'');
+  g.innerHTML=ready?`${ic('unlock')}<span>Ready to digitize</span>${ic('chev')}`:`${ic('lock')}<span>Blocked — ${n} reason${n>1?'s':''}</span>${ic('chev')}`;
+  $('#gt').textContent=ready?'All critical items are resolved':'Digitization is blocked';
+  $('#gp').textContent=ready?'Every critical item has a counsel answer or a prior answer.':'These critical items are not resolved. Select one to go to it.';
+  const li=r.map(x=>`<li><button type="button" data-goto="${x.id}" data-kind="${x.kind}">${ic('stop')}<span><b>${esc(x.title)}</b><span class="why" style="display:block">${esc(x.where)} · ${esc(x.why)}</span></span></button></li>`).join('');
+  $('#gl').innerHTML=li;
+  const gp=$('#gatepanel2');
+  gp.className='gp'+(ready?' ready':'');
+  gp.innerHTML=`<div class="gp-l"><span class="gp-ic">${ic(ready?'unlock':'lock')}</span><div>
+      <h2 id="gpH" aria-live="polite">${ready?'Ready to digitize':'Digitization is blocked'}</h2>
+      <p>${ready?'Every critical item has a recorded counsel answer. The document can go to digitization.':`${n} critical item${n>1?'s are':' is'} not resolved. The gate opens when each one has a counsel answer.`}</p>
+      <div class="gp-prog"><b>${done} of ${tot}</b> critical items resolved</div></div></div>
+    ${ready?`<p class="gp-ok">${ic('check')}Nothing is holding this document back.</p>`:`<ul aria-label="Reasons the gate is blocked">${r.map(x=>`<li><button type="button" data-goto="${x.id}" data-kind="${x.kind}">${ic('stop','stp')}<span><span class="t">${esc(x.title)}</span><span class="w">${esc(x.where)} · ${esc(x.why)}</span></span><span class="go">${ic('chev')}</span></button></li>`).join('')}</ul>`}
+    <p class="gp-note">${ic('info')}<span>Accepting a finding does not open the gate. Only a counsel answer (A, B or C) does. An answer of "unclear" keeps it blocked.</span></p>`;
+  const open=Q.filter(q=>!q.ans).length, c=$('#counselCount');
+  c.hidden=!open;c.textContent=open;
+}
+
+/* ----- render: questions ----- */
+function provHTML(q){
+  const edited=Object.prototype.hasOwnProperty.call(edits,q.id);
+  let h='';
+  if(isAI(q))h+=`<span class="tag t-ai">${ic('spark')} AI draft</span><span>${esc(q.model)} · from cache</span>`;
+  else h+=`<span class="tag t-st">${ic('rule')} Template draft</span><span>${q.prov?'from rule '+q.prov:'template wording (AI is off)'}</span>`;
+  if(edited)h+=`<span class="tag t-st">${ic('edit')} Edited by you</span>`;
+  return h;
+}
+function recForm(it,kind){
+  const opts=it.opts.concat([['unclear','Unclear: counsel could not answer. This keeps the gate blocked for a critical item.']]);
+  const pre=it.ans||{};
+  return `<form class="rec" data-form="${kind}" data-id="${it.id}" novalidate>
+    <fieldset><legend>Counsel's answer</legend>
+      ${opts.map((o,i)=>`<label class="r"><input type="radio" name="ans-${it.id}" value="${o[0]}" ${pre.key===o[0]?'checked':''} ${i===0?'id="firstAns"':''}><b>${o[0]==='unclear'?'?':o[0]}</b><span>${esc(o[1])}</span></label>`).join('')}
+    </fieldset>
+    <label class="f">Note (optional)<textarea name="note" rows="2" placeholder="For example: counsel's reasoning, or the wording to use">${esc(pre.note||'')}</textarea></label>
+    <div class="two">
+      <label class="f">Answered by<input type="text" name="who" value="${esc(pre.who||'R. Whitlock, Hartwell & Crane LLP')}" autocomplete="off"></label>
+      <label class="f">Date<input type="date" name="when" value="${esc(pre.when||TODAY)}"></label>
+    </div>
+    <div class="err${errFor===it.id?' on':''}" role="alert">${ic('warn')}Choose an option or "unclear" before saving, and say who answered.</div>
+    <div class="acts"><button type="submit" class="btn pri">${ic('check')}Save answer</button><button type="button" class="btn" data-act="cancel-ans">Cancel</button></div>
+  </form>`;
+}
+function ansHTML(q){
+  const a=q.ans, unc=a.key==='unclear';
+  return `<div class="ans${unc?' unclear':''}"><div class="h">${ic(unc?'warn':'check')}${unc?'Answered "unclear". The gate stays blocked for this item.':`Answered: option ${a.key}`}</div>
+    ${unc?'':`<div>${esc(optText(q.opts,a.key))}</div>`}
+    <dl>${a.note?`<dt>Note</dt><dd>${esc(a.note)}</dd>`:''}<dt>Answered by</dt><dd>${esc(a.who)}</dd><dt>Date</dt><dd>${fmt(a.when)}</dd></dl></div>`;
+}
+function qHTML(q){
+  const s=SEV[q.sev];
+  const stTag=q.ans?`<span class="tag t-ok">${ic('check')} Answered</span>`:(q.st==='accepted'?`<span class="tag t-st">${ic('check')} Accepted</span>`:`<span class="tag t-new">New</span>`);
+  const memTag=(q.memory&&!q.ans)?`<span class="tag t-re">${ic('memory')} ${q.memory}</span>`:'';
+  const isEd=editing===q.id;
+  const wording=isEd?`<div class="edit"><label class="sr" for="ed-${q.id}">Question wording</label><textarea id="ed-${q.id}" rows="3">${esc(textOf(q))}</textarea>
+      <div class="acts"><button type="button" class="btn pri" data-act="save-ed" data-id="${q.id}">${ic('check')}Save wording</button><button type="button" class="btn" data-act="cancel-ed">Cancel</button>${Object.prototype.hasOwnProperty.call(edits,q.id)?`<button type="button" class="btn lnk" data-act="reset-ed" data-id="${q.id}">Reset to ${isAI(q)?'AI':'template'} draft</button>`:''}<span class="hint">Ctrl or Cmd + Enter saves. Esc cancels.</span></div></div>`
+    :`<h3 class="qt" tabindex="-1">${esc(textOf(q))}</h3>`;
+  const body=answering===q.id?recForm(q,'q'):(q.ans?ansHTML(q)+`<div class="acts"><button type="button" class="btn" data-act="rec" data-id="${q.id}">${ic('edit')}Change answer</button></div>`:`<div class="acts"><button type="button" class="btn pri" data-act="rec" data-id="${q.id}">${ic('counsel')}Record answer</button></div>`);
+  return `<li class="q" id="q-${q.id}" data-id="${q.id}">
+    <div class="l1"><span class="qn">Q${q.n}</span><span class="badge ${s.cls}">${ic(s.icon)}${s.label}</span><span class="cls">${q.cls}</span>${stTag}${memTag}</div>
+    ${wording}
+    <div class="prov">${provHTML(q)}${isEd?'':`<button type="button" class="btn lnk" data-act="edit" data-id="${q.id}">${ic('edit')}Edit wording</button>`}</div>
+    <blockquote class="ev">${esc(q.quote)}<cite>${ic('pin')} ${q.loc}</cite></blockquote>
+    <ul class="interp" aria-label="Possible readings">${q.opts.map(o=>`<li><b>${o[0]}</b><span>${esc(o[1])}</span></li>`).join('')}</ul>
+    ${body}
+  </li>`;
+}
+function renderList(){
+  const list=Q.filter(q=>filter==='all'||!q.ans);
+  $('#qs').innerHTML=list.length?list.map(qHTML).join(''):`<li class="empty">Every question on this sheet has an answer. You can still export it.</li>`;
+  const open=Q.filter(q=>!q.ans).length;
+  $('#nAll').textContent=Q.length;$('#nOpen').textContent=open;
+  $$('[data-filter]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.filter===filter));
+  const ans=Q.length-open, ac=Q.filter(q=>q.st==='accepted').length;
+  $('#tbSub').textContent=`${Q.length} questions · ${Q.length-ac} New, ${ac} Accepted · ${ans} answered · one question per finding marked "needs counsel"`;
+}
+function renderEx(){
+  const a=X.filter(x=>x.kind==='answered'), w=X.filter(x=>x.kind==='awaiting');
+  $('#exTitle').textContent=`Already answered (${a.length}) · Awaiting counsel (${w.length})`;
+  const card=x=>{
+    const t=x.kind==='answered'?`<span class="tag t-ok">${ic('check')} Already answered</span>`:`<span class="tag t-st">${ic('clock')} Awaiting counsel</span>`;
+    const crit=x.crit?`<span class="badge b-block">${ic('stop')}Blocks digitization</span>`:'';
+    const meta=x.kind==='answered'
+      ?`<dl><dt>Prior answer</dt><dd>${esc(x.ans.text)}</dd>${x.ans.note?`<dt>Note</dt><dd>${esc(x.ans.note)}</dd>`:''}<dt>Fund</dt><dd>${esc(x.fund)}</dd><dt>Answered by</dt><dd>${esc(x.who)}</dd><dt>When</dt><dd>${esc(x.when)}</dd></dl>`
+      :`<dl><dt>Sent</dt><dd>${esc(x.when)} by ${esc(x.who)}</dd><dt>Fund</dt><dd>${esc(x.fund)}</dd><dt>Status</dt><dd>No answer yet. ${x.crit?'Counts as unresolved for the gate.':'Does not block the gate.'}</dd></dl>`;
+    const act=answering===x.id?recForm(x,'x'):(x.kind==='awaiting'?`<div class="acts"><button type="button" class="btn" data-act="rec" data-id="${x.id}">${ic('counsel')}Record counsel's answer</button></div>`:'');
+    return `<div class="xc" id="x-${x.id}"><div class="l1">${t}${crit}<span class="cls">${x.cls}</span></div>
+      <h4 tabindex="-1">${esc(x.title)}</h4><blockquote class="ev" style="font-size:14px">${esc(x.quote)}</blockquote>${meta}
+      <div class="notx">${ic('x')} Not included in the export</div>${act}</div>`;};
+  $('#exbody').innerHTML=`<div class="exgrp"><p class="cap">Already answered (${a.length})</p>${a.map(card).join('')||'<p class="hint">None.</p>'}</div>
+    <div class="exgrp"><p class="cap">Awaiting counsel (${w.length})</p>${w.map(card).join('')||'<p class="hint">None.</p>'}</div>`;
+  $('#exbody').hidden=!exOpen;$('#exbtn').setAttribute('aria-expanded',exOpen);
+}
+function renderStages(){$('#banner').classList.toggle('on',!aiOn);}
+function render(o={}){
+  renderGate();renderList();renderEx();renderStages();
+  if(o.focusSel){const el=$(o.focusSel);el&&el.focus({preventScroll:!!o.noScroll});}
+}
+
+/* ----- toast ----- */
+function toast(msg,undo){
+  $('#toastMsg').textContent=msg;undoFn=undo||null;$('#toastUndo').hidden=!undo;$('#toast').classList.add('on');
+  clearTimeout(toastT);toastT=setTimeout(()=>$('#toast').classList.remove('on'),undo?7000:2800);
+}
+function gateLine(){const n=reasons().length;return n?`${n} reason${n>1?'s':''} left on the gate.`:'The gate is now Ready.';}
+
+/* ----- goto ----- */
+function goto(id,kind){
+  closeGate();
+  if(kind==='x'){exOpen=true;filter=filter;render();
+    const c=$('#x-'+id);if(c){c.scrollIntoView({block:'center',behavior:reduce?'auto':'smooth'});const h=c.querySelector('h4');h&&h.focus({preventScroll:true});}
+    return;}
+  filter='all';render();
+  const c=$('#q-'+id);if(!c)return;
+  c.scrollIntoView({block:'start',behavior:reduce?'auto':'smooth'});
+  const h=c.querySelector('.qt');h&&h.focus({preventScroll:true});
+  c.classList.remove('flash');void c.offsetWidth;c.classList.add('flash');
+}
+
+/* ----- export preview ----- */
+function openPreview(){
+  const r=reasons();
+  const ac=Q.filter(q=>q.st==='accepted').length;
+  $('#dlgS').textContent=`${Q.length} questions go to counsel: ${Q.length-ac} New, ${ac} Accepted. Law firm: Hartwell & Crane LLP.`;
+  const items=Q.map(q=>`<div class="item"><div class="qq">${q.n}. ${esc(textOf(q))}</div>
+     <div class="cit">${q.loc} · "${esc(q.quote.length>110?q.quote.slice(0,108)+'…':q.quote)}"</div>
+     <ol type="A">${q.opts.map(o=>`<li>${esc(o[1])}</li>`).join('')}</ol>
+     <div class="ra">${q.ans?`Recorded answer: ${q.ans.key==='unclear'?'unclear':q.ans.key}${q.ans.note?' · '+esc(q.ans.note):''} · ${esc(q.ans.who)} · ${fmt(q.ans.when)}`:'Answer: ______   Note: ______   By / date: ______'}</div></div>`).join('');
+  const ex=X.map(x=>`<li>${esc(x.title)} (${x.kind==='answered'?'already answered':'awaiting counsel'}, ${esc(x.fund)})</li>`).join('');
+  $('#dlgB').innerHTML=`${r.length?`<div class="warn">${ic('warn')}<span>The gate is still Blocked (${r.length} reason${r.length>1?'s':''}). Exporting does not clear it. Only recorded counsel answers do.</span></div>`:''}
+    <div class="pv"><h3>Counsel query sheet · Partners Group Next Generation Infrastructure LLC</h3>${items}
+    <div class="out"><b style="font:600 13px var(--sans);color:var(--ink-3)">Left out of this export (${X.length})</b><ul style="margin:0;padding:0">${ex}</ul></div></div>`;
+  const d=$('#dlg');
+  if(d.showModal){d.showModal();}else{d.setAttribute('open','');}
+  $('#dlgC').focus();
+}
+function closePreview(){const d=$('#dlg');if(d.close){d.close();}else{d.removeAttribute('open');}$('#exportBtn').focus();}
+
+/* ----- interactions ----- */
+function closeGate(){const p=$('#gatepopover');if(!p.hidden){p.hidden=true;$('#gate').setAttribute('aria-expanded','false');}}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button,a');
+  if(!t){if(!e.target.closest('.gatewrap'))closeGate();return;}
+  if(!t.closest('.gatewrap'))closeGate();
+  if(t.dataset.other){toast(t.dataset.other+' is designed in a separate mockup.');return;}
+  if(t.dataset.goto){goto(t.dataset.goto,t.dataset.kind);return;}
+  if(t.dataset.filter){filter=t.dataset.filter;renderList();return;}
+  if(t.id==='gate'){const p=$('#gatepopover'),o=!p.hidden;p.hidden=o;t.setAttribute('aria-expanded',!o);return;}
+  if(t.id==='exbtn'){exOpen=!exOpen;$('#exbody').hidden=!exOpen;t.setAttribute('aria-expanded',exOpen);return;}
+  if(t.id==='exportBtn'){openPreview();return;}
+  if(t.id==='dlgC'||t.id==='dlgX'){closePreview();return;}
+  if(t.id==='dlgD'){toast('Mockup only: no file is generated. The real export writes a .docx with these questions.');return;}
+  if(t.id==='toastUndo'){undoFn&&undoFn();undoFn=null;$('#toast').classList.remove('on');return;}
+  const a=t.dataset.act,id=t.dataset.id;
+  if(a==='edit'){answering=null;editing=id;renderList();const el=$('#ed-'+id);if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}return;}
+  if(a==='cancel-ed'){const id2=editing;editing=null;renderList();const h=$('#q-'+id2+' .qt');h&&h.focus({preventScroll:true});return;}
+  if(a==='save-ed'){
+    const el=$('#ed-'+id),v=el.value.trim();
+    if(!v){toast('Wording cannot be empty.');el.focus();return;}
+    if(v===baseText(qById(id)))delete edits[id];else edits[id]=v;
+    safeSet(KEY,JSON.stringify(edits));editing=null;renderList();
+    const h=$('#q-'+id+' .qt');h&&h.focus({preventScroll:true});toast('Wording saved. It stays after a reload.');return;}
+  if(a==='reset-ed'){delete edits[id];safeSet(KEY,JSON.stringify(edits));editing=null;renderList();toast('Wording reset to the draft.');return;}
+  if(a==='rec'){editing=null;answering=id;errFor=null;renderList();renderEx();
+    const f=document.querySelector(`form[data-id="${id}"]`);f&&f.scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});
+    const r=f&&(f.querySelector('input:checked')||f.querySelector('input[type=radio]'));r&&r.focus({preventScroll:true});return;}
+  if(a==='cancel-ans'){const id2=answering;answering=null;errFor=null;renderList();renderEx();focusItem(id2);return;}
+});
+function focusItem(id){
+  const q=$('#q-'+id+' .qt'),x=$('#x-'+id+' h4');
+  (q||x)&&(q||x).focus({preventScroll:true});
+}
+document.addEventListener('submit',e=>{
+  const f=e.target.closest('form.rec');if(!f)return;
+  e.preventDefault();
+  const id=f.dataset.id, kind=f.dataset.form;
+  const r=f.querySelector('input[type=radio]:checked'), who=f.elements.who.value.trim(), when=f.elements.when.value||TODAY, note=f.elements.note.value.trim();
+  if(!r||!who){errFor=id;f.querySelector('.err').classList.add('on');(r?f.elements.who:f.querySelector('input[type=radio]')).focus();return;}
+  const key=r.value;
+  if(kind==='q'){
+    const q=qById(id),prev=JSON.stringify(q.ans);
+    q.ans={key,note,who,when};answering=null;errFor=null;
+    render();focusItem(id);
+    toast((key==='unclear'?'Recorded as unclear. ':'Answer recorded. Finding set to Answered. ')+gateLine(),()=>{q.ans=JSON.parse(prev);render();focusItem(id);});
+  }else{
+    const x=xById(id),prev=JSON.stringify(x);
+    x.kind='answered';x.ans={key,text:key==='unclear'?'Counsel answered "unclear".':'Counsel chose '+key+': '+optText(x.opts,key),note};
+    x.who=who;x.when=fmt(when);x.fund=FUND+' (this fund)';
+    if(key==='unclear'&&x.crit){x.kind='awaiting';x.ans=null;toast('Recorded as unclear. It stays Awaiting counsel until a clear answer arrives.');}
+    else toast('Answer recorded. Finding set to Answered. '+gateLine(),()=>{Object.keys(x).forEach(k=>delete x[k]);Object.assign(x,JSON.parse(prev));render();});
+    answering=null;errFor=null;exOpen=true;render();focusItem(id);
+  }
+});
+document.addEventListener('change',e=>{
+  if(e.target.type==='radio'){const f=e.target.closest('form.rec');const er=f&&f.querySelector('.err');er&&er.classList.remove('on');}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if(!$('#gatepopover').hidden){closeGate();$('#gate').focus();return;}
+    if($('#dlg').hasAttribute('open'))return; /* native dialog handles Esc */
+    if(editing){const id=editing;editing=null;renderList();focusItem(id);return;}
+    if(answering){const id=answering;answering=null;errFor=null;renderList();renderEx();focusItem(id);return;}
+  }
+  if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&editing&&e.target.tagName==='TEXTAREA'){
+    const b=document.querySelector('[data-act="save-ed"]');b&&b.click();
+  }
+});
+$('#dlg').addEventListener('close',()=>{$('#exportBtn').focus();});
+$('#aiOn').addEventListener('click',()=>setAI(true));
+$('#aiOff').addEventListener('click',()=>setAI(false));
+function setAI(v){
+  aiOn=v;$('#aiOn').setAttribute('aria-pressed',v);$('#aiOff').setAttribute('aria-pressed',!v);
+  /* a typed edit replaces the draft; if it now equals nothing new we keep it */
+  render();
+  toast(v?'AI mode on (demo control). Q5 uses the cached AI draft again unless you edited it.':'No-AI mode: all drafts use template wording. Gate and answers are unchanged.');
+}
+render();
+})();
+</script>
+</body>
+</html>

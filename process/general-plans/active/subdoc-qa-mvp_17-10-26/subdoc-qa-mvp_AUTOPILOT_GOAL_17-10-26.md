@@ -36,3 +36,27 @@ TEST GATES: TBD — populated after VALIDATE
 START: wait for PLAN agent → validators → VALIDATE phase 00
 LANE: full
 ```
+
+## (UPDATE) 2026-10-17
+
+```
+SESSION GOAL: (UPDATE) Build, test and deploy the sub-doc QA MVP (SPEC R6, 64 ACs) phase by phase per the umbrella plan in process/general-plans/active/subdoc-qa-mvp_17-10-26/
+ENTRY PHASE: EXECUTE phase 00 (PLAN done; PVL: 00 PASS after 1 cycle; 01/03/04a re-validating)
+REMAINING PHASES:
+  [ ] 00 EXECUTE→EVL→UP (vc-execute-agent opus → vc-tester sonnet → vc-update-process-agent sonnet)
+  [ ] 01, 03, 04a: PVL to PASS, then E→EVL→UP; deploy M1 slice
+  [ ] 02, 04b, 05, 06, 07, 08, 08b, 09, 10 (inner PVL just-in-time)
+CLARIFICATIONS LOCKED: unchanged (see provisional block above)
+EXECUTE CONSENT: standing-granted via autopilot trigger (2026-10-17)
+DECISION POLICY: unchanged
+HARD STOPS: unchanged
+TEST GATES (phase 00):
+  pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm test && pnpm guard:cf && pnpm secrets:scan
+  pnpm --filter @aduin/worker test
+  pnpm --filter @aduin/scripts test
+  pnpm --filter @aduin/scripts spike:check
+  pnpm --filter @aduin/scripts spike:s06-local
+  pnpm --filter @aduin/scripts spike:s07
+START: spawn vc-execute-agent for phase 00
+LANE: full
+```

@@ -1,0 +1,8 @@
+// Throwaway spike Worker (Phase 00 S1/S2/S6 remote). workers.dev only: no routes, no custom domain.
+{
+  "name": "aduin-transaction-spike",
+  "main": "worker.ts",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "observability": { "enabled": false },
+}

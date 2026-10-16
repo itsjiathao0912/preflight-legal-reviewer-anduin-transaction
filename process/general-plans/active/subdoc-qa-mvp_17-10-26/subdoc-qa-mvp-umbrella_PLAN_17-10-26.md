@@ -336,7 +336,16 @@ Seam files (single-line appends serialized by the orchestrator): `packages/core/
 
 ## Pre-PVL Conflict Resolution
 
-(placeholder — orchestrator writes this before outer PVL begins; it must classify each shared package as `parallel-safe` or `reassign` with the winning phase named, or state explicitly: "No package conflicts — all phases are parallel-safe.")
+Orchestrator classification (2026-10-17, outer PVL of Milestone 1):
+
+| Shared surface | Classification | Winner / rule |
+|---|---|---|
+| `packages/core` | parallel-safe | Disjoint subdirectories per phase; barrel lines are append-only |
+| `apps/web` | parallel-safe | 03 owns the shell; later phases add feature dirs; 06 extends `apps/web/src/engine` after 03 |
+| `apps/worker` | parallel-safe (04a ∥ 04b) / sequential (05 after 04a) | Disjoint subdirectories; `createApp` pre-wires `mountProxyRoutes` + `mountMemoryRoutes` (Phase 00 B4) |
+| `apps/web/e2e/slice.spec.ts` | **reassign → 04a** | 04a owns the slice spec + `scripts/src/slice-check.ts`; 03 proves real findings via `finding-highlight` |
+| `pnpm-lock.yaml`, `THIRD_PARTY_NOTICES.md`, `.gitignore`, root manifests | seam (Phase 00 owner) | 03 and 04a edits are serialized by the orchestrator (one commit at a time) |
+| `apps/worker/wrangler.jsonc` | seam (Phase 00 skeleton) | 04a owns proxy vars; 04b owns `triggers.crons` + purge vars; one-key serialized edits |
 
 Planner's pre-analysis for the orchestrator (not the final classification): `packages/core` — shared by 01, 02, 05, 06, 07, 08, 09 but in disjoint subdirectories with append-only barrel lines: parallel-safe within groups G1/G2/G3. `apps/web` — 03 owns the shell; later phases add feature directories: parallel-safe except the seam registry. `apps/worker` — 04a vs 04b disjoint by subdirectory; 05 extends one 04a file after 04a verifies (sequential, not parallel).
 
@@ -382,13 +391,29 @@ Per-phase strategy is also recorded inside each phase plan. Agent-team is the ma
 
 ---
 
+## User-Decided Product Defaults (2026-10-17, approved by the user via the design session: "đồng ý")
+
+These override the proposed defaults in the next section wherever they differ. Each phase applies them at its inner PVL or supplement.
+
+| # | Decision | Applies to |
+|---|---|---|
+| D-1 | The counsel DOCX export contains only unanswered New/Accepted questions; answers are shown in the app | 08 |
+| D-2 | A counsel answer on a "Dismissed in <old fund>, re-confirm" item counts as the re-confirmation | 08, 03 (gate interim) |
+| D-3 | Awaiting-counsel items can be answered in-app | 08 |
+| D-4 | Retention: uploads 24h (browser); sandbox memory 30 days (demo never purged); 3 fresh-AI documents per visitor per day; opening a cached sample does not count | 03, 04a, 04b |
+| D-5 | A rejected rule proposal may be re-proposed when new evidence (more same-reason dismissals) arrives | 04b, 08b |
+| D-6 | Compare opens in Versions mode by default | 07 |
+| D-7 | Sample corpus = 12 HTML (01–08, 10–13) + the 22-page RW Holdings scan set (09); ILPA #14 local-only; SPEC AC2 corrected | 02, 03, 06, 10 |
+| D-8 (orchestrator, autonomous, reversible) | `axe-core` / `@axe-core/playwright` (MPL-2.0) is allowed as a **dev-only test dependency**. It is not copied and not shipped. The user's license rule covers code copied into the product. If the user objects, swap it for another a11y check. | 03, 10 |
+| D-9 (orchestrator, from phase 00 A1) | Worker tests use `@cloudflare/vitest-plugin` 1.4.4 (`cloudflareTest`) instead of the deprecated `@cloudflare/vitest-pool-workers` 0.23.0; vitest stays at 4.1.12. Read "pool-workers" in plans 01/04a/04b as this plugin. | 01, 04a, 04b |
+
 ## Open Decisions Deferred by PLAN (with proposed defaults)
 
 | # | Decision | Proposed default (adopted in phase plans) | Where |
 |---|---|---|---|
 | 1 | Retention values | see table above | 03, 04b |
 | 2 | `pattern_key` spec | `<detector_id>[:<shape>]` with digits → `#`, ≤ 80 chars; AI: `ai:<task>:<class>`; reason `other` never proposes | 02 |
-| 3 | Last-4 masking of sensitive spans | keep `#####` + last 4 in hash and snippet; `sensitive_data` severity capped `medium` so a collision cannot hide a blocking item | 01, 02 |
+| 3 | Last-4 masking of sensitive spans | keep `#` + last 4 in hash and snippet (DATA-MODEL 2.2; orchestrator 2026-10-17); `sensitive_data` severity capped `medium` so a collision cannot hide a blocking item | 01, 02 |
 | 4 | `unclear` counsel answer | resolves to label New; critical items stay unresolved; re-included in the next sheet | 01, 08 |
 | 5 | Accept on a blocking finding | CONFIRMED by the user: gate stays Blocked until counsel answers | 03, 08 |
 | 6 | AI-only findings and the gate | severity ≤ high, labeled "AI suggestion", never gate unless the analyst promotes them | 01, 05 |
@@ -557,6 +582,20 @@ node .claude/skills/vc-generate-plan/scripts/validate-plan-artifact.mjs <each pl
 - Execute-agent start instruction: read this file, read the Phase 00 plan, run the research subagent first.
 
 ---
+
+## Execution Holds (orchestrator, 2026-10-17)
+
+| Phase | Hold | Released when | Run-order effect |
+|---|---|---|---|
+| 03 web shell (and later UI-only steps of 05/07/08/08b/09) | **Dependency-BLOCKED on `design/mockups/app.html` approval.** The user is switching navigation from horizontal tabs to a vertical sidebar. The groups are REVIEW (Findings, Counsel questions), CHECK (Structure incl. an "Investor types" sub-view, Compare versions) and FIRM (Firm memory, Documents). The gate status is pinned at the sidebar bottom, the sidebar collapses to an icon rail, and detail opens in drawers. `review-workspace.html` is no longer the navigation spec; its tokens (palette, Newsreader/Geist, 4px radius, tone steps) still apply. Source: user, relayed by the design session ("Báo session build tạm chưa dựng khung UI cho tới khi tôi duyệt."). | The design session reports that the user approved app.html. Then a P03 PVL supplement re-targets the plan to app.html before EXECUTE. | Autopilot skips 03 and runs the next independent phases: 01 → 04a → 02 → 04b → 07 → 06, … The M1 slice deploy waits for 03. |
+
+**Deferred P03 supplement items (apply together with the app.html re-target):**
+- G4: drop `--` from gate commands. pnpm 11.13.1 passes `--` literally and the whole suite runs. Add a `pretest:a11y` samples hook, or a `pnpm build` webServer.
+- G5: one fingerprint flow. The engine returns `quote_hash` only; the main thread calls core `fingerprintFor(finding, firmId)` before lookup; `firmId=null` means "memory not applied". Remove `firmId` from worker settings.
+
+**Hold update (2026-10-17): Phase 03 RELEASED for shell + Findings.** The user approved `design/mockups/app.html` + `app_NOTES.md` and its 3 defaults: the Findings badge counts open items only; group labels are sentence case; Accept on a blocking finding keeps the gate Blocked until counsel answers. User's words, relayed by the design session: "Duyệt app.html và cả 3 mặc định…". Phase 03 builds the app shell (232px sidebar / 56px rail, auto-collapse below 1200px, groups Review/Check/Firm, bottom: gate pill + AI switch + analyst) and the Findings screen. Other routes are placeholders until their views in app.html are approved. **Still held:** UI for Counsel questions, Structure/Investor types, Compare, Firm memory, Documents (later UI phases build from app.html once approved). Proposed product defaults (export/retention/re-propose/Compare default) are NOT decided; plan defaults stay.
+
+**Program-wide gate-command rule (orchestrator, 2026-10-17):** under pnpm 11.13.1, select tests with `pnpm --filter <pkg> test <token> [<token>...]` (NO `--`). Plans that still say `test -- <token>` must be read as the no-`--` form by execute agents and testers. Their supplements fix the text when each phase reaches inner PVL.
 
 ## Current Execution State
 

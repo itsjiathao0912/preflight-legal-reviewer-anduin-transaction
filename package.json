@@ -1,0 +1,27 @@
+{
+  "name": "aduin-transaction",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.13.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "guard:cf": "pnpm --filter @aduin/scripts guard:cf",
+    "secrets:scan": "pnpm --filter @aduin/scripts secrets:scan",
+    "dev:stack": "pnpm --filter @aduin/web build && pnpm --filter @aduin/worker dev",
+    "slice:check": "pnpm --filter @aduin/scripts slice:check"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.13.0",
+    "globals": "17.13.0",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2"
+  }
+}

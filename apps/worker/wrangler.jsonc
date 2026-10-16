@@ -1,0 +1,26 @@
+// Sub-doc QA Worker: serves the built SPA as static assets and /api/* from the Worker.
+// Rules (guard:cf enforces): no routes, no custom domains, no zone references; every
+// resource name starts with "aduin-transaction". Deploys go to *.workers.dev only.
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "aduin-transaction-web",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "assets": {
+    "directory": "../web/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"],
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "aduin-transaction-db",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+    },
+  ],
+  "vars": {
+    "PAID_FALLBACK_ENABLED": "false",
+  },
+}
