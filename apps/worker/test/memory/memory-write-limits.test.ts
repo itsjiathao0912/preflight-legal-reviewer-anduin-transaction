@@ -59,10 +59,10 @@ describe('memory write limits (review M1)', () => {
       requestsPerDay: 600,
       runsPerDay: 40,
       findingsPerDay: 2000,
-      rowBudgetPerDay: 40_000,
+      rowBudgetPerDay: 30_000,
     });
     expect(MEMORY_WRITE_WEIGHTS).toEqual({
-      decision: 25,
+      decision: 32,
       run: 12,
       counselAnswer: 18,
       findingsBase: 5,
@@ -319,7 +319,7 @@ describe('global weighted daily write-row budget (fix cycle 2, N1/M1)', () => {
     );
   });
 
-  test('at the budget a write is 429 memory_write_budget, retry-after to next UTC day, only the prior claim row written', async () => {
+  test('at the budget a write is 429 memory_write_budget, retry-after to next UTC day, zero rows written (N8 pre-check)', async () => {
     const h = makeMem();
     const s = await session(h);
     const run = await newRun(h, s);
@@ -331,8 +331,8 @@ describe('global weighted daily write-row budget (fix cycle 2, N1/M1)', () => {
     expect(r.body.error).toMatchObject({ code: 'rate_limited', reason: 'memory_write_budget' });
     const nextDay = Math.floor(h.clock.now / 86_400_000 + 1) * 86_400;
     expect(Number(r.res.headers.get('retry-after'))).toBe(nextDay - Math.floor(h.clock.now / 1000));
-    // only the prior per-workspace request claim (1 row); the refused budget claim writes nothing
-    expect(h.stats.rowsWritten).toBe(1);
+    // fix cycle 3 (N8): the 0-row budget pre-check refuses before the per-workspace request claim
+    expect(h.stats.rowsWritten).toBe(0);
     expect(await budgetUsed(h.clock.now)).toBe(MEMORY_WRITE_CAPS.rowBudgetPerDay - 10);
     expect(await dumpWorkspace(env.DB, s.workspaceId)).toBe(before);
     // a cheaper write that fits still goes through (weights, not a flat count)

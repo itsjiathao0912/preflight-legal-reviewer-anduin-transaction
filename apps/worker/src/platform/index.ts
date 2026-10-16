@@ -34,20 +34,26 @@ export const MEMORY_WRITE_CAPS = Object.freeze({
    * Global (all workspaces) weighted daily write-row budget (review fix cycle 2, N1/M1). Every
    * memory write claims `memoryWriteWeight(...)` units from `mw|rows|<day>`; at the cap memory
    * writes get 429 `memory_write_budget` until the next UTC day. Sessions, AI and OCR are NOT
-   * charged here. Worst case/day: 40k (memory writes) + 300 x ~120 (sessions) + AI/OCR claims
-   * stays under the 100k rows/day D1 Free write budget.
+   * charged here. Fix cycle 3 (N9): lowered 40k -> 30k for purge headroom. Worst case/day:
+   * 30k (memory) + 300 x 130 (sessions incl. lazy purge slot) = 39k + AI/OCR + refused claims
+   * + cron purge DELETEs stays under the 100k rows/day D1 Free write budget (phase 04b report).
    */
-  rowBudgetPerDay: 40_000,
+  rowBudgetPerDay: 30_000,
 });
 
 /**
  * Write-row weights per memory route (units claimed from the global budget). Derived from the
  * rows-written test bounds (test/memory/rows-written.test.ts) so units >= rows actually written:
- * decision 25, run 12, counsel answer 18 (bound 18 > the 10 default), findings chunk n + 5
+ * decision 32, run 12, counsel answer 18 (bound 18 > the 10 default), findings chunk n + 5
  * (n finding rows + run recount + claim rows), every other write 10.
+ * Fix cycle 3 (N7): the decision weight was 25 against a 3-evidence proposal; the worst case is
+ * now a re-proposal linking the capped EVIDENCE_LINK_MAX (10) evidence rows, measured at 26 rows
+ * (rows-written N7 loop test), plus a margin of 6 for a superseding re-proposal -> 32.
+ * Run export's drafted-question UPDATE is amortised: each counsel question (weight 10, <= 9 rows)
+ * pays for its own single later export row.
  */
 export const MEMORY_WRITE_WEIGHTS = Object.freeze({
-  decision: 25,
+  decision: 32,
   run: 12,
   counselAnswer: 18,
   findingsBase: 5,

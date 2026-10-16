@@ -8,19 +8,19 @@ import { measureAi, measureEndpoints } from './budget-probe';
 
 const CAPS: Record<string, number> = {
   session: 20,
-  runs: 8,
-  findings_25: 8,
+  runs: 9, // +1 each write: N8 0-row budget pre-check (fix cycle 3)
+  findings_25: 9,
   lookup_200: 2,
   decision_dismiss_with_proposal: 12,
-  decision_supersede: 12,
+  decision_supersede: 13,
   revoke: 8,
   counsel_question: 10,
-  counsel_answer: 12,
+  counsel_answer: 13,
   rules_list: 3,
-  rule_approve: 6,
+  rule_approve: 7,
   firm: 5,
   audit: 3,
-  run_export: 7, // +1: global write-row budget claim (fix cycle 2, N1)
+  run_export: 8, // +1 global budget claim (N1), +1 budget pre-check (N8)
   export: 5,
   session_with_purge: 30,
 };

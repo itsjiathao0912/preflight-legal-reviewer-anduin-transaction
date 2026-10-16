@@ -34,6 +34,7 @@ export interface RuleDbRow {
   status: 'proposed' | 'active' | 'rejected' | 'revoked';
   origin: 'manual' | 'proposed';
   seed_of: string | null;
+  /** Linked evidence rows (N7: capped at the newest 10 when a rule is (re-)proposed; see proposal.ts). */
   evidence_count: number;
   law_firm_id?: string;
 }

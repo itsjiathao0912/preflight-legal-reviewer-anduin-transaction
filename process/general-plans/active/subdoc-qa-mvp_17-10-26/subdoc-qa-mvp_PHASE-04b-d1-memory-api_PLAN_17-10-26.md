@@ -301,6 +301,13 @@ All within the 04b blast radius (no hard-stop class). Recorded by EXECUTE 17-10-
 - N6: a live sandbox cookie is reused BEFORE the per-IP claim at any cap level (previously only in the over-global-cap branch, which is now removed as unreachable).
 - Worst-case D1 rows/day: memory writes <= 40k (weights >= rows) + one budget-counter row per write (<= ~6.7k at the minimum weight 6) + sessions 300 x ~120 = 36k + AI/OCR claim/cache/ledger rows (<= 15 per call, bounded by 04a quotas) -> ~83k before AI/OCR, under 100k for the demo; the budget is a one-constant change if remote calibration differs.
 
+### Fix cycle 3 deviations (re-review APPROVE_WITH_FIXES N7-N9; within the 04b blast radius)
+
+- `apps/worker/src/memory/proposal.ts` (PROPOSAL_SQL.evidence): evidence link capped at the newest `EVIDENCE_LINK_MAX` = 10 active same-key dismissals. Deviation: a (re-)proposal no longer carries ALL evidence when more than 10 exist; `evidence_count` (GET /api/rules, /api/export) now counts LINKED evidence (labelled in `repo/rules.ts`). The threshold still counts all decisions, so rule-proposal-threshold-matrix is unchanged (its re-proposal case links 4 < 10).
+- `apps/worker/src/platform/index.ts`: `MEMORY_WRITE_WEIGHTS.decision` 25 -> 32 (measured worst 26 + 6 margin); `MEMORY_WRITE_CAPS.rowBudgetPerDay` 40000 -> 30000 (N9).
+- `apps/worker/src/memory/ctx.ts` + `platform/quota.ts` (`QUOTA_SQL.peek`): N8 0-row budget pre-check before the `mw|req` claim. Deviation: a budget-refused write now writes 0 rows (memory-write-limits assertion changed 1 -> 0) and every write route costs +1 query (query-budget caps raised by 1 for runs, findings_25, decision_supersede, counsel_answer, rule_approve, run_export).
+- Set-based write scan: only the evidence insert was unbounded; `COUNSEL_SQL.markExported` is amortised (asserted in rows-written).
+
 ## Phase Loop Progress
 
 Orchestrator reads this before deciding which subagent to spawn next. The canonical 7-step inner loop `R → I → P → PVL → E → EVL → UP` SKIPS SPEC (SPEC runs once in the outer program loop).

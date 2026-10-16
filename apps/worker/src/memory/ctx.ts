@@ -10,8 +10,9 @@ import { configFor } from '../proxy/pipeline';
 import type { Db } from '../db/meta';
 import { DEMO_WORKSPACE_ID, readHealth, writable } from './health';
 import { WORKSPACE_SQL, type LivenessRow } from './repo/workspace';
-import { claim } from '../platform/quota';
+import { claim, QUOTA_SQL, splitWindow } from '../platform/quota';
 import {
+  MEMORY_WRITE_CAPS,
   MEMORY_WRITE_WEIGHTS,
   rowBudgetKey,
   withSessionCaps,
@@ -122,6 +123,7 @@ export async function resolveSession(
     readOnly: false,
   };
   if (s.write) {
+    await precheckRowBudget(ctx, weight);
     await claimWrite(ctx, 'req', 1);
     await claimRowBudget(ctx, weight);
   }
@@ -156,6 +158,21 @@ export async function claimRowBudget(ctx: MemoryCtx, weight: number): Promise<vo
   const qopts = { capFor: withSessionCaps(() => 0), now: () => ctx.now };
   const r = await claim(ctx.db, qopts, rowBudgetKey(ctx.now), weight);
   if (!r.ok) throw new ProxyError('rate_limited', 'memory_write_budget', secondsToReset(ctx.now));
+}
+
+/**
+ * Review fix cycle 3 (N8): 0-row read of the global budget BEFORE the per-workspace request claim,
+ * so a request that the budget would refuse never burns a `mw|req` row. Advisory only: the guarded
+ * claim in claimRowBudget stays the authority (a race past this read is still refused there).
+ */
+export async function precheckRowBudget(ctx: MemoryCtx, weight: number): Promise<void> {
+  const { base, window } = splitWindow(rowBudgetKey(ctx.now).key);
+  const row = await ctx.db
+    .prepare(QUOTA_SQL.peek)
+    .bind('rate', base, window)
+    .first<{ count: number }>();
+  if (row && Number(row.count) + weight > MEMORY_WRITE_CAPS.rowBudgetPerDay)
+    throw new ProxyError('rate_limited', 'memory_write_budget', secondsToReset(ctx.now));
 }
 
 const WRITE_REASON: Record<WriteKind, string> = {

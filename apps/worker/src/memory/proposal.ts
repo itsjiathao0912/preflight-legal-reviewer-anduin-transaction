@@ -13,6 +13,16 @@ const SAME_KEY =
   "workspace_id = ?1 AND law_firm_id = ?3 AND pattern_key = ?8 AND reason_code = ?9 AND decision = 'dismissed' AND status = 'active'";
 const KEY_RULES = 'workspace_id = ?1 AND law_firm_id = ?3 AND proposal_key = ?5';
 
+/**
+ * Review fix cycle 3 (N7): the evidence insert links at most the newest EVIDENCE_LINK_MAX active
+ * same-key dismissals per dismissal, so the decision write weight is a real upper bound (a
+ * reject -> dismiss loop over hundreds of same-key dismissals used to write one row per
+ * dismissal). The proposal threshold uses COUNT(*) over decisions, so it is unaffected; evidence is
+ * display/provenance only. `evidence_count` therefore counts LINKED evidence: a re-proposal after a
+ * rejection links at most the newest 10, and every later same-key dismissal adds itself.
+ */
+export const EVIDENCE_LINK_MAX = 10;
+
 export const PROPOSAL_SQL = {
   propose:
     'INSERT INTO firm_rule (workspace_id, id, law_firm_id, origin, status, rule_text, proposal_key, created_by_name, created_at) ' +
@@ -26,7 +36,8 @@ export const PROPOSAL_SQL = {
     'INSERT OR IGNORE INTO rule_evidence (workspace_id, rule_id, decision_id, added_at) ' +
     'SELECT ?1, r.id, d.id, ?6 FROM firm_rule r JOIN decision d ON d.workspace_id = r.workspace_id AND d.law_firm_id = r.law_firm_id ' +
     "WHERE r.workspace_id = ?1 AND r.law_firm_id = ?2 AND r.proposal_key = ?3 AND r.status = 'proposed' " +
-    "AND d.pattern_key = ?4 AND d.reason_code = ?5 AND d.decision = 'dismissed' AND d.status = 'active'",
+    "AND d.pattern_key = ?4 AND d.reason_code = ?5 AND d.decision = 'dismissed' AND d.status = 'active' " +
+    `ORDER BY d.decided_at DESC, d.id DESC LIMIT ${EVIDENCE_LINK_MAX}`,
 } as const;
 
 const REASON_TEXT: Record<Exclude<ReasonCode, 'other'>, string> = {

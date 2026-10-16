@@ -206,3 +206,31 @@ Plan `## Deviations` -> "Fix cycle 2 deviations" (counsel answer weight 18; chun
 - Web outbox should treat 429 `memory_write_budget` like `workspace_*_limit` (soft failure, retry next day).
 - review-decision.json was not edited; the reviewer should move N1-N4/N6 to resolved.
 
+
+## Fix cycle 3 (2026-10-17, re-review APPROVE_WITH_FIXES: N7-N9)
+
+### What was done
+
+- N7 (MEDIUM): `PROPOSAL_SQL.evidence` now links at most the newest 10 active same-key dismissals (`ORDER BY d.decided_at DESC, d.id DESC LIMIT 10`). Threshold semantics unchanged (COUNT over decisions). `evidence_count` = linked evidence (capped at 10 at re-proposal). Decision weight 25 -> 32 (measured worst case 26 rows: 30 same-key dismissals -> reject -> dismiss again). New tests in `rows-written`: N7 loop (rows <= weight, exactly 10 evidence linked) and counsel-export amortisation. Scenario added to `harness/phase-04b/adversarial-validation.json`.
+- Set-based write scan: finding INSERT...SELECT json_each bounded by the 25-finding chunk (weight n+5, measured 29 <= 30); `markExported` UPDATE amortised (question 4 rows + 1 export row <= weight 10); seed-copy INSERT...SELECT bounded by the fixed demo seed and paid by SESSION_CAPS; rule/decision/finding_state UPDATEs are single-row by primary key; purge statements are cron/lazy-slot only with LIMITs.
+- N8 (LOW): `precheckRowBudget` reads `mw|rows|<day>` (0 rows) before the `mw|req` claim; refuses 429 `memory_write_budget` when count + weight > cap. The guarded claim remains the authority.
+- N9 (LOW): `rowBudgetPerDay` 40000 -> 30000.
+- `harness/phase-04b/review-decision.json` rewritten as the cycle-2 re-review verdict (pendingFixes N7-N9 as stated by the reviewer).
+
+### Daily D1 rows-written arithmetic (worst case, D1 Free 100k/day)
+
+| Source | Bound | Rows/day |
+|---|---|---|
+| Memory writes (global weighted budget, weights >= measured rows) | 30,000 units | <= 30,000 |
+| Refused memory claims (N8 pre-check: budget refusals write 0; per-workspace req/run/fnd refusals write 0) | - | ~0 |
+| Sessions (SESSION_CAPS 300/day global, <= 130 rows incl. seed copy + lazy purge slot) | 300 x 130 | <= 39,000 |
+| Refused session claims (per-IP / global caps refuse with 0 rows; degrade path no refund) | - | ~0 |
+| AI/OCR path (measured <= 15 rows/call; bounded by per-visitor/global AI quotas and the spend cap) | ~1,000 calls | <= 15,000 |
+| Cron + lazy purge DELETEs (expired sandboxes <= 300/day x ~130 child rows; ai_cache <= 500, quota_counter <= 1000 per run) | - | <= ~12,000 |
+| Total | | <= ~96,000 (< 100,000) |
+
+The AI/OCR row is an estimate from the 04a quota caps; Phase 10 should re-measure remotely (spike S9).
+
+### Gates
+
+memory-write-limits 17, rows-written 6, query-budget 2, rule-proposal-threshold-matrix 5, memory-guards-matrix 45, session-degrade-bounds 5, decision-record-contract 85, demo-workspace-not-polluted 7, proxy 11 files / 141; full worker suite 47 files / 445 passed. typecheck, lint, guard:cf, secrets:scan, seed:check all exit 0. validate-risk-artifacts on harness/phase-04b: 0 failures, 0 warnings.

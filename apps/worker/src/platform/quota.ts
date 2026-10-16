@@ -17,6 +17,7 @@ export const QUOTA_SQL = {
     'RETURNING count',
   refund:
     'UPDATE quota_counter SET count = MAX(0, count - ?4), updated_at = ?5 WHERE scope = ?1 AND key = ?2 AND window = ?3',
+  peek: 'SELECT count FROM quota_counter WHERE scope = ?1 AND key = ?2 AND window = ?3',
   usage:
     'SELECT scope, key, window, count FROM quota_counter WHERE (scope, key, window) IN ' +
     "(SELECT json_extract(value, '$[0]'), json_extract(value, '$[1]'), json_extract(value, '$[2]') FROM json_each(?1))",

@@ -2,10 +2,13 @@
 // the wrangler CLI does not report rows_written). Remote calibration is spike S9 (SPIKE-RESULTS REF).
 import { describe, expect, test } from 'vitest';
 import { MEMORY_WRITE_WEIGHTS as W } from '../../src/platform/index';
+import { env } from 'cloudflare:test';
+import { EVIDENCE_LINK_MAX } from '../../src/memory/proposal';
 import { measureAi, measureEndpoints } from './budget-probe';
+import { call, decide, makeMem, newRun, op, session } from './memory-harness';
 
 // Fix cycle 2 (N1): each write route's global-budget weight must cover its measured rows written,
-// so the 40k-unit budget really bounds memory D1 rows/day. Sessions are bounded by SESSION_CAPS.
+// so the 30k-unit budget really bounds memory D1 rows/day. Sessions are bounded by SESSION_CAPS.
 const WEIGHT_OF: Record<string, number> = {
   runs: W.run,
   findings_25: 25 + W.findingsBase,
@@ -59,5 +62,46 @@ describe('rows-written (AC40 interim, M1)', () => {
 
   test('the AI path writes only claims, cache and ledger rows', async () => {
     expect((await measureAi()).rowsWritten).toBeLessThanOrEqual(15);
+  });
+
+  test('N7: a reject -> dismiss re-proposal loop over 30 same-key dismissals stays within the decision weight', async () => {
+    const h = makeMem();
+    const s = await session(h);
+    const run = await newRun(h, s);
+    const dismiss = (i: number) =>
+      decide(h, s, {
+        runId: run,
+        quote: `Loop dismissal ${i}.`,
+        patternKey: 'n7:loop',
+        reason: 'no_form_impact',
+      });
+    for (let i = 0; i < 30; i++) expect((await dismiss(i)).status).toBe(200);
+    const rule = await env.DB.prepare(
+      "SELECT id FROM firm_rule WHERE workspace_id = ?1 AND proposal_key = 'n7:loop|no_form_impact' AND status = 'proposed'",
+    )
+      .bind(s.workspaceId)
+      .first<{ id: string }>();
+    const rj = await call(
+      h,
+      'POST',
+      `/api/rules/${encodeURIComponent(rule!.id)}/reject`,
+      { client_op_id: op() },
+      { cookie: s.cookie },
+    );
+    expect(rj.status).toBe(200);
+    h.resetStats();
+    expect((await dismiss(30)).status).toBe(200);
+    expect(h.stats.rowsWritten).toBeLessThanOrEqual(W.decision);
+    const ev = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM rule_evidence e JOIN firm_rule r ON r.workspace_id = e.workspace_id AND r.id = e.rule_id WHERE r.workspace_id = ?1 AND r.proposal_key = 'n7:loop|no_form_impact' AND r.status = 'proposed'",
+    )
+      .bind(s.workspaceId)
+      .first<{ n: number }>();
+    expect(ev!.n).toBe(EVIDENCE_LINK_MAX);
+  });
+
+  test('run export: the drafted-question UPDATE is amortised (each question weight covers its own rows + 1 export row)', async () => {
+    const m = await measureEndpoints();
+    expect(m['counsel_question']!.rowsWritten + 1).toBeLessThanOrEqual(W.other);
   });
 });

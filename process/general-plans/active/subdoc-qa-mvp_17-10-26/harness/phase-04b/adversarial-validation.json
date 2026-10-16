@@ -142,6 +142,13 @@
       "ruled_out": true,
       "rationale": "POST /api/session reuses a live sandbox cookie BEFORE the per-IP claim at any cap level (0 rows written); liveSandbox() only accepts kind='sandbox' active unexpired rows, so a read-only demo cookie is never reissued as a demo-bound workspace cookie",
       "test": "pnpm --filter @aduin/worker test session-degrade-bounds"
+    },
+    {
+      "stride": "D",
+      "scenario": "N7 evidence re-proposal loop: ~300 same-key dismissals, reject the proposal, dismiss again; each re-proposal used to link one rule_evidence row per active same-key dismissal (K rows for 25-35 weight units), amplifying D1 writes past the global row budget",
+      "ruled_out": true,
+      "rationale": "Fix cycle 3: PROPOSAL_SQL.evidence links only the newest EVIDENCE_LINK_MAX=10 dismissals (ORDER BY decided_at DESC, id DESC LIMIT 10); the proposal threshold still COUNTs all active same-key decisions. Measured worst case 26 rows <= decision weight 32. Every other set-based write was scanned: finding insert bounded by the 25-finding chunk (weight n+5), counsel markExported amortised (each question weight 10 covers its own <=9 rows + 1 export row), seed-copy bounded by the fixed demo seed inside session (SESSION_CAPS), purge/cron not request-driven.",
+      "test": "pnpm --filter @aduin/worker test rows-written"
     }
   ]
 }
