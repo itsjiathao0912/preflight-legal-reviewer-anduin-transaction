@@ -1,0 +1,17 @@
+{
+  "task": "subdoc-qa-mvp phase 04a worker proxy: /api/ai, /api/ocr hold-open proxy to OpenRouter, /api/quota, quotas + spend cap over ports, Turnstile, visitor cookie, abuse guards, slice:check --worker-only",
+  "planPath": "process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-04a-worker-proxy_PLAN_17-10-26.md",
+  "riskLevel": "high",
+  "riskClasses": [
+    "permission, secret, or trust-boundary logic",
+    "public API or external contract changes",
+    "deploy/runtime/container/proxy/gateway behavior",
+    "billing or credits",
+    "auth or identity"
+  ],
+  "mustStopBeforeFinalize": true,
+  "humanApprovalRequired": false,
+  "why": "The Worker holds the OpenRouter API key and forwards visitor-controlled payloads to a paid-capable third-party API (open-proxy, SSRF and key-exfiltration surface); it enforces per-visitor/global quotas and the $10 spend cap (credits), issues and re-signs the visitor cookie and gates on Turnstile (identity/trust boundary), and publishes the /api/ai, /api/ocr, /api/quota contracts. No remote deploy, no real key, no live network call in this phase (injected fetch + throwing global fetch guard).",
+  "approver": "pending: independent automated reviewer scheduled by the orchestrator (autopilot; user away)",
+  "date": "2026-10-17"
+}

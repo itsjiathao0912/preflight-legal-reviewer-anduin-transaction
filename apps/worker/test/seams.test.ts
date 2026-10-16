@@ -17,10 +17,10 @@ function recordingApp(): { app: App; calls: string[] } {
 }
 
 describe('Phase 00 seam stubs', () => {
-  it('mountProxyRoutes exists and registers nothing (no-op)', () => {
+  it('mountProxyRoutes registers exactly the Phase 04a proxy routes (no /api/cache)', () => {
     const { app, calls } = recordingApp();
     expect(mountProxyRoutes(app, deps)).toBeUndefined();
-    expect(calls).toEqual([]);
+    expect(calls).toEqual(['POST /api/ai', 'POST /api/ocr', 'GET /api/quota']);
   });
 
   it('mountMemoryRoutes exists and registers nothing (no-op)', () => {

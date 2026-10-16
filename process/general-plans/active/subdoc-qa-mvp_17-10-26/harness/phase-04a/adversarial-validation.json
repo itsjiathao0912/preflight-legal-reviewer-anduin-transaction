@@ -1,0 +1,64 @@
+{
+  "task": "subdoc-qa-mvp phase 04a worker proxy",
+  "scenarios": [
+    {
+      "scenario": "Key exfiltration via errors, headers or logs (e.g. upstream echoes the bearer key in an error body)",
+      "ruled_out": true,
+      "rationale": "Key read from env only and sent only in the upstream authorization header; upstream bodies are mapped to code+reason and never echoed; app catch-all returns a fixed body; logger drops sensitive fields and scrubs secret values/Bearer tokens. Gate secret-non-leak injects the key into 4 upstream failure shapes and asserts absence in every response, header and log line."
+    },
+    {
+      "scenario": "Open-proxy abuse: client chooses model/models/plugins/provider/tools/max_tokens/response_format or smuggles them via settings/ext",
+      "ruled_out": true,
+      "rationale": "FORBIDDEN_FIELDS rejected with 400 at top level and inside settings before any port call; ext and unknown fields dropped by shaping; the upstream body is built server-side only. abuse-protection-matrix rows + 'ext dropped' + free-only-config 'model_tier never a model id'."
+    },
+    {
+      "scenario": "Cookie forgery (sign own claims, unknown kid, tampered payload) to impersonate a visitor or reset limits",
+      "ruled_out": true,
+      "rationale": "verifyCookie (Phase 01, HMAC via crypto.subtle.verify, kid map) rejects; an invalid cookie is treated as absent and a fresh v is minted, which gives no extra allowance because limits also key on the IP hash. Test 'forged cookie' asserts no claim on the forged v."
+    },
+    {
+      "scenario": "Cap bypass by cookie minting (drop cookie per request) or spoofed x-forwarded-for / IPv6 rotation",
+      "ruled_out": true,
+      "rationale": "Fresh-document counter is claimed on both v and the daily-salted cf-connecting-ip hash (IPv6 /64); a minted cookie is a new v so every request counts as a new document on the ip key (3/day). XFF is never read. Tests: cookie-minting bypass, spoofed XFF, IPv6 /64 rotation. Residual (non-blocking): a holder of up to 3 valid cookies can make up to 8 requests each on already-counted documents per IP per day (per-IP request counter dropped to meet the 12-port-call budget); global cap 35/day + Turnstile + 6/min pre-limit are the backstop."
+    },
+    {
+      "scenario": "SSRF via image URL (http(s)://169.254.169.254, file://, data:text/html) handed to the provider",
+      "ruled_out": true,
+      "rationale": "imageBase64 accepts only raw base64 or data:image/(png|jpeg|webp);base64 and re-validates the base64 alphabet; any scheme-prefixed value is rejected 400 before any port call; the Worker itself never fetches payload URLs. Rows non-data image URL, file: URL, data URL of a non-image, non-base64 data."
+    },
+    {
+      "scenario": "Paid-model injection / spend overshoot (client fields, flag truthy variants, provider returning a paid model)",
+      "ruled_out": true,
+      "rationale": "Client model fields rejected; config allows only :free ids and rejects openrouter/* routers; paid path only on PAID_FALLBACK_ENABLED === 'true' with a non-empty paid list and a successful max-cost reservation under the spend cap (<= $10, enforced at config load); while paid is disabled the circuit breaker trips (until the next UTC day or config change) on usage.cost > 0 or on a parseable served id that is neither a :free variant nor, suffix-normalised, a configured free model; a missing/unparseable id with cost 0 only logs proxy.served_model_unknown (fix cycle 1, F2). The breaker sits behind BreakerPort (per-isolate memory in 04a; a tripped() port error fails closed). Gate spend-cap-enforced."
+    },
+    {
+      "scenario": "Origin/CSRF bypass (cross-site POST, lookalike origin, missing Origin, simple-request content types)",
+      "ruled_out": true,
+      "rationale": "Mutating calls require Origin === own origin, sec-fetch-site same-origin when present, custom x-aduin-client header and application/json (forces a CORS preflight, which is never answered: no CORS headers, OPTIONS 404). Rows missing/cross/lookalike Origin, cross-site fetch metadata, form content type."
+    },
+    {
+      "scenario": "Turnstile bypass (missing token, replayed/spent token, future t claim, siteverify outage)",
+      "ruled_out": true,
+      "rationale": "Every non-pass fails closed with 401 invalid_session before any claim or upstream call; t is only set by the Worker via resign after a pass; future t is stale. Gate turnstile-first-call. Residual: cache hits are served without Turnstile by design (zero cost)."
+    },
+    {
+      "scenario": "Resource exhaustion (oversize bodies without content-length, slowloris hold-open, upstream hang)",
+      "ruled_out": true,
+      "rationale": "Streamed byte cap; 120 s upstream timeout aborts upstream and refunds visitor-scoped claims only (global + spend kept); client disconnect aborts upstream and keeps all claims after dispatch (refunds all only before dispatch); in-isolate pre-limit before identity/D1. Residual: in-isolate limiter is per isolate (best effort); real CPU/edge limits proven only on workers.dev (Phase 10)."
+    },
+    {
+      "scenario": "Abort-after-dispatch quota laundering (fix cycle 1, F1/F9): holder of a Turnstile-passed cookie sends a request and disconnects ~100 ms after the Worker dispatched it upstream, so refunds keep our counters flat while OpenRouter counts the request (and, with paid enabled, the spend reservation is released)",
+      "ruled_out": true,
+      "rationale": "Final refund policy (fix cycle 1 + F11): client abort after dispatch keeps ALL claims; provider 5xx/429/402, timeout and network errors refund only visitor-scoped claims (req, seen, doc v+ip, OCR pages v+ip; Claims.refundVisitorScoped by scope tag) and KEEP the global counter + spend reservation; malformed/schema-invalid output and 200-with-error bodies (inducible via prompt injection) keep ALL claims; pre-dispatch aborts and definite non-consuming 400/401/403/413/415/422 refund ALL. The stream onCancel does not refund; run decides from the outcome. A paid call that did not consume releases only its own spend reservation. Gates: stream-holdopen 'abort AFTER dispatch (~100 ms) ... counters do not move back' (asserts zero refunds, unchanged counters, global=1) and 'abort BEFORE dispatch refunds every claim (incl. the spend reservation)'; llm-failure-injection-matrix rows (visitor-refund for 5xx/429/402/network/timeout, nothing refunded for malformed x3 and 200+error, full refund for non-consuming 4xx; OCR 5xx keeps global pages; global-claimed-last invariant). Residual: OpenRouter's actual accounting of aborted requests is unproven (Phase 10 live probe)."
+    },
+    {
+      "scenario": "Pre-limit evasion via malformed or oversize bodies (fix cycle 1, F3/F9): attacker floods with bodies that fail parse/validation so the in-isolate pre-limit never counts them, while the Worker spends CPU reading/parsing up to 700 KB each",
+      "ruled_out": true,
+      "rationale": "Order is now header-only guards (x-aduin-client, Origin/fetch-metadata, content-type) -> pre-limit -> body read/parse/validate, so every request that passes header checks is counted before any body byte is read. Gate abuse-protection-matrix 'F3: pre-limit runs before the body is read; malformed bodies are counted' (6 malformed -> 400, 7th -> rate_limited with request.bodyUsed === false, zero claims/upstream/siteverify). Residual: limiter is best-effort per isolate (F7 Map.clear at 10,000 keys accepted)."
+    }
+  ],
+  "fixCycle1": {
+    "date": "2026-10-17",
+    "results": "both new scenarios ruled out by passing gates (stream-holdopen 4/4, abuse-protection-matrix 39/39)"
+  }
+}

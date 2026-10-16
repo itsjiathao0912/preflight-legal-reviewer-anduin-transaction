@@ -1,0 +1,201 @@
+{
+  "task": "subdoc-qa-mvp phase 04a worker proxy",
+  "date": "2026-10-17",
+  "commands": [
+    {
+      "command": "pnpm --filter @aduin/worker test llm-failure-injection-matrix",
+      "result": "PASS",
+      "notes": "1 file / 12 tests: 429 (retry_after_s), 402, malformed body/content/schema, 200+error, network, 120 s timeout abort, repair attempt, retry-then-cache, platform down; units refunded, nothing cached, no ledger cost"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test spend-cap-enforced",
+      "result": "PASS",
+      "notes": "1 file / 14 tests: refuse paid at cap, reserve-then-paid under cap with ledger model+cost, 7 non-exact flag values disabled, empty paid list, cap > $10 rejected, circuit breaker (cost>0 / non-:free model) + UTC-day reset"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test free-only-config",
+      "result": "PASS",
+      "notes": "1 file / 18 tests: only :free model/models[], no file part/file-parser/plugins/tools/provider, 13 invalid-config rows throw, invalid config fails closed, model_tier never a model id"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test llm-ocr-cache-hit",
+      "result": "PASS",
+      "notes": "1 file / 6 tests: cacheKey vectors match fixtures/cache-key-vectors.json, key from forwarded messages, hit with exhausted caps and no token -> 1 port call, 0 writes, 0 claims, 0 upstream, 0 siteverify"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test per-visitor-ai-limit-e2e",
+      "result": "PASS",
+      "notes": "1 file / 6 tests: 4th fresh document -> 429 quota_exhausted reason visitor_limit (pre-stream HTTP), 8-request ceiling, new v same IP no extra allowance, cached opens not counted, post-open failure is a terminal error frame"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test global-daily-cap-and-budget",
+      "result": "PASS",
+      "notes": "1 file / 10 tests: lesser-of cap, below/at/above, UTC midnight reset, AI+OCR share one counter, one claim per request, ocr_pages reason, GET /api/quota shape with zero writes/claims, fail-soft quota when platform down"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test abuse-protection-matrix",
+      "result": "PASS",
+      "notes": "1 file / 38 tests: oversize (content-length and streamed), burst 6/min AI and 30/min, 22 rejection rows with zero port calls, ext dropped, hostile text as data, forged cookie, a-with-different-v, cookie minting, spoofed XFF, IPv6 /64, expired/future t"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test turnstile-first-call",
+      "result": "PASS",
+      "notes": "1 file / 8 tests: pass + re-sign preserves claims (t in ms), fail, already-spent, missing token, network error, missing secret, TTL boundary +/-1 ms and future t, real port fail-closed shapes; every non-pass 401 invalid_session with zero claims and zero upstream"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test secret-non-leak",
+      "result": "PASS",
+      "notes": "1 file / 6 tests: key never in any response/header/log across success+4 failure shapes, upstream bodies not echoed, no-store + no CORS, missing key and foreign base URL fail closed, redactor, net guard throws"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test stream-holdopen",
+      "result": "PASS",
+      "notes": "1 file / 3 tests (fake timers): hb at open and every 10 s, exactly one terminal frame, all lines parseFrameLine-valid, 120 s timeout, waitUntil (throwing) never called, timers cleared; client disconnect aborts upstream and refunds"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test proxy-budget",
+      "result": "PASS",
+      "notes": "1 file / 4 tests: AI miss, refusal and upstream-failure paths <= 12 port calls; cache hit = 1 port call; OCR miss within budget"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test",
+      "result": "PASS",
+      "notes": "13 files / 132 tests (incl. Phase 00 health + updated seams test)"
+    },
+    {
+      "command": "pnpm --filter @aduin/core test:golden",
+      "result": "PASS",
+      "notes": "5 files / 44 tests (goldens really ran; not vacuous)"
+    },
+    {
+      "command": "pnpm guard:cf && pnpm secrets:scan",
+      "result": "PASS",
+      "notes": "guard:cf: OK; secrets:scan: OK"
+    },
+    {
+      "command": "pnpm slice:check --worker-only",
+      "result": "PASS",
+      "notes": "wrangler dev --local on a free port with an empty temp --assets dir; /api/health 200; /api/quota 200 {ai:{used:0,limit:3},ocr_pages:{used:0,limit:6},global_ok:false}; POST /api/ai 429 fail-closed; no openrouter.ai outside the bindings table; dev server process group killed (0 leftover), tmpdir removed; guards OK"
+    },
+    {
+      "command": "pnpm --filter @aduin/scripts tsx src/slice-check.ts --bogus",
+      "result": "PASS",
+      "notes": "unknown argument exits 2"
+    },
+    {
+      "command": "pnpm slice:check",
+      "result": "PASS",
+      "notes": "full mode exits 1 'deferred: depends on Phase 03' (slice.spec.ts not authored); never green-faked"
+    },
+    {
+      "command": "pnpm exec wrangler deploy --dry-run (apps/worker)",
+      "result": "PASS",
+      "notes": "S6: Total Upload 860.38 KiB / gzip 143.65 KiB (< 1 MiB conservative threshold); no upload performed"
+    }
+  ],
+  "manualChecks": [
+    "Red-first: all 11 gate files created with the contract TDD stubs and confirmed failing (exit 1 each) before implementation.",
+    "Unmatched gate token exits 1 (vitest 'No test files found'); no passWithNoTests on the worker.",
+    "No live OpenRouter or Turnstile call: all outbound traffic in tests goes through OpenRouterStub/TurnstileStub injected via createApp(deps); test/setup.ts makes globalThis.fetch throw.",
+    "No .dev.vars/.env in apps/worker; slice-check strips OPENROUTER/TURNSTILE/COOKIE/API_KEY/SECRET/TOKEN vars from the child env."
+  ],
+  "result": "PASS (04a-WORKER gate set). Reviewer decision pending (independent automated reviewer). M1 SLICE CLOSURE deferred: depends on Phase 03.",
+  "steps": [
+    {
+      "step": "fix cycle 1: gate llm-failure-injection-matrix",
+      "command": "pnpm --filter @aduin/worker test llm-failure-injection-matrix",
+      "result": "PASS",
+      "notes": "exit 0, 18 passed"
+    },
+    {
+      "step": "fix cycle 1: gate spend-cap-enforced",
+      "command": "pnpm --filter @aduin/worker test spend-cap-enforced",
+      "result": "PASS",
+      "notes": "exit 0, 18 passed"
+    },
+    {
+      "step": "fix cycle 1: gate free-only-config",
+      "command": "pnpm --filter @aduin/worker test free-only-config",
+      "result": "PASS",
+      "notes": "exit 0, 18 passed"
+    },
+    {
+      "step": "fix cycle 1: gate llm-ocr-cache-hit",
+      "command": "pnpm --filter @aduin/worker test llm-ocr-cache-hit",
+      "result": "PASS",
+      "notes": "exit 0, 6 passed"
+    },
+    {
+      "step": "fix cycle 1: gate per-visitor-ai-limit-e2e",
+      "command": "pnpm --filter @aduin/worker test per-visitor-ai-limit-e2e",
+      "result": "PASS",
+      "notes": "exit 0, 6 passed"
+    },
+    {
+      "step": "fix cycle 1: gate global-daily-cap-and-budget",
+      "command": "pnpm --filter @aduin/worker test global-daily-cap-and-budget",
+      "result": "PASS",
+      "notes": "exit 0, 10 passed"
+    },
+    {
+      "step": "fix cycle 1: gate abuse-protection-matrix",
+      "command": "pnpm --filter @aduin/worker test abuse-protection-matrix",
+      "result": "PASS",
+      "notes": "exit 0, 39 passed"
+    },
+    {
+      "step": "fix cycle 1: gate turnstile-first-call",
+      "command": "pnpm --filter @aduin/worker test turnstile-first-call",
+      "result": "PASS",
+      "notes": "exit 0, 9 passed"
+    },
+    {
+      "step": "fix cycle 1: gate secret-non-leak",
+      "command": "pnpm --filter @aduin/worker test secret-non-leak",
+      "result": "PASS",
+      "notes": "exit 0, 7 passed"
+    },
+    {
+      "step": "fix cycle 1: gate stream-holdopen",
+      "command": "pnpm --filter @aduin/worker test stream-holdopen",
+      "result": "PASS",
+      "notes": "exit 0, 4 passed"
+    },
+    {
+      "step": "fix cycle 1: gate proxy-budget",
+      "command": "pnpm --filter @aduin/worker test proxy-budget",
+      "result": "PASS",
+      "notes": "exit 0, 4 passed"
+    },
+    {
+      "step": "fix cycle 1: full worker suite",
+      "command": "pnpm --filter @aduin/worker test",
+      "result": "PASS",
+      "notes": "13 files / 146 passed (was 132; +14 F1/F2/F3/F6 tests)"
+    },
+    {
+      "step": "fix cycle 1: typecheck",
+      "command": "pnpm --filter @aduin/worker typecheck",
+      "result": "PASS",
+      "notes": "tsc exit 0"
+    },
+    {
+      "step": "fix cycle 1: slice check",
+      "command": "pnpm slice:check --worker-only",
+      "result": "PASS",
+      "notes": "slice:check: PASS (worker-only)"
+    },
+    {
+      "step": "fix cycle 1: guard:cf / secrets:scan",
+      "command": "pnpm guard:cf && pnpm secrets:scan",
+      "result": "PASS",
+      "notes": "guard:cf: OK; secrets:scan: OK"
+    },
+    {
+      "step": "fix cycle 1 boundary: abort after dispatch keeps claims; pre-dispatch abort refunds all",
+      "command": "pnpm --filter @aduin/worker test stream-holdopen",
+      "result": "PASS",
+      "notes": "F1"
+    }
+  ]
+}

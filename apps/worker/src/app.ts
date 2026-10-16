@@ -4,6 +4,7 @@
 // deps-wiring change here is a single-line edit serialized by the orchestrator.
 import { mountMemoryRoutes } from './routes/memory/index';
 import { mountProxyRoutes } from './routes/proxy/index';
+import type { ProxyDeps } from './proxy/pipeline';
 
 export interface Env {
   ASSETS?: Fetcher;
@@ -15,6 +16,8 @@ export interface AppDeps {
   /** Outbound fetch, injectable for tests (cloudflare:test has no fetchMock). */
   fetch: typeof fetch;
   now: () => number;
+  /** Phase 04a (optional, additive): proxy ports, Turnstile, timers, log sink. */
+  proxy?: ProxyDeps;
 }
 
 export type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
