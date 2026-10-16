@@ -1,0 +1,73 @@
+---
+name: registry:subdoc-qa-mvp-blast-radius
+description: "Append-only blast-radius registry for the subdoc-qa-mvp phase program (one section per phase; seam rules)"
+date: 17-10-26
+metadata:
+  node_type: memory
+  type: reference
+  feature: subdoc-qa-mvp
+---
+
+# Phase Blast-Radius Registry — subdoc-qa-mvp
+
+Append-only: later agents add a `## Phase N` revision note, never overwrite. Umbrella: `subdoc-qa-mvp-umbrella_PLAN_17-10-26.md`. Registry initialized by the PLAN session (single planner, so no cross-agent overlap occurred during planning; overlap analysis below).
+
+## Seam files (shared by design; edits are single appended lines, serialized by the orchestrator)
+
+- `packages/core/src/index.ts` (barrel exports)
+- `packages/core/src/detectors/registry.ts` (detector registrations; Phases 01, 02)
+- `apps/web/src/features/registry.ts` (feature modules; Phases 03, 02, 05, 06, 07, 08, 08b, 09)
+- `apps/worker/src/app.ts` (mount lines for proxy routes, memory routes, Turnstile port, D1 platform; Phases 04a, 04b)
+- `pnpm-lock.yaml` / package manifests: owned by Phase 00; new dependencies need a registry note and a serialized commit.
+
+## Phase 00
+Creates: root config, `packages/*` and `apps/*` skeletons, `scripts/` package, `fixtures/` dirs, guards, seam stubs, spike scripts for S1, S2, S6, S7, `THIRD_PARTY_NOTICES.md`. Edits: `.gitignore`.
+
+## Phase 01
+Owns: `packages/core/**` (model, adapters/html, structure, graph, findings, detectors golden, memory, session/cookie, config/limits, contracts, engine), `fixtures/fingerprint-vectors.json`, `fixtures/memory/law-firms.json`.
+
+## Phase 02
+Owns: `packages/core/src/{detectors (new files), investor, memory/patternKey.ts}`, `packages/core/test/**` (new), `fixtures/html-seeded`, `fixtures/memory/{fund-*,demo-seed-spec.json}`, `scripts/src/fixtures`, `apps/web/src/features/investor-paths`, 2 web e2e specs. Disjoint from 04b.
+
+## Phase 03
+Owns: `apps/web/**` (except later feature dirs), `scripts/src/build-samples.ts`. Reads `design/mockups/*`. Disjoint from 04a.
+
+## Phase 04a
+Owns: `apps/worker/src/{routes/proxy,proxy,upstream,limits,identity/turnstile.ts,config.ts}`, `apps/worker/test/{proxy,fakes}`, `scripts/src/slice-check.ts`, `apps/web/e2e/slice.spec.ts`. Disjoint from 04b (migrations, seed, platform, memory, routes/memory, test/memory).
+
+## Phase 04b
+Owns: `apps/worker/{migrations,seed,src/db,src/platform,src/memory,src/routes/memory,test/memory}`, `scripts/src/{seed,spikes/s05*,s08*,s09*,s10*}`, `fixtures/memory/_test-seed-spec.json`. Single owner of all SQL.
+
+## Phase 05
+Owns: `packages/core/src/llm/**` (except `tasks/drift-narrative*`), `fixtures/llm-recordings/{clause-judgment,counsel-draft}`, `apps/web/src/features/ai/**`, `scripts/src/{record/record-ai.ts,precompute/precompute-ai.ts}`, `design/mockups/ai-states.html`. Extends: `apps/worker/src/routes/proxy/ai.ts` (04a-owned; verified before this phase).
+
+## Phase 06
+Owns: `packages/core/src/{adapters (pdf, docx, ocr, format-detect), ocr}`, `fixtures/{docx,pdf,scans-ground-truth}`, `fixtures/llm-recordings/ocr`, `apps/web/src/{engine,features/scan}`, `scripts/src/{ocr,spikes/s03*,s04*,record/record-ocr.ts,precompute/precompute-ocr.ts}`, `apps/web/public/precomputed/ocr`, `design/mockups/scan-viewer.html`.
+
+## Phase 07
+Owns: `packages/core/src/diff/**`, `packages/core/src/llm/tasks/drift-narrative.v1.ts`, `fixtures/diff`, `fixtures/llm-recordings/drift-narrative`, `apps/web/src/features/diff/**`, `design/mockups/diff.html`.
+
+## Phase 08
+Owns: `packages/core/src/counsel/**`, `apps/web/src/{features/{counsel,gate,metrics,audit},api (extension)}`, `scripts/src/dev-seed.ts`, `design/mockups/counsel-sheet.html`.
+
+## Phase 08b
+Owns: `apps/web/src/features/memory/**`, `design/mockups/firm-memory.html`; extends `features/audit/**`.
+
+## Phase 09
+Owns: `packages/core/src/outline/**`, `fixtures/outline`, `apps/web/src/features/outline/**`.
+
+## Phase 10
+Owns: `scripts/src/{deploy,conformance,precompute/precompute-all.ts}`, final `apps/web/public/precomputed/**`, `apps/worker/seed/demo.sql` (regenerated), `README.md`, `docs/{demo,DEPLOY.md}`, `apps/web/e2e/{perf-budget,a11y-keyboard,deployed-smoke,fund-two,free-plan-limits}.spec.ts`; edits `apps/worker/wrangler.jsonc` (D1 id only).
+
+## Overlap analysis (planning time)
+
+| Parallel group | Pairs | Result |
+|---|---|---|
+| M1 | 03 vs 04a | Disjoint (`apps/web/src` vs `apps/worker/src`); 04a adds one web e2e spec after 03 is verified |
+| G1 | 02 vs 04b | Disjoint (`packages/core`, `fixtures/*`, web investor view vs `apps/worker`, seed, migrations) |
+| G2 | 05 vs 06 vs 09 | Disjoint feature dirs; shared seams are append-only lines; 05 extends one 04a file after 04a is verified |
+| G3 | 07 vs 06/09 | Disjoint (`diff/` vs `adapters`/`ocr` vs `outline/`) |
+
+## Potential Blast Radius Conflicts
+
+None unresolved. Known shared-write points are the seam files above; mitigation is orchestrator-serialized single-line edits.
