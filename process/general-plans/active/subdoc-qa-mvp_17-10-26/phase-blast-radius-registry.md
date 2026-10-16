@@ -22,6 +22,7 @@ Append-only: later agents add a `## Phase N` revision note, never overwrite. Umb
 
 ## Phase 00
 Creates: root config, `packages/*` and `apps/*` skeletons, `scripts/` package, `fixtures/` dirs, guards, seam stubs, spike scripts for S1, S2, S6, S7, `THIRD_PARTY_NOTICES.md`. Edits: `.gitignore`.
+status: DONE (17-10-26, commit 7d9955b, EVL 11/11 green)
 
 ## Phase 01
 Owns: `packages/core/src/{model,adapters/html,structure,graph,findings,detectors (golden files only),memory,session,config,contracts,engine}` + their tests, `fixtures/fingerprint-vectors.json`, `fixtures/memory/law-firms.json`. NOT owned (later phases): `llm`, `diff`, `counsel`, `outline`, `investor`, `adapters/{pdf,docx,ocr}`. Seams (append-only): `packages/core/src/index.ts`, `detectors/registry.ts`. Phase-00-owned manifests/lint edited only via the serialized F0 seam step (2026-10-17 revision).
@@ -90,3 +91,10 @@ None unresolved. Known shared-write points are the seam files above; mitigation 
 - `apps/worker/src/app.ts`: route-mount lines (`mountProxyRoutes(app, deps)`, `mountMemoryRoutes(app, deps)`) are pre-wired by Phase 00 and are never edited; deps-wiring lines (real TurnstilePort in 04a, `createD1Platform` in 04b) are single-line edits serialized by the orchestrator.
 - `apps/worker/wrangler.jsonc` (Phase 00 owns the skeleton): Phase 04b owns `triggers.crons` and purge-related `vars`; Phase 04a owns proxy `vars`; each a serialized one-key edit. Carry into Phase 04b PVL.
 - Phase 00 added (beyond the touchpoint list): `.prettierignore`, `scripts/tsconfig.worker.json`, `scripts/src/guards/scan-files.ts`, `scripts/src/slice-check-stub.ts` (stub for `pnpm slice:check`; Phase 04a creates `scripts/src/slice-check.ts` and repoints the script), `scripts/spikes/s01-s02/{worker.ts,wrangler.jsonc,cf-api.ts}`.
+
+## Phase 03 re-target note 17-10-26 (supplement cycle 3)
+
+- Phase 03 re-targeted to `design/mockups/app.html` (shell + Findings only; `review-workspace.html` is a historical token source). Blast radius unchanged: `apps/web/**`, `scripts/src/build-samples.ts`; reads `design/mockups/app.html`, `app_NOTES.md`, DATA-MODEL (memory_label CHECK list, test time).
+- Phase 03 publishes `data-testid`s (listed in its `## Public Contracts`); Phase 04a's `slice.spec.ts` selectors use only those.
+- Structure (incl. Investor types sub-view), Counsel, Compare, Firm memory, Documents are P03 placeholders registered via `apps/web/src/features/registry.ts`; later UI phases append real views. Phase 02's `apps/web/src/features/investor-paths` and its `investor-path-view` e2e have no host until the later Structure UI phase.
+- Phase 01 `MemoryLabel` enum must equal the DATA-MODEL `memory_label` CHECK list (`previously_dismissed`, `already_answered`, ...); P03 `memory-label-enum` test asserts it.

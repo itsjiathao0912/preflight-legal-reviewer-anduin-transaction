@@ -1,6 +1,6 @@
 # aduin-transaction - All Context
 
-Last updated: 2026-10-17 (vc-setup, pre-code)
+Last updated: 2026-10-17 (Phase 00 UPDATE PROCESS; HEAD 7d9955b)
 
 This file is the root context entrypoint for the repo.
 
@@ -100,7 +100,7 @@ For most substantial tasks:
 | Group | Entry point | Scope |
 |---|---|---|
 | `planning/` | `process/context/planning/all-planning.md` | Planning conventions and plan-shape examples (SIMPLE vs COMPLEX) for writing implementation plans |
-| `tests/` | `process/context/tests/all-tests.md` | Test strategy, runners, commands and known gaps for the sub-doc QA tool (pre-code: planned shape only) |
+| `tests/` | `process/context/tests/all-tests.md` | Test runners (vitest 4 + cloudflare vitest plugin + Playwright), real pnpm commands, no-double-dash rule, tooling caveats and known gaps for the sub-doc QA tool |
 | `ui/` | `process/context/ui/all-ui.md` | UI/UX design direction, design skills, references, tokens and approved mockups for the sub-doc QA web app |
 <!-- /GENERATED:routing -->
 
@@ -184,32 +184,43 @@ When durable project knowledge changes:
 
 ## Repository Structure
 
-No application code yet (pre-SPEC). Current layout:
+pnpm monorepo scaffold exists (Phase 00 of the subdoc-qa-mvp program, commit 7d9955b); product logic arrives from Phase 01. Current layout:
 
 ```
 aduin-transaction/
   CLAUDE.md, AGENTS.md      -- kit-managed orchestrator rules (+ user Project Rules at end of CLAUDE.md)
   .claude/ .codex/ .agents/ -- vibecode-pro-max-kit v3.2.5 agents, skills, hooks
+  package.json, pnpm-workspace.yaml, pnpm-lock.yaml -- root scripts, workspaces (packages/*, apps/*, scripts), pnpm@11.13.1
+  tsconfig.base.json, eslint.config.js, THIRD_PARTY_NOTICES.md
+  packages/core/            -- @aduin/core: parser/graph/detector engine (src/index.ts seam; test/{unit,golden,property,seeded,recorded})
+  apps/web/                 -- @aduin/web: React 19 + Vite 8 + Tailwind 4 SPA, Playwright e2e (e2e/ empty until Phase 03)
+  apps/worker/              -- @aduin/worker: Cloudflare Worker (src/app.ts with pre-wired proxy/memory route seams), wrangler.jsonc
+  scripts/                  -- @aduin/scripts: guards (guard:cf, secrets:scan), spike runners, spike worker scripts (spikes/s01-s02)
+  fixtures/                 -- fixture dirs (fingerprint vectors and memory seeds land in Phases 01/02)
+  design/                   -- approved mockups and design assets
   docs/research/            -- reusable-repos.md (open-source candidates + licenses)
   samples/sub-docs/         -- README.md manifest + raw/ real SEC sub docs (13 HTML), ILPA PDF (gitignored),
                                raw/09-rw-holdings-scans/ (22 JPEG pages for OCR), raw/_full-prospectus/ (gitignored)
   process/
-    context/                -- this context system (all-context.md, product-domain.md, planning/, tests/)
-    general-plans/          -- active/ completed/ backlog/ task folders
+    context/                -- this context system (all-context.md, product-domain.md, planning/, tests/, ui/)
+    general-plans/          -- active/ completed/ backlog/ task folders (subdoc-qa-mvp_17-10-26 = the MVP phase program)
     features/               -- feature-scoped storage (none yet)
     development-protocols/  -- RIPER-5 methodology docs (kit-managed)
 ```
 
 ## Technology Stack
 
-**Not chosen yet.** Final stack is decided in INNOVATE. Working assumptions from the user's setup:
+Chosen in INNOVATE and scaffolded in Phase 00 (exact pins in the `package.json` files; spike evidence in the Phase 00 SPIKE-RESULTS REF):
 
-- **Hosting:** Cloudflare (Workers and/or Pages, plus D1/R2/KV as needed), account-level resources named
-  `aduin-transaction-*`, default `*.workers.dev` / `*.pages.dev` URLs. **Never touch zone `itsjiathao.com`.**
-- **Language:** TypeScript preferred (edge-friendly). A Python service is allowed only if a library clearly earns it.
+- **Package manager / runtime:** pnpm 11.13.1 (workspaces), Node >=24, TypeScript 6.0.3 (ESM).
+- **Core (`@aduin/core`):** htmlparser2 12, unpdf 1.9, mammoth 1.13, diff 9, zod 4.6, @noble/hashes 2.4 (import paths end in `.js`).
+- **Web (`@aduin/web`):** React 19.3, Vite 8, Tailwind 4 (`@tailwindcss/vite`), zustand, dexie, comlink, @tanstack/react-table, pdfjs-dist 6, docx 9.
+- **Worker (`@aduin/worker`):** Cloudflare Workers via wrangler 4.151, zod 4.6; tested with `@cloudflare/vitest-plugin` 1.4.4.
+- **Test / lint:** vitest 4.1.12, Playwright 1.64, fast-check 4.10, eslint 10 + typescript-eslint 8, prettier 3.9. See `process/context/tests/all-tests.md`.
+- **Hosting:** Cloudflare (Workers plus static assets; D1/R2/KV as needed), resources named
+  `aduin-transaction-*`, default `*.workers.dev` / `*.pages.dev` URLs. **Never touch zone `itsjiathao.com`** (enforced by `pnpm guard:cf`).
 - **LLM / OCR:** OpenRouter (OpenAI-compatible API). Free models first, cheap paid fallback, ~$10 total cap.
-- **Candidate libraries (permissive):** unpdf, pdf.js / react-pdf, mammoth.js, docxjs, jsdiff, docx (export),
-  Docxodus WASM (needs a Workers spike), defined-terms-checker rules, OpenContracts frontend patterns.
+- **Not installed on purpose:** `@axe-core/playwright` (MPL-2.0). Docxodus WASM is still unproven on Workers.
 - **Local toolchain:** Node.js v24.22.0, git, gh (logged in as itsjiathao0912).
 
 ## Key Patterns and Conventions
@@ -233,17 +244,17 @@ Secrets live outside the repo (see `CLAUDE.md` credentials table). Env var names
 
 ## Open Questions and Outstanding Work
 
-- Stack choice (Workers vs Pages Functions vs container; React framework) is decided in INNOVATE.
 - Does Docxodus WASM run on Cloudflare Workers? (spike needed before relying on it for DOCX diff)
 - Which free OpenRouter vision model is good enough for OCR on `samples/sub-docs/raw/09-rw-holdings-scans/`?
   The paid fallback is chosen against the ~$10 cap.
 - Persistence for counsel-query tracking (D1 vs KV) and whether the demo needs auth.
 - OpenRouter credits not yet topped up by the user; paid fallback unavailable until then.
-- Next step: RESEARCH → SPEC for the MVP.
+- Next step: Phase 01 EXECUTE (core engine) in the subdoc-qa-mvp program; see the umbrella `## Current Execution State`.
+- a11y scanner: axe is MPL-2.0 and not installed; user decision needed before Phases 03/10 a11y gates.
 
 ## Scan Metadata
 
 - Generated: 2026-10-17
-- HEAD: 33669f5
-- Mode: refresh (kit protocols present; context/plans/features scaffolded fresh)
-- Package manager: none yet (no package.json)
+- HEAD: 7d9955b
+- Mode: delta update after Phase 00 (scaffold, guards, spikes S1/S2/S6/S7)
+- Package manager: pnpm 11.13.1 (workspaces: packages/*, apps/*, scripts)

@@ -13,10 +13,10 @@ metadata:
 
 **Date**: 17-10-26
 **Complexity**: COMPLEX
-**Status**: ⏳ PLANNED
+**Status**: ✅ VERIFIED (DONE 17-10-26; EVL 11/11 green; commit 7d9955b)
 **Program:** subdoc-qa-mvp
 **Umbrella plan:** process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp-umbrella_PLAN_17-10-26.md
-**Phase status:** ⏳ PLANNED
+**Phase status:** ✅ VERIFIED (DONE; plan stays in active/ until the program closes)
 **Milestone:** M1 vertical slice (00 → 01 → 03 → 04a)
 **Report destination:** process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-00-scaffold-spikes_REPORT_17-10-26.md
 
@@ -225,8 +225,8 @@ Orchestrator reads this before deciding which subagent to spawn next. The canoni
 - [ ] 3. PLAN-SUPPLEMENT — plan-agent: existing phase plan updated; Inner Loop Refresh Note if sections changed (or "n/a — research clean")
 - [ ] 4. PVL — vc-validate-agent: full V1-V7; validate-contract written per `.claude/skills/vc-validate-findings/references/example-validate-output.md` (include APPROVED-REMOTE / APPROVED-LIVE lines or their absence)
 - [x] 5. EXECUTE — all checklist items done; per-section test gates run and green (or gaps documented)
-- [ ] 6. EVL — all EVL gates green; follow-up stubs registered; EVL HANDOFF SUMMARY written
-- [ ] 7. UPDATE PROCESS — phase report written, umbrella state updated, commit done
+- [x] 6. EVL — all EVL gates green; follow-up stubs registered; EVL HANDOFF SUMMARY written
+- [x] 7. UPDATE PROCESS — phase report written, umbrella state updated, commit done
 
 **Validate-contract required before execute.** If step 4 (PVL) is unchecked or `## Validate Contract` reads "(placeholder — vc-validate-agent writes this section before EXECUTE)", orchestrator must spawn vc-validate-agent first. A partial contract missing Plan updates applied / Execute-agent instructions / Test gates sections is treated as a placeholder.
 
@@ -241,9 +241,9 @@ Signals present: S1 (3 workspaces), S3 (10 spikes), S4, S6 (secrets/Cloudflare),
 ## Resume and Execution Handoff
 
 - Selected plan file path: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-00-scaffold-spikes_PLAN_17-10-26.md`
-- Last completed step: EXECUTE (step 5) done 17-10-26; all checklist items A1-F1 complete; report: `subdoc-qa-mvp_PHASE-00-scaffold-spikes_REPORT_17-10-26.md`; REF: `subdoc-qa-mvp_SPIKE-RESULTS_REF_17-10-26.md`. Next: EVL (step 6)
+- Last completed step: UPDATE PROCESS (step 7) done 17-10-26; EVL 11/11 green; committed 7d9955b (execution); process commit by the orchestrator. Report: `subdoc-qa-mvp_PHASE-00-scaffold-spikes_REPORT_17-10-26.md`; REF: `subdoc-qa-mvp_SPIKE-RESULTS_REF_17-10-26.md`; closeout: `subdoc-qa-mvp_PHASE-00-closeout_REPORT_17-10-26.md`.
 - Validate-contract status: PASS (outer-pvl, 2026-10-17, after supplement cycle 1; see `## Validate Contract`)
-- Next Step: spawn vc-research-agent for RESEARCH (step 1); then follow Phase Loop Progress. Remote actions need APPROVED-REMOTE in the contract. Do not start Phase 01 before this phase's exit gate.
+- Next Step: Phase 00 is DONE. Next program step is Phase 01 EXECUTE (see umbrella `## Current Execution State`).
 
 ## Validate Contract
 

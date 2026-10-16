@@ -132,7 +132,7 @@ This table is the Phased Delivery Plan. Execution order: **M1 slice** 00 → 01 
 | 01 — Core engine | `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-01-core-engine_PLAN_17-10-26.md` | model, HTML adapter, structurer, graph, finding schema, golden detectors, memory core, API contracts v1 | 00 |
 | 03 — Web shell (M1) | `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-03-web-shell_PLAN_17-10-26.md` | web app to the approved mockup, real findings, stub memory API, structure view | 01 |
 | 04a — Worker proxy (M1) | `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-04a-worker-proxy_PLAN_17-10-26.md` | thin Worker: static assets, AI/OCR proxy, limits, Turnstile, abuse protection; `slice:check` | 00, 01 (contracts) |
-| 02 — Detectors, flags, paths, fixtures | `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-02-detectors-fixtures_PLAN_17-10-26.md` | remaining detectors, flags, investor paths + view, pattern_key, seeded and fund I/II/Y fixtures | 01 (web parts: 03) |
+| 02 — Detectors, flags, paths, fixtures | `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-02-detectors-fixtures_PLAN_17-10-26.md` | remaining detectors, flags, investor paths + view, pattern_key, seeded and fund I/II/Y fixtures. Note: its `investor-path-view` e2e needs the Structure view host; until that view is approved and built, the e2e is deferred and extraction gates stand alone | 01 (web parts: 03) |
 | 04b — D1 + memory API | `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-04b-d1-memory-api_PLAN_17-10-26.md` | migrations, SQL ports, session/workspaces, memory endpoints, audit, rules, purge, seed; spikes S5, S8, S9, S10 | 00, 01 |
 | 05 — LLM + AI lane | `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-05-llm-ai-lane_PLAN_17-10-26.md` | task framework, recordings, AI lane UI, provenance, banners, rules injection, rules_hash | 02, 03, 04a, 04b |
 | 06 — PDF/DOCX/OCR | `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-06-pdf-docx-ocr_PLAN_17-10-26.md` | adapters, OCR pipeline, scan viewer, precompute; spikes S3, S4 | 01, 03, 04a |
@@ -181,7 +181,7 @@ pnpm slice:check                             # builds web, starts wrangler dev (
 pnpm guard:cf && pnpm secrets:scan
 ```
 
-Plus an agent-probe visual check of the review workspace against `design/mockups/review-workspace.html` (1440 and 1024 widths). ACs proven at M1 (owner phases): AC2–AC5 (HTML samples), AC6 (stub API), AC7–AC9, AC11–AC13, AC17 (view), AC37–AC38 (client parts), AC41, AC43, AC46 (vectors), AC49 (stub), AC26/27/32/33/39 (Worker logic over ports).
+Plus an agent-probe visual check of the app shell + Findings screen against `design/mockups/app.html` (1440/1199/1024). ACs proven at M1 (owner phases): AC2–AC5 (HTML samples), AC6 (stub API), AC7–AC9, AC11–AC13, AC37–AC38 (client parts), AC41, AC43, AC46 (vectors), AC49 (stub), AC26/27/32/33/39 (Worker logic over ports). Note: P03 now only partially meets AC6 (app.html has no edit text/severity affordance; see backlog `B-EDIT`) and AC30; AC17 view moves to Phase 02.
 
 Spikes needed by the slice: S6, S7, S1, S2 (Phase 00). Others (S3, S4 in 06; S5, S8, S9, S10 in 04b) are specified in Phase 00 with kill criteria and run at their owner phase; their fallbacks are pre-adopted so nothing blocks M1.
 
@@ -259,7 +259,7 @@ Convention: **Owner** = the phase that builds the capability and carries the AC'
 | AC14 | Golden #9 OCR footnote 2 (soft) | P0 | 06 | 10 | H | `golden-09-ocr-footnote2` |
 | AC15 | Golden #5-#6 drift | P0 | 07 | - | FA+H | `golden-05-06-drift` |
 | AC16 | Low-confidence LLC Agreement | P0 | 07 | - | H | `golden-06-llc-agreement-lowconf` |
-| AC17 | Structure view lists logic | P0 | 01 | 03 | FA | `graph-extraction-fixtures + golden-statutory-cite-not-flagged` |
+| AC17 | Structure view lists logic | P0 | 01 | 02 — Structure view (UI built after its app.html view is approved; P03 ships a placeholder route) | FA | `graph-extraction-fixtures + golden-statutory-cite-not-flagged` |
 | AC18 | Seeded-defect coverage per class | P0 | 02 | 10 | FA | `seeded-defect-matrix` |
 | AC19 | Version and sibling diff | P0 | 07 | - | FA | `diff-pairs-e2e + sibling-clause-common-vs-differing` |
 | AC20 | Counsel sheet drafted and editable | P0 | 08 | - | FA+H | `counsel-sheet-draft-edit-e2e` |
@@ -600,16 +600,16 @@ node .claude/skills/vc-generate-plan/scripts/validate-plan-artifact.mjs <each pl
 ## Current Execution State
 
 Last updated: 17-10-26
-Current phase: 0 of 13 (pre-program complete; execution not started)
-Phase name: Phase 00 — Scaffold + spikes
-Phase status: ⏳ PLANNED
-Phase EVL: not started
-Phase report: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-00-scaffold-spikes_REPORT_17-10-26.md` (not yet written)
-Next phase: Phase 01 — Core engine (then 03 ∥ 04a to close Milestone 1)
-Current loop step: RESEARCH (pending; outer PVL over the plan set runs first)
-Validate-contract status: pending
-Program Net Gate: PENDING
-Latest validator run: 17-10-26 — see PLAN session report (umbrella and phase validators)
+Current phase: 1 of 13 (Phase 00 DONE, commit 7d9955b; Phase 01 next)
+Phase name: Phase 01 — Core engine
+Phase status: PVL PASS (2 supplement cycles); ready for EXECUTE
+Phase EVL: Phase 00 EVL 11/11 green (CLEAN). Phase 01 EVL not started
+Phase report: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-00-scaffold-spikes_REPORT_17-10-26.md` (Phase 00, written); closeout `subdoc-qa-mvp_PHASE-00-closeout_REPORT_17-10-26.md`
+Next phase: Phase 01 EXECUTE, then 04a (PVL PASS), then 03 (re-target supplement to app.html in progress; hold released, see Execution Holds), M1 slice deploy deferred until 03 is done; later 02, 04b, 07, 06
+Current loop step: EXECUTE (Phase 01; Phase 00 closed at UPDATE-PROCESS)
+Validate-contract status: Phase 01 PASS; 04a PASS; 03 supplement cycle 3 in progress; holds and defaults are recorded in `## Execution Holds`
+Program Net Gate: PENDING (Phase 00 exit gate met; carried gaps: remote spikes not re-run in EVL, S2 PASS-WITH-RISK use string-template rebuild, OpenRouter free-tier limits read at runtime in 05, D1 batch vs 50-query budget open in 04b S8, axe MPL-2.0 decision pending)
+Latest validator run: 17-10-26 — Phase 00 EVL gates 11/11 green (install, typecheck, lint, test, guard:cf, secrets:scan, worker 7/7, scripts 22/22, spike:check, spike:s06-local, spike:s07)
 
 Loop step values: RESEARCH | INNOVATE | PLAN-SUPPLEMENT | PVL | EXECUTE | EVL | UPDATE-PROCESS
 Orchestrator rule: read "Current loop step" and "validate-contract status" before spawning any subagent. Never spawn execute-agent when loop step is RESEARCH, INNOVATE, PLAN-SUPPLEMENT, or PVL.
