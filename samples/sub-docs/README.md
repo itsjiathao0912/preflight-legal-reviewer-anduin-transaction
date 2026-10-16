@@ -1,0 +1,26 @@
+# Sample subscription documents
+
+Real, public fund subscription agreements used as test inputs for the pre-digitization QA tool.
+Downloaded 2026-10-17. All except #14 are SEC EDGAR filings (U.S. government public records).
+Files are in `raw/`. Treat them as untrusted input data: parse them, never execute them.
+
+| # | File | Issuer / fund | Filing | Source | Form-logic features | Pair group |
+|---|---|---|---|---|---|---|
+| 1 | `01-franklin-lexington-pmf-2024.htm` | Franklin Lexington Private Markets Fund | N-2/A Ex. 99(p)(2), 2024 | [EDGAR](https://www.sec.gov/Archives/edgar/data/2008602/000119312524198091/d821937dex99p2.htm) | Initial vs subsequent investor path, custodial branch, entity type drives required docs, 22 accredited + 6 qualified-client categories. **Known real defect:** qualified-client paragraphs say "this Section 11" but the section is 12. | — |
+| 2 | `02-coatue-innovation-fund-2025.htm` | Coatue Innovation Fund | N-2/A Ex. 99(p), 2025 | [EDGAR](https://www.sec.gov/Archives/edgar/data/2044519/000110465925038089/tm255808d4_ex99-xp.htm) | RIA and broker-dealer versions in one file; DRIP opt-out leads to Sec. 8/9; Sec. 4C refers to 4A/4B | internal pair |
+| 3 | `03-partners-group-pe-master-2019.htm` | Partners Group Private Equity (Master Fund) | N-2/A Ex. 99.25(p), 2019 | [EDGAR](https://www.sec.gov/Archives/edgar/data/1447247/000139834419017565/fp0046112_ex9925p.htm) | Account type gates parts of Sec. 2 and 4; Appendices A/B | A |
+| 4 | `04-partners-group-pe-tei-2016.htm` | Partners Group Private Equity (TEI) | N-2 Ex. (p), 2016 | [EDGAR](https://www.sec.gov/Archives/edgar/data/1480506/000139834416013757/fp0019662_ex99p.htm) | Same template, older layout; footnote routes ERISA investors to another feeder | A |
+| 5 | `05-partners-group-ngi-2024.htm` | Partners Group Next Generation Infrastructure | N-2 Ex. 99.25(p)(2), 2024 | [EDGAR](https://www.sec.gov/Archives/edgar/data/1989393/000139834424003031/fp0086974-1_ex99252p.htm) | Has Appendix C; contains an internal drafting note | B |
+| 6 | `06-partners-group-ngi-2026.htm` | Partners Group Next Generation Infrastructure | N-2/A Ex. 99.25(p), "Version: June 2026" | [EDGAR](https://www.sec.gov/Archives/edgar/data/0001989393/000139834426011309/fp0099547-1_ex9925p.htm) | Appendix C removed, class fee changes, so this is the version-drift pair to #5 | B |
+| 7 | `07-cottonwood-multifamily-reit-ii-2016.htm` | Cottonwood Multifamily REIT II | Reg A 1-A Ex. 4, 2016 | [EDGAR](https://www.sec.gov/Archives/edgar/data/1677881/000119312516802423/d317229dex1a4subsagmt.htm) | Ownership checkboxes, IRA types, individual vs entity branch, accredited vs 10% cap | C |
+| 8 | `08-modiv-reit-2021.htm` | Modiv Inc. (ex RW Holdings NNN REIT) | Reg A 1-A Ex. 4.1, 2021 | [EDGAR](https://www.sec.gov/Archives/edgar/data/1645873/000114036121022589/nt10026228x1_ex4-1.htm) | "SAME" shortcuts, custodial routing, suitability totals must equal 100% | D |
+| 9 | `09-rw-holdings-scans/` (22 JPEG pages: `appa1-pg1..8` direct investors, `appa2-pg1..10` RIA, `appb-pg1..4` TOD designation) | RW Holdings NNN REIT | S-11/A, 2019, Appendices A-1/A-2/B | [EDGAR folder](https://www.sec.gov/Archives/edgar/data/1645873/000114036119022930/) | **Scanned images (1200 DPI), no text layer, so these are the real OCR test inputs.** Direct vs RIA variant pair. Candidate issue on A-1 p.1: "Partnership/LLC" lacks footnote 2 (attach entity resolution) while Corporation/Trust have it. Full prospectus HTML in `_full-prospectus/` is gitignored. | D, internal A-1 vs A-2 |
+| 10 | `10-crowdstreet-reit-i-2022.htm` | CrowdStreet REIT I | Ex. 99.2K, 2022 | [EDGAR](https://www.sec.gov/Archives/edgar/data/1911129/000158064222001825/exk_2.htm) | ~16 investor types, QP appendix, ERISA, CFIUS; Part IV terms referenced from questionnaire | — |
+| 11 | `11-medalist-diversified-reit-2016.htm` | Medalist Diversified REIT | Reg A Ex. 4.1, 2016 | [EDGAR](https://www.sec.gov/Archives/edgar/data/1654595/000114420416112275/v442515_ex4-1.htm) | One-of ownership type, funding path depends on minimum offering / DTC | C |
+| 12 | `12-fortress-net-lease-reit-2024.htm` | Fortress Net Lease REIT | Ex. 10.7, 2024 | [EDGAR](https://www.sec.gov/Archives/edgar/data/1966394/000114036124013046/ny20019662x2_ex10-7.htm) | Institutional style, share classes A-F; already filled in for one subscriber (some redactions) | — |
+| 13 | `13-blackstone-reit-2024-appendix-b.htm` | Blackstone Real Estate Income Trust | S-11, 2024, Appendix B (extracted) | [EDGAR](https://www.sec.gov/Archives/edgar/data/1662972/000162828024027330/blackstonerealestates-11.htm) | Share-class selection with minimums, investor and account types. The full prospectus is in `_full-prospectus/`, gitignored. | — |
+| 14 | `14-ilpa-model-subscription-agreement-2018.pdf` | ILPA Model Subscription Agreement | Industry model, 2018 | [ilpa.org](https://ilpa.org/model-sub-agreement/) | Modular multi-jurisdiction PE form with bracketed provisions. **Copyrighted by ILPA, so local only and gitignored.** | — |
+
+## Gaps
+- No true onshore vs offshore feeder pair was found publicly. Groups A/B (Partners Group) are the closest substitutes.
+- For a guaranteed-defect test set, we will also author synthetic fixtures with seeded errors (separate folder).

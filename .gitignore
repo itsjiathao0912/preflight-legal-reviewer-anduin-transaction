@@ -4,3 +4,5 @@
 .dev.vars
 .claude/hooks/.logs/
 .codex/hooks/.logs/
+samples/sub-docs/raw/_full-prospectus/
+samples/sub-docs/raw/14-ilpa-*
