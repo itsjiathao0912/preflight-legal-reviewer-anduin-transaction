@@ -205,7 +205,7 @@ function toPt(n: number, unit: string | undefined): number {
 }
 
 function decodeBytes(input: Uint8Array): string {
-  const utf8 = new TextDecoder('utf-8', { fatal: false }).decode(input);
+  const utf8 = new TextDecoder('utf-8', { fatal: false, ignoreBOM: false }).decode(input);
   if (!utf8.includes('�')) return utf8;
   return new TextDecoder('windows-1252').decode(input);
 }

@@ -25,7 +25,7 @@ export type VerifyResult =
     };
 
 const enc = new TextEncoder();
-const dec = new TextDecoder('utf-8', { fatal: true });
+const dec = new TextDecoder('utf-8', { fatal: true, ignoreBOM: false });
 
 export function b64urlEncode(bytes: Uint8Array): string {
   let bin = '';
