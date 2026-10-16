@@ -26,6 +26,11 @@ export interface FindingInput {
   sensitive?: Span[];
 }
 
+/** Clamp to the schema bound so a long input degrades to "…" instead of a ZodError (F1). */
+function clamp(s: string, n: number): string {
+  return s.length <= n ? s : s.slice(0, n - 1) + '…';
+}
+
 function snippetOf(quote: string, focusStart: number, focusEnd: number): string {
   const max = limits.snippetMaxChars;
   if (quote.length <= max) return quote;
@@ -51,11 +56,16 @@ export function buildFinding(g: DocGraph, input: FindingInput): Finding {
   const anchor = makeAnchor(block.anchor.docHash, block.id, snap.start, snap.end);
   const severity = capSeverity(input.severity, maxSeverityFor(input.issueClass, 'rule'));
   const detail: FindingDetail = {
-    explanation: input.explanation,
-    facts: input.facts,
-    interpretations: input.interpretations ?? [],
+    explanation: clamp(input.explanation, 1000),
+    facts: Object.fromEntries(
+      Object.entries(input.facts).map(([k, v]) => [k, typeof v === 'string' ? clamp(v, 1000) : v]),
+    ),
+    interpretations: (input.interpretations ?? [])
+      .filter((x) => x.length > 0)
+      .slice(0, 6)
+      .map((x) => clamp(x, 500)),
   };
-  if (input.expected) detail.expected = input.expected;
+  if (input.expected) detail.expected = clamp(input.expected, 300);
   const f: Finding = {
     id: findingId(input.detectorId, input.issueClass, anchor, qh),
     issue_class: input.issueClass,

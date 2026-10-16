@@ -13,10 +13,10 @@ export interface ParsedTarget {
   parts: string[];
 }
 
-const PARTS_OF_RE =
+export const PARTS_OF_RE =
   /^Parts?\s+([A-Z](?:\s*(?:&|and|or|,)\s*[A-Z]){0,3})\s+of\s+Section\s+(\d{1,2}[A-Z]?)$/;
-const SECTION_RE = /^Sections?\s+(\d{1,2}[A-Z]?)$/;
-const PART_RE = /^Parts?\s+([A-Z])$/;
+export const SECTION_RE = /^Sections?\s+(\d{1,2}[A-Z]?)$/;
+export const PART_RE = /^Parts?\s+([A-Z])$/;
 
 export function parseTarget(raw: string): ParsedTarget | null {
   const t = raw.trim();

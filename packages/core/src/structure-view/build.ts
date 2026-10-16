@@ -1,5 +1,6 @@
 import { checkTarget, conditionalTargets } from '../detectors/flow';
-import { maskText, whereOf } from '../detectors/util';
+import { maskText, maskThenClip, whereOf } from '../detectors/util';
+import { sensitiveSpans } from '../memory/mask';
 import type { DocGraph } from '../graph/graph';
 import type { Finding } from '../findings/schema';
 import { investorModelOf } from '../investor/paths';
@@ -167,10 +168,18 @@ function blockTextOf(s: Structure, i: number): string {
   return s.blocks[i]!.lines.map((l) => l.text).join(' ');
 }
 
-/** Excerpt around [start, end): word-bounded, with "…" where the text was cut. */
+/**
+ * Excerpt around [start, end): word-bounded, with "…" where the text was cut. The window is first
+ * widened so it never cuts through a sensitive span, then the cut text is masked (F2: a cut can
+ * never leave a raw digit tail that is too short to be recognised and masked).
+ */
 function excerpt(text: string, start: number, end: number, pad = 90): string {
   let a = Math.max(0, start - pad);
   let b = Math.min(text.length, end + pad);
+  for (const sp of sensitiveSpans(text)) {
+    if (sp.start < a && sp.end > a) a = sp.start;
+    if (sp.start < b && sp.end > b) b = sp.end;
+  }
   if (a > 0) {
     const sp = text.indexOf(' ', a);
     if (sp !== -1 && sp < start) a = sp + 1;
@@ -179,7 +188,7 @@ function excerpt(text: string, start: number, end: number, pad = 90): string {
     const sp = text.lastIndexOf(' ', b);
     if (sp > end) b = sp;
   }
-  return `${a > 0 ? '…' : ''}${text.slice(a, b).trim()}${b < text.length ? '…' : ''}`;
+  return `${a > 0 ? '…' : ''}${maskText(text.slice(a, b).trim())}${b < text.length ? '…' : ''}`;
 }
 
 function sectionKey(scopeId: string, number: string): string {
@@ -227,7 +236,7 @@ function questionOf(s: Structure, g: OptionGroup): string {
     const t = blockTextOf(s, i).trim();
     if (t && t.length <= 120) return t.replace(/:\s*$/, '');
   }
-  return g.options[0]?.label.slice(0, 80) ?? 'Options';
+  return g.options[0] ? maskThenClip(g.options[0].label, 80) : 'Options';
 }
 
 /** Pure: the same graph and findings always give the same view (AC8 determinism). */
@@ -253,7 +262,7 @@ export function buildStructureView(g: DocGraph, findings: readonly Finding[]): S
       external.push({
         id: `x:${r.ref.id}`,
         text: m(r.ref.text),
-        where,
+        where: m(where),
         source:
           r.form === 'usc_cfr'
             ? 'U.S. Code / C.F.R.'
@@ -281,7 +290,7 @@ export function buildStructureView(g: DocGraph, findings: readonly Finding[]): S
       const sec = s.scopes
         .find((x) => x.id === t.scopeId)
         ?.sections.find((x) => x.number === t.sectionNumber);
-      const title = sec ? ` (${sec.title.replace(/\s*\(.*$/, '').slice(0, 60)})` : '';
+      const title = sec ? ` (${maskThenClip(sec.title.replace(/\s*\(.*$/, ''), 60)})` : '';
       target = `Section ${t.sectionNumber}${t.part ? `, Part ${t.part}` : ''}${title}`;
     }
     const f = findingOn(
@@ -292,7 +301,7 @@ export function buildStructureView(g: DocGraph, findings: readonly Finding[]): S
     crossrefs.push({
       id: `r:${r.ref.id}`,
       text: m(r.ref.text),
-      where,
+      where: m(where),
       target: m(target),
       status: r.ref.status,
       quote: m(excerpt(blockTextOf(s, r.blockIndex), r.start, r.end)),
@@ -319,7 +328,7 @@ export function buildStructureView(g: DocGraph, findings: readonly Finding[]): S
       sections.push({
         id: `s:${k}`,
         number: sec.number,
-        title: m(sec.title.slice(0, 120)),
+        title: maskThenClip(sec.title, 120),
         depth: 0,
         restart: num.restart || scopeRestart,
         numbering:
@@ -335,7 +344,7 @@ export function buildStructureView(g: DocGraph, findings: readonly Finding[]): S
         sections.push({
           id: `s:${k}:${p.letter}`,
           number: p.letter,
-          title: m(p.label.slice(0, 120)),
+          title: maskThenClip(p.label, 120),
           depth: 1,
           restart: false,
           numbering: `Part letter, scoped to Section ${sec.number}`,
@@ -360,9 +369,9 @@ export function buildStructureView(g: DocGraph, findings: readonly Finding[]): S
     return {
       id: `c:${c.id}`,
       kind: conditionKind(c),
-      text: m(c.text.slice(0, 240)),
-      where: whereOf(g, c.blockIndex),
-      condition: m(c.trigger.replace(/[,\s]+$/, '').slice(0, 160)),
+      text: maskThenClip(c.text, 240),
+      where: m(whereOf(g, c.blockIndex)),
+      condition: maskThenClip(c.trigger.replace(/[,\s]+$/, ''), 160),
       target: m(c.targets.join(', ')),
       targetFound,
       findingId: f?.id ?? null,
@@ -386,9 +395,9 @@ export function buildStructureView(g: DocGraph, findings: readonly Finding[]): S
     const cueStated = og.cue !== undefined;
     return {
       id: `o:${og.id}`,
-      question: m(questionOf(s, og).slice(0, 120)),
-      where: whereOf(g, og.blockIndices[0]!),
-      options: og.options.map((o) => m(o.label.slice(0, 80))),
+      question: maskThenClip(questionOf(s, og), 120),
+      where: m(whereOf(g, og.blockIndices[0]!)),
+      options: og.options.map((o) => maskThenClip(o.label, 80)),
       howMany: og.cue && /all that apply/i.test(og.cue) ? 'all' : 'one',
       cueStated,
       cueText: og.cue ? m(og.cue) : null,
@@ -411,9 +420,9 @@ export function buildStructureView(g: DocGraph, findings: readonly Finding[]): S
     );
     const status: TermStatus = f ? (TERM_KIND[String(f.detail.facts.kind)] ?? 'ok') : 'ok';
     terms.push({
-      id: `t:${d.term}`,
+      id: m(`t:${d.term}`),
       term: m(d.term),
-      definedAt: whereOf(g, d.blockIndex),
+      definedAt: m(whereOf(g, d.blockIndex)),
       uses: usesOf(d.term),
       status,
       note: f ? f.detail.explanation : TERM_NOTE.ok,
@@ -428,7 +437,7 @@ export function buildStructureView(g: DocGraph, findings: readonly Finding[]): S
     if (!term || seenTerm.has(term)) continue;
     seenTerm.add(term);
     terms.push({
-      id: `t:${term}`,
+      id: m(`t:${term}`),
       term: m(term),
       definedAt: 'Not defined',
       uses: Number(f.detail.facts.contexts ?? 1) || 1,
@@ -445,7 +454,7 @@ export function buildStructureView(g: DocGraph, findings: readonly Finding[]): S
   const mainTitle = (n: string) => {
     for (const sc of s.scopes) {
       const sec = sc.sections.find((x) => x.number === n);
-      if (sec) return m(sec.title.replace(/\s*\(.*$/, '').slice(0, 80));
+      if (sec) return maskThenClip(sec.title.replace(/\s*\(.*$/, ''), 80);
     }
     return '';
   };
@@ -460,7 +469,7 @@ export function buildStructureView(g: DocGraph, findings: readonly Finding[]): S
         kind: gap.kind,
         item: m(gap.item),
         clause: m(gap.citation.text),
-        where: whereOf(g, gap.citation.blockIndex),
+        where: m(whereOf(g, gap.citation.blockIndex)),
         peers: gap.peers.map((x) => TYPE_LABELS[x]),
         findingId: f?.id ?? null,
         blockId: s.blocks[gap.citation.blockIndex]!.id,
@@ -474,7 +483,7 @@ export function buildStructureView(g: DocGraph, findings: readonly Finding[]): S
         kind: 'dead-end',
         item: m(p.deadEnd.reason),
         clause: m(c.text),
-        where: whereOf(g, c.blockIndex),
+        where: m(whereOf(g, c.blockIndex)),
         peers: [],
         findingId: f?.id ?? null,
         blockId: s.blocks[c.blockIndex]!.id,

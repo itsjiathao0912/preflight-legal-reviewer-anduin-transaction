@@ -52,10 +52,10 @@ export const investorPathMissingItem: Detector = {
       const types = h.items.map((x) => x.p);
       const facts = maskFacts({
         kind: gap.kind,
-        investor_type: types.map((p) => p.label).join(', '),
+        investor_type: [...new Set(types.map((p) => p.label))].join(', '),
         type_id: types.map((p) => p.type).join('-'),
         item: gap.item,
-        peers: gap.peers.map((x) => TYPE_LABELS[x]).join(', '),
+        peers: [...new Set(gap.peers.map((x) => TYPE_LABELS[x]))].join(', '),
         clause: gap.citation.text,
         where: whereOf(g, h.blockIndex),
       });

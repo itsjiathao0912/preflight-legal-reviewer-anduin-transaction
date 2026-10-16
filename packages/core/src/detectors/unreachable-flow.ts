@@ -4,7 +4,7 @@ import type { Finding } from '../findings/schema';
 import type { Conditional } from '../structure/types';
 import { checkTarget, conditionalTargets, sectionOfBlock } from './flow';
 import type { Detector, ExplainFacts } from './registry';
-import { fact, maskFacts, textOf, whereOf } from './util';
+import { fact, maskFacts, maskThenClip, textOf, whereOf } from './util';
 
 /**
  * unreachable-flow (critical): reachability + cycle detection over jump instructions
@@ -42,7 +42,11 @@ export function jumpEdges(g: DocGraph): JumpEdge[] {
 /** First cycle in the jump graph, as the ordered list of edges (deterministic DFS). */
 export function findCycle(edges: JumpEdge[]): JumpEdge[] | null {
   const adj = new Map<string, JumpEdge[]>();
-  for (const e of edges) adj.set(e.from, [...(adj.get(e.from) ?? []), e]);
+  for (const e of edges) {
+    const list = adj.get(e.from);
+    if (list) list.push(e);
+    else adj.set(e.from, [e]);
+  }
   const nodes = [...adj.keys()].sort(
     (a, b) => parseInt(a, 10) - parseInt(b, 10) || (a < b ? -1 : 1),
   );
@@ -115,7 +119,7 @@ export const unreachableFlow: Detector = {
         first.cond,
         {
           kind: 'circular',
-          instruction: first.cond.text.slice(0, 200),
+          instruction: maskThenClip(first.cond.text, 200),
           path: [...cycle.map((e) => `Section ${e.from}`), `Section ${first.from}`].join(' → '),
           where: whereOf(g, first.cond.blockIndex),
         },
@@ -142,7 +146,7 @@ export const unreachableFlow: Detector = {
         e.cond,
         {
           kind: 'unreachable',
-          instruction: e.cond.text.slice(0, 200),
+          instruction: maskThenClip(e.cond.text, 200),
           skipped: stranded.map((n) => `Section ${n}`).join(', '),
           target: `Section ${e.to}`,
           where: whereOf(g, e.cond.blockIndex),

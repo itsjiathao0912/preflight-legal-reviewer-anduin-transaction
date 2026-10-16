@@ -36,15 +36,17 @@ export function mask(text: string, spans: Span[]): string {
 }
 
 /**
- * Candidate account/routing numbers (F3-widened; every quantifier bounded, no nested unbounded
- * repetition, linear on hostile input — covered by security/redos.test.ts):
+ * Candidate account/routing numbers (F3-widened twice; every quantifier bounded, no nested
+ * unbounded repetition, linear on hostile input — covered by security/redos.test.ts):
  *  1. IBAN-like: 2 letters + 2 check digits + 2..7 groups of 4 alphanumerics (+ short tail)
- *  2. alpha-prefixed account: 1-4 capitals, optional dash, 6-34 digits ("DDA-12345678")
- *  3. digit runs of 6+ digits (optionally separated by - or space), including runs longer than 31
- *     digits (the trailing `\d{0,96}` lets a 40-digit run end on a word boundary)
+ *  2. alpha-prefixed account: 1-4 letters (any case), optional dash, 6-130 digits ("DDA-12345678",
+ *     "acct12345678")
+ *  3. digit runs of 6+ digits, optionally separated by space, "-", "–", ".", "/" or NBSP. No
+ *     word-boundary assertions: a run glued to letters ("021000021x") is still caught, and a run
+ *     longer than the 131-digit bound is matched in adjacent chunks that mask() merges into one span.
  */
 export const ACCOUNT_NUMBER_RE =
-  /\b(?:[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,3})?|[A-Z]{1,4}-?\d{6,34}|\d(?:[ -]?\d){5,30}\d{0,96})\b/g;
+  /\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,3})?\b|\b[A-Za-z]{1,4}-?\d{6,130}|\d(?:[ \-\u2013./\u00A0]?\d){5,130}/g;
 
 export function sensitiveSpans(text: string): Span[] {
   const out: Span[] = [];

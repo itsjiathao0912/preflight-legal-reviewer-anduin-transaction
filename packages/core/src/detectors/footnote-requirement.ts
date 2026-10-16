@@ -3,7 +3,7 @@ import { buildFinding, patternKey } from '../findings/make-finding';
 import type { Finding } from '../findings/schema';
 import { isInvestorGroup } from '../investor/extract';
 import type { Detector, ExplainFacts } from './registry';
-import { fact, maskFacts, textOf, whereOf } from './util';
+import { fact, listLabels, maskFacts, textOf, whereOf } from './util';
 
 /**
  * footnote-requirement (high): an option group where some options carry a footnote marker
@@ -31,14 +31,14 @@ export const footnoteRequirement: Detector = {
       const marked = group.options.filter((o) => o.footnote_marker);
       const unmarked = group.options.filter((o) => !o.footnote_marker);
       if (!marked.length || !unmarked.length) continue;
-      const markers = [...new Set(marked.map((o) => o.footnote_marker!))];
+      const markers = [...new Set(marked.map((o) => o.footnote_marker!))].slice(0, 5);
       const target = unmarked[0]!;
       const text = textOf(g, target.blockIndex);
       const at = Math.max(0, text.indexOf(target.label));
       const facts = maskFacts({
         marker: markers.join(', '),
-        marked: marked.map((o) => `"${o.label.slice(0, 60)}"`).join(', '),
-        unmarked: unmarked.map((o) => `"${o.label.slice(0, 60)}"`).join(', '),
+        marked: listLabels(marked.map((o) => o.label)),
+        unmarked: listLabels(unmarked.map((o) => o.label)),
         where: whereOf(g, target.blockIndex),
       });
       out.push(

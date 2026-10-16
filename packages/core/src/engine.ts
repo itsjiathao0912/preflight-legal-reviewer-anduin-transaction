@@ -9,6 +9,17 @@ import { structure } from './structure/structurer';
 export interface EngineSettings {
   /** Restrict to these detector ids (default: all registered). */
   detectorIds?: string[];
+  /**
+   * Receives one entry per detector that threw. The entry carries the detector id and the error
+   * class name only — never the message or any document text (F1 isolation).
+   */
+  diagnostics?: DetectorFailure[];
+}
+
+export interface DetectorFailure {
+  stage: 'detector';
+  detectorId: string;
+  code: string;
 }
 
 /** Lines -> DocGraph (structure + graph). A structurer exception yields a partial Doc with stage_failed. */
@@ -47,7 +58,18 @@ export function runDeterministic(
     ? list.filter((d) => settings.detectorIds!.includes(d.id))
     : list;
   const all: Finding[] = [];
-  for (const d of selected) all.push(...d.run(g));
+  for (const d of selected) {
+    try {
+      all.push(...d.run(g));
+    } catch (e) {
+      // one failing detector must not drop every other detector's findings
+      settings.diagnostics?.push({
+        stage: 'detector',
+        detectorId: d.id,
+        code: e instanceof Error ? e.name : 'unknown',
+      });
+    }
+  }
   const seen = new Set<string>();
   const unique: Finding[] = [];
   for (const f of all) {

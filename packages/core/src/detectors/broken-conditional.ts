@@ -3,7 +3,7 @@ import { buildFinding, patternKey } from '../findings/make-finding';
 import type { Finding } from '../findings/schema';
 import { checkTarget, conditionalTargets, isFlowAction } from './flow';
 import type { Detector, ExplainFacts } from './registry';
-import { fact, maskFacts, textOf, whereOf } from './util';
+import { fact, maskFacts, textOf, whereOf, maskThenClip } from './util';
 
 /**
  * broken-conditional (critical): a conditional instruction ("If ..., complete / skip / proceed to
@@ -30,7 +30,7 @@ export const brokenConditional: Detector = {
         const chk = checkTarget(g, c, t);
         if (chk.status !== 'missing') continue;
         const facts = maskFacts({
-          instruction: c.text.slice(0, 200),
+          instruction: maskThenClip(c.text, 200),
           action: c.action,
           target: t.raw,
           missing: chk.missing ?? t.raw,

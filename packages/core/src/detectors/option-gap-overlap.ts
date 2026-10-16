@@ -3,7 +3,7 @@ import { buildFinding, patternKey } from '../findings/make-finding';
 import type { Finding } from '../findings/schema';
 import type { OptionGroup } from '../structure/types';
 import type { Detector, ExplainFacts } from './registry';
-import { fact, maskFacts, textOf, whereOf } from './util';
+import { fact, maskFacts, textOf, whereOf, maskThenClip } from './util';
 
 /**
  * option-gap-overlap (high): exclusivity vs structure in option groups.
@@ -124,8 +124,8 @@ export const optionGapOverlap: Detector = {
       const at = Math.max(0, text.indexOf(it.second));
       const facts = maskFacts({
         kind: it.kind,
-        first: it.first.slice(0, 120),
-        second: it.second.slice(0, 120),
+        first: maskThenClip(it.first, 120),
+        second: maskThenClip(it.second, 120),
         cue: group.cue ?? 'no cue printed',
         where: whereOf(g, opt.blockIndex),
         issues: issues.length,

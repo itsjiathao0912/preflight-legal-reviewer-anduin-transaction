@@ -237,3 +237,26 @@ Classification: **Keep in active/testing** until EVL re-runs the gates. Implemen
 
 ### Dependency Changes
 - None by this phase (no lockfile change; scripts import core by relative path, E7). The working tree also holds 04b's `package.json`/`pnpm-lock.yaml` changes, which are not part of Phase 02.
+
+## Review fix cycle (17-10-26, independent review verdict APPROVE_WITH_FIXES)
+
+All fixes are in `packages/core` plus one line in `apps/web/src/engine/engine.worker.ts`. No golden, contracts snapshot or generated fixture changed (`test:golden` 44/44 byte-identical; `fixtures:check` OK, 46 files). Regression tests: `packages/core/test/unit/review-fix-cycle.test.ts` (14 tests).
+
+| Finding | Change | Test |
+|---|---|---|
+| F1 (HIGH) long option groups throw ZodError; one throw loses every finding | `detectors/util.ts`: `listLabels` (first 5 + "and N more"), `maskFacts` clamps strings to 400 chars after masking; `footnote-requirement.ts` uses `listLabels` and caps markers at 5; `investor-path-missing-item.ts` dedupes `peers` and `investor_type`; `findings/make-finding.ts` clamps explanation 1000 / facts 1000 / interpretations 500 (max 6) / expected 300; `engine.ts` wraps each `d.run(g)` in try/catch and pushes `{stage:'detector', detectorId, code: error name}` into optional `EngineSettings.diagnostics` (no message, no document text) | 100-option group + one `<sup>` gives one schema-valid finding ("and 94 more"); a throwing detector is recorded and the other findings still return |
+| F2 (MED) slice before mask | new `maskThenClip(s, n)` used in flag-drafting-note, broken-conditional, option-gap-overlap, unreachable-flow (same pattern), `whereOf` scope titles, and every `m(x.slice())` in `structure-view/build.ts`; `excerpt()` widens its window to whole sensitive spans and masks the cut text | `990000017` swept across every clip boundary (260 docs); asserts no 4-digit raw window leaks besides `#0017`. Confirmed red when `maskThenClip` was temporarily switched back to slice-first |
+| F3 (MED) `ACCOUNT_NUMBER_RE` gaps | `memory/mask.ts`: alpha branch `\b[A-Za-z]{1,4}-?\d{6,130}`; digit branch `\d(?:[ \-–./NBSP]?\d){5,130}` with no word-boundary assertions (runs glued to letters are caught; runs longer than the bound match in adjacent chunks that `mask()` merges). All quantifiers bounded | 9 cases (40 digits after prefix, `acct…`, `021000021x`, `.`, `/`, en-dash, NBSP, 60 grouped digits, 304-digit run); ReDoS suite and the 100k hostile-input test pass |
+| P2-1 EDGAR wrapper rule dropped real lines | `adapters/html.ts` rule now the anchored shape (`EX-…`, `<TAG>…`, `TAG:…`, case-sensitive tags) | Keeps "Type of Subscriber (check one):", "Documentation ☐ …", "Text of Section 4"; drops "EX-99.(P)(2)", "<TYPE>10-K", "TYPE: 10-K"; sample #10 has no wrapper noise and keeps its "Documentation" line |
+| F5 | `unreachable-flow.ts` pushes into existing adjacency arrays; `sectionIndex` memoized per graph (WeakMap) | full suite |
+| F6 | exported `CAP_WORD_BEFORE_RE`, `CAP_WORD_AFTER_RE` (defined-term-issues) and `PARTS_OF_RE`, `SECTION_RE`, `PART_RE` (flow) so the ReDoS suite collects them | `test security` |
+| F8 | empty catch around `buildStructureView` now `console.warn('[engine] structure_view_failed', <error name>)` (no document text) | web typecheck, `test import-graph` |
+| F9 | `where` and term ids wrapped in `m()` in `structure-view/build.ts` | covered by the F2 sweep |
+
+**Re-baseline note (P2-1):** no golden covers sample #10's investor paths, so nothing was re-baselined. Sample #10 now keeps the "Documentation ☐ For entity investors…" line, which can change its investor-path view and findings on the Findings/Structure screens. The corpus ceiling still holds.
+
+**F10 hash note:** F3 masks more spans, so `quote_hash` changes for any quote that holds a newly masked run (prefixed / glued / dot-, slash-, dash- or NBSP-separated numbers, or runs over 32 digits). `FP_VERSION` is unchanged on purpose: no stored memory exists yet. Phase 04b/05 must not assume these hashes match pre-fix values.
+
+**Deferred:** F4 (quadratic defined-term scans) goes to Phase 05 / backlog P2. F7 skipped: `tokens.css` has no tokens for `#f7f9f6`, `#3f2a00`, `#5a4000` (the mockup CSS uses the same raw hex). F11/P2-5 (date masking) is out of scope. Note: the widened digit branch now also masks 6+ digit dates written with `/` or `.` (e.g. `10/17/2026`). No existing test covers this.
+
+**Gates (each a separate call, one token, no `--`):** core `test security` 6 files / 27 tests; `test:golden` 5 / 44; `test:seeded` 1 / 2; `test` 37 / 291; core `typecheck` exit 0; web `test import-graph` 1 / 4; web `typecheck` exit 0; `fixtures:check` OK; eslint + prettier clean on touched files.

@@ -104,7 +104,11 @@ export const GLYPH_RULES: ReadonlyArray<{ from: RegExp; to: string; note: string
 export const NOISE_RULES: ReadonlyArray<{ id: string; pattern: RegExp }> = [
   {
     id: 'edgar-exhibit-wrapper',
-    pattern: /^(EX-\d+[A-Z.()0-9-]*|<?\/?(DOCUMENT|TYPE|SEQUENCE|FILENAME|DESCRIPTION|TEXT)>?.*)$/i,
+    // anchored EDGAR shapes only: "EX-99.(P)(2)", "<TYPE>10-K", "</TEXT>", "TYPE: 10-K". A plain
+    // line that merely starts with one of the words ("Documentation ☐ …", "Type of Subscriber",
+    // "Text of Section 4") is real content and is kept (P2-1).
+    pattern:
+      /^(?:[Ee][Xx]-\d+[A-Z.()0-9-]*|<\/?(?:DOCUMENT|TYPE|SEQUENCE|FILENAME|DESCRIPTION|TEXT)>.*|(?:DOCUMENT|TYPE|SEQUENCE|FILENAME|DESCRIPTION|TEXT):.*)$/,
   },
   { id: 'page-counter-n-of-m', pattern: /^(page\s+)?\d{1,3}\s+of\s+\d{1,3}$/i },
   { id: 'logo-placeholder', pattern: /^\[\s*logo\s*\]$/i },

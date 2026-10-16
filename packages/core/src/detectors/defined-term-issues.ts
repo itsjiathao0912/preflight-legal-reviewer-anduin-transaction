@@ -66,7 +66,7 @@ export function referentOf(text: string, defStart: number): string {
 
 export const FORWARD_REF_RE =
   /^[\s”"’)]{0,3}\(?\s{0,2}(?:as defined|as hereinafter defined|defined below|hereinafter)/i;
-const CAP_WORD_BEFORE_RE = /(?:^|[^.;:!?]\s)([A-Z][A-Za-z&'’-]{0,30})[,]?\s{1,2}$/;
+export const CAP_WORD_BEFORE_RE = /(?:^|[^.;:!?]\s)([A-Z][A-Za-z&'’-]{0,30})[,]?\s{1,2}$/;
 /** Capitalized function words (sentence starts) never make a use part of a proper name. */
 const FUNCTION_WORDS = new Set([
   'The',
@@ -86,7 +86,7 @@ const FUNCTION_WORDS = new Set([
   'Its',
   'All',
 ]);
-const CAP_WORD_AFTER_RE = /^,?\s{1,2}(?:[A-Z][A-Za-z&'’-]{0,30}|Inc\.|LLC|L\.P\.)/;
+export const CAP_WORD_AFTER_RE = /^,?\s{1,2}(?:[A-Z][A-Za-z&'’-]{0,30}|Inc\.|LLC|L\.P\.)/;
 
 /** A use that is not part of a longer capitalized name and not an explicit forward reference. */
 export function isStandaloneUse(text: string, start: number, end: number): boolean {

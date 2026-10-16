@@ -14,10 +14,31 @@ export function maskText(s: string): string {
   return mask(s, sensitiveSpans(s));
 }
 
-/** Mask every string fact; numbers, booleans and null pass through. */
+/** Longest string fact after masking (schema allows 1000; explain() embeds several facts). */
+export const FACT_MAX_CHARS = 400;
+
+/** Clip to n chars, ending with "…" when cut. Apply to already-masked text only. */
+export function clip(s: string, n: number): string {
+  return s.length <= n ? s : s.slice(0, Math.max(0, n - 1)) + '…';
+}
+
+/** Mask first, then cut: a clip boundary can never split a sensitive run and leak its digits (F2). */
+export function maskThenClip(s: string, n: number): string {
+  return maskText(s).slice(0, n);
+}
+
+/** "a", "b", "c", "d", "e" and 20 more — bounded label lists for long option groups (F1). */
+export function listLabels(labels: readonly string[], max = 5, each = 60): string {
+  const shown = labels.slice(0, max).map((l) => `"${maskThenClip(l, each)}"`);
+  const rest = labels.length - shown.length;
+  return rest > 0 ? `${shown.join(', ')} and ${rest} more` : shown.join(', ');
+}
+
+/** Mask every string fact (then clamp to FACT_MAX_CHARS); numbers, booleans and null pass through. */
 export function maskFacts(f: ExplainFacts): ExplainFacts {
   const out: ExplainFacts = {};
-  for (const [k, v] of Object.entries(f)) out[k] = typeof v === 'string' ? maskText(v) : v;
+  for (const [k, v] of Object.entries(f))
+    out[k] = typeof v === 'string' ? clip(maskText(v), FACT_MAX_CHARS) : v;
   return out;
 }
 
@@ -35,7 +56,7 @@ export function whereOf(g: DocGraph, blockIndex: number): string {
     const part = info.part ? `, Part ${info.part.letter}` : '';
     return `Section ${info.section.number}${part}`;
   }
-  if (info && info.scope.kind !== 'body') return info.scope.title.slice(0, 80);
+  if (info && info.scope.kind !== 'body') return maskThenClip(info.scope.title, 80);
   return 'the document';
 }
 
@@ -97,12 +118,17 @@ export function groupBySentence<T>(
   return out;
 }
 
-/** Accepted section numbers per scope id, and the set of all section numbers. */
-export function sectionIndex(g: DocGraph): {
+export interface SectionIndex {
   all: Set<string>;
   byScope: Map<string, Set<string>>;
   parts: Map<string, Set<string>>;
-} {
+}
+const sectionIndexCache = new WeakMap<DocGraph, SectionIndex>();
+
+/** Accepted section numbers per scope id, and the set of all section numbers (memoized per graph). */
+export function sectionIndex(g: DocGraph): SectionIndex {
+  const hit = sectionIndexCache.get(g);
+  if (hit) return hit;
   const all = new Set<string>();
   const byScope = new Map<string, Set<string>>();
   const parts = new Map<string, Set<string>>();
@@ -117,5 +143,7 @@ export function sectionIndex(g: DocGraph): {
     }
     byScope.set(sc.id, set);
   }
-  return { all, byScope, parts };
+  const idx = { all, byScope, parts };
+  sectionIndexCache.set(g, idx);
+  return idx;
 }

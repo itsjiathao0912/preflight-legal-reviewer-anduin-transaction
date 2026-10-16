@@ -180,8 +180,9 @@ const api: EngineApi = {
     // Phase 02: the #structure view model (pure core function, worker only; optional on the wire)
     try {
       result.structure = buildStructureView(g, result.findings);
-    } catch {
-      /* the Structure view shows its empty state */
+    } catch (e) {
+      // the Structure view shows its empty state; log a code only, never document text (F8)
+      console.warn('[engine] structure_view_failed', e instanceof Error ? e.name : 'unknown');
     }
     report({ id: 'checks', state: 'done', sub: `Done · ${n} finding${n === 1 ? '' : 's'}` });
     return result;

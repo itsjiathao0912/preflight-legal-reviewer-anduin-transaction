@@ -2,7 +2,7 @@ import type { DocGraph } from '../graph/graph';
 import { buildFinding, patternKey } from '../findings/make-finding';
 import type { Finding } from '../findings/schema';
 import type { Detector, ExplainFacts } from './registry';
-import { fact, groupBySentence, maskFacts, maskText, textOf, whereOf } from './util';
+import { fact, groupBySentence, maskFacts, maskText, maskThenClip, textOf, whereOf } from './util';
 
 /**
  * flag-drafting-note (AC10): internal drafting notes left in the document ("NTD:",
@@ -34,7 +34,7 @@ export const flagDraftingNote: Detector = {
     return groupBySentence(g, hits).map((h) => {
       const text = textOf(g, h.blockIndex);
       const marker = h.items[0]!.replace(/\s+/g, ' ').replace(/\s*:$/, ':');
-      const note = text.slice(h.matchEnd, Math.min(h.end, h.matchEnd + 160)).trim();
+      const note = maskThenClip(text.slice(h.matchEnd, h.end), 160).trim();
       const facts = maskFacts({
         marker,
         note: note || '(empty)',
