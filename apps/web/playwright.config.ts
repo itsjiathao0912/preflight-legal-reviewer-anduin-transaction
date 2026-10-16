@@ -8,7 +8,15 @@ import { defineConfig, devices } from '@playwright/test';
 // configured when the stack project is requested (`--project=stack` / `--project stack`).
 const PREVIEW_PORT = 4317;
 const PREVIEW_URL = `http://127.0.0.1:${PREVIEW_PORT}`;
-const STACK_URL = 'http://127.0.0.1:8787';
+const LOCAL_STACK_URL = 'http://127.0.0.1:8787';
+// SLICE_BASE_URL (https only) points the stack project at a deployed Worker; no local stack server then.
+const SLICE_BASE_URL = process.env['SLICE_BASE_URL'];
+if (
+  SLICE_BASE_URL !== undefined &&
+  !/^https:\/\/[a-z0-9.-]+\.workers\.dev\/?$/.test(SLICE_BASE_URL)
+)
+  throw new Error('SLICE_BASE_URL must be an https://*.workers.dev origin');
+const STACK_URL = SLICE_BASE_URL?.replace(/\/$/, '') ?? LOCAL_STACK_URL;
 
 const argv = process.argv.join(' ');
 const wantsStack = /--project[= ]stack\b/.test(argv);
@@ -43,7 +51,7 @@ export default defineConfig({
       reuseExistingServer: false,
       timeout: 180_000,
     },
-    ...(wantsStack
+    ...(wantsStack && SLICE_BASE_URL === undefined
       ? [
           {
             command: 'pnpm dev:stack',

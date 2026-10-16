@@ -235,8 +235,8 @@ async function full(): Promise<void> {
     'exec',
     'playwright',
     'test',
-    '--project',
-    'stack',
+    // `--project` is variadic in Playwright: use the `=` form so the file filter is not eaten.
+    '--project=stack',
     'e2e/slice.spec.ts',
   ]);
 }

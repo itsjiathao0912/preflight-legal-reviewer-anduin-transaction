@@ -149,3 +149,54 @@ Scope: `apps/worker/**` and `harness/phase-04a/*` only. No dependency, lockfile,
 
 ### Residual (unchanged)
 OpenRouter's real accounting of aborted or 4xx requests, and the served-model string format, are still unproven. Both need the Phase 05/10 live probe. The breaker is per-isolate until 04b. F7 (pre-limit Map.clear) is accepted.
+
+## M1 closure + deploy (17-10-26, autopilot EXECUTE)
+
+**Result: M1 SLICE CLOSURE done.** The full slice is green locally, the web regression is green, and the slice is live on workers.dev. AI is fail-closed in M1 by design: D1 arrives in Phase 04b, and there is no Turnstile widget until 04b/05.
+
+### Gates
+- `pnpm slice:check` (full): PASS. Covers core goldens, web build, worker-only checks (health 200; quota 200 `global_ok:false`; `/api/ai` 429 fail-closed; no openrouter.ai), guard:cf and secrets:scan OK, Playwright `--project=stack` `slice.spec.ts` 1 passed.
+- `pnpm --filter @aduin/web test:e2e`: 58 passed, 1 skipped (`design-probe`, opt-in, pre-existing).
+- `pnpm --filter @aduin/web test`, `pnpm --filter @aduin/worker test`, `pnpm -r typecheck`: green. eslint on changed files is clean.
+- `apps/web/e2e/slice.spec.ts` (E2, new) uses Phase 03 published testids plus the `open-another`/`loading-state` hooks that Phase 03's own fixtures use. It runs with no e2e hooks against the production build. It checks:
+  - sample #1 opens and shows real findings
+  - the "this Section 11" row expands and `finding-found` reads `this Section 11`
+  - the `doc-highlight` for that row is in the viewport
+  - dismiss with reason `tool_false_alarm` removes the row and lowers the open count by one; the gate pill reads Ready (sample #1 findings are "Fix", not blocking)
+  - `/api/quota` returns 200 with no-store and `global_ok:false`
+  - no browser request goes to openrouter.ai and there are no console errors
+
+### Deploy (E3)
+- Live URL: https://aduin-transaction-web.giathaowork.workers.dev (account workers.dev subdomain `giathaowork` already existed; none was registered).
+- Before deploying: `pnpm guard:cf && pnpm secrets:scan` OK, production `vite build`, `no-e2e-hook-in-dist` 2/2.
+- `wrangler deploy` uploaded 61 assets. The Worker is `aduin-transaction-web`, bindings are ASSETS plus 5 plain vars, deploy Version ID `5abe3038-0e48-43f2-9a7a-6db697c197c6`. After the 3 secret puts, the active version is `9dcf2f75-d8ac-419f-b33b-5a2525847ae7` (100%).
+- Secrets were piped on stdin with `wrangler secret put` and never echoed:
+  - `COOKIE_SIGNING_KEYS`: JSON `{kid: random 32-byte base64url}`
+  - `COOKIE_SIGNING_KID` = `k20261017`
+  - `OPENROUTER_API_KEY` from `~/.config/openrouter/credentials.env`
+- Not created: D1 (Phase 04b), Turnstile widget or `TURNSTILE_SECRET`.
+- Resource listing via the Cloudflare API (read-only), before and after:
+  - Workers: before `[portfolio-2026]`; after `[aduin-transaction-web (new), portfolio-2026 (modified_on unchanged 2026-10-05)]`
+  - Zone 894bc9f9… worker routes: `[]` before and after
+  - Custom domains: unchanged (itsjiathao.com and www point to portfolio-2026)
+  - D1: `[portfolio-db]` only
+  - `aduin-transaction-web` subdomain enabled. No route, custom domain or zone was touched.
+
+### Live smoke
+- `GET /` 200 text/html app shell. Deep link `/findings` 200 serves the same shell (SPA fallback).
+- `GET /api/health` 200 `{"ok":true}`.
+- `GET /api/quota` 200 JSON with no-store and `global_ok:false`, `ai.limit 3`, `ocr_pages.limit 6`. It sets the signed visitor cookie `__Host-aduin_v` (Secure, HttpOnly, SameSite=Lax, kid `k20261017`).
+- `POST /api/ai` with no Turnstile token: 401 `invalid_session` / `turnstile_missing`, no-store. With a cross-origin `Origin`: 400.
+- No `access-control-*` headers on any /api response. A grep of every response header and body for `sk-or` or `OPENROUTER_API_KEY` found nothing.
+- Headless Playwright `slice.spec.ts` against the live URL (`SLICE_BASE_URL=… --project=stack`): 1 passed (8.2s).
+
+### Deviations (within blast radius, documented)
+1. **Temporary deploy config.** The committed `wrangler.jsonc` binds D1 with a placeholder all-zero id, which `wrangler deploy` cannot resolve, and creating D1 is 04b's job. I deployed with a generated `apps/worker/.wrangler/m1/wrangler.m1.json` (gitignored, deleted after). It is the committed config minus `d1_databases` and `$schema`, with paths rebased. A generator assertion confirmed it has no routes, custom_domain or zone keys and that the name is `aduin-transaction-*`. The M1 entry never reads `env.DB`. Phase 04b should replace the placeholder id with the real one, after which plain `wrangler deploy` works.
+2. **slice-check.ts bug.** `--project stack e2e/slice.spec.ts` was parsed by Playwright as two projects (the flag is variadic). Changed to `--project=stack`.
+3. **`apps/web/playwright.config.ts` (Phase 03 file, one additive key).** Added an optional `SLICE_BASE_URL` override (must be an https `*.workers.dev` origin). When it is set, the stack project targets that URL and the local stack webServer is not started. Local default behaviour is unchanged.
+
+### Follow-ups / minor
+- `GET /api/health` has no `cache-control: no-store` (Phase 00 route, static `{ok:true}`). Minor and not fixed here; candidate for 04b or 10.
+- When the stack project runs, the `preview` webServer still starts and writes an e2e build into `apps/web/dist` (same `outDir`). Order is sequential, so the stack serves the production build. Before any deploy, rebuild with `pnpm --filter @aduin/web build` (done here, proven by `no-e2e-hook-in-dist`).
+- An untracked `packages/core/test/_tmp_count.test.ts` that was not created by this run (probably a parallel agent) made root `prettier --check` hit ENOENT. Left untouched.
+- Redeploy recipe until 04b: build web, then regenerate the no-D1 config the same way, then `wrangler deploy -c` that file.
