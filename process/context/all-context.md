@@ -93,6 +93,7 @@ For most substantial tasks:
 | `process/context/all-context.md` | any substantial planning, research, review, or implementation task |
 | `process/context/planning/all-planning.md` | creating or reviewing an implementation plan |
 | `process/context/tests/all-tests.md` | testing, verification, test fixtures, or test debugging |
+| `process/context/ui/all-ui.md` | any UI/UX design, mockup, frontend implementation or UI review task |
 
 ## Current Context Groups
 
@@ -100,6 +101,7 @@ For most substantial tasks:
 |---|---|---|
 | `planning/` | `process/context/planning/all-planning.md` | Planning conventions and plan-shape examples (SIMPLE vs COMPLEX) for writing implementation plans |
 | `tests/` | `process/context/tests/all-tests.md` | Test strategy, runners, commands and known gaps for the sub-doc QA tool (pre-code: planned shape only) |
+| `ui/` | `process/context/ui/all-ui.md` | UI/UX design direction, design skills, references, tokens and approved mockups for the sub-doc QA web app |
 <!-- /GENERATED:routing -->
 
 ## Task Routing Table
@@ -133,6 +135,7 @@ For most substantial tasks:
 | Cloudflare / OpenRouter calls, secrets | `CLAUDE.md` → Project Rules (credentials table) |
 | testing or verification | `process/context/tests/all-tests.md` |
 | creating a new plan | `process/context/planning/all-planning.md` |
+| UI/UX design, mockups, frontend look and feel | `process/context/ui/all-ui.md` |
 
 ## Context Group Lifecycle
 
