@@ -1,13 +1,56 @@
 {
   "task": "subdoc-qa-mvp phase 01 core engine: session cookie helper + frozen API contracts v1",
-  "reviewer": "vc-execute-agent self-review (independent EVL re-run and code review pending, orchestrator-owned)",
+  "reviewer": "automated vc-code-reviewer (sonnet), independent of the implementing execute-agent (re-review of fix cycle 1)",
   "decision": "approved-with-concerns",
+  "reviewDecision": "APPROVE_WITH_FIXES",
+  "date": "2026-10-17",
+  "timestamp": "2026-10-17",
+  "mustStopBeforeFinalize": false,
+  "autoStopCleared": true,
   "blockingFindings": [],
   "nonBlockingFindings": [
-    "Reviewer is the implementing agent; EVL must re-run the security/contracts gates independently before finalize.",
-    "workerd/browser conformance of vectors and cookie helper not proven until P04b/P03 (known-gap, owner phases named)."
+    "OPEN LOW F9-followup: packages/core/test/zz_probe.test.ts is deleted in the working tree (git status shows D) but still tracked in HEAD 6d12628; orchestrator must commit the deletion (git rm / git add -u) so the 35 s probe test leaves the suite.",
+    "OPEN LOW F3 packages/core/src/memory/mask.ts ACCOUNT_NUMBER_RE: bounded/ReDoS-safe but misses >31-digit runs and alpha-prefixed numbers (IBAN, ACCT12345678); 6-digit minimum masks unrelated numbers. Known gap, follow-up.",
+    "OPEN LOW F7 test/property/memory-label-matrix.test.ts: DATA_MODEL_CHECK is a hard-coded copy of the doc list (matches today); cannot detect later drift. Known gap.",
+    "OPEN LOW F8 licensing: add sax (BlueOak-1.0.0), pako (MIT AND Zlib), jszip (MIT OR GPL-3.0, elect MIT) to THIRD_PARTY_NOTICES.md; deferred to after phase 03 (file owned by phase 03). Must not be dropped at release.",
+    "NEW LOW: Finding.detail.explanation / detail.facts (ref-label-coherence noun_window and cited text, undefined-term first_context) embed short raw document text that is NOT run through mask(); only quote, quote_snippet and quote_hash are masked. Windows are 4 tokens / a short regex match so exposure is unlikely, but P03/P04 persistence should either mask detail strings with the same sensitiveSpans or document that detail is non-persisted. Also AiFindingSchema (contracts/ai.ts) quotes come from the LLM path (P04): that path must call the same masking before hashing; no AI finding builder exists in core yet.",
+    "NEW LOW/INFO: worst-case 10 MB flat input (e.g. 2M one-char <p> blocks) costs ~3.7 s of CPU in htmlToLines (linear, not quadratic). Acceptable for Node/tests; P04a must front it with a Worker body cap and CPU budget (Workers CPU limits) rather than rely on core alone. Rejecting >16384 open elements is a deliberate product tradeoff: real EDGAR sub docs peak at depth 16; a legitimately deeper document would receive payload_too_large (misleading message for a nesting rejection, consider a dedicated error code or message in the API contract in a future bump; do not change frozen v1 codes now).",
+    "Info: Date.now() adapter_ms remains a nondeterministic stats field (not hashed). Known gap carried from implementer: workerd/browser conformance of vectors and cookie helper not proven until P04b/P03."
   ],
-  "notes": "mustStopBeforeFinalize stays true until EVL confirms.",
-  "rationale": "All tamper/expiry/kid cases rejected by tests; shapes frozen by snapshot.",
-  "timestamp": "2026-10-17"
+  "notes": "Re-review of fix cycle 1 complete. F1 (High) and F2 (Medium) are resolved with no new high or critical findings and no regression in golden/contracts/security/full suites. Auto-stop cleared. Remaining items are low and tracked in nonBlockingFindings. Adversarial-validation.json unchanged: its ReDoS entry should be read as now covering nested-tag work amplification (nesting-dos.test.ts); update it in a later pass if desired.",
+  "rationale": "Quadratic nesting DoS eliminated and verified independently; default-on masking closes the finding quote/hash leak; real documents are far below the new depth cap. Only low-severity housekeeping remains.",
+  "resolvedFindings": [
+    "F1 RESOLVED: frame-local inherited state (O(1) per text node), MAX_FRAME_DEPTH=256, MAX_PARSE_DEPTH=16384 -> payload_too_large. Independently re-measured outside the repo: <b>a x80000 = 40 ms, <div>a x80000 = 77 ms, ~10 MB <span>x = 103 ms, all rejected with payload_too_large (was 6.8 s / 20.9 s / hours). Depth 16384 still parses in 57 ms (so htmlparser2 unshift cost is negligible at the cap); 17000 rejected. Width attacks are linear: 10 MB flat <b>a</b> 1.2 s, 300k table rows 1.1 s, 2M <p> lines 3.7 s, single 10 MB line 1.8 s. 12 real sub-doc samples (samples/sub-docs/raw/*.htm): max open depth 8-16 (cap is ~1000x headroom), all parse with no rejection, 4-30 ms each.",
+    "F2 RESOLVED: buildFinding merges sensitiveSpans(snap.quote) with input.sensitive before mask(); quote, quote_snippet and quote_hash all derive from the masked text. buildFinding is the only Finding constructor in core src (the 3 detectors all call it; grep for quote_hash/quote_snippet/FindingSchema finds no other builder). Test finding-mask.test.ts asserts #0021 in quote and snippet and hash == sha256(normalize(masked)). Mask merge handles overlapping default+detector spans.",
+    "F4 RESOLVED: non-finite nowS returns expired (fail closed). F5 RESOLVED: value.length checked before encode; b64urlDecode round-trip canonical check (empty/short sig and bad padding still rejected). F6 RESOLVED: string length precheck before TextEncoder. Info localeCompare RESOLVED (plain < / >). F9 file deleted in working tree (see low item below: deletion is not yet committed)."
+  ],
+  "reReview": {
+    "date": "2026-10-17",
+    "scope": "fix cycle 1: html.ts, make-finding.ts, cookie.ts, references.ts, new tests nesting-dos/finding-mask, extended cookie tests",
+    "verified": [
+      "pnpm --filter @aduin/core test security: 5 files / 25 tests pass",
+      "test:golden: 5 files / 44 pass",
+      "test contracts: 1 file / 34 pass (schema snapshot untouched)",
+      "full core test: 25 files / 226 pass",
+      "independent probes in scratchpad outside repo (F1 shapes, depth boundary, width attacks, 12 real samples)"
+    ],
+    "newHighOrCritical": 0,
+    "previousFindings": {
+      "blockingFindings": [
+        "F1 HIGH packages/core/src/adapters/html.ts:229-455 (htmlToLines): CPU DoS via deeply nested tags. The 10 MB size cap does not bound work: stack.some() per text node (ontext), currentIndent() per line start and the onclosetag back-scan are O(depth), so total cost is quadratic in nesting depth. Measured: '<b>a' x80000 (320 KB) = 6.8 s, '<div>a' x80000 (480 KB) = 20.9 s, 10 MB would run for hours. Input is attacker-controlled (anonymous visitor upload). The redos test (test/security/redos.test.ts) only covers flat single-line regex input, not nesting depth. Fix: cap frame-stack depth (e.g. 256, frames beyond the cap are not pushed/counted) and maintain hasClass count and indent sum incrementally instead of rescanning; add a nesting-depth case (500 KB of '<div>a') with a time budget to redos.test.ts."
+      ],
+      "nonBlockingFindings": [
+        "F2 MEDIUM packages/core/src/findings/make-finding.ts:44-48: masking is opt-in. buildFinding only masks spans passed in input.sensitive and no P01 detector passes any, so a quote sentence containing an account/routing number would be stored raw in quote, quote_snippet and hashed raw into quote_hash. Fix: default spans to sensitiveSpans(snap.quote) merged with input.sensitive, plus a test that a sentence containing 'ABA 021000021' yields '#0021' in quote, quote_snippet and a hash equal to the hash of the masked text.",
+        "F3 LOW packages/core/src/memory/mask.ts:36 ACCOUNT_NUMBER_RE: bounded and ReDoS-safe, but misses digit runs longer than 31 digits and alpha-prefixed numbers (IBAN, 'ACCT12345678') because of the \\b anchors; the 6-digit minimum also masks unrelated numbers. Document as known gap or widen.",
+        "F4 LOW packages/core/src/session/cookie.ts:117-118: verifyCookie fails open if nowS is NaN (exp <= NaN and iat > NaN are both false). Add Number.isFinite(nowS) guard returning an error. Callers also must pass epoch SECONDS (ms fails closed as expired).",
+        "F5 LOW packages/core/src/session/cookie.ts:37-47 b64urlDecode uses atob which discards non-zero trailing bits, so the signature segment is malleable (several strings verify). Harmless for a bearer cookie, but reject non-canonical encodings (re-encode and compare) if cookies are ever used as unique ids. Also signCookie does not enforce that the supplied key corresponds to claims.kid (documented, caller's job); and the size cap at line 86 encodes the whole value before checking, prefer value.length > max first.",
+        "F6 LOW packages/core/src/adapters/html.ts:225: string input is fully UTF-8 encoded before the size check; check input.length first (a string longer than the cap in UTF-16 units is always larger than cap/3 bytes) to avoid allocating huge buffers. Worker body caps (otherBodyBytes) should front this in P04a.",
+        "F7 LOW test/property/memory-label-matrix.test.ts:10: DATA_MODEL_CHECK is a hard-coded copy, not parsed from DATA-MODEL. It matches the doc today (line 216: new, previously_dismissed, already_answered, awaiting_counsel, dismissed_reconfirm; verified) but cannot detect later doc drift.",
+        "F8 LOW licensing: all prod deps are MIT/BSD/Apache/ISC except transitive sax (BlueOak-1.0.0, permissive, not on the stated allow-list), pako (MIT AND Zlib) and jszip (MIT OR GPL-3.0; elect MIT). Add these to THIRD_PARTY_NOTICES.md. mammoth/unpdf/diff are declared but not imported by core src in P01 (no ideas-only port found in code; none is recorded in the report either).",
+        "F9 PROCESS MEDIUM: scratch file packages/core/test/zz_probe.test.ts (created by this review for the DoS measurement and deleted from the working tree) was swept into HEAD 6d12628 by a concurrent commit. Remove it with a follow-up commit (git rm packages/core/test/zz_probe.test.ts); it is a slow 35 s test and must not stay in the suite.",
+        "Info: Date.now() in adapter_ms is a nondeterministic stats field (excluded from the determinism test, not part of findings/graph). Do not feed graph.stats into cache keys or hashes. localeCompare in references.ts:286 sorts ASCII form names only; use plain < comparison for host-independent order.",
+        "Known gap carried from implementer: workerd/browser conformance of vectors and cookie helper not proven until P04b/P03."
+      ]
+    }
+  }
 }

@@ -283,7 +283,10 @@ export function extractReferences(ctx: Ctx): RefInfo[] {
     }
   });
   out.sort(
-    (a, b) => a.blockIndex - b.blockIndex || a.start - b.start || a.form.localeCompare(b.form),
+    (a, b) =>
+      a.blockIndex - b.blockIndex ||
+      a.start - b.start ||
+      (a.form < b.form ? -1 : a.form > b.form ? 1 : 0),
   );
   return out;
 }

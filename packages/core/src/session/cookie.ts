@@ -40,6 +40,8 @@ export function b64urlDecode(s: string): Uint8Array | null {
     const bin = atob(s.replace(/-/g, '+').replace(/_/g, '/') + pad);
     const out = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    // reject non-canonical encodings (non-zero trailing bits) so each value has one encoding
+    if (b64urlEncode(out) !== s) return null;
     return out;
   } catch {
     return null;
@@ -83,6 +85,10 @@ export async function verifyCookie(
   keys: KeyMap,
   nowS: number,
 ): Promise<VerifyResult> {
+  // fail closed on a non-finite clock (NaN/Infinity would make every exp/iat comparison pass or fail oddly)
+  if (!Number.isFinite(nowS)) return { ok: false, reason: 'expired' };
+  // UTF-8 bytes >= UTF-16 units: reject huge strings before encoding them
+  if (value.length > limits.cookieMaxBytes) return { ok: false, reason: 'oversize' };
   if (enc.encode(value).byteLength > limits.cookieMaxBytes)
     return { ok: false, reason: 'oversize' };
   const dot = value.indexOf('.');

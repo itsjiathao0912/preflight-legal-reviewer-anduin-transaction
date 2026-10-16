@@ -40,6 +40,21 @@
       "scenario": "Hash brute-force of masked account numbers",
       "ruled_out": false,
       "rationale": "by design only last 4 digits enter the hash (DATA-MODEL 2.2, user decision); sensitive_data severity capped at medium so collisions cannot hide blocking items"
+    },
+    {
+      "scenario": "Nesting DoS: deeply nested unclosed tags (<b>a x80000, <div>a x80000, ~10 MB <span> nest) driving quadratic stack scans in htmlToLines and htmlparser2 (Array#unshift stack)",
+      "ruled_out": true,
+      "rationale": "Fix cycle 1 (F1): inherited bold/align/indent/class computed once per frame (O(1) lookups), frame stack capped at MAX_FRAME_DEPTH=256 (deeper elements counted, not stored; close back-scan bounded by 256), total open depth > MAX_PARSE_DEPTH=16384 rejected with payload_too_large. test/security/nesting-dos.test.ts: all three inputs finish < 1500 ms budget (local: well under 100 ms each); depth 16368 still parsed and bold; goldens unchanged."
+    },
+    {
+      "scenario": "Detector omits sensitive spans so a raw routing/account number leaks into quote / quote_snippet / quote_hash",
+      "ruled_out": true,
+      "rationale": "Fix cycle 1 (F2): buildFinding always merges sensitiveSpans(snap.quote) with detector spans; test/security/finding-mask.test.ts asserts ABA 021000021 -> #0021 in quote and snippet and quote_hash == sha256(normalize(masked))."
+    },
+    {
+      "scenario": "verifyCookie called with NaN/Infinity clock makes exp/iat checks pass",
+      "ruled_out": true,
+      "rationale": "Fix cycle 1 (F4): Number.isFinite(nowS) guard fails closed; cookie.test.ts covers NaN/+Inf/-Inf."
     }
   ]
 }

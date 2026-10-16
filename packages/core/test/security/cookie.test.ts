@@ -121,3 +121,19 @@ describe('cookie-security-matrix', () => {
     await expect(signCookie(claims, 'short')).rejects.toThrow(/32 bytes/);
   });
 });
+
+describe('cookie clock + encoding hardening', () => {
+  it('fails closed on a non-finite nowS', async () => {
+    const c = await signCookie(claims, k1);
+    for (const n of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])
+      expect((await verifyCookie(c, keys, n)).ok).toBe(false);
+  });
+  it('rejects non-canonical base64url and huge strings', async () => {
+    expect(b64urlDecode('QR')).toBeNull(); // canonical is "QQ"
+    expect(b64urlDecode('QQ')).not.toBeNull();
+    expect(await verifyCookie('a'.repeat(1_000_000), keys, NOW)).toEqual({
+      ok: false,
+      reason: 'oversize',
+    });
+  });
+});

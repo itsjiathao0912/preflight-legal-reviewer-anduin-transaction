@@ -25,3 +25,5 @@ iteration	timestamp	gaps_found	fail_count	concern_count	applied	saturation_statu
 23	2026-10-17	3	0	3	3	ACTIVE	CONTINUE	phase=03 supplement cycle 3 applied (re-target app.html + G4/G5 + D-2/D-4/D-7); re-validate
 24	2026-10-17	0	0	0	3	SATURATED	HALTED_SUCCESS	phase=03 Gate: PASS after 3 supplement cycles (app.html target; user-confirmed 4 choices; E4-E11 scaffold instructions)
 25	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	phase=01 EVL all gates green; committed (security review pending)
+26	2026-10-17	3	1	2	0	ACTIVE	CONTINUE	phase=01 evl cycle 1: security review APPROVE_WITH_FIXES (F1 high nested-tag DoS, F2 masking default, F9 probe file); scoped fix
+27	2026-10-17	0	0	0	7	SATURATED	HALTED_SUCCESS	phase=01 evl cycle 1 fixes verified by re-review (APPROVE_WITH_FIXES low only; autoStop cleared)

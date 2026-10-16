@@ -1,7 +1,7 @@
 import { limits } from '../config/limits';
 import { makeAnchor } from '../model/anchors';
 import type { DocGraph } from '../graph/graph';
-import { mask, type Span } from '../memory/mask';
+import { mask, sensitiveSpans, type Span } from '../memory/mask';
 import { quoteHash } from '../memory/fingerprint';
 import { snapToSentence } from '../memory/snap';
 import { findingId } from './ids';
@@ -43,7 +43,9 @@ export function buildFinding(g: DocGraph, input: FindingInput): Finding {
   const snap = snapToSentence(text, input.matchStart, input.matchEnd);
   const spans = (input.sensitive ?? [])
     .map((s) => ({ start: s.start - snap.start, end: s.end - snap.start }))
-    .filter((s) => s.end > 0 && s.start < snap.quote.length);
+    .filter((s) => s.end > 0 && s.start < snap.quote.length)
+    // default-on masking: account/routing-like digit runs in the quote are always masked (F2)
+    .concat(sensitiveSpans(snap.quote));
   const masked = mask(snap.quote, spans);
   const qh = quoteHash(masked);
   const anchor = makeAnchor(block.anchor.docHash, block.id, snap.start, snap.end);

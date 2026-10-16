@@ -195,3 +195,19 @@ None added. `fixtures/memory/law-firms.json` is new and imported by `memory/firm
 
 Drift score: MEDIUM (3 signals: >=10 files touched, backlog/follow-up notes written, structural context-group addition)
 Recommend UPDATE PROCESS -- significant changes detected.
+
+## Fix cycle 1 (security review findings, 17-10-26)
+
+Scope: packages/core only + harness/phase-01. No frozen contract/schema, error code, or golden count changed.
+
+- **F1 (High) fixed** — `src/adapters/html.ts`: frames carry inherited bold/source/align/indent/class (O(1) per text node, no stack rescans); frame stack capped at `MAX_FRAME_DEPTH=256` (deeper elements tracked by a counter, close back-scan bounded by 256). Profiling showed htmlparser2 12's own open-element stack uses `Array#unshift`, so the library itself is quadratic in depth; added `MAX_PARSE_DEPTH=16384` total open depth, beyond which the input is rejected with existing code `payload_too_large`. Consequence: `'<b>a'x80000`, `'<div>a'x80000` and a ~10 MB `<span>` nest are rejected cleanly in a few ms instead of parsed; depth 16368 still parses (bold preserved). Budget 1500 ms (>10x CI headroom; pre-fix took seconds). Test: `test/security/nesting-dos.test.ts`.
+- **F2 (Medium) fixed** — `src/findings/make-finding.ts` merges `sensitiveSpans(snap.quote)` into detector spans. Test: `test/security/finding-mask.test.ts`. Fingerprint vectors and goldens unchanged.
+- **F4 fixed** — `verifyCookie` fails closed (`expired`) on non-finite `nowS`; tests added to `test/security/cookie.test.ts`.
+- **F5 fixed** — `value.length` checked before UTF-8 encode; `b64urlDecode` rejects non-canonical encodings (re-encode round-trip).
+- **F6 fixed** — string input `length > maxHtmlBytes` rejected before `TextEncoder` (UTF-8 bytes >= UTF-16 units); byte cap kept.
+- **F9 fixed** — `test/zz_probe.test.ts` deleted (orchestrator to `git rm`).
+- **Info fixed** — `references.ts` sort uses plain `<`/`>` instead of `localeCompare`. `adapter_ms` is not part of any hash (unchanged).
+- **Known gaps (not fixed this cycle):** F3, F7 — recorded as known gaps for follow-up; F8 (third-party notices) deferred until after phase 03 because `THIRD_PARTY_NOTICES.md` is owned by the phase 03 agent.
+- **Deviation (within blast radius):** the F1 brief said 80k-nesting inputs "finish under budget"; they finish by clean rejection rather than full parse, because the quadratic cost is inside htmlparser2 (not patchable without dependency changes, which are out of scope).
+
+Gates (all green): core `test` 25 files / 226 tests; `test:golden` 44; `test:property` 29; `test:corpus` 13; `test:vectors` 38; `test security` 25; `test contracts` 34 (schema snapshot untouched); `pnpm --filter @aduin/core typecheck` clean; `eslint packages/core` clean; prettier clean on changed files. Repo-wide typecheck/lint not run (apps/web and apps/worker being edited in parallel).

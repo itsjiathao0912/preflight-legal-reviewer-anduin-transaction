@@ -145,7 +145,23 @@ interface Frame {
   align?: 'left' | 'center' | 'right';
   indent?: number;
   hasClass: boolean;
+  /** Inherited (effective) values, computed once at push so lookups are O(1). */
+  effBold: boolean;
+  effSource?: 'tag' | 'inline_css';
+  effAlign?: 'left' | 'center' | 'right';
+  effIndent: number;
+  effHasClass: boolean;
 }
+
+/** Max tracked element depth; deeper elements are text containers that add no frame (F1 nesting DoS). */
+export const MAX_FRAME_DEPTH = 256;
+/**
+ * Hard cap on total open-element depth. htmlparser2 keeps its own open-element stack with
+ * Array#unshift (O(depth) per open), so unbounded nesting is quadratic inside the library.
+ * Past this depth the document is rejected (payload_too_large) instead of parsed; real filings
+ * nest a few dozen levels, and 16384 keeps the worst-case library cost to tens of ms.
+ */
+export const MAX_PARSE_DEPTH = 16384;
 
 interface Run {
   text: string;
@@ -222,6 +238,10 @@ function splitLong(text: string, max: number): string[] {
 
 export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
   const t0 = Date.now();
+  // UTF-8 byte length >= UTF-16 unit count, so this rejects before allocating the encoded copy.
+  if (typeof input === 'string' && input.length > limits.maxHtmlBytes) {
+    throw new CoreError('payload_too_large', `HTML input exceeds ${limits.maxHtmlBytes} bytes`);
+  }
   const bytesArr = typeof input === 'string' ? new TextEncoder().encode(input) : input;
   if (bytesArr.byteLength > limits.maxHtmlBytes) {
     throw new CoreError('payload_too_large', `HTML input exceeds ${limits.maxHtmlBytes} bytes`);
@@ -241,22 +261,9 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
   const lines: Line[] = [];
   const noise: NoiseRemoval[] = [];
 
-  const currentBold = (): { bold: boolean; source?: 'tag' | 'inline_css' } => {
-    for (let i = stack.length - 1; i >= 0; i--) {
-      const f = stack[i]!;
-      if (f.weight !== undefined) return { bold: f.weight, source: f.weightSource };
-    }
-    return { bold: false };
-  };
-  const currentAlign = (): Frame['align'] => {
-    for (let i = stack.length - 1; i >= 0; i--) if (stack[i]!.align) return stack[i]!.align;
-    return undefined;
-  };
-  const currentIndent = (): number => {
-    let sum = 0;
-    for (const f of stack) sum += f.indent ?? 0;
-    return sum;
-  };
+  /** Count of open non-void elements beyond MAX_FRAME_DEPTH (not tracked as frames). */
+  let overflowDepth = 0;
+  const top = (): Frame | undefined => stack[stack.length - 1];
 
   const flush = () => {
     lineHasText = false;
@@ -361,6 +368,12 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
   const parser = new Parser(
     {
       onopentag(name, attribs) {
+        if (!VOID_TAGS.has(name) && stack.length + overflowDepth + skipDepth >= MAX_PARSE_DEPTH) {
+          throw new CoreError(
+            'payload_too_large',
+            `HTML nesting exceeds ${MAX_PARSE_DEPTH} open elements`,
+          );
+        }
         if (skipDepth > 0 || SKIP_TAGS.has(name)) {
           if (!VOID_TAGS.has(name)) skipDepth++;
           return;
@@ -379,7 +392,13 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
           flush();
         }
         const style = attribs.style;
-        const frame: Frame = { tag: name, hasClass: Boolean(attribs.class) };
+        const frame: Frame = {
+          tag: name,
+          hasClass: Boolean(attribs.class),
+          effBold: false,
+          effIndent: 0,
+          effHasClass: false,
+        };
         const sw = styleWeight(style);
         if (sw !== undefined) {
           frame.weight = sw;
@@ -395,20 +414,38 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
         if (name === 'center') frame.align = 'center';
         const im = style ? INDENT_RE.exec(style) : null;
         if (im) frame.indent = toPt(Number(im[1]), im[2]);
-        if (!VOID_TAGS.has(name)) stack.push(frame);
+        if (VOID_TAGS.has(name)) return;
+        if (stack.length >= MAX_FRAME_DEPTH) {
+          overflowDepth++;
+          return;
+        }
+        const parent = top();
+        if (frame.weight !== undefined) {
+          frame.effBold = frame.weight;
+          frame.effSource = frame.weightSource;
+        } else if (parent) {
+          frame.effBold = parent.effBold;
+          frame.effSource = parent.effSource;
+        }
+        frame.effAlign = frame.align ?? parent?.effAlign;
+        frame.effIndent = (parent?.effIndent ?? 0) + (frame.indent ?? 0);
+        frame.effHasClass = frame.hasClass || (parent?.effHasClass ?? false);
+        stack.push(frame);
       },
       ontext(raw) {
         if (skipDepth > 0) return;
         const text = remapCp1252(raw);
         if (!text) return;
-        const { bold, source } = currentBold();
+        const t = top();
+        const bold = t?.effBold ?? false;
+        const source = t?.effSource;
         if (!lineHasText) {
-          lineAlign = currentAlign();
-          lineIndent = currentIndent();
+          lineAlign = t?.effAlign;
+          lineIndent = t?.effIndent ?? 0;
         }
         if (/\S/.test(text)) lineHasText = true;
         if (bold && source && text.trim()) lineSource = lineSource ?? source;
-        if (stack.some((f) => f.hasClass)) lineHasClass = true;
+        if (t?.effHasClass) lineHasClass = true;
         runs.push({ text, bold });
       },
       onclosetag(name) {
@@ -417,7 +454,12 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
           return;
         }
         if (VOID_TAGS.has(name)) return;
-        // pop to the matching frame (tolerant of mis-nesting)
+        if (overflowDepth > 0) {
+          // closes an untracked deep element; no frame to pop
+          overflowDepth--;
+          return;
+        }
+        // pop to the matching frame (tolerant of mis-nesting); bounded by MAX_FRAME_DEPTH
         for (let i = stack.length - 1; i >= 0; i--) {
           if (stack[i]!.tag === name) {
             stack.length = i;
