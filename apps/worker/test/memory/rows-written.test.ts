@@ -6,7 +6,7 @@ import { measureAi, measureEndpoints } from './budget-probe';
 const CAPS: Record<string, number> = {
   session: 120,
   runs: 12,
-  findings_50: 60,
+  findings_25: 35,
   lookup_200: 0,
   decision_dismiss_with_proposal: 25,
   decision_supersede: 15,
@@ -29,10 +29,11 @@ describe('rows-written (AC40 interim, M1)', () => {
       expect(m[name]!.rowsWritten, name).toBeLessThanOrEqual(cap);
   });
 
-  test('a 50-finding chunk writes about one row per finding (no secondary index on finding)', async () => {
+  test('a 25-finding chunk (server cap, S10/L5) writes about one row per finding (no secondary index)', async () => {
     const m = await measureEndpoints();
-    expect(m['findings_50']!.rowsWritten).toBeGreaterThanOrEqual(50);
-    expect(m['findings_50']!.rowsWritten).toBeLessThanOrEqual(55);
+    expect(m['findings_25']!.rowsWritten).toBeGreaterThanOrEqual(25);
+    // 25 finding rows + run recount + the M1 request and findings claims (1 row each)
+    expect(m['findings_25']!.rowsWritten).toBeLessThanOrEqual(30);
   });
 
   test('the AI path writes only claims, cache and ledger rows', async () => {

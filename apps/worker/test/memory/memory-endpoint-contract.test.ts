@@ -272,7 +272,7 @@ describe('memory-endpoint-contract (frozen Contracts v1)', () => {
     );
     expect(ids.size).toBe(page.events.length + au2.body.events.length); // keyset: no overlap
     const health = await call(h, 'GET', '/api/memory/health');
-    expect(health.body).toMatchObject({ ok: true, schema_version: '4', seed_mode: '0' });
+    expect(health.body).toMatchObject({ ok: true, schema_version: '5', seed_mode: '0' });
     expect((await call(h, 'GET', '/api/health')).body).toEqual({ ok: true });
   });
 });

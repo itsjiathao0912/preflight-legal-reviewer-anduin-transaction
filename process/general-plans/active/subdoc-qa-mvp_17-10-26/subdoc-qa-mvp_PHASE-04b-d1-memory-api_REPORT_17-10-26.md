@@ -137,3 +137,36 @@ Measured budgets (local, through `db/meta.ts`):
 - `@aduin/scripts` now depends on `@aduin/core` (`workspace:*`); lockfile +3 lines. No new third-party dependency.
 
 Follow-up stubs created: none (both LOW residuals are recorded in `adversarial-validation.json` for the reviewer to classify). CONTEXT_PARTIAL: none.
+
+## Fix cycle 1 (2026-10-17, review-decision.json APPROVE_WITH_FIXES: M1, L1-L6)
+
+Base HEAD 7a7f421, no commit. Scope: apps/worker/** + harness/phase-04b/adversarial-validation.json + this plan/report. No edits to packages/core, apps/web, lockfile or package.json files; review-decision.json untouched.
+
+### What was fixed
+- **M1 write flood**: `memoryCtx(write:true)` (now `verifySession` + `resolveSession`) claims a per-workspace daily counter through the existing guarded quota_counter UPSERT right after liveness (scope `rate`, key `mw|req|<ws>|<day>`, cap 600). POST /api/runs also claims `mw|run` (cap 5/day), findings claim `mw|fnd` by chunk size (cap 2,000/day). Refusal: 429 `rate_limited` with reason `workspace_write_limit` / `workspace_run_limit` / `workspace_findings_limit` and retry-after; nothing is written. Caps live in code (`MEMORY_WRITE_CAPS`, apps/worker/src/platform/index.ts).
+- **L1**: the session degrade path no longer refunds the per-IP claim.
+- **L6**: at the global cap, a request carrying a live sandbox cookie gets that sandbox back (same w/a, kind sandbox) instead of the 'ro' cookie.
+- **L2**: `parseWith` enforces `ID_RE` on `client_op_id` and `finding_ref` (400 `id_charset`); finding ids are checked against `ID_RE`; `anchor.blockId`, `detector_id`, `model` pass through `maskFree` before persisting.
+- **L3**: new migration `0005_demo_protection_gaps.sql` (UPDATE triggers on review_run, counsel_answer, fund, document, analyst; DELETE triggers on firm_rule, rule_evidence, analyst, fund, document, review_run, finding, finding_state, counsel_question); schema_version '5'. 0002 untouched.
+- **L4**: rule approve/reject/revoke use `AUDIT_SQL.insertIfRuleStatus` (audit row only if the rule is still in the expected prior status) and check the UPDATE's `meta.changes`; 0 → replayed result, else 409 `conflict_active_decision` with reason `rule_<current status>`.
+- **L5**: every memory POST runs header guards → cookie signature check (no DB) → capped body read/parse → liveness (+ write claim). Findings chunks over 25 are 413 `payload_too_large` reason `findings_chunk`.
+
+### Files changed
+- src: memory/ctx.ts, memory/http.ts, memory/health.ts, memory/repo/audit.ts, memory/repo/finding.ts, platform/index.ts, routes/memory/{counsel,decisions,export,lookup,rules,runs,session}.ts
+- migrations: 0005_demo_protection_gaps.sql (new)
+- tests (new): test/memory/memory-write-limits.test.ts (11), test/memory/session-degrade-bounds.test.ts (3)
+- tests (updated): budget-probe.ts, demo-workspace-not-polluted (+3 L3 tests), memory-endpoint-contract (schema_version 5), memory-guards-matrix (verify-first order), migrations (0005), query-budget / rows-written (findings_25), session-cookie-workerd (L1: IP claim kept)
+- evidence: harness/phase-04b/adversarial-validation.json (+7 scenarios incl. the M1 write flood)
+
+### Test gate outcomes (fresh run)
+- 36 single-token runs (32 memory tokens + s08-sql-surface + the 2 new files + seams + proxy): all rc=0 (e.g. memory-guards-matrix 45, query-budget 2, rows-written 3, demo-workspace-not-polluted 7, memory-write-limits 11, session-degrade-bounds 3, proxy 141, seams 6).
+- `pnpm --filter @aduin/worker test`: 47 files / 434 tests passed.
+- `pnpm seed:check` OK; `pnpm typecheck` OK; `pnpm lint` OK (eslint + prettier); `pnpm guard:cf` OK; `pnpm secrets:scan` OK; validate-risk-artifacts.mjs on harness/phase-04b: 0 warnings, 0 failures.
+
+### Deviations
+Recorded in the plan under `## Deviations` → "Fix cycle 1 deviations" (verify-first changes 413/400 to 401 for cookie-less requests; findings_50 → findings_25 budget key; L4 409 carries status in `reason` because the frozen ConflictBody `current` is an ActiveDecision; schema_version 5; maskFree instead of charset rejection for blockId/detector_id/model).
+
+### Forward preview additions
+- Phase 10 must apply migrations 0001-0005 (writes are 503 until schema_version is 5) and set TURNSTILE_SECRET (L6 note).
+- The web client must send findings in chunks of at most 25 (it already does per S10) and handle 429 `workspace_*_limit` as a soft failure in the outbox.
+- review-decision.json `pendingFixes` still lists M1, L1-L6; the reviewer (not this agent) should re-review and move them to `resolvedFindings`.

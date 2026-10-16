@@ -21,6 +21,7 @@ import {
 } from '../proxy/guards';
 import { classifyBatchError } from '../db/tx';
 import { ID_RE } from '../db/ids';
+import { resolveSession, verifySession, type MemoryCtx } from './ctx';
 
 export const MEMORY_BODY_CAP = limits.otherBodyBytes; // 64 KB
 export const FINDINGS_BODY_CAP = limits.aiBodyBytes; // 128 KB
@@ -99,6 +100,22 @@ export async function readJsonBody(
   return parseJsonObject(await readBodyCapped(request, cap));
 }
 
+/**
+ * Mutating/POST entry (review L5): header guards, then the cookie signature check (no DB), and
+ * only then the capped body read + JSON parse, then liveness (+ the M1 write claim for writes).
+ */
+export async function postEntry(
+  request: Request,
+  env: { DB?: D1Database },
+  now: number,
+  opts: { write: boolean; cap?: number },
+): Promise<{ ctx: MemoryCtx; raw: Record<string, unknown> }> {
+  writeHeaderGuards(request);
+  const s = await verifySession(request, env, now, { write: opts.write });
+  const raw = parseJsonObject(await readBodyCapped(request, opts.cap ?? MEMORY_BODY_CAP));
+  return { ctx: await resolveSession(s), raw };
+}
+
 /** Read guards (GET): client header only, no body. */
 export function readGuards(request: Request): void {
   checkClientHeader(request);
@@ -110,9 +127,20 @@ export function writeHeaderGuards(request: Request): void {
   checkJsonContentType(request);
 }
 
+/** Persisted client-chosen id fields checked against ID_RE after every schema parse. */
+const SAFE_ID_KEYS = ['client_op_id', 'finding_ref'] as const;
+
 export function parseWith<S extends z.ZodType>(schema: S, raw: unknown): z.infer<S> {
   const r = schema.safeParse(raw);
   if (!r.success) throw new ProxyError('invalid_request', 'schema');
+  // Review L2: client-chosen ids that are persisted must use the safe Id charset.
+  const d = r.data as unknown;
+  if (d && typeof d === 'object')
+    for (const k of SAFE_ID_KEYS) {
+      const v = (d as Record<string, unknown>)[k];
+      if (typeof v === 'string' && !ID_RE.test(v))
+        throw new ProxyError('invalid_request', 'id_charset');
+    }
   return r.data;
 }
 

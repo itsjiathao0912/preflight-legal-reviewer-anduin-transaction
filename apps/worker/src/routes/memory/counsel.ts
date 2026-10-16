@@ -14,8 +14,7 @@ import {
 import type { Handler } from '../../app';
 import { ProxyError, jsonNoStore } from '../../proxy/errors';
 import { newId } from '../../db/ids';
-import { memoryCtx } from '../../memory/ctx';
-import { handle, ok, parseWith, readJsonBody, type MemoryDeps } from '../../memory/http';
+import { handle, ok, parseWith, postEntry, type MemoryDeps } from '../../memory/http';
 import { maskFree, maskOpt, snippetOf } from '../../memory/mask';
 import { auditStmt } from '../../memory/repo/audit';
 import {
@@ -38,8 +37,7 @@ import { fingerprintOk, onBatchError } from './decisions';
 
 export function counselQuestionHandler(deps: MemoryDeps): Handler {
   return handle(deps, 'counsel_questions', async (request, env) => {
-    const raw = await readJsonBody(request);
-    const ctx = await memoryCtx(request, env, deps.now(), { write: true });
+    const { ctx, raw } = await postEntry(request, env, deps.now(), { write: true });
     const body = parseWith(CounselQuestionRequestSchema, raw);
     const withFinding = await ctx.db
       .prepare(RUN_SQL.latestWithFinding)
@@ -91,8 +89,7 @@ export function counselQuestionHandler(deps: MemoryDeps): Handler {
 
 export function counselAnswerHandler(deps: MemoryDeps): Handler {
   return handle(deps, 'counsel_answers', async (request, env) => {
-    const raw = await readJsonBody(request);
-    const ctx = await memoryCtx(request, env, deps.now(), { write: true });
+    const { ctx, raw } = await postEntry(request, env, deps.now(), { write: true });
     const body = parseWith(CounselAnswerRequestSchema, raw);
     const q = await questionById(ctx, body.question_id);
     if (!q) throw new ProxyError('invalid_request', 'question_not_found');

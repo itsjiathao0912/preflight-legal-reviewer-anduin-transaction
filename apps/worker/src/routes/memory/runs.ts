@@ -10,14 +10,13 @@ import {
 } from '@aduin/core';
 import type { Handler } from '../../app';
 import { ProxyError } from '../../proxy/errors';
-import { memoryCtx } from '../../memory/ctx';
 import {
   FINDINGS_BODY_CAP,
   handle,
   ok,
   parseWith,
   pathId,
-  readJsonBody,
+  postEntry,
   type MemoryDeps,
 } from '../../memory/http';
 import { maskFree, maskOpt } from '../../memory/mask';
@@ -27,12 +26,17 @@ import { fundUpsertStmt, NO_FUND } from '../../memory/repo/fund';
 import { lookupActive } from '../../memory/repo/lookup';
 import { RUN_SQL, runUpsertStmt } from '../../memory/repo/run';
 import { createRulesPort } from '../../platform/rules';
+import { claimWrite } from '../../memory/ctx';
+import { ID_RE } from '../../db/ids';
+
+/** Server-side findings chunk cap (S10 measured > 10 ms CPU on a 50-finding worst case). */
+export const FINDINGS_CHUNK_MAX = 25;
 
 export function createRunHandler(deps: MemoryDeps): Handler {
   return handle(deps, 'runs', async (request, env) => {
-    const raw = await readJsonBody(request);
-    const ctx = await memoryCtx(request, env, deps.now(), { write: true });
+    const { ctx, raw } = await postEntry(request, env, deps.now(), { write: true });
     const body = parseWith(CreateRunRequestSchema, raw);
+    await claimWrite(ctx, 'run', 1);
     const firm = body.law_firm_id;
     if (firm !== null && !firmById(firm)) throw new ProxyError('invalid_request', 'unknown_firm');
     const rulesHash = firm
@@ -69,9 +73,17 @@ export function createRunHandler(deps: MemoryDeps): Handler {
 export function storeFindingsHandler(deps: MemoryDeps): Handler {
   return handle(deps, 'findings', async (request, env, params) => {
     const runId = pathId(params);
-    const raw = await readJsonBody(request, FINDINGS_BODY_CAP);
-    const ctx = await memoryCtx(request, env, deps.now(), { write: true });
+    const { ctx, raw } = await postEntry(request, env, deps.now(), {
+      write: true,
+      cap: FINDINGS_BODY_CAP,
+    });
+    // S10 / review L5: the 25-finding chunk is enforced server-side (CPU bound on Free).
+    const list = raw['findings'];
+    if (Array.isArray(list) && list.length > FINDINGS_CHUNK_MAX)
+      throw new ProxyError('payload_too_large', 'findings_chunk');
     const body = parseWith(StoreFindingsRequestSchema, raw);
+    for (const f of body.findings)
+      if (!ID_RE.test(f.id)) throw new ProxyError('invalid_request', 'id_charset');
     const run = await ctx.db
       .prepare(RUN_SQL.context)
       .bind(ctx.workspaceId, runId)
@@ -94,6 +106,7 @@ export function storeFindingsHandler(deps: MemoryDeps): Handler {
       );
       return findingRow(f, label, d ? d.id : null);
     });
+    if (rows.length > 0) await claimWrite(ctx, 'fnd', rows.length);
     const [insert] = await ctx.db.batch(insertFindingsStmts(ctx.db, ctx, runId, rows));
     return ok(StoreFindingsResponseSchema, { stored: Number(insert?.meta.changes ?? 0) });
   });

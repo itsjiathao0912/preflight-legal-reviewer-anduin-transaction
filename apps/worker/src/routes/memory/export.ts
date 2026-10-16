@@ -12,7 +12,7 @@ import {
   parseWith,
   pathId,
   readGuards,
-  readJsonBody,
+  postEntry,
   type MemoryDeps,
 } from '../../memory/http';
 import { auditPage, auditStmt } from '../../memory/repo/audit';
@@ -44,8 +44,7 @@ export const EXPORT_SQL = {
 export function runExportHandler(deps: MemoryDeps): Handler {
   return handle(deps, 'run_export', async (request, env, params) => {
     const runId = pathId(params);
-    const raw = await readJsonBody(request);
-    const ctx = await memoryCtx(request, env, deps.now(), { write: true });
+    const { ctx, raw } = await postEntry(request, env, deps.now(), { write: true });
     const body = parseWith(RunExportRequestSchema, raw);
     const run = await runContext(ctx, runId);
     if (!run) throw new ProxyError('invalid_request', 'run_not_found');

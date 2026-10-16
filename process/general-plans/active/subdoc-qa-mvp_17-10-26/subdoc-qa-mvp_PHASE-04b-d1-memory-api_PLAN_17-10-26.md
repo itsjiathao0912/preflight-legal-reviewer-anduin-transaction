@@ -283,6 +283,15 @@ All within the 04b blast radius (no hard-stop class). Recorded by EXECUTE 17-10-
 | 13 | Test helpers `test/memory/{db-fixtures,memory-harness,budget-probe}.ts`, `src/memory/http.ts`; `test/env.d.ts` declares `import.meta.glob` and `?raw` | shared plumbing for the 32 gate files and the statement lint | not `.test.ts`, so no token matches them |
 | 14 | The validator command on `harness/` (root) fails for every phase (no pack at the root); the pack is validated at `harness/phase-04b` | the per-phase folder layout used since Phase 01 | the only failure there is the intentionally pending reviewer decision |
 
+### Fix cycle 1 deviations (review-decision.json M1, L1-L6; within the 04b blast radius)
+
+- Body/guard order (L5): memory POST routes now verify the cookie signature (no DB) BEFORE reading or parsing the body, so a missing/forged cookie with an oversized or malformed body is 401 (was 413/400). `memory-guards-matrix` sends a valid cookie for the malformed-JSON and body-cap cases and adds a "401 before body read, zero queries" case.
+- Findings chunk is capped at 25 server-side (413 `payload_too_large`, reason `findings_chunk`); the budget probe key `findings_50` is renamed `findings_25` in query-budget/rows-written (rows-written bound now 25-30 for a 25-finding chunk).
+- M1 caps reuse the frozen `rate` quota scope (no core edit) with keys `mw|req|<ws>|<day>`, `mw|run|...`, `mw|fnd|...`; defaults in code (`MEMORY_WRITE_CAPS` 600 req / 5 runs / 2,000 findings per workspace per UTC day). 5 runs/day follows the review suggestion; it may be tight for a heavy demo session and is a one-constant change.
+- L4: the frozen `ConflictBody.current` is typed as an ActiveDecision, so a lost rule race returns 409 `conflict_active_decision` with the current rule status in `reason` (`rule_<status>`) instead of a rule object in `current`.
+- L3: migration 0005 sets `schema_version` '5' last (migration convention test); `EXPECTED_SCHEMA_VERSION` is now '5', so writes stay 503 until 0005 is applied remotely (Phase 10 must apply 0001-0005).
+- L2: blockId/detector_id/model go through `maskFree` (non-rejecting) rather than a charset rejection, to avoid breaking engine ids.
+
 ## Phase Loop Progress
 
 Orchestrator reads this before deciding which subagent to spawn next. The canonical 7-step inner loop `R → I → P → PVL → E → EVL → UP` SKIPS SPEC (SPEC runs once in the outer program loop).

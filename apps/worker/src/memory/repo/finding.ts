@@ -41,7 +41,7 @@ export function findingRow(
 ): Record<string, unknown> {
   const anchor = JSON.stringify({
     docHash: f.anchor.docHash.slice(0, 64),
-    blockId: f.anchor.blockId.slice(0, 200),
+    blockId: maskFree(f.anchor.blockId).slice(0, 200),
     offsetStart: f.anchor.offsetStart,
     offsetEnd: f.anchor.offsetEnd,
   });
@@ -51,8 +51,8 @@ export function findingRow(
     pk: f.pattern_key ?? null,
     s: f.severity,
     dk: f.detector_kind,
-    di: f.detector_id,
-    m: f.model ?? null,
+    di: maskFree(f.detector_id),
+    m: f.model === undefined || f.model === null ? null : maskFree(f.model),
     pv: f.provenance ?? null,
     cf: f.confidence,
     a: anchor,

@@ -17,11 +17,11 @@ import {
   parseWith,
   pathId,
   readGuards,
-  readJsonBody,
+  postEntry,
   type MemoryDeps,
 } from '../../memory/http';
 import { maskFree } from '../../memory/mask';
-import { auditStmt, replayed, type AuditAction } from '../../memory/repo/audit';
+import { AUDIT_SQL, auditStmt, replayed, type AuditAction } from '../../memory/repo/audit';
 import { ruleById, RULES_SQL, rulesForFirm, toRule } from '../../memory/repo/rules';
 import { onBatchError, replayResponse } from './decisions';
 
@@ -44,8 +44,7 @@ export function listRulesHandler(deps: MemoryDeps): Handler {
 
 export function createRuleHandler(deps: MemoryDeps): Handler {
   return handle(deps, 'rules_create', async (request, env) => {
-    const raw = await readJsonBody(request);
-    const ctx = await memoryCtx(request, env, deps.now(), { write: true });
+    const { ctx, raw } = await postEntry(request, env, deps.now(), { write: true });
     const firm = firmQuery(request);
     const body = parseWith(RuleActionRequestSchema, raw);
     if (!body.text) throw new ProxyError('invalid_request', 'text_required');
@@ -86,8 +85,7 @@ const ACTION: Record<RuleAction, { audit: AuditAction; from: string }> = {
 export function ruleActionHandler(deps: MemoryDeps, action: RuleAction): Handler {
   return handle(deps, `rules_${action}`, async (request, env, params) => {
     const id = pathId(params);
-    const raw = await readJsonBody(request);
-    const ctx = await memoryCtx(request, env, deps.now(), { write: true });
+    const { ctx, raw } = await postEntry(request, env, deps.now(), { write: true });
     const body = parseWith(RuleActionRequestSchema, raw);
     const rule = await ruleById(ctx, id);
     if (!rule) throw new ProxyError('invalid_request', 'rule_not_found');
@@ -121,21 +119,36 @@ export function ruleActionHandler(deps: MemoryDeps, action: RuleAction): Handler
           : ctx.db
               .prepare(RULES_SQL.revoke)
               .bind(ctx.workspaceId, id, ctx.analystName, ctx.now, text ?? 'revoked');
+    let res: D1Result[];
     try {
-      await ctx.db.batch([
-        auditStmt(ctx.db, ctx, {
-          op: body.client_op_id,
-          action: a.audit,
-          lawFirmId: rule.law_firm_id ?? null,
-          entityType: 'rule',
-          entityId: id,
-          ...(action === 'revoke' && text ? { reason: text } : {}),
-          result,
-        }),
+      res = await ctx.db.batch([
+        auditStmt(
+          ctx.db,
+          ctx,
+          {
+            op: body.client_op_id,
+            action: a.audit,
+            lawFirmId: rule.law_firm_id ?? null,
+            entityType: 'rule',
+            entityId: id,
+            ...(action === 'revoke' && text ? { reason: text } : {}),
+            result,
+          },
+          AUDIT_SQL.insertIfRuleStatus,
+          [a.from],
+        ),
         update,
       ]);
     } catch (e) {
       return onBatchError(e, ctx, body.client_op_id, a.audit);
+    }
+    if (Number(res[1]?.meta.changes ?? 0) === 0) {
+      // Review L4: lost a race (another op moved the rule between the read and the batch); the
+      // conditional audit insert wrote nothing, so no duplicate transition event exists.
+      if (await replayed(ctx, body.client_op_id))
+        return replayResponse(ctx, body.client_op_id, a.audit);
+      const cur = await ruleById(ctx, id);
+      throw new ProxyError('conflict_active_decision', `rule_${cur ? cur.status : 'missing'}`);
     }
     return jsonNoStore(result);
   });

@@ -27,7 +27,7 @@ const TABLES = [
 ];
 
 describe('migrations (AC42, AC43, AC47)', () => {
-  test('0001-0004 are applied in order and recorded', async () => {
+  test('0001-0005 are applied in order and recorded', async () => {
     const r = await env.DB.prepare('SELECT name FROM d1_migrations ORDER BY id').all<{
       name: string;
     }>();
@@ -36,6 +36,7 @@ describe('migrations (AC42, AC43, AC47)', () => {
       '0002_memory_core.sql',
       '0003_reference_seed.sql',
       '0004_cache_quota_ledger.sql',
+      '0005_demo_protection_gaps.sql',
     ]);
   });
 

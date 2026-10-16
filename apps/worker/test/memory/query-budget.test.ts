@@ -9,7 +9,7 @@ import { measureAi, measureEndpoints } from './budget-probe';
 const CAPS: Record<string, number> = {
   session: 20,
   runs: 8,
-  findings_50: 8,
+  findings_25: 8,
   lookup_200: 2,
   decision_dismiss_with_proposal: 12,
   decision_supersede: 12,

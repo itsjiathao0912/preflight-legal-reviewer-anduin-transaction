@@ -17,13 +17,13 @@ import type { Handler } from '../../app';
 import { ProxyError, jsonNoStore } from '../../proxy/errors';
 import { newId } from '../../db/ids';
 import { classifyBatchError } from '../../db/tx';
-import { memoryCtx, type MemoryCtx } from '../../memory/ctx';
+import { type MemoryCtx } from '../../memory/ctx';
 import {
   ConflictError,
   handle,
   parseWith,
   pathId,
-  readJsonBody,
+  postEntry,
   type MemoryDeps,
 } from '../../memory/http';
 import { maskFree, maskOpt, snippetOf } from '../../memory/mask';
@@ -92,8 +92,7 @@ export async function onBatchError(
 
 export function createDecisionHandler(deps: MemoryDeps): Handler {
   return handle(deps, 'decisions', async (request, env) => {
-    const raw = await readJsonBody(request);
-    const ctx = await memoryCtx(request, env, deps.now(), { write: true });
+    const { ctx, raw } = await postEntry(request, env, deps.now(), { write: true });
     const body = parseWith(CreateDecisionRequestSchema, raw);
     if (!body.run_id) throw new ProxyError('invalid_request', 'run_required');
     if (body.pattern_key !== undefined && !PATTERN_KEY_RE.test(body.pattern_key))
@@ -181,8 +180,7 @@ export function createDecisionHandler(deps: MemoryDeps): Handler {
 export function revokeDecisionHandler(deps: MemoryDeps): Handler {
   return handle(deps, 'revoke', async (request, env, params) => {
     const id = pathId(params);
-    const raw = await readJsonBody(request);
-    const ctx = await memoryCtx(request, env, deps.now(), { write: true });
+    const { ctx, raw } = await postEntry(request, env, deps.now(), { write: true });
     const body = parseWith(RevokeDecisionRequestSchema, raw);
     const row = await decisionById(ctx, id);
     if (!row) throw new ProxyError('invalid_request', 'decision_not_found');

@@ -41,7 +41,7 @@ export async function measureEndpoints(): Promise<Record<string, Measured>> {
   take('session');
   const run = await newRun(h, s);
   take('runs');
-  const findings = Array.from({ length: 50 }, (_, i) =>
+  const findings = Array.from({ length: 25 }, (_, i) =>
     wireFinding('firm-x', `Budget finding sentence ${i}.`),
   );
   await call(
@@ -51,7 +51,7 @@ export async function measureEndpoints(): Promise<Record<string, Measured>> {
     { client_op_id: op(), findings },
     { cookie: s.cookie },
   );
-  take('findings_50');
+  take('findings_25');
   await call(
     h,
     'POST',
@@ -60,7 +60,7 @@ export async function measureEndpoints(): Promise<Record<string, Measured>> {
       law_firm_id: 'firm-x',
       fingerprints: findings
         .map((f) => f.fingerprint)
-        .concat(Array.from({ length: 150 }, (_, i) => fpOf('firm-x', 'ambiguity', `pad ${i}`))),
+        .concat(Array.from({ length: 175 }, (_, i) => fpOf('firm-x', 'ambiguity', `pad ${i}`))),
     },
     { cookie: s.cookie },
   );

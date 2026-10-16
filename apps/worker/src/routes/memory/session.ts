@@ -31,7 +31,7 @@ import { DEMO_WORKSPACE_ID, readHealth } from '../../memory/health';
 import { maskFree } from '../../memory/mask';
 import { auditStmt } from '../../memory/repo/audit';
 import { claimPurgeSlot, runPurge, sandboxExpiry } from '../../memory/repo/purge';
-import { createSandboxStmts } from '../../memory/repo/workspace';
+import { createSandboxStmts, WORKSPACE_SQL, type LivenessRow } from '../../memory/repo/workspace';
 import { seedCopyStmts } from '../../memory/seed-copy';
 import { handle, parseWith, readJsonBody, type MemoryDeps } from '../../memory/http';
 import type { Handler } from '../../app';
@@ -51,6 +51,22 @@ async function setCookie(
 ): Promise<Record<string, string>> {
   const c = await visitorSetCookie({ ...visitor, claims, dirty: true }, cfg);
   return c ? { 'set-cookie': c } : {};
+}
+
+/** The live sandbox bound to the incoming (verified) cookie, if any (review L6). */
+async function liveSandbox(
+  db: Db,
+  claims: SessionClaims,
+  now: number,
+): Promise<{ expires_at: number } | null> {
+  if (!claims.w || !claims.a || claims.a === READ_ONLY_ANALYST) return null;
+  const row = await db
+    .prepare(WORKSPACE_SQL.liveness)
+    .bind(claims.w, claims.a)
+    .first<LivenessRow>();
+  if (!row || row.kind !== 'sandbox' || row.status !== 'active') return null;
+  if (row.expires_at === null || row.expires_at <= now) return null;
+  return { expires_at: row.expires_at };
 }
 
 export function sessionHandler(deps: MemoryDeps): Handler {
@@ -87,7 +103,21 @@ export function sessionHandler(deps: MemoryDeps): Handler {
     if (!ipClaim.ok) throw new ProxyError('rate_limited', 'session_limit', secondsToReset(now));
     const gClaim = await claim(db, qopts, k.global, 1);
     if (!gClaim.ok) {
-      await refund(db, qopts, ipClaim.refundToken).catch(() => {});
+      // Review L1: the per-IP claim is NOT refunded here, so the IP cap still bounds this loop.
+      // Review L6: a browser that already holds a live sandbox keeps it instead of degrading.
+      const live = await liveSandbox(db, visitor.claims, now);
+      if (live) {
+        return jsonNoStore(
+          CreateSessionResponseSchema.parse({
+            workspace_id: visitor.claims.w,
+            analyst_id: visitor.claims.a,
+            kind: 'sandbox',
+            expires_at: live.expires_at,
+            read_only: false,
+          }),
+          await setCookie(visitor, visitor.claims, cfg),
+        );
+      }
       // Degrade: read-only demo (no workspace is created, no write budget spent).
       const claims = resign(visitor.claims, {
         a: READ_ONLY_ANALYST,

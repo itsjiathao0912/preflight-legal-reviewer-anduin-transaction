@@ -18,6 +18,10 @@ export const AUDIT_SQL = {
   insertIfRuleExists:
     `INSERT INTO audit_event (${COLS}) SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13 ` +
     'WHERE EXISTS (SELECT 1 FROM firm_rule WHERE workspace_id = ?1 AND id = ?10)',
+  /** Review L4: the audit row exists only if the rule is still in the expected prior status (?14). */
+  insertIfRuleStatus:
+    `INSERT INTO audit_event (${COLS}) SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13 ` +
+    'WHERE EXISTS (SELECT 1 FROM firm_rule WHERE workspace_id = ?1 AND id = ?10 AND status = ?14)',
   byOp: 'SELECT action, result_json FROM audit_event WHERE workspace_id = ?1 AND client_op_id = ?2',
   page:
     'SELECT id, at, actor_name, action, law_firm_id, entity_type, entity_id, reason, detail_json FROM audit_event ' +
@@ -43,6 +47,7 @@ export function auditStmt(
   ctx: MemoryCtx,
   a: AuditInput,
   sql: string = AUDIT_SQL.insert,
+  extra: readonly (string | number | null)[] = [],
 ): D1PreparedStatement {
   return db
     .prepare(sql)
@@ -60,6 +65,7 @@ export function auditStmt(
       a.reason ?? null,
       a.detail ? JSON.stringify(a.detail) : null,
       a.result === undefined ? null : JSON.stringify(a.result),
+      ...extra,
     );
 }
 

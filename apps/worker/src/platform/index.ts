@@ -2,6 +2,7 @@
 // `createD1Platform(db, {capFor})` returns `{quota(keys), cache, ledger}`; rules are NOT part of
 // the bundle because the RulesPort is workspace-bound (`createRulesPort(db, workspaceId)`).
 import type { QuotaKey } from '@aduin/core';
+import { utcDay } from '../limits/clock';
 import type { ProxyPlatform } from '../proxy/ports';
 import type { Db } from '../db/meta';
 import { createD1Cache } from './cache';
@@ -19,6 +20,30 @@ export { createRulesPort } from './rules';
  */
 export const SESSION_CAPS = Object.freeze({ perIpPerDay: 5, globalPerDay: 300 });
 
+/**
+ * Per-workspace daily memory write caps (review M1; `rate` scope, `mw|<kind>|<workspace>|<day>`):
+ * mutating requests, persisted review runs (POST /api/runs) and persisted findings. Sized to a
+ * realistic demo session: 600 requests stays ~1-2k rows/day/workspace worst case on top of the
+ * capped run/finding rows, so one sandbox can no longer exhaust the 100k/day D1 write budget.
+ */
+export const MEMORY_WRITE_CAPS = Object.freeze({
+  requestsPerDay: 600,
+  runsPerDay: 5,
+  findingsPerDay: 2_000,
+});
+
+export type WriteKind = 'req' | 'run' | 'fnd';
+
+export function writeKey(workspaceId: string, kind: WriteKind, nowMs: number): QuotaKey {
+  return { scope: 'rate', key: `mw|${kind}|${workspaceId}|${utcDay(nowMs)}` };
+}
+
+const WRITE_CAP: Record<string, number> = {
+  req: MEMORY_WRITE_CAPS.requestsPerDay,
+  run: MEMORY_WRITE_CAPS.runsPerDay,
+  fnd: MEMORY_WRITE_CAPS.findingsPerDay,
+};
+
 const PROXY_KINDS = new Set(['req', 'doc', 'seen', 'ocr', 'g', 'spend']);
 
 /**
@@ -28,6 +53,11 @@ const PROXY_KINDS = new Set(['req', 'doc', 'seen', 'ocr', 'g', 'spend']);
 export function withSessionCaps(base: (key: QuotaKey) => number): (key: QuotaKey) => number {
   return (key) => {
     const [kind, sub] = key.key.split('|');
+    if (kind === 'mw') {
+      const cap = sub !== undefined ? WRITE_CAP[sub] : undefined;
+      if (cap === undefined) throw new Error(`unknown memory write kind: ${sub ?? ''}`);
+      return cap;
+    }
     if (kind === 'snew') return sub === 'ip' ? SESSION_CAPS.perIpPerDay : SESSION_CAPS.globalPerDay;
     if (!kind || !PROXY_KINDS.has(kind)) throw new Error(`unknown quota key kind: ${kind ?? ''}`);
     return base(key);

@@ -164,7 +164,7 @@ describe('session-cookie-workerd (AC56, AC39)', () => {
     );
     expect(w.status).toBe(403);
     expect(w.body.error.code).toBe('read_only_demo');
-    // the per-IP claim of the degraded request was refunded (count back to 0)
+    // review L1: the per-IP claim of the degraded request is NOT refunded (count stays 1)
     const hash = await ipHash(
       new Request('https://x', { headers: { 'cf-connecting-ip': '192.0.2.31' } }),
       COOKIE_KEY,
@@ -175,7 +175,7 @@ describe('session-cookie-workerd (AC56, AC39)', () => {
     )
       .bind(`snew|ip|${hash}`)
       .first<{ count: number }>();
-    expect(ipRow?.count).toBe(0);
+    expect(ipRow?.count).toBe(1);
   });
 
   test('memory routes never mint: a request without a cookie gets 401 and no Set-Cookie', async () => {
