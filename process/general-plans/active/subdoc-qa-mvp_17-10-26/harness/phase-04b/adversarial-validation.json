@@ -119,7 +119,7 @@
       "stride": "R",
       "scenario": "Concurrent double-approve of one rule writes two rule_approved audit events (review L4)",
       "ruled_out": true,
-      "rationale": "Rule approve/reject/revoke insert the audit row only WHERE the rule is still in the expected prior status; UPDATE meta.changes = 0 -> replay result or 409 with the current status in reason (rule_<status>)",
+      "rationale": "Rule approve/reject/revoke insert the audit row only WHERE the rule is still in the expected prior status; UPDATE meta.changes = 0 -> replay result or 409 with the frozen ConflictBody (current: null), as decisions.ts (fix cycle 2, N2); covered end to end by the N4 race test",
       "test": "pnpm --filter @aduin/worker test memory-write-limits"
     },
     {
@@ -128,6 +128,20 @@
       "ruled_out": true,
       "rationale": "Migration 0005 adds demo_ro_*_update (review_run, counsel_answer, fund, document, analyst) and demo_ro_*_delete (firm_rule, rule_evidence, analyst, fund, document, review_run, finding, finding_state, counsel_question); 0002 untouched",
       "test": "pnpm --filter @aduin/worker test demo-workspace-not-polluted"
+    },
+    {
+      "stride": "D",
+      "scenario": "Mint-and-flood: an attacker mints sandboxes from several IPs (5/IP/day, global 300) and floods writes in each, so the per-workspace caps alone let ~2 IPs exhaust the 100k rows/day D1 Free write budget (re-review N1/M1)",
+      "ruled_out": true,
+      "rationale": "resolveSession takes a global weighted daily write-row budget claim (rate scope, key mw|rows|<day>, cap 40,000 units, guarded quota_counter UPSERT) after the per-workspace claim on every memory write. Weights cover measured rows (decision 25, run 12, counsel answer 18, findings chunk n+5, other 10; asserted in rows-written). Refusal is 429 rate_limited memory_write_budget with retry-after to the next UTC day and writes no row beyond the prior per-workspace claim. Sessions, AI and OCR are not charged, so they keep working. Worst case/day ~= 40k memory + ~36k sessions (300 x ~120) + AI/OCR claim rows < 100k.",
+      "test": "pnpm --filter @aduin/worker test memory-write-limits"
+    },
+    {
+      "stride": "D",
+      "scenario": "Reload loop burns the per-IP sandbox claim and mints a new sandbox per reload (re-review N6)",
+      "ruled_out": true,
+      "rationale": "POST /api/session reuses a live sandbox cookie BEFORE the per-IP claim at any cap level (0 rows written); liveSandbox() only accepts kind='sandbox' active unexpired rows, so a read-only demo cookie is never reissued as a demo-bound workspace cookie",
+      "test": "pnpm --filter @aduin/worker test session-degrade-bounds"
     }
   ]
 }

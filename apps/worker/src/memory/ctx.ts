@@ -11,7 +11,13 @@ import type { Db } from '../db/meta';
 import { DEMO_WORKSPACE_ID, readHealth, writable } from './health';
 import { WORKSPACE_SQL, type LivenessRow } from './repo/workspace';
 import { claim } from '../platform/quota';
-import { withSessionCaps, writeKey, type WriteKind } from '../platform/index';
+import {
+  MEMORY_WRITE_WEIGHTS,
+  rowBudgetKey,
+  withSessionCaps,
+  writeKey,
+  type WriteKind,
+} from '../platform/index';
 import { secondsToReset } from '../limits/clock';
 
 /** Analyst marker of a read-only demo session (no `w`): reads bind ws_demo, writes get 403. */
@@ -79,9 +85,13 @@ export async function verifySession(
 
 /**
  * Step 2: liveness + health in the first query; for writes, the per-workspace daily
- * mutating-request claim (review M1) is taken right after liveness. A refusal writes nothing.
+ * mutating-request claim (review M1) is taken right after liveness, then the global weighted
+ * daily write-row budget claim (review fix cycle 2, N1) of `weight` units. A refusal writes nothing.
  */
-export async function resolveSession(s: VerifiedSession): Promise<MemoryCtx> {
+export async function resolveSession(
+  s: VerifiedSession,
+  weight: number = MEMORY_WRITE_WEIGHTS.other,
+): Promise<MemoryCtx> {
   const { db, w, a, now } = s;
   if (!w) {
     const h = await readHealth(db);
@@ -111,7 +121,10 @@ export async function resolveSession(s: VerifiedSession): Promise<MemoryCtx> {
     now,
     readOnly: false,
   };
-  if (s.write) await claimWrite(ctx, 'req', 1);
+  if (s.write) {
+    await claimWrite(ctx, 'req', 1);
+    await claimRowBudget(ctx, weight);
+  }
   return ctx;
 }
 
@@ -132,6 +145,17 @@ export async function claimWrite(ctx: MemoryCtx, kind: WriteKind, units: number)
   const qopts = { capFor: withSessionCaps(() => 0), now: () => ctx.now };
   const r = await claim(ctx.db, qopts, writeKey(ctx.workspaceId, kind, ctx.now), units);
   if (!r.ok) throw new ProxyError('rate_limited', WRITE_REASON[kind], secondsToReset(ctx.now));
+}
+
+/**
+ * Global weighted daily write-row budget (review fix cycle 2, N1): bounds total memory D1 writes
+ * across all sandboxes. Refusal -> 429 rate_limited `memory_write_budget`, retry-after = next UTC day.
+ */
+export async function claimRowBudget(ctx: MemoryCtx, weight: number): Promise<void> {
+  if (!Number.isInteger(weight) || weight < 1) throw new Error(`bad write weight: ${weight}`);
+  const qopts = { capFor: withSessionCaps(() => 0), now: () => ctx.now };
+  const r = await claim(ctx.db, qopts, rowBudgetKey(ctx.now), weight);
+  if (!r.ok) throw new ProxyError('rate_limited', 'memory_write_budget', secondsToReset(ctx.now));
 }
 
 const WRITE_REASON: Record<WriteKind, string> = {

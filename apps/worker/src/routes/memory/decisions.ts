@@ -4,6 +4,7 @@
 // (audit UNIQUE) returns the ORIGINAL 200 body; a uq_decision_active race returns 409 with
 // `current`. The two are told apart by the constraint text recorded in S8.
 // A0: the firm comes from run_id -> review_run.law_firm_id; unknown request keys are stripped.
+import { MEMORY_WRITE_WEIGHTS } from '../../platform/index';
 import {
   CreateDecisionRequestSchema,
   CreateDecisionResponseSchema,
@@ -92,7 +93,10 @@ export async function onBatchError(
 
 export function createDecisionHandler(deps: MemoryDeps): Handler {
   return handle(deps, 'decisions', async (request, env) => {
-    const { ctx, raw } = await postEntry(request, env, deps.now(), { write: true });
+    const { ctx, raw } = await postEntry(request, env, deps.now(), {
+      write: true,
+      weight: MEMORY_WRITE_WEIGHTS.decision,
+    });
     const body = parseWith(CreateDecisionRequestSchema, raw);
     if (!body.run_id) throw new ProxyError('invalid_request', 'run_required');
     if (body.pattern_key !== undefined && !PATTERN_KEY_RE.test(body.pattern_key))

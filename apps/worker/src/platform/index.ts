@@ -28,11 +28,38 @@ export const SESSION_CAPS = Object.freeze({ perIpPerDay: 5, globalPerDay: 300 })
  */
 export const MEMORY_WRITE_CAPS = Object.freeze({
   requestsPerDay: 600,
-  runsPerDay: 5,
+  runsPerDay: 40,
   findingsPerDay: 2_000,
+  /**
+   * Global (all workspaces) weighted daily write-row budget (review fix cycle 2, N1/M1). Every
+   * memory write claims `memoryWriteWeight(...)` units from `mw|rows|<day>`; at the cap memory
+   * writes get 429 `memory_write_budget` until the next UTC day. Sessions, AI and OCR are NOT
+   * charged here. Worst case/day: 40k (memory writes) + 300 x ~120 (sessions) + AI/OCR claims
+   * stays under the 100k rows/day D1 Free write budget.
+   */
+  rowBudgetPerDay: 40_000,
+});
+
+/**
+ * Write-row weights per memory route (units claimed from the global budget). Derived from the
+ * rows-written test bounds (test/memory/rows-written.test.ts) so units >= rows actually written:
+ * decision 25, run 12, counsel answer 18 (bound 18 > the 10 default), findings chunk n + 5
+ * (n finding rows + run recount + claim rows), every other write 10.
+ */
+export const MEMORY_WRITE_WEIGHTS = Object.freeze({
+  decision: 25,
+  run: 12,
+  counselAnswer: 18,
+  findingsBase: 5,
+  other: 10,
 });
 
 export type WriteKind = 'req' | 'run' | 'fnd';
+
+/** The global weighted daily write-row budget key (`rate` scope; review fix cycle 2, N1). */
+export function rowBudgetKey(nowMs: number): QuotaKey {
+  return { scope: 'rate', key: `mw|rows|${utcDay(nowMs)}` };
+}
 
 export function writeKey(workspaceId: string, kind: WriteKind, nowMs: number): QuotaKey {
   return { scope: 'rate', key: `mw|${kind}|${workspaceId}|${utcDay(nowMs)}` };
@@ -42,6 +69,7 @@ const WRITE_CAP: Record<string, number> = {
   req: MEMORY_WRITE_CAPS.requestsPerDay,
   run: MEMORY_WRITE_CAPS.runsPerDay,
   fnd: MEMORY_WRITE_CAPS.findingsPerDay,
+  rows: MEMORY_WRITE_CAPS.rowBudgetPerDay,
 };
 
 const PROXY_KINDS = new Set(['req', 'doc', 'seen', 'ocr', 'g', 'spend']);

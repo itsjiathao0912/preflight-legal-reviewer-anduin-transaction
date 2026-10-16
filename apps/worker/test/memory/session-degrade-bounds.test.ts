@@ -95,3 +95,48 @@ describe('session degrade bounds (review L1, L6)', () => {
     expect(r.body).toMatchObject({ read_only: true, workspace_id: 'ws_demo' });
   });
 });
+
+describe('session reuse before the per-IP claim (fix cycle 2, N6)', () => {
+  const ipCount = async (ip: string) =>
+    count(
+      `SELECT COALESCE(SUM(count), 0) AS n FROM quota_counter WHERE scope = 'session_new' AND key LIKE 'snew|ip|%'`,
+    ).then((n) => ({ ip, n }));
+
+  test('reloads with a live sandbox cookie never mint and never burn an IP claim', async () => {
+    const h = makeMem();
+    const ip = '192.0.2.90';
+    const first = await post(h, { ip });
+    expect(first.status).toBe(200);
+    const cookie = cookieOf(first.res)!;
+    const ipBefore = (await ipCount(ip)).n;
+    const wsBefore = await count('SELECT COUNT(*) AS n FROM workspace');
+    // more reloads than the per-IP cap: all keep the same sandbox, no claim is taken
+    for (let i = 0; i < SESSION_CAPS.perIpPerDay + 2; i++) {
+      h.resetStats();
+      const r = await post(h, { ip, cookie });
+      expect(r.status).toBe(200);
+      expect(r.body).toMatchObject({ workspace_id: first.body.workspace_id, read_only: false });
+      expect(h.stats.rowsWritten).toBe(0);
+    }
+    expect((await ipCount(ip)).n).toBe(ipBefore);
+    expect(await count('SELECT COUNT(*) AS n FROM workspace')).toBe(wsBefore);
+  });
+
+  test('a read-only demo cookie is never reused as a sandbox (isolation)', async () => {
+    const h = makeMem();
+    await fillGlobal(h.clock.now);
+    const ro = await post(h, { ip: '192.0.2.91' });
+    expect(ro.body.read_only).toBe(true);
+    await env.DB.prepare("DELETE FROM quota_counter WHERE scope = 'session_new'").run();
+    const again = await post(h, { ip: '192.0.2.91', cookie: cookieOf(ro.res)! });
+    expect(again.status).toBe(200);
+    expect(again.body.kind).toBe('sandbox');
+    expect(again.body.workspace_id).not.toBe('ws_demo');
+    const v = await verifyCookie(
+      cookieValue(cookieOf(again.res)!),
+      KEYS,
+      Math.floor(h.clock.now / 1000),
+    );
+    expect(v.ok && v.claims.w).toBe(again.body.workspace_id);
+  });
+});

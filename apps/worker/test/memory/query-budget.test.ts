@@ -20,7 +20,7 @@ const CAPS: Record<string, number> = {
   rule_approve: 6,
   firm: 5,
   audit: 3,
-  run_export: 6,
+  run_export: 7, // +1: global write-row budget claim (fix cycle 2, N1)
   export: 5,
   session_with_purge: 30,
 };

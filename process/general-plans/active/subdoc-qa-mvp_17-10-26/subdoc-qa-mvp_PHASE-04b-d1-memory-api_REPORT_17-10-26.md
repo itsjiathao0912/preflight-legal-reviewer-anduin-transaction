@@ -170,3 +170,39 @@ Recorded in the plan under `## Deviations` → "Fix cycle 1 deviations" (verify-
 - Phase 10 must apply migrations 0001-0005 (writes are 503 until schema_version is 5) and set TURNSTILE_SECRET (L6 note).
 - The web client must send findings in chunks of at most 25 (it already does per S10) and handle 429 `workspace_*_limit` as a soft failure in the outbox.
 - review-decision.json `pendingFixes` still lists M1, L1-L6; the reviewer (not this agent) should re-review and move them to `resolvedFindings`.
+
+## Fix cycle 2 (2026-10-17, re-review APPROVE_WITH_FIXES: N1-N4, N6)
+
+### What was fixed
+- N1/M1: global weighted daily write-row budget (40,000 units/day, `mw|rows|<day>`) claimed in `resolveSession` after the per-workspace claim; 429 `memory_write_budget` with retry-after to next UTC day; sessions/AI/OCR not charged. Mint-and-flood scenario added to harness/phase-04b/adversarial-validation.json.
+- N2: rule lost-race 409 is now `ConflictError(null)` (frozen ConflictBody, `current: null`).
+- N3: `runsPerDay` 40; run claim after firm validation.
+- N4: end-to-end race test (competing approve injected between `ruleById` and the batch via a D1 proxy seam): 409 ConflictBody, exactly one audit event.
+- N6: live sandbox reuse before the per-IP claim (0 rows, no IP claim); ro cookie never reused as a sandbox.
+
+### Weights (units = max rows written, from rows-written bounds)
+| Route | Units |
+|---|---|
+| POST /api/decisions | 25 |
+| POST /api/runs | 12 |
+| POST /api/runs/:id/findings | n + 5 |
+| POST /api/counsel/answers | 18 |
+| every other memory write | 10 |
+
+Worst case/day: <= 40k memory rows + <= ~6.7k budget-counter rows + 36k session rows + AI/OCR rows -> ~83k + AI/OCR, under 100k.
+
+### Files changed
+apps/worker/src/{memory/ctx.ts, memory/http.ts, platform/index.ts, routes/memory/{counsel,decisions,rules,runs,session}.ts}; apps/worker/test/memory/{memory-write-limits,query-budget,rows-written,session-degrade-bounds}.test.ts; harness/phase-04b/adversarial-validation.json; this report and the plan.
+
+### Test gate outcomes (fresh run)
+- memory-write-limits 17, session-degrade-bounds 5, memory-guards-matrix 45, rows-written 4, query-budget 2, rule-proposal-threshold-matrix 5, memory-endpoint-contract 5, demo-workspace-not-polluted 7, session-cookie-workerd 5, sandbox-isolation 3, proxy 141 (11 files): all rc=0.
+- `pnpm --filter @aduin/worker test`: 47 files / 443 tests passed.
+- typecheck, lint (eslint + prettier), guard:cf, secrets:scan, seed:check: OK; validate-risk-artifacts on harness/phase-04b: 0 warnings, 0 failures.
+
+### Deviations
+Plan `## Deviations` -> "Fix cycle 2 deviations" (counsel answer weight 18; chunk check before claims; run_export query cap 7; L4 reason-note superseded by N2).
+
+### Forward preview additions
+- Web outbox should treat 429 `memory_write_budget` like `workspace_*_limit` (soft failure, retry next day).
+- review-decision.json was not edited; the reviewer should move N1-N4/N6 to resolved.
+

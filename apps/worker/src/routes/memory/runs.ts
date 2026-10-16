@@ -27,6 +27,7 @@ import { lookupActive } from '../../memory/repo/lookup';
 import { RUN_SQL, runUpsertStmt } from '../../memory/repo/run';
 import { createRulesPort } from '../../platform/rules';
 import { claimWrite } from '../../memory/ctx';
+import { MEMORY_WRITE_WEIGHTS } from '../../platform/index';
 import { ID_RE } from '../../db/ids';
 
 /** Server-side findings chunk cap (S10 measured > 10 ms CPU on a 50-finding worst case). */
@@ -34,11 +35,15 @@ export const FINDINGS_CHUNK_MAX = 25;
 
 export function createRunHandler(deps: MemoryDeps): Handler {
   return handle(deps, 'runs', async (request, env) => {
-    const { ctx, raw } = await postEntry(request, env, deps.now(), { write: true });
+    const { ctx, raw } = await postEntry(request, env, deps.now(), {
+      write: true,
+      weight: MEMORY_WRITE_WEIGHTS.run,
+    });
     const body = parseWith(CreateRunRequestSchema, raw);
-    await claimWrite(ctx, 'run', 1);
     const firm = body.law_firm_id;
     if (firm !== null && !firmById(firm)) throw new ProxyError('invalid_request', 'unknown_firm');
+    // N3: the run claim is taken only after the firm validated (a bad firm burns no run slot).
+    await claimWrite(ctx, 'run', 1);
     const rulesHash = firm
       ? (await createRulesPort(ctx.db, ctx.workspaceId).activeRules(firm)).rules_hash
       : 'none';
@@ -70,17 +75,25 @@ export function createRunHandler(deps: MemoryDeps): Handler {
   });
 }
 
+/**
+ * Global write-row budget units for a findings chunk (N1): n + 5. Runs before any claim, so the
+ * S10 / review L5 server-side 25-finding chunk cap (CPU bound on Free) also refuses with 0 claims.
+ */
+function findingsWeight(raw: Record<string, unknown>): number {
+  const list = raw['findings'];
+  const n = Array.isArray(list) ? list.length : 0;
+  if (n > FINDINGS_CHUNK_MAX) throw new ProxyError('payload_too_large', 'findings_chunk');
+  return n + MEMORY_WRITE_WEIGHTS.findingsBase;
+}
+
 export function storeFindingsHandler(deps: MemoryDeps): Handler {
   return handle(deps, 'findings', async (request, env, params) => {
     const runId = pathId(params);
     const { ctx, raw } = await postEntry(request, env, deps.now(), {
       write: true,
       cap: FINDINGS_BODY_CAP,
+      weight: findingsWeight,
     });
-    // S10 / review L5: the 25-finding chunk is enforced server-side (CPU bound on Free).
-    const list = raw['findings'];
-    if (Array.isArray(list) && list.length > FINDINGS_CHUNK_MAX)
-      throw new ProxyError('payload_too_large', 'findings_chunk');
     const body = parseWith(StoreFindingsRequestSchema, raw);
     for (const f of body.findings)
       if (!ID_RE.test(f.id)) throw new ProxyError('invalid_request', 'id_charset');

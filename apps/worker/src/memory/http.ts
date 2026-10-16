@@ -108,12 +108,18 @@ export async function postEntry(
   request: Request,
   env: { DB?: D1Database },
   now: number,
-  opts: { write: boolean; cap?: number },
+  opts: {
+    write: boolean;
+    cap?: number;
+    /** Global write-row budget units (N1); a function sees the parsed body (findings: n + 5). */
+    weight?: number | ((raw: Record<string, unknown>) => number);
+  },
 ): Promise<{ ctx: MemoryCtx; raw: Record<string, unknown> }> {
   writeHeaderGuards(request);
   const s = await verifySession(request, env, now, { write: opts.write });
   const raw = parseJsonObject(await readBodyCapped(request, opts.cap ?? MEMORY_BODY_CAP));
-  return { ctx: await resolveSession(s), raw };
+  const w = typeof opts.weight === 'function' ? opts.weight(raw) : opts.weight;
+  return { ctx: await resolveSession(s, w), raw };
 }
 
 /** Read guards (GET): client header only, no body. */

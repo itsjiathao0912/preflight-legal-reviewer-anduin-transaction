@@ -96,6 +96,23 @@ export function sessionHandler(deps: MemoryDeps): Handler {
     const health = await readHealth(db);
     if (!health.writable) throw new ProxyError('memory_unavailable', 'schema');
 
+    // Review L6 + fix cycle 2 (N6): a browser that already holds a live sandbox keeps it at any
+    // cap level, BEFORE the per-IP claim, so a reload never mints and never burns an IP claim.
+    // liveSandbox() only accepts kind='sandbox' rows, so a demo-bound cookie is never re-issued.
+    const live = await liveSandbox(db, visitor.claims, now);
+    if (live) {
+      return jsonNoStore(
+        CreateSessionResponseSchema.parse({
+          workspace_id: visitor.claims.w,
+          analyst_id: visitor.claims.a,
+          kind: 'sandbox',
+          expires_at: live.expires_at,
+          read_only: false,
+        }),
+        await setCookie(visitor, visitor.claims, cfg),
+      );
+    }
+
     // Sandbox-minting caps: per IP hash first, the global counter last.
     const qopts = { capFor: withSessionCaps(capFor(cfg)), now: () => now };
     const k = sessionKeys(visitor.ipHash, now);
@@ -104,20 +121,6 @@ export function sessionHandler(deps: MemoryDeps): Handler {
     const gClaim = await claim(db, qopts, k.global, 1);
     if (!gClaim.ok) {
       // Review L1: the per-IP claim is NOT refunded here, so the IP cap still bounds this loop.
-      // Review L6: a browser that already holds a live sandbox keeps it instead of degrading.
-      const live = await liveSandbox(db, visitor.claims, now);
-      if (live) {
-        return jsonNoStore(
-          CreateSessionResponseSchema.parse({
-            workspace_id: visitor.claims.w,
-            analyst_id: visitor.claims.a,
-            kind: 'sandbox',
-            expires_at: live.expires_at,
-            read_only: false,
-          }),
-          await setCookie(visitor, visitor.claims, cfg),
-        );
-      }
       // Degrade: read-only demo (no workspace is created, no write budget spent).
       const claims = resign(visitor.claims, {
         a: READ_ONLY_ANALYST,

@@ -3,6 +3,7 @@
 // the run of the latest decision on that finding, else the latest run of the workspace; its firm
 // must be set. The answer's firm and class come from the question row. An answer writes a
 // superseding `answered` decision (option + note denormalized) so lookup stays a one-table read.
+import { MEMORY_WRITE_WEIGHTS } from '../../platform/index';
 import {
   CounselAnswerRequestSchema,
   CounselAnswerResponseSchema,
@@ -89,7 +90,10 @@ export function counselQuestionHandler(deps: MemoryDeps): Handler {
 
 export function counselAnswerHandler(deps: MemoryDeps): Handler {
   return handle(deps, 'counsel_answers', async (request, env) => {
-    const { ctx, raw } = await postEntry(request, env, deps.now(), { write: true });
+    const { ctx, raw } = await postEntry(request, env, deps.now(), {
+      write: true,
+      weight: MEMORY_WRITE_WEIGHTS.counselAnswer,
+    });
     const body = parseWith(CounselAnswerRequestSchema, raw);
     const q = await questionById(ctx, body.question_id);
     if (!q) throw new ProxyError('invalid_request', 'question_not_found');

@@ -12,6 +12,7 @@ import { ProxyError, jsonNoStore } from '../../proxy/errors';
 import { newId } from '../../db/ids';
 import { memoryCtx } from '../../memory/ctx';
 import {
+  ConflictError,
   handle,
   ok,
   parseWith,
@@ -147,8 +148,8 @@ export function ruleActionHandler(deps: MemoryDeps, action: RuleAction): Handler
       // conditional audit insert wrote nothing, so no duplicate transition event exists.
       if (await replayed(ctx, body.client_op_id))
         return replayResponse(ctx, body.client_op_id, a.audit);
-      const cur = await ruleById(ctx, id);
-      throw new ProxyError('conflict_active_decision', `rule_${cur ? cur.status : 'missing'}`);
+      // Fix cycle 2 (N2): frozen ConflictBodySchema shape (`current: null`), as decisions.ts.
+      throw new ConflictError(null);
     }
     return jsonNoStore(result);
   });

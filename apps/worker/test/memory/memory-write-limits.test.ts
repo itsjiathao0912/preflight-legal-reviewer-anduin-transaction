@@ -2,8 +2,15 @@
 // quota_counter UPSERT, 429 rate_limited, nothing written on refusal), L2 safe-charset ids,
 // L4 conditional rule-transition audit, L5 server-side 25-finding chunk cap.
 import { env } from 'cloudflare:test';
-import { describe, expect, test } from 'vitest';
-import { MEMORY_WRITE_CAPS, writeKey } from '../../src/platform/index';
+import { afterEach, describe, expect, test } from 'vitest';
+import { ConflictBodySchema } from '@aduin/core';
+import {
+  MEMORY_WRITE_CAPS,
+  MEMORY_WRITE_WEIGHTS,
+  rowBudgetKey,
+  writeKey,
+} from '../../src/platform/index';
+import { measureAi } from './budget-probe';
 import { splitWindow } from '../../src/platform/quota';
 import { AUDIT_SQL } from '../../src/memory/repo/audit';
 import { FINDINGS_CHUNK_MAX } from '../../src/routes/memory/runs';
@@ -17,6 +24,7 @@ import {
   session,
   wireFinding,
   type MemHarness,
+  T0,
   type Session,
 } from './memory-harness';
 
@@ -47,7 +55,19 @@ const storeFindings = (h: MemHarness, s: Session, run: string, list: unknown[]) 
 
 describe('memory write limits (review M1)', () => {
   test('caps are code defaults sized to a demo session', () => {
-    expect(MEMORY_WRITE_CAPS).toEqual({ requestsPerDay: 600, runsPerDay: 5, findingsPerDay: 2000 });
+    expect(MEMORY_WRITE_CAPS).toEqual({
+      requestsPerDay: 600,
+      runsPerDay: 40,
+      findingsPerDay: 2000,
+      rowBudgetPerDay: 40_000,
+    });
+    expect(MEMORY_WRITE_WEIGHTS).toEqual({
+      decision: 25,
+      run: 12,
+      counselAnswer: 18,
+      findingsBase: 5,
+      other: 10,
+    });
   });
 
   test('at the per-workspace request cap every write is 429 and writes nothing; reads still work', async () => {
@@ -251,5 +271,182 @@ describe('rule transitions are audited once (review L4)', () => {
       .run();
     expect(r.meta.changes).toBe(0);
     expect(await approvedEvents(s.workspaceId, 'fr_race2')).toBe(1);
+  });
+});
+
+async function setBudget(nowMs: number, n: number) {
+  const k = rowBudgetKey(nowMs);
+  const { base, window } = splitWindow(k.key);
+  await env.DB.prepare(
+    'INSERT INTO quota_counter (scope, key, window, count, updated_at) VALUES (?1, ?2, ?3, ?4, 0) ' +
+      'ON CONFLICT(scope, key, window) DO UPDATE SET count = excluded.count',
+  )
+    .bind(k.scope, base, window, n)
+    .run();
+}
+const budgetUsed = async (nowMs: number) => {
+  const k = rowBudgetKey(nowMs);
+  const { base, window } = splitWindow(k.key);
+  return (
+    (
+      await env.DB.prepare(
+        'SELECT count AS n FROM quota_counter WHERE scope = ?1 AND key = ?2 AND window = ?3',
+      )
+        .bind(k.scope, base, window)
+        .first<{ n: number }>()
+    )?.n ?? 0
+  );
+};
+
+describe('global weighted daily write-row budget (fix cycle 2, N1/M1)', () => {
+  afterEach(async () => {
+    await setBudget(T0, 0);
+  });
+
+  test('each write claims its route weight from mw|rows|<day>', async () => {
+    const h = makeMem();
+    const s = await session(h);
+    const b0 = await budgetUsed(h.clock.now);
+    const run = await newRun(h, s);
+    expect(await budgetUsed(h.clock.now)).toBe(b0 + MEMORY_WRITE_WEIGHTS.run);
+    expect((await decide(h, s, { runId: run, quote: 'Weighted.' })).status).toBe(200);
+    expect(await budgetUsed(h.clock.now)).toBe(
+      b0 + MEMORY_WRITE_WEIGHTS.run + MEMORY_WRITE_WEIGHTS.decision,
+    );
+    expect((await storeFindings(h, s, run, findings(7, 'w'))).status).toBe(200);
+    expect(await budgetUsed(h.clock.now)).toBe(
+      b0 + MEMORY_WRITE_WEIGHTS.run + MEMORY_WRITE_WEIGHTS.decision + 7 + 5,
+    );
+  });
+
+  test('at the budget a write is 429 memory_write_budget, retry-after to next UTC day, only the prior claim row written', async () => {
+    const h = makeMem();
+    const s = await session(h);
+    const run = await newRun(h, s);
+    await setBudget(h.clock.now, MEMORY_WRITE_CAPS.rowBudgetPerDay - 10);
+    const before = await dumpWorkspace(env.DB, s.workspaceId);
+    h.resetStats();
+    const r = await decide(h, s, { runId: run, quote: 'Over budget.' });
+    expect(r.status).toBe(429);
+    expect(r.body.error).toMatchObject({ code: 'rate_limited', reason: 'memory_write_budget' });
+    const nextDay = Math.floor(h.clock.now / 86_400_000 + 1) * 86_400;
+    expect(Number(r.res.headers.get('retry-after'))).toBe(nextDay - Math.floor(h.clock.now / 1000));
+    // only the prior per-workspace request claim (1 row); the refused budget claim writes nothing
+    expect(h.stats.rowsWritten).toBe(1);
+    expect(await budgetUsed(h.clock.now)).toBe(MEMORY_WRITE_CAPS.rowBudgetPerDay - 10);
+    expect(await dumpWorkspace(env.DB, s.workspaceId)).toBe(before);
+    // a cheaper write that fits still goes through (weights, not a flat count)
+    expect((await storeFindings(h, s, run, findings(5, 'fit'))).status).toBe(200);
+  });
+
+  test('mint-and-flood: many sandboxes from many IPs stop at the global budget', async () => {
+    const h = makeMem();
+    const sandboxes = [];
+    for (let i = 0; i < 4; i++) sandboxes.push(await session(h, 'Flood', `198.51.100.${i + 1}`));
+    const runs = [];
+    for (const s of sandboxes) runs.push(await newRun(h, s));
+    await setBudget(
+      h.clock.now,
+      MEMORY_WRITE_CAPS.rowBudgetPerDay - 3 * MEMORY_WRITE_WEIGHTS.decision,
+    );
+    const statuses: number[] = [];
+    for (let i = 0; i < 8; i++) {
+      const k = i % sandboxes.length;
+      statuses.push(
+        (await decide(h, sandboxes[k]!, { runId: runs[k]!, quote: `Mf ${i}.` })).status,
+      );
+    }
+    expect(statuses).toEqual([200, 200, 200, 429, 429, 429, 429, 429]);
+    expect(await budgetUsed(h.clock.now)).toBe(MEMORY_WRITE_CAPS.rowBudgetPerDay);
+    // a NEW sandbox minted after the budget is hit still works for sessions and reads
+    const fresh = await session(h, 'After', '198.51.100.99');
+    expect(
+      (await call(h, 'GET', '/api/audit?limit=1', undefined, { cookie: fresh.cookie })).status,
+    ).toBe(200);
+    // the budget resets on the next UTC day
+    h.clock.now += 86_400_000;
+    expect((await decide(h, sandboxes[0]!, { runId: runs[0]!, quote: 'Next day.' })).status).toBe(
+      200,
+    );
+  });
+
+  test('the AI proxy keeps working when the memory write budget is exhausted', async () => {
+    await setBudget(T0, MEMORY_WRITE_CAPS.rowBudgetPerDay);
+    const m = await measureAi(); // throws unless the AI call completes with a result frame
+    expect(m.rowsWritten).toBeGreaterThan(0);
+    expect(await budgetUsed(T0)).toBe(MEMORY_WRITE_CAPS.rowBudgetPerDay);
+  });
+});
+
+describe('run claim after firm validation (fix cycle 2, N3)', () => {
+  test('an unknown firm is 400 and burns no run slot', async () => {
+    const h = makeMem();
+    const s = await session(h);
+    await setCounter(s.workspaceId, 'run', h.clock.now, MEMORY_WRITE_CAPS.runsPerDay - 1);
+    await expect(newRun(h, s, 'firm-does-not-exist')).rejects.toThrow(/400.*unknown_firm/);
+    await newRun(h, s); // the last slot is still available
+    await expect(newRun(h, s)).rejects.toThrow(/429.*workspace_run_limit/);
+  });
+});
+
+describe('rule lost-race 409 end to end (fix cycle 2, N4 / review L4)', () => {
+  test('status flips between ruleById and the batch -> 409 ConflictBody, one audit event', async () => {
+    const h0 = makeMem();
+    const s = await session(h0);
+    await env.DB.prepare(
+      "INSERT INTO firm_rule (workspace_id, id, law_firm_id, origin, status, rule_text, created_by_name, created_at) VALUES (?1, 'fr_race4', 'firm-x', 'proposed', 'proposed', 'Proposed rule text', 'T', 1)",
+    )
+      .bind(s.workspaceId)
+      .run();
+    let armed = true;
+    let winner: Promise<unknown> | null = null;
+    // Test seam: the losing request's batch first lets a competing approve win (real HTTP path).
+    const raceDb = new Proxy(env.DB, {
+      get(t, p) {
+        if (p === 'batch')
+          return async (stmts: D1PreparedStatement[]) => {
+            if (armed) {
+              armed = false;
+              winner = call(
+                h,
+                'POST',
+                '/api/rules/fr_race4/approve',
+                { client_op_id: op('win') },
+                { cookie: s.cookie },
+              );
+              const w = (await winner) as { status: number };
+              expect(w.status).toBe(200);
+            }
+            return t.batch(stmts);
+          };
+        const v = Reflect.get(t, p) as unknown;
+        return typeof v === 'function' ? (v as (...a: unknown[]) => unknown).bind(t) : v;
+      },
+    }) as D1Database;
+    const h = makeMem({ db: raceDb });
+    const lose = await call(
+      h,
+      'POST',
+      '/api/rules/fr_race4/reject',
+      { client_op_id: op('lose') },
+      { cookie: s.cookie },
+    );
+    expect(winner).not.toBeNull();
+    expect(lose.status).toBe(409);
+    const body = ConflictBodySchema.parse(lose.body);
+    expect(body.current).toBeNull();
+    expect(body.error.code).toBe('conflict_active_decision');
+    const n = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM audit_event WHERE workspace_id = ?1 AND entity_id = 'fr_race4'",
+    )
+      .bind(s.workspaceId)
+      .first<{ n: number }>();
+    expect(n?.n).toBe(1);
+    const st = await env.DB.prepare(
+      "SELECT status FROM firm_rule WHERE workspace_id = ?1 AND id = 'fr_race4'",
+    )
+      .bind(s.workspaceId)
+      .first<{ status: string }>();
+    expect(st?.status).toBe('active');
   });
 });
