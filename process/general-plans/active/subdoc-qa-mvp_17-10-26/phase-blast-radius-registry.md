@@ -33,9 +33,11 @@ Owns: `packages/core/src/{detectors (new files), investor, memory/patternKey.ts}
 
 ## Phase 03
 Owns: `apps/web/**` (except later feature dirs), `scripts/src/build-samples.ts`. Reads `design/mockups/*`. Disjoint from 04a.
+status: DONE (17-10-26, commit 833161b, EVL green, visual review PASS_WITH_NOTES)
 
 ## Phase 04a
 Owns: `apps/worker/src/{routes/proxy,proxy,upstream,limits,identity/turnstile.ts,config.ts}`, `apps/worker/test/{proxy,fakes}`, `scripts/src/slice-check.ts`, `apps/web/e2e/slice.spec.ts`. Disjoint from 04b (migrations, seed, platform, memory, routes/memory, test/memory).
+status: DONE (17-10-26, commits 729e7fd + 70d320b, EVL green, review APPROVE_WITH_FIXES fixed; M1 closed). Extra seam edit during M1 closure: `apps/web/playwright.config.ts` (optional `SLICE_BASE_URL` override, one additive key).
 
 ## Phase 04b
 Owns: `apps/worker/{migrations,seed,src/db,src/platform,src/memory,src/routes/memory,test/memory}`, `scripts/src/{seed,spikes/s05*,s08*,s09*,s10*}`, `fixtures/memory/_test-seed-spec.json`. Single owner of all SQL.

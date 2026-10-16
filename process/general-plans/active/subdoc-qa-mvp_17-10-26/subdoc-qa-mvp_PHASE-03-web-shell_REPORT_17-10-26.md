@@ -151,3 +151,20 @@ Seven deviations are recorded in the plan's `## Deviations` section; all are wit
 ### Dependency Changes
 + @radix-ui/react-dialog 1.3.1, @radix-ui/react-popover 1.3.1, @fontsource/geist 5.3.0, @fontsource/newsreader 5.3.0
 + dev: @axe-core/playwright 4.14.0 (MPL-2.0, D-8), fake-indexeddb 6.2.5, tsx 4.23.15, @types/node 24.19.2
+
+## UPDATE PROCESS Closeout (17-10-26)
+
+Closeout packet (vc-generate-closeout, Deep mode: this report, `design-probe/second-review_17-10-26.md`, `git log` 833161b, plan checklist).
+
+1. **Selected plan:** `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-03-web-shell_PLAN_17-10-26.md`.
+2. **Closeout classification:** Ready for UPDATE PROCESS archival at phase level (status `VERIFIED`; supersedes the earlier "Keep in active/testing" line above, whose conditions - EVL and the second visual reviewer - are now met). The task folder stays in `active/` until the program closes.
+3. **What was finished:** app shell (232 px sidebar / 56 px rail, Review/Check/Firm, gate pill, AI switch), Findings screen with real engine findings on 12 bundled samples, Dismiss modal, undo, Previously handled, Open a document dialog, privacy notices, placeholders for the 5 other routes, 9 Vitest gates, 17 Playwright specs, a11y smoke, design probe.
+4. **Verified vs unverified:** Verified: every Fully-Automated gate, the Hybrid a11y gate (0 critical), D0 wiring, regression set, EVL green, second visual review PASS_WITH_NOTES (15/15 rubric items), M1 stack run (04a). Unverified: AC6 edit clause (no affordance in app.html), AC17/AC61 views (placeholder), full AC30 sign-off, the 2 serious axe items, contrast and keyboard-focus checks (Phase 10).
+4b. **Validate-contract:** present (PVL 3 cycles, re-targeted to app.html), PASS.
+5. **Cleanup done:** plan status, E3 and steps 6-7 ticked; E3 recorded in `process/context/ui/all-ui.md` (tokens source, shell contract, routes, testids, component and test conventions); B-EDIT filed (`process/general-plans/backlog/b-edit_17-10-26/`); U1-U4 in `core-followups_17-10-26`; registry `status: DONE`. Still needed: the process commit (orchestrator); umbrella AC17/AC61 notes already live in the registry.
+6. **Next valid state:** Phase 02 and Phase 04b inner PVL, then EXECUTE.
+7. **Commit checkpoint:** Process commit belongs after UPDATE PROCESS (execution commit 833161b exists).
+8. **Regression status:** Regression: core goldens - PASS (`pnpm --filter @aduin/core test:golden`, 5 files / 44 tests). Regression: web suite after M1 closure - PASS (`pnpm --filter @aduin/web test:e2e`, 58 passed, 1 skipped). Regression: guards - PASS (`pnpm guard:cf && pnpm secrets:scan`).
+9. **SPEC achievement:** no per-phase SPEC (umbrella SPEC governs). Met by passing automated gates: AC2, AC3, AC4, AC5, AC37, AC38, AC41, AC49, AC39 (client), AC10 (control). Unmet: AC6 edit text/severity clause (backlog B-EDIT; "answered" moves to P08), AC17 view and AC61 host (later UI phase), AC30 full sign-off (P10; interim a11y gate met).
+
+Drift score: HIGH (5 signals: more than 10 files touched, 3+ memory-worthy observations, backlog notes written, 7 recorded deviations). Strongly recommend UPDATE PROCESS -- harness/protocol files touched.

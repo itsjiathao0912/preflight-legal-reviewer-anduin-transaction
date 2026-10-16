@@ -13,10 +13,10 @@ metadata:
 
 **Date**: 17-10-26
 **Complexity**: COMPLEX
-**Status**: ⏳ PLANNED (re-targeted to app.html 17-10-26, supplement cycle 3)
+**Status**: ✅ VERIFIED (17-10-26, commit 833161b; EVL green; second visual review PASS_WITH_NOTES)
 **Program:** subdoc-qa-mvp
 **Umbrella plan:** process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp-umbrella_PLAN_17-10-26.md
-**Phase status:** 🧪 EXECUTED — awaiting EVL
+**Phase status:** ✅ VERIFIED — EVL green (17 e2e specs, 9 unit gates, a11y 0 critical, D0), second visual review PASS_WITH_NOTES (U1-U4 in backlog `core-followups_17-10-26`); UPDATE PROCESS done 17-10-26 (E3 recorded in `process/context/ui/all-ui.md`; B-EDIT filed). Task folder stays in `active/` until the program closes.
 **Milestone:** M1 vertical slice (00 → 01 → 03 → 04a)
 **Report destination:** process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-03-web-shell_REPORT_17-10-26.md
 
@@ -198,7 +198,7 @@ Engine worker error → partial result with stage named in the stage popover and
 ### Step E — Visual check vs app.html
 - [x] E1. Screenshot review at 1440, 1024 and 1199 (auto-collapse) widths; compare layout, tokens, type scale, spacing against `app.html`; apply `design-taste-frontend` `references/tells.md`/`critique.md` as a checklist only; record deviations and reasons in the report (agent-probe). Playwright saves screenshots of the app.html file and the app at 1440, 1024 and 1199 into this task folder (`design-probe/`; external Google Fonts blocked for parity, rubric judges type scale not glyph shapes; content differs because app.html is demo data), with a pass/fail rubric (sidebar 232/56, rail at 1199, findings column 400/380, no tab bar, tone steps, type scale and radius judged against the app.html-derived sets from D1c incl. the named exceptions, shadow only on popovers/modal, single accent); a read-only second subagent runs the rubric. The Open a document dialog is excluded from the rubric. Other mockups (compare, counsel-sheet, firm-memory, start, structure) are NOT approved: do not build from them.
 - [x] E2. Raise selects and the dismiss note to 16 px where app.html does (modal textarea 16 px); keep the Detector select styled like the other Filter selects.
-- [ ] E3. UPDATE PROCESS action: record approved tokens, the shell contract and the published `data-testid` list in `process/context/ui/all-ui.md` (Artifacts section) at closeout.
+- [x] E3. (done in UPDATE PROCESS 17-10-26) UPDATE PROCESS action: record approved tokens, the shell contract and the published `data-testid` list in `process/context/ui/all-ui.md` (Artifacts section) at closeout.
 
 ## Test Gates (commands created in this phase)
 
@@ -314,8 +314,8 @@ Orchestrator reads this before deciding which subagent to spawn next. The canoni
 - [ ] 3. PLAN-SUPPLEMENT — plan-agent: existing phase plan updated; Inner Loop Refresh Note if sections changed (or "n/a — research clean")
 - [ ] 4. PVL — vc-validate-agent: full V1-V7; validate-contract written per `.claude/skills/vc-validate-findings/references/example-validate-output.md`
 - [x] 5. EXECUTE — all checklist items done; per-section test gates run and green (or gaps documented) (17-10-26: all automated gates + a11y green locally; visual probe captured; report `subdoc-qa-mvp_PHASE-03-web-shell_REPORT_17-10-26.md`)
-- [ ] 6. EVL — all EVL gates green; follow-up stubs registered; EVL HANDOFF SUMMARY written
-- [ ] 7. UPDATE PROCESS — phase report written, umbrella state updated, commit done
+- [x] 6. EVL — all EVL gates green; follow-up stubs registered; EVL HANDOFF SUMMARY written (17-10-26: 17 e2e, 9 unit, a11y 0 critical, D0; second visual review PASS_WITH_NOTES; U1-U4 in backlog)
+- [x] 7. UPDATE PROCESS — archived; context updated; committed (17-10-26: closeout appended to the phase report, umbrella state rewritten, all-ui.md E3 recorded, B-EDIT filed; process commit by orchestrator)
 
 **Validate-contract required before execute.** If step 4 (PVL) is unchecked or `## Validate Contract` reads "(placeholder — vc-validate-agent writes this section before EXECUTE)", orchestrator must spawn vc-validate-agent first. A partial contract missing Plan updates applied / Execute-agent instructions / Test gates sections is treated as a placeholder.
 

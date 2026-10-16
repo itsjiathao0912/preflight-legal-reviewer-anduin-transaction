@@ -1,9 +1,9 @@
 ---
 name: report:subdoc-qa-mvp-phase-04a-worker-proxy
-description: "Sub-doc QA MVP Phase 04a EXECUTE report: worker proxy, limits, Turnstile, abuse guards, slice:check --worker-only; 04a-WORKER gates green, reviewer decision pending, M1 SLICE CLOSURE deferred: depends on Phase 03"
+description: "Sub-doc QA MVP Phase 04a report: worker proxy, limits, Turnstile, abuse guards; fix cycle 1 after independent review; M1 closure and workers.dev deploy; UPDATE PROCESS closeout (VERIFIED)"
 date: 17-10-26
 phase: phase-04a-worker-proxy
-status: COMPLETE_WITH_GAPS
+status: COMPLETE
 feature: subdoc-qa-mvp
 plan: process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-04a-worker-proxy_PLAN_17-10-26.md
 metadata:
@@ -200,3 +200,29 @@ OpenRouter's real accounting of aborted or 4xx requests, and the served-model st
 - When the stack project runs, the `preview` webServer still starts and writes an e2e build into `apps/web/dist` (same `outDir`). Order is sequential, so the stack serves the production build. Before any deploy, rebuild with `pnpm --filter @aduin/web build` (done here, proven by `no-e2e-hook-in-dist`).
 - An untracked `packages/core/test/_tmp_count.test.ts` that was not created by this run (probably a parallel agent) made root `prettier --check` hit ENOENT. Left untouched.
 - Redeploy recipe until 04b: build web, then regenerate the no-D1 config the same way, then `wrangler deploy -c` that file.
+
+## UPDATE PROCESS Closeout (17-10-26)
+
+Closeout packet (vc-generate-closeout, Deep mode: evidence from this report, the `harness/phase-04a/*.json` pack, `git log` 729e7fd / 70d320b and the plan checklist).
+
+1. **Selected plan:** `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-04a-worker-proxy_PLAN_17-10-26.md`.
+2. **Closeout classification:** Ready for UPDATE PROCESS archival at phase level (status `VERIFIED`). The task folder is the whole program, so it stays in `active/` until the program closes; nothing is moved.
+3. **What was finished:** `POST /api/ai`, `POST /api/ocr`, `GET /api/quota` with guards, visitor cookie, Turnstile, quotas, spend cap, circuit breaker and NDJSON hold-open over ports; fix cycle 1 (F1/F2/F3/F6/F8/F11/F12/F13); `scripts/src/slice-check.ts`; `apps/web/e2e/slice.spec.ts`; M1 closure and the workers.dev deploy (version `9dcf2f75-d8ac-419f-b33b-5a2525847ae7`).
+4. **Verified vs unverified:** Verified: all 11 gate tokens, 148 worker tests, `pnpm -r typecheck`, lint, `pnpm guard:cf`, `pnpm secrets:scan`, risk pack validator (failures []), full `pnpm slice:check`, web e2e 58 passed, live slice spec 1 passed on workers.dev. Unverified (Agent-Probe residual, owner 05/10): real workerd CPU and hold-open, OpenRouter accounting of aborted/4xx requests, served-model string format; real D1 and Turnstile widget (04b/05).
+4b. **Validate-contract:** present in the plan (PVL 3 cycles, PASS).
+5. **Cleanup done:** plan status and Phase Loop steps 6-7 ticked; F14 added to the 04b contract notes; registry `status: DONE`; umbrella state rewritten with the live URL and deploy runbook; worker context doc `process/context/worker/all-worker.md`; `all-tests.md`, `all-context.md` refreshed; follow-ups W1-W9 in `core-followups_17-10-26`. Still needed: the process commit (orchestrator); 04b must set the real D1 id.
+6. **Next valid state:** run Phase 02 and Phase 04b inner PVL to completion, then EXECUTE (02 and 04b in parallel, then 05).
+7. **Commit checkpoint:** Process commit belongs after UPDATE PROCESS (execution commits 729e7fd and 70d320b already exist).
+8. **Regression status:** Regression: Phase 01 core goldens - PASS. Command: `pnpm --filter @aduin/core test:golden`. Result: 5 files / 44 tests. Regression: Phase 03 web - PASS. Command: `pnpm --filter @aduin/web test:e2e`. Result: 58 passed, 1 skipped (design-probe opt-in). Regression: guards - PASS. Command: `pnpm guard:cf && pnpm secrets:scan`. Result: OK.
+9. **SPEC achievement:** no per-phase SPEC (the umbrella SPEC governs). AC26, AC27 (key and zero-write hit), AC32 (server level), AC33, AC39 (server): met by passing Fully-Automated gates. AC40: interim (port budget) met; residual (real workerd CPU and hold-open) is unmet and stays Agent-Probe, backlog W6, owner Phase 05/10. M1 slice criterion: met (full `pnpm slice:check` plus live run).
+
+Drift score: HIGH (5 signals: more than 10 files touched, 3+ memory-worthy observations, backlog notes written, plan/blast-radius deviations DV1-DV12). Strongly recommend UPDATE PROCESS -- harness/protocol files touched.
+
+Phase-program shape: status VERIFIED; what green proves: the Worker enforces limits, caps, key isolation and fail-closed behavior against stubs and a local plus live no-AI smoke, not real upstream behavior; remains outside: D1 platform and persisted breaker (04b), real AI path (05), live probe (10); UPDATE PROCESS next: done; next phase: 02 and 04b.
+
+### Forward Preview (final)
+
+- Test infra found: worker harness and fakes (see above); `scripts/src/slice-check.ts`; `SLICE_BASE_URL` live run.
+- Blast radius changes: seam edit `apps/web/playwright.config.ts` (`SLICE_BASE_URL`); `slice-check.ts` `--project=stack` fix.
+- Commands to stay green: the gate loop, `pnpm --filter @aduin/worker test`, `pnpm slice:check`, guards.
+- Dependency changes: none.

@@ -1,6 +1,6 @@
 # aduin-transaction - All Context
 
-Last updated: 2026-10-17 (Phase 01 UPDATE PROCESS; HEAD 6d12628)
+Last updated: 2026-10-17 (Phase 03/04a + Milestone 1 UPDATE PROCESS; HEAD 70d320b)
 
 This file is the root context entrypoint for the repo.
 
@@ -23,6 +23,8 @@ typos), diffs related versions (feeder / parallel / prior template), and turns c
 Target user: Anduin's Digitization Service Analyst. Deliverables: live demo, README, video, slides.
 
 Domain knowledge, defect taxonomy, competitors and product decisions: `process/context/product-domain.md`.
+
+**Live demo (Milestone 1, 17-10-26):** https://aduin-transaction-web.giathaowork.workers.dev (Worker `aduin-transaction-web`, version `9dcf2f75-d8ac-419f-b33b-5a2525847ae7`). The Findings screen runs real engine findings on bundled samples. AI is fail-closed until Phase 04b (D1) and Phase 05 (Turnstile widget). Deploy rules and the redeploy recipe: `process/context/worker/all-worker.md`.
 
 ---
 
@@ -95,6 +97,7 @@ For most substantial tasks:
 | `process/context/planning/all-planning.md` | creating or reviewing an implementation plan |
 | `process/context/tests/all-tests.md` | testing, verification, test fixtures, or test debugging |
 | `process/context/ui/all-ui.md` | any UI/UX design, mockup, frontend implementation or UI review task |
+| `process/context/worker/all-worker.md` | any work in apps/worker, the /api/* routes, quotas or limits, OpenRouter calls, secrets, or deploying to workers.dev |
 
 ## Current Context Groups
 
@@ -102,8 +105,9 @@ For most substantial tasks:
 |---|---|---|
 | `engine/` | `process/context/engine/all-engine.md` | Core engine architecture in packages/core (adapters, structure, graph, detectors, findings, memory, session, frozen contracts v1), pinned algorithms H/L/R/U/S with final thresholds, and how later phases extend it additively |
 | `planning/` | `process/context/planning/all-planning.md` | Planning conventions and plan-shape examples (SIMPLE vs COMPLEX) for writing implementation plans |
-| `tests/` | `process/context/tests/all-tests.md` | Test runners (vitest 4 + cloudflare vitest plugin + Playwright), real pnpm commands, no-double-dash rule, tooling caveats and known gaps for the sub-doc QA tool |
+| `tests/` | `process/context/tests/all-tests.md` | Test runners (vitest 4 + cloudflare vitest plugin + Playwright preview/stack projects), real pnpm commands for web and worker gates, no-double-dash and one-token-per-call rules, SLICE_BASE_URL live run, design-probe opt-in, tooling caveats and known gaps for the sub-doc QA tool |
 | `ui/` | `process/context/ui/all-ui.md` | UI/UX design direction, design skills, references, tokens and approved mockups for the sub-doc QA web app |
+| `worker/` | `process/context/worker/all-worker.md` | Cloudflare Worker (apps/worker) facts for the sub-doc QA tool - AI/OCR proxy pipeline order, refund policy, limits, config and env var names, secret names, error shapes, live deploy rules and redeploy recipe |
 <!-- /GENERATED:routing -->
 
 ## Task Routing Table
@@ -136,6 +140,7 @@ For most substantial tasks:
 | choosing libraries or copying open-source code | `docs/research/reusable-repos.md` (license rules) |
 | Cloudflare / OpenRouter calls, secrets | `CLAUDE.md` → Project Rules (credentials table) |
 | core engine, detectors, thresholds, frozen API contracts (packages/core) | `process/context/engine/all-engine.md` |
+| Worker routes, quotas, OpenRouter proxy, secrets, deploy to workers.dev | `process/context/worker/all-worker.md` |
 | testing or verification | `process/context/tests/all-tests.md` |
 | creating a new plan | `process/context/planning/all-planning.md` |
 | UI/UX design, mockups, frontend look and feel | `process/context/ui/all-ui.md` |
@@ -187,7 +192,7 @@ When durable project knowledge changes:
 
 ## Repository Structure
 
-pnpm monorepo scaffold exists (Phase 00 of the subdoc-qa-mvp program, commit 7d9955b); Phase 01 (commit 6d12628) added the core engine in `packages/core` (see `process/context/engine/all-engine.md`). Current layout:
+pnpm monorepo scaffold exists (Phase 00 of the subdoc-qa-mvp program, commit 7d9955b); Phase 01 (6d12628) added the core engine in `packages/core` (see `process/context/engine/all-engine.md`); Phase 03 (833161b) added the web shell and Findings screen; Phase 04a (729e7fd) added the Worker AI/OCR proxy; Milestone 1 closed at 70d320b. Current layout:
 
 ```
 aduin-transaction/
@@ -196,16 +201,16 @@ aduin-transaction/
   package.json, pnpm-workspace.yaml, pnpm-lock.yaml -- root scripts, workspaces (packages/*, apps/*, scripts), pnpm@11.13.1
   tsconfig.base.json, eslint.config.js, THIRD_PARTY_NOTICES.md
   packages/core/            -- @aduin/core: parser/graph/detector engine (src/index.ts seam; test/{unit,golden,property,seeded,recorded})
-  apps/web/                 -- @aduin/web: React 19 + Vite 8 + Tailwind 4 SPA, Playwright e2e (e2e/ empty until Phase 03)
-  apps/worker/              -- @aduin/worker: Cloudflare Worker (src/app.ts with pre-wired proxy/memory route seams), wrangler.jsonc
-  scripts/                  -- @aduin/scripts: guards (guard:cf, secrets:scan), spike runners, spike worker scripts (spikes/s01-s02)
+  apps/web/                 -- @aduin/web: React 19 + Vite 8 + Tailwind 4 SPA. src/{styles,shell,features,components,state,engine,storage,api,memory}; engine runs in a Comlink Web Worker; e2e/ = 17 Playwright specs + fixtures; test/ = 9 Vitest gates + support/mockupCss.ts; public/samples and firms.json are generated (gitignored). See process/context/ui/all-ui.md
+  apps/worker/              -- @aduin/worker: Cloudflare Worker, wrangler.jsonc. src/{config,proxy,limits,upstream,identity,routes/proxy}: POST /api/ai, POST /api/ocr, GET /api/quota (NDJSON hold-open proxy to OpenRouter, quotas, spend cap, Turnstile, breaker); routes/memory and platform/ are Phase 04b seams. See process/context/worker/all-worker.md
+  scripts/                  -- @aduin/scripts: guards (guard:cf, secrets:scan), build-samples.ts, slice-check.ts (M1 check), spike runners and spike worker scripts (spikes/s01-s02)
   fixtures/                 -- fixture dirs (fingerprint vectors and memory seeds land in Phases 01/02)
   design/                   -- approved mockups and design assets
   docs/research/            -- reusable-repos.md (open-source candidates + licenses)
   samples/sub-docs/         -- README.md manifest + raw/ real SEC sub docs (13 HTML), ILPA PDF (gitignored),
                                raw/09-rw-holdings-scans/ (22 JPEG pages for OCR), raw/_full-prospectus/ (gitignored)
   process/
-    context/                -- this context system (all-context.md, product-domain.md, planning/, tests/, ui/)
+    context/                -- this context system (all-context.md, product-domain.md, engine/, planning/, tests/, ui/, worker/)
     general-plans/          -- active/ completed/ backlog/ task folders (subdoc-qa-mvp_17-10-26 = the MVP phase program)
     features/               -- feature-scoped storage (none yet)
     development-protocols/  -- RIPER-5 methodology docs (kit-managed)
@@ -217,13 +222,13 @@ Chosen in INNOVATE and scaffolded in Phase 00 (exact pins in the `package.json` 
 
 - **Package manager / runtime:** pnpm 11.13.1 (workspaces), Node >=24, TypeScript 6.0.3 (ESM).
 - **Core (`@aduin/core`):** htmlparser2 12, unpdf 1.9, mammoth 1.13, diff 9, zod 4.6, @noble/hashes 2.4 (import paths end in `.js`).
-- **Web (`@aduin/web`):** React 19.3, Vite 8, Tailwind 4 (`@tailwindcss/vite`), zustand, dexie, comlink, @tanstack/react-table, pdfjs-dist 6, docx 9.
-- **Worker (`@aduin/worker`):** Cloudflare Workers via wrangler 4.151, zod 4.6; tested with `@cloudflare/vitest-plugin` 1.4.4.
+- **Web (`@aduin/web`):** React 19.3, Vite 8, Tailwind 4 (`@tailwindcss/vite`), zustand, dexie, comlink, Radix dialog + popover 1.3.1 (behavior only, restyled by tokens), self-hosted @fontsource Geist + Newsreader, pdfjs-dist 6, docx 9 (@tanstack/react-table is installed but unused so far; plan deviation 1).
+- **Worker (`@aduin/worker`):** Cloudflare Workers via wrangler 4.151, zod 4.6; tested with `@cloudflare/vitest-plugin` 1.4.4. Free-only OpenRouter models, secrets via `wrangler secret put`.
 - **Test / lint:** vitest 4.1.12, Playwright 1.64, fast-check 4.10, eslint 10 + typescript-eslint 8, prettier 3.9. See `process/context/tests/all-tests.md`.
 - **Hosting:** Cloudflare (Workers plus static assets; D1/R2/KV as needed), resources named
   `aduin-transaction-*`, default `*.workers.dev` / `*.pages.dev` URLs. **Never touch zone `itsjiathao.com`** (enforced by `pnpm guard:cf`).
 - **LLM / OCR:** OpenRouter (OpenAI-compatible API). Free models first, cheap paid fallback, ~$10 total cap.
-- **Not installed on purpose:** `@axe-core/playwright` (MPL-2.0). Docxodus WASM is still unproven on Workers.
+- **a11y:** `@axe-core/playwright` 4.14.0 is installed dev-only (MPL-2.0; decision D-8 recorded in `THIRD_PARTY_NOTICES.md`). Docxodus WASM is still unproven on Workers.
 - **Local toolchain:** Node.js v24.22.0, git, gh (logged in as itsjiathao0912).
 
 ## Key Patterns and Conventions
@@ -243,7 +248,8 @@ Secrets live outside the repo (see `CLAUDE.md` credentials table). Env var names
 
 - Cloudflare: `CLOUDFLARE_EMAIL`, `CLOUDFLARE_API_KEY`, `CLOUDFLARE_ACCOUNT_ID` (`~/.config/cloudflare/credentials.env`)
 - OpenRouter: `OPENROUTER_API_KEY`, `OPENROUTER_BASE_URL` (`~/.config/openrouter/credentials.env`)
-- App runtime (planned): Workers secrets via `wrangler secret put`; local dev in gitignored `.dev.vars` / `.env`.
+- App runtime: Workers secrets via `wrangler secret put` (live: `COOKIE_SIGNING_KEYS`, `COOKIE_SIGNING_KID`, `OPENROUTER_API_KEY`; `TURNSTILE_SECRET` not yet); plain vars in `apps/worker/wrangler.jsonc`; full list in `process/context/worker/all-worker.md`. Local dev in gitignored `.dev.vars` / `.env`.
+- Tests: `SLICE_BASE_URL` (https `*.workers.dev` only) points the Playwright `stack` project at a deployed Worker; `DESIGN_PROBE` enables the opt-in design-probe spec.
 
 ## Open Questions and Outstanding Work
 
@@ -252,12 +258,12 @@ Secrets live outside the repo (see `CLAUDE.md` credentials table). Env var names
   The paid fallback is chosen against the ~$10 cap.
 - Persistence for counsel-query tracking (D1 vs KV) and whether the demo needs auth.
 - OpenRouter credits not yet topped up by the user; paid fallback unavailable until then.
-- Next step: Phases 03 and 04a EXECUTE in parallel, then M1 slice deploy; see the umbrella `## Current Execution State`. Phase 01 (core engine) is DONE, see `process/context/engine/all-engine.md`.
-- a11y scanner: axe is MPL-2.0 and not installed; user decision needed before Phases 03/10 a11y gates.
+- Next step: Phases 02 and 04b (inner PVL running), then 05, 06, 07, 08, 08b, 09, 10; see the umbrella `## Current Execution State`. Phases 00, 01, 03, 04a are DONE and Milestone 1 is closed and live. Phase 04b must replace the placeholder D1 id in `apps/worker/wrangler.jsonc`.
+- Open backlog: AC6 edit text/severity (B-EDIT), UI notes U1-U4, core follow-ups, `/api/health` no-store (`process/general-plans/backlog/`).
 
 ## Scan Metadata
 
 - Generated: 2026-10-17
-- HEAD: 7d9955b
-- Mode: delta update after Phase 00 (scaffold, guards, spikes S1/S2/S6/S7)
+- HEAD: 70d320b
+- Mode: delta update after Phase 03 (web shell), Phase 04a (worker proxy) and Milestone 1 closure + deploy
 - Package manager: pnpm 11.13.1 (workspaces: packages/*, apps/*, scripts)

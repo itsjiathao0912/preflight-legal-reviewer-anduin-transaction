@@ -599,19 +599,28 @@ node .claude/skills/vc-generate-plan/scripts/validate-plan-artifact.mjs <each pl
 
 **Program-wide gate-command rule (orchestrator, 2026-10-17):** under pnpm 11.13.1, select tests with `pnpm --filter <pkg> test <token> [<token>...]` (NO `--`). Plans that still say `test -- <token>` must be read as the no-`--` form by execute agents and testers. Their supplements fix the text when each phase reaches inner PVL.
 
+## Live Demo and Deploy Runbook (Milestone 1, 17-10-26)
+
+- Live demo: https://aduin-transaction-web.giathaowork.workers.dev (Worker `aduin-transaction-web`, workers.dev only; active version `9dcf2f75-d8ac-419f-b33b-5a2525847ae7`). AI is fail-closed (no D1 platform, no Turnstile widget) until Phase 04b/05.
+- Redeploy until 04b: `pnpm guard:cf && pnpm secrets:scan`, `pnpm --filter @aduin/web build`, then `wrangler deploy` with a generated config that is the committed `apps/worker/wrangler.jsonc` minus `d1_databases` (the committed file still carries the placeholder all-zero D1 id). Phase 04b replaces the placeholder with the real id, after which plain `wrangler deploy` works. Full recipe, secret names and rules: `process/context/worker/all-worker.md` (Deploy section).
+- Verify a deploy: `SLICE_BASE_URL=https://aduin-transaction-web.giathaowork.workers.dev pnpm --filter @aduin/web exec playwright test --project=stack`.
+- Hard stops still apply: no custom domain or route, never the zone itsjiathao.com, `aduin-transaction-*` names only, secrets only via `wrangler secret put`.
+
+---
+
 ## Current Execution State
 
 Last updated: 17-10-26
-Current phase: 3 and 4a of 13 executing in parallel (Phase 00 DONE, commit 7d9955b; Phase 01 DONE, commit 6d12628)
-Phase name: Phase 03 — Web shell + Phase 04a — Worker proxy (parallel EXECUTE)
-Phase status: Phase 01 DONE (EVL CLEAN; independent security review pending); 03 and 04a EXECUTING in parallel; M1 slice deploy after 03 + 04a
-Phase EVL: Phase 01 EVL green (core 217, golden 44, property 29, corpus 13, vectors 38, security 16, contracts 34, typecheck/lint/guard:cf/secrets:scan, root test, negative check); 03 and 04a EVL not started
-Phase report: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-01-core-engine_REPORT_17-10-26.md` (Phase 01, written); closeout appended there; Phase 00 `subdoc-qa-mvp_PHASE-00-scaffold-spikes_REPORT_17-10-26.md`
-Next phase: after M1 slice deploy (03 + 04a): 02, 04b, then 05/06/07/08/08b/09/10; all UI holds released (see Execution Holds, Hold update 2)
-Current loop step: EXECUTE (Phase 03 and Phase 04a in parallel; Phase 01 closed at UPDATE-PROCESS)
-Validate-contract status: Phase 01 PASS (EXECUTED, EVL green); 03 PASS (after 3 supplement cycles); 04a PASS; holds and defaults are recorded in `## Execution Holds`
-Program Net Gate: PENDING (Phase 01 exit gate met; carried gaps: workerd/browser conformance of vectors + cookie helper owned by P04b/P03, dev deps missing from THIRD_PARTY_NOTICES.md, patternKey.ts owned by P02, remote spikes not re-run, S2 PASS-WITH-RISK use string-template rebuild, OpenRouter free-tier limits read at runtime in 05, D1 batch vs 50-query budget open in 04b S8, axe MPL-2.0 decision pending)
-Latest validator run: 17-10-26 — Phase 01 EVL gates green (core 217, golden 44, property 29, corpus 13, vectors 38, security 16, contracts 34, typecheck/lint/guard:cf/secrets:scan, root pnpm test, nosuchtoken exits 1)
+Current phase: Phases 02 and 04b of 13 (parallel inner loop; Phases 00, 01, 03, 04a DONE; Milestone 1 CLOSED and live)
+Phase name: Phase 02 — Detectors + fixtures, and Phase 04b — D1 + memory API (both in inner PVL)
+Phase status: 00 DONE (7d9955b); 01 DONE (6d12628); 03 DONE (833161b); 04a DONE (729e7fd); M1 CLOSED (70d320b; full `pnpm slice:check` PASS, live slice spec PASS); live at https://aduin-transaction-web.giathaowork.workers.dev (version 9dcf2f75-d8ac-419f-b33b-5a2525847ae7; AI fail-closed until 04b); 02 and 04b not executed yet
+Phase EVL: 03 green (17 e2e, 9 unit, a11y 0 critical, D0; visual review PASS_WITH_NOTES); 04a green (11 gates, 148 worker tests, lint/typecheck clean; review APPROVE_WITH_FIXES, fixes verified); M1 slice:check full PASS; 02 and 04b EVL not started
+Phase report: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-04a-worker-proxy_REPORT_17-10-26.md` (04a incl. Fix cycle 1 and M1 closure + deploy, closeout appended); `subdoc-qa-mvp_PHASE-03-web-shell_REPORT_17-10-26.md` (03, closeout appended); earlier: PHASE-01 and PHASE-00 reports
+Next phase: 02 in parallel with 04b (inner PVL running), then 05, 06, 07, 08, 08b, 09, 10; Phase 04b must set the real D1 database id in `apps/worker/wrangler.jsonc` and wire the persisted breaker/QuotaPort (see the 04a plan `### Phase 04b contract notes`)
+Current loop step: PVL (Phase 02 and Phase 04b inner PVL validators running; do not EXECUTE until both contracts are written)
+Validate-contract status: 01, 03, 04a PASS and EXECUTED; 02 and 04b in PVL (contract pending); holds and defaults are recorded in `## Execution Holds`
+Program Net Gate: CONDITIONAL (M1 exit gate met; carried gaps: AC6 edit clause (B-EDIT backlog), AC17/AC61 views placeholder until later UI phases, U1-U4 UI notes and 2 serious axe items to Phase 10, AC40 real workerd CPU/hold-open and OpenRouter abort/4xx accounting need the Phase 05/10 live probe, breaker per-isolate until 04b, `/api/health` lacks no-store, THIRD_PARTY_NOTICES transitive rows before 10, axe MPL-2.0 dev-only decision recorded in notices, remote spikes not re-run)
+Latest validator run: 17-10-26 — M1 full `pnpm slice:check` PASS; web e2e 58 passed; live slice spec PASS; 04a 11 gates + 148 worker tests green; UPDATE PROCESS (03, 04a): `discover-context --check-routing`, `validate-context-discovery`, `validate-all-context`, `validate-plan-inventory` (failures []), `validate-umbrella-artifact`, `validate-phase-stub` (03, 04a) all clean, `git diff --check` clean
 
 Loop step values: RESEARCH | INNOVATE | PLAN-SUPPLEMENT | PVL | EXECUTE | EVL | UPDATE-PROCESS
 Orchestrator rule: read "Current loop step" and "validate-contract status" before spawning any subagent. Never spawn execute-agent when loop step is RESEARCH, INNOVATE, PLAN-SUPPLEMENT, or PVL.

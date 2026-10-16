@@ -13,11 +13,11 @@ metadata:
 
 **Date**: 17-10-26
 **Complexity**: COMPLEX
-**Status**: 🚧 EXECUTED (04a-WORKER gates green; M1 SLICE CLOSURE green 17-10-26: full slice:check + web e2e + workers.dev deploy)
+**Status**: ✅ VERIFIED (17-10-26, commits 729e7fd + 70d320b; EVL green; independent review APPROVE_WITH_FIXES, fixes applied; M1 slice closed and live on workers.dev)
 **Program:** subdoc-qa-mvp
 **Umbrella plan:** process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp-umbrella_PLAN_17-10-26.md
-**Phase status:** 🚧 EXECUTE done, awaiting EVL + independent review
-**Milestone:** M1 vertical slice (00 → 01 → 03 → 04a): 04a-WORKER closes the worker half; M1 SLICE CLOSURE is deferred until Phase 03 is VERIFIED against `app.html` (umbrella `## Execution Holds`)
+**Phase status:** ✅ VERIFIED — 11 gates + 148 worker tests green, lint/typecheck clean, review F1/F2/F3/F6/F8/F11/F12/F13 fixed, F4/F5/F14 handed to 04b as contract notes, F7/F10 accepted; M1 SLICE CLOSURE done (full `pnpm slice:check` PASS, live slice spec PASS). UPDATE PROCESS done 17-10-26. Task folder stays in `active/` until the program closes.
+**Milestone:** M1 vertical slice (00 → 01 → 03 → 04a): 04a-WORKER closes the worker half; M1 SLICE CLOSURE is DONE (17-10-26, commit 70d320b; Phase 03 VERIFIED; live https://aduin-transaction-web.giathaowork.workers.dev)
 **Report destination:** process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-04a-worker-proxy_REPORT_17-10-26.md
 
 ---
@@ -247,6 +247,7 @@ Tests use injected fetch only (no network; throwing global fetch guard). No live
 - F4: `x-aduin-doc` is client-attested. A constant value collapses the 3-documents/day D-4 limit to the 8 requests/day ceiling on `v` (still bounded by the ip doc counter for new cookies, Turnstile and the global cap). 04b/05 may derive the document id server-side; until then treat it as untrusted.
 - F5: the 04b SQL `QuotaPort.claim` MUST throw on any port/storage error and return `ok:false` ONLY for a genuine at-cap refusal. `Claims.marker()` reads `ok:false` as "document already seen", so a swallowed port error would silently skip the doc claims.
 - F2: 04b should persist the circuit breaker by implementing `BreakerPort` (D1 row keyed by UTC day + config fingerprint) and wiring it via `createApp({ proxy: { breaker } })`; `tripped()` should throw on storage errors (the pipeline fails closed).
+- F14 (LOW, review): a `BreakerPort.trip()` write failure is logged and swallowed, so with a persisted 04b breaker a failed write leaves it open (read fails closed, write fails open) and the next request can reach a paid model. 04b: on `trip()` failure also set the in-isolate memory trip, or compose memory + persistent.
 - F1: with claims kept after dispatch, the 04b refund path is only hit before dispatch or for definite non-consuming 4xx; port-call budget on the failure path is unchanged or lower.
 
 ## Phase Loop Progress
@@ -258,8 +259,8 @@ Orchestrator reads this before deciding which subagent to spawn next. The canoni
 - [ ] 3. PLAN-SUPPLEMENT — plan-agent: existing phase plan updated; Inner Loop Refresh Note if sections changed (or "n/a — research clean")
 - [ ] 4. PVL — vc-validate-agent: full V1-V7; validate-contract written per `.claude/skills/vc-validate-findings/references/example-validate-output.md`
 - [x] 5. EXECUTE — all checklist items done; per-section test gates run and green (or gaps documented) (17-10-26: 04a-WORKER gates green; reviewer decision pending; M1 SLICE CLOSURE deferred: depends on Phase 03)
-- [ ] 6. EVL — all EVL gates green; follow-up stubs registered; EVL HANDOFF SUMMARY written
-- [ ] 7. UPDATE PROCESS — phase report written, umbrella state updated, commit done
+- [x] 6. EVL — all EVL gates green; follow-up stubs registered; EVL HANDOFF SUMMARY written (17-10-26: 11 gates, 148 worker tests, independent review APPROVE_WITH_FIXES, fixes verified; M1 slice:check full PASS)
+- [x] 7. UPDATE PROCESS — archived; context updated; committed (17-10-26: closeout appended to the phase report, umbrella state rewritten, worker context doc + deploy runbook written; process commit by orchestrator)
 
 **Validate-contract required before execute.** If step 4 (PVL) is unchecked or `## Validate Contract` reads "(placeholder — vc-validate-agent writes this section before EXECUTE)", orchestrator must spawn vc-validate-agent first. A partial contract missing Plan updates applied / Execute-agent instructions / Test gates sections is treated as a placeholder.
 

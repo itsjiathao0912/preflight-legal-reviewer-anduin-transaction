@@ -1,7 +1,7 @@
 ---
 name: context:tests
-description: Test runners (vitest 4 + cloudflare vitest plugin + Playwright), real pnpm commands, no-double-dash rule, tooling caveats and known gaps for the sub-doc QA tool
-keywords: test, tests, testing, vitest, playwright, pnpm, cloudflare vitest plugin, guard, secrets scan, spike, verification, golden corpus, fixtures, seeded defects, e2e, ocr accuracy
+description: Test runners (vitest 4 + cloudflare vitest plugin + Playwright preview/stack projects), real pnpm commands for web and worker gates, no-double-dash and one-token-per-call rules, SLICE_BASE_URL live run, design-probe opt-in, tooling caveats and known gaps for the sub-doc QA tool
+keywords: test, tests, testing, vitest, playwright, slice check, slice:check, live smoke, a11y, axe, design probe, one token per call, preview project, stack project, worker gates, pnpm, cloudflare vitest plugin, guard, secrets scan, spike, verification, golden corpus, fixtures, seeded defects, e2e, ocr accuracy
 metadata:
   node_type: group-entrypoint
   type: context
@@ -10,7 +10,7 @@ metadata:
 
 # aduin-transaction - All Tests
 
-Last updated: 2026-10-17 (Phase 00 UPDATE PROCESS; HEAD 7d9955b)
+Last updated: 2026-10-17 (Phase 03/04a UPDATE PROCESS; HEAD 70d320b)
 
 Attach this file first when the task involves testing, verification, or test debugging.
 
@@ -115,12 +115,19 @@ Use this file when you need to:
   - `apps/web`: jsdom environment; tiny render helper, no @testing-library.
   - `apps/worker`: Workers runtime (workerd/Miniflare) through **`@cloudflare/vitest-plugin` 1.4.4** using `cloudflareTest({ wrangler: { configPath: './wrangler.jsonc' } })`. Import `SELF` / `env` from `cloudflare:test`. It replaces the deprecated `@cloudflare/vitest-pool-workers`. There is no `fetchMock`, so inject `fetch` through `createApp(deps)` (`AppDeps.fetch`).
   - `scripts`: Node environment; guard tests build throwaway git repos with `scripts/test/tmp-repo.ts`.
-- **Playwright 1.64.1** (Chromium headless shell) for e2e: `apps/web/playwright.config.ts`, project `stack` runs against `pnpm dev:stack` at `http://127.0.0.1:8787`. `apps/web/e2e/` is empty until Phase 03. The axe a11y scanner is NOT installed (`@axe-core/playwright` is MPL-2.0, outside the license rule; user decision pending).
+- **Playwright 1.64.1** (Chromium headless shell) for e2e, `apps/web/playwright.config.ts`, two projects:
+  - `preview` (default for `test:e2e`): `vite preview` of a `--mode e2e` build on port 4317, stub memory API, no Worker; runs every Phase 03 spec (`slice.spec.ts` is excluded).
+  - `stack`: built SPA + Worker via `pnpm dev:stack` at `http://127.0.0.1:8787`; runs ONLY `slice.spec.ts`. Select it as `--project=stack` (the `=` form; a space form makes Playwright read the next token as a second project). The stack webServer is only started when `--project=stack` is requested.
+  - `SLICE_BASE_URL=https://<name>.workers.dev` points `stack` at a deployed Worker (https `*.workers.dev` only; no local stack is started).
+  - `@axe-core/playwright` 4.14.0 is installed dev-only (MPL-2.0, D-8 recorded in `THIRD_PARTY_NOTICES.md`) and powers `a11y-smoke`.
 - LLM and OCR steps are tested against recorded responses only; no live calls in CI.
 
 ### Hard rules
 
 - **No `--` token rule (program-wide):** pnpm 11.13.1 passes `--` literally and the whole suite runs. Select tests with `pnpm --filter <pkg> test <token> [<token>...]`, never `test -- <token>`. Older plan text that says `test -- <token>` must be read in the no-`--` form.
+- **One token per call:** gate loops run each token as its own command (`for t in ...; do pnpm --filter <pkg> test "$t" || exit 1; done`) so an unmatched token cannot hide behind another. An unmatched token must exit 1 (`No test files found` / `No tests found`); that is the D0 check that a gate cannot pass vacuously. Each one-token `test:e2e` call rebuilds the preview (3-6 s).
+- **Design probe is opt-in:** `design-probe.spec.ts` skips unless `DESIGN_PROBE=1` (run `pnpm exec playwright test --project=preview design-probe` from `apps/web`); it writes app-vs-mockup screenshots into the task folder's `design-probe/`.
+- **Before any deploy,** rebuild with `pnpm --filter @aduin/web build` (the `preview` webServer writes an e2e build into the same `dist`); `no-e2e-hook-in-dist` proves the production build carries no e2e hook.
 - **Run tools through pnpm / `pnpm exec`.** The kit's scout-block hook rejects Bash/Read on paths containing `dist` or `node_modules`, and the privacy hook misreads env-var access text in heredocs as a file path. Write such files with the Write tool, and invoke binaries as `pnpm exec <tool>`, not by a `node_modules/.bin` path.
 
 ## Default Verification Order
@@ -182,34 +189,36 @@ pnpm test -- path/to/file.test.ts  # single file
 | `pnpm guard:cf` | Cloudflare guard (blocks zone `itsjiathao.com`, non-`aduin-transaction-*` names) via `@aduin/scripts` |
 | `pnpm secrets:scan` | secret scanner over tracked files via `@aduin/scripts` |
 | `pnpm dev:stack` | builds `@aduin/web`, then `wrangler dev` on 127.0.0.1:8787 (used by Playwright) |
-| `pnpm slice:check` | currently a stub (`scripts/src/slice-check-stub.ts`); Phase 04a repoints it |
+| `pnpm slice:check` | Milestone 1 check (`scripts/src/slice-check.ts`): core goldens, web build, worker-only checks (health 200, quota 200, `/api/ai` 429 fail-closed, no openrouter.ai call), guards, then Playwright `--project=stack` `slice.spec.ts`. `--worker-only` skips the web half; an unknown argument exits 2 |
 
 **Per package:**
 
 | Package | Runner | Commands |
 |---|---|---|
 | `@aduin/core` (`packages/core`) | vitest | `pnpm --filter @aduin/core test`; subsets `test:golden`, `test:property`, `test:corpus`, `test:vectors` (Phase 01: `--passWithNoTests` removed; unmatched token exits 1), `test:seeded` (still `--passWithNoTests`, Phase 02); filename-token gates `test security`, `test contracts`. See `process/context/engine/all-engine.md` |
-| `@aduin/web` (`apps/web`) | vitest (jsdom), Playwright | `pnpm --filter @aduin/web test`; `test:e2e`; `test:a11y` (`--grep @a11y --pass-with-no-tests`) |
-| `@aduin/worker` (`apps/worker`) | vitest + cloudflare plugin | `pnpm --filter @aduin/worker test` (health, 404 JSON, seam tests: 7 tests) |
+| `@aduin/web` (`apps/web`) | vitest (jsdom), Playwright | `pnpm --filter @aduin/web test` (10 files / 38 tests); token gates `stub-memory-api retention-purge gate-interim import-graph memory-label-enum no-e2e-hook-in-dist tokens-match-mockup severity-label source-guard`; `pnpm --filter @aduin/web test:e2e` (preview project; 58 passed, 1 skipped design-probe) or one token e.g. `test:e2e gate-pill`; `test:a11y` (runs the `a11y-smoke` spec, samples regenerated by `pretest:a11y`; gate = 0 critical); `typecheck` |
+| `@aduin/worker` (`apps/worker`) | vitest + cloudflare plugin | `pnpm --filter @aduin/worker test` (13 files / 148 tests, no live network: `test/setup.ts` makes `fetch` throw); gate tokens `llm-failure-injection-matrix spend-cap-enforced free-only-config llm-ocr-cache-hit per-visitor-ai-limit-e2e global-daily-cap-and-budget abuse-protection-matrix turnstile-first-call secret-non-leak stream-holdopen proxy-budget`; `typecheck` |
 | `@aduin/scripts` (`scripts`) | vitest | `pnpm --filter @aduin/scripts test` (22 tests: guard failing-cases, spike-check, thresholds, gzip) |
 
 **Spike gates (scripts package):** `pnpm --filter @aduin/scripts spike:check` (S1..S10 records present), `spike:s06-local` (gzip bundle size), `spike:s07` (browser timing; needs Chromium and local sample docs). Results: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_SPIKE-RESULTS_REF_17-10-26.md`.
 
-**Phase 00 green baseline (to keep green):**
-`pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm test && pnpm guard:cf && pnpm secrets:scan`
+**Green baseline (to keep green, every phase exit):**
+`pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm test && pnpm guard:cf && pnpm secrets:scan`; from Milestone 1 on also `pnpm slice:check`. Live check after a deploy: `SLICE_BASE_URL=https://aduin-transaction-web.giathaowork.workers.dev pnpm --filter @aduin/web exec playwright test --project=stack`. Worker test helpers (reuse in Phases 04b/05/06): `apps/worker/test/fakes/{harness,platform,openrouter-stub,turnstile-stub}.ts`; inject `fetch`, never `fetchMock`; read NDJSON bodies via `arrayBuffer()` + `TextDecoder`.
 
 ## Debugging Quick Reference
 
 - **Worker tests fail to find bindings:** bindings come from `apps/worker/wrangler.jsonc`; the plugin config points at it.
 - **Worker needs a fake network:** pass `fetch` through `createApp(deps)`; do not rely on `fetchMock`.
-- **Web e2e needs the stack:** Playwright starts `pnpm dev:stack` (build + wrangler dev on port 8787); free that port first.
+- **Stack e2e needs the stack:** `--project=stack` starts `pnpm dev:stack` (build + wrangler dev on port 8787); free that port first. The `preview` project needs only port 4317.
+- **Worker/scripts `tsc` baseline:** `@cloudflare/workers-types` plus core `TextDecoder` needs explicit `ignoreBOM` (fixed in core 69fad02); typecheck is clean at HEAD.
 - **Hook false positives:** see the "Run tools through pnpm" rule above.
 - **Remote spikes** used a temporary workers.dev Worker (already deleted); do not re-run them without APPROVED-REMOTE in the phase contract.
 
 ## Known Gaps
 
-- No a11y scanner (axe is MPL-2.0); Phases 03/10 need a user decision.
-- `apps/web/e2e/` has no specs yet (Phase 03).
+- a11y: zero critical axe violations is the gate; two serious items (nav label-content-name mismatch, findings scroller focusable) and manual keyboard/contrast checks close in Phase 10.
+- AC40 real workerd CPU/hold-open and OpenRouter accounting of aborted/4xx requests are Agent-Probe residuals for the Phase 05/10 live probe; CI uses recorded responses only.
+- Each one-token e2e call rebuilds the preview; the main bundle is 568 kB (code-splitting candidate for Phase 10).
 - Remote spikes were not re-run in EVL; Worker deletion is trusted from the spike REF.
 - OpenRouter free-tier numeric limits are unconfirmed; read `GET /api/v1/key` at runtime (Phase 05).
 - D1 "batch counts as one of the 50 queries" is open (S8, Phase 04b). S3/S4 land in Phase 06; S5/S8/S9/S10 in Phase 04b.

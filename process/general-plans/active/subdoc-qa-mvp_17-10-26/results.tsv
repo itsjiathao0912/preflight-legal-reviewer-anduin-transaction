@@ -32,3 +32,5 @@ iteration	timestamp	gaps_found	fail_count	concern_count	applied	saturation_statu
 30	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	phase=03 EVL all gates green (17 e2e, 9 unit, a11y, D0); committed
 31	2026-10-17	0	0	0	9	SATURATED	HALTED_SUCCESS	phase=04a WORKER VERIFIED: EVL green + review APPROVE_WITH_FIXES (F1/F2 fixed; F11-F13 fixed); M1 slice closure pending
 32	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	M1 slice closed (slice:check full PASS, web e2e 58) and deployed to https://aduin-transaction-web.giathaowork.workers.dev (version 9dcf2f75; AI fail-closed until 04b)
+33	2026-10-17	13	0	13	0	ACTIVE	CONTINUE	phase=02 inner pvl first-pass CONDITIONAL (structure view, P03 spec regression repair, gates, pattern_key, masking); supplement
+34	2026-10-17	13	0	13	13	ACTIVE	CONTINUE	phase=02 supplement cycle 1 applied; re-validate
