@@ -1,0 +1,50 @@
+/* Intake Phase 3 track 3b: package coverage line and package gate reasons. */
+.pkg-gate-coverage {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-2, inherit);
+}
+.pkg-gate-coverage svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+.pkg-gate-partial svg {
+  color: var(--warn, currentColor);
+}
+.pkg-gate-blocked svg {
+  color: var(--stop, currentColor);
+}
+.pkg-gate-full svg {
+  color: var(--ok, currentColor);
+}
+.pkg-gate-reasons {
+  margin-top: 8px;
+}
+.pkg-gate-head {
+  margin: 8px 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.pkg-gate-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.pkg-gate-list li {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  font-size: 12.5px;
+}
+.pkg-gate-list svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  margin-top: 2px;
+}

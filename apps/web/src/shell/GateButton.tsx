@@ -2,7 +2,10 @@ import { Icon } from '../components/ui/icon';
 import { Popover } from '../components/ui/popover';
 import { gatePillView } from '../features/gate/gate-pill';
 import { useGatePopover } from '../features/gate/gate-store';
+import { CoverageLine } from '../features/gate/CoverageLine';
 import { GateReasons } from '../features/gate/GateReasons';
+import { PackageGateReasons } from '../features/gate/PackageGateReasons';
+import { usePackageView } from '../features/package/package-view';
 import { useReviewView } from '../features/review/use-review-view';
 import { useReview } from '../state/review';
 
@@ -11,7 +14,16 @@ export function GateButton() {
   const setOpen = useGatePopover((s) => s.setOpen);
   const hasDocument = useReview((s) => s.result !== null);
   const { gate, rows } = useReviewView();
-  const v = gatePillView(hasDocument, gate);
+  const pkg = usePackageView();
+  const pkgReasons = pkg?.gateReasons ?? [];
+  const pkgBlocks = pkgReasons.filter((r) => r.level === 'block');
+  // Spread the core gate so `unreadable` (no-text document) survives and still wins.
+  const merged = {
+    ...gate,
+    status: gate.status === 'blocked' || pkgBlocks.length > 0 ? ('blocked' as const) : gate.status,
+    reasons: [...gate.reasons, ...pkgBlocks],
+  };
+  const v = gatePillView(hasDocument, merged);
   return (
     <Popover
       open={open}
@@ -32,7 +44,7 @@ export function GateButton() {
           <span className="lbl">{v.label}</span>
           {v.state === 'blocked' ? (
             <span className="gn" aria-hidden="true">
-              {gate.reasons.length}
+              {merged.reasons.length}
             </span>
           ) : null}
           <Icon name="chev" />
@@ -42,7 +54,11 @@ export function GateButton() {
       <h2>{v.title}</h2>
       <p>{v.body}</p>
       {v.state === 'none' ? null : (
-        <GateReasons reasons={gate.reasons} rows={rows} onGo={() => setOpen(false)} />
+        <>
+          <GateReasons reasons={gate.reasons} rows={rows} onGo={() => setOpen(false)} />
+          <PackageGateReasons reasons={pkgReasons} />
+          <CoverageLine placement="popover" />
+        </>
       )}
     </Popover>
   );

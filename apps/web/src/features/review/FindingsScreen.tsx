@@ -1,3 +1,4 @@
+import { CoverageLine } from '../gate/CoverageLine';
 import type { ReasonCode } from '@aduin/core';
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from '../../components/ui/icon';
@@ -86,6 +87,7 @@ export function FindingsScreen() {
           <p className="meta" data-testid="findings-meta">
             {doc ? `${view.open} open · ${blocked} block digitization` : 'No document open'}
           </p>
+          <CoverageLine placement="header" />
         </div>
         <StageStatus />
       </header>
