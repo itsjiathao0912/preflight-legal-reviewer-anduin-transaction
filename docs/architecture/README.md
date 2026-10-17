@@ -46,11 +46,9 @@ flowchart LR
   PX --> D1
   MA --> D1
   CR --> D1
-  classDef r fill:#F7E2DF,stroke:#B5554A,color:#8A1C1C
-  class D1 r
 ```
 
-D1 is shaded red because it is not bound on the live Worker yet (see [status.md](status.md)). The OpenRouter key exists only as a Worker secret.
+D1 (`aduin-transaction-db`) is bound and live on the deployed Worker (see [status.md](status.md)). The OpenRouter key exists only as a Worker secret.
 
 ## What runs where
 

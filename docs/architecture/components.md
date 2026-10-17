@@ -4,7 +4,7 @@ What each component does, where its code lives, and the request flows, Worker ro
 
 ## Component table
 
-Status key: **Built / Partial / Planned / Not live yet** (built and tested locally, but needs the real D1 or Turnstile on the live Worker).
+Status key: **Built / Partial / Planned / Not live yet** (built and tested; live means running on the deployed Worker with real D1 and Turnstile since 17 Oct 2026).
 
 | Component | Responsibility | Tech | Runs in | Key files | Status |
 |---|---|---|---|---|---|
@@ -18,17 +18,17 @@ Status key: **Built / Partial / Planned / Not live yet** (built and tested local
 | Version diff | Section alignment, word diff, renames, fees, findings delta, sibling mode | jsdiff | Engine Web Worker | [diff](../../packages/core/src/diff/index.ts), [features/compare](../../apps/web/src/features/compare/CompareScreen.tsx) | Built |
 | Memory + fingerprint | Normalize quote, fingerprint, label, rules hash, pattern key | @noble/hashes | Browser and Worker (same code) | [core/memory](../../packages/core/src/memory/index.ts) | Built |
 | Memory client | Real API client with idempotent outbox and retries | Dexie, fetch | Main thread | [realMemoryApi.ts](../../apps/web/src/api/realMemoryApi.ts), [outbox.ts](../../apps/web/src/api/outbox.ts) | Built |
-| Memory API | Session, lookup, runs, decisions, counsel, rules, audit, export | Hand-rolled router, zod | CF Worker + D1 | [routes/memory](../../apps/worker/src/routes/memory/index.ts), [memory/repo](../../apps/worker/src/memory/repo/lookup.ts) | Built; Not live yet (no D1 on the live Worker) |
+| Memory API | Session, lookup, runs, decisions, counsel, rules, audit, export | Hand-rolled router, zod | CF Worker + D1 | [routes/memory](../../apps/worker/src/routes/memory/index.ts), [memory/repo](../../apps/worker/src/memory/repo/lookup.ts) | Built; live (real D1 bound) |
 | Counsel sheet + gate | Questions, template drafts, gate rules, export metrics | core | Web Worker + main thread | [counsel](../../packages/core/src/counsel/gate.ts), [features/gate](../../apps/web/src/features/gate/gate-store.ts) | Built |
 | DOCX export | Export the query sheet | docx (lazy-loaded) | Main thread | [exportDocx.ts](../../apps/web/src/features/counsel/exportDocx.ts) | Built |
 | Logic outline export | Versioned JSON of the form logic | zod | Web Worker + main thread | [outline](../../packages/core/src/outline/build.ts), [features/outline](../../apps/web/src/features/outline/ExportOutlineButton.tsx) | Built |
 | AI proxy | Guards, pre-limit, masking, cookie, firm rules, cache, Turnstile, claims, streaming with heartbeats, ledger | Hand-rolled pipeline | CF Worker | [proxy](../../apps/worker/src/proxy/pipeline.ts), [routes/proxy](../../apps/worker/src/routes/proxy/index.ts), [upstream](../../apps/worker/src/upstream/openrouter.ts) | Built; AI on uploads is closed on the live site |
-| Limits + visitor | Signed visitor cookie, per-visitor and global caps, spend cap, circuit breaker | core config | CF Worker + D1 | [limits](../../apps/worker/src/limits/policy.ts), [platform](../../apps/worker/src/platform/index.ts) | Not live yet (needs D1) |
+| Limits + visitor | Signed visitor cookie, per-visitor and global caps, spend cap, circuit breaker | core config | CF Worker + D1 | [limits](../../apps/worker/src/limits/policy.ts), [platform](../../apps/worker/src/platform/index.ts) | Built; live (D1 quotas) |
 | Turnstile | Bot check before fresh AI | Cloudflare Turnstile | Worker verify, browser widget | [turnstile.ts](../../apps/worker/src/identity/turnstile.ts), [turnstile.ts (web)](../../apps/web/src/features/ai/turnstile.ts) | Partial (Worker side built; widget and secret land in Phase 10) |
-| D1 schema | 20 tables, migrations 0001-0005, demo seed, write-block triggers | SQLite on D1 | D1 | [migrations](../../apps/worker/migrations/0001_reference_and_workspace.sql), [demo.sql](../../apps/worker/seed/demo.sql) | Not live yet (not applied remotely) |
+| D1 schema | 20 tables, migrations 0001-0005, demo seed, write-block triggers | SQLite on D1 | D1 | [migrations](../../apps/worker/migrations/0001_reference_and_workspace.sql), [demo.sql](../../apps/worker/seed/demo.sql) | Built; live (migrations applied remotely, schema 5, demo seed) |
 | Static assets | SPA, samples, precomputed AI and OCR | Vite 8, React 19, Tailwind 4 | Workers static assets | [apps/web/public](../../apps/web/public/samples/manifest.json), [apps/web/src](../../apps/web/src/main.tsx) | Built |
 | Browser storage | Uploads 24 h, drafts, UI state, outbox | Dexie | IndexedDB | [db.ts](../../apps/web/src/storage/db.ts) | Built |
-| Purge cron | Daily purge of expired sandboxes, cache and quota rows | Worker cron 03:17 UTC | CF Worker | [purge.ts](../../apps/worker/src/memory/repo/purge.ts) | Built; Not live yet (needs D1) |
+| Purge cron | Daily purge of expired sandboxes, cache and quota rows | Worker cron 03:17 UTC | CF Worker | [purge.ts](../../apps/worker/src/memory/repo/purge.ts) | Built; live (D1 bound) |
 | Scripts + fixtures | Samples, seeded defects, memory fixtures, precompute and record, repo guards, slice check | Node, tsx | Local | [scripts/src](../../scripts/src/build-samples.ts), [fixtures](../../fixtures/cache-key-vectors.json) | Built |
 | Final deploy + docs | Real D1, Turnstile, CSP headers, deploy guide, demo materials | wrangler | Cloudflare | [Phase 10 plan](../../process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-10-deploy-final_PLAN_17-10-26.md) | Planned |
 | CI pipeline | Gates run locally; no workflow files exist | none | none | none | Planned (none today) |

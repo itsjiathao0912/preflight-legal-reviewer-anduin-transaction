@@ -5,12 +5,69 @@ Digitization Service Analyst: it reads a sub doc (HTML, text PDF, DOCX or scanne
 graph, finds what would break a digitized form, and turns confirmed issues into a counsel query sheet
 that blocks digitization until the critical items are answered.
 
-![Findings screen: document on the left, findings with cited evidence on the right](docs/demo/img/03-findings.png)
+[Live demo](https://aduin-transaction-web.giathaowork.workers.dev) · [Docs](docs/README.md) · [Architecture](docs/architecture/README.md) · [Decisions](docs/architecture/decisions.md)
 
-Live demo: https://aduin-transaction-web.giathaowork.workers.dev
-Live version: 23612b12-51c7-4d75-a324-f4f2f6392ba8 (code af59da6).
-Live status: D1 `aduin-transaction-db` is live (schema v5, demo seed of 3 law firms, 1 workspace, 3 firm rules, 8 decisions),
-the Turnstile managed widget is live, and CSP is enforced (`style-src` keeps `unsafe-inline` for Radix). The zero-upstream smoke run passed.
+![tests 3,995](https://img.shields.io/badge/tests-3%2C995_passing-brightgreen)
+![detectors 13](https://img.shields.io/badge/detectors-13-blue)
+![issue classes 15](https://img.shields.io/badge/issue_classes-15-blue)
+![deploy Cloudflare Workers](https://img.shields.io/badge/deploy-Cloudflare_Workers-F38020)
+![AI cost $0](https://img.shields.io/badge/AI_cost-%240-brightgreen)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6)
+
+![Findings screen of the live app: the document on the left, findings with cited evidence on the right](docs/demo/img/03-findings.png)
+
+Live version 23612b12-51c7-4d75-a324-f4f2f6392ba8 (code af59da6) · status: D1 `aduin-transaction-db` is live (schema v5, demo seed of 3 law firms, 1 workspace, 3 firm rules, 8 decisions), the Turnstile managed widget is live, and CSP is enforced (`style-src` keeps `unsafe-inline` for Radix). The zero-upstream smoke run passed.
+
+## At a glance
+
+| | |
+| --- | --- |
+| **Problem** | Errors in a subscription agreement (dead cross-references, wrong conditional skips, unreachable sections, undefined terms) carry into the digital form; finding them by hand across versions is slow and uneven. |
+| **Approach** | Parse in the browser to a logic graph, run 13 deterministic detectors covering 15 issue classes, diff related versions, and turn confirmed issues into a counsel query sheet with a digitization gate. |
+| **What AI does** | Free OpenRouter models judge graph-selected clause neighborhoods (ambiguity, contradiction, meaning-changing typos) and read scanned pages (OCR). |
+| **What AI never does** | See whole documents, parse, override a deterministic finding, or run without a quotable, locatable citation. The app works with AI switched off. |
+| **Status** | Live on Cloudflare Workers with D1 and Turnstile. Largest sample reviews in 169 ms, a ~50 KB sample in 104 ms. Live AI/OCR calls 0, cost $0. Known misses are listed below. |
+
+## Contents
+
+- [At a glance](#at-a-glance)
+- [Architecture](#architecture)
+- [Screenshots](#screenshots)
+- [What and why](#what-and-why)
+- [Quick tour](#quick-tour)
+- [How it works](#how-it-works)
+- [Documentation](#documentation)
+- [Run it locally](#run-it-locally)
+- [Tests and gates](#tests-and-gates)
+- [Cost and limits](#cost-and-limits)
+- [Privacy and retention](#privacy-and-retention)
+- [Known misses](#known-misses)
+- [Not built for production](#not-built-for-production)
+- [Deploy](#deploy)
+- [Third-party notices](#third-party-notices)
+
+## Architecture
+
+```mermaid
+flowchart LR
+  B["Browser: React app + engine Web Worker"] -- "static app, samples" --> W
+  B -- "/api/ai, /api/ocr, memory API" --> W["Cloudflare Worker: proxy, quotas, memory API"]
+  W --> D[("D1: memory, quotas, cache")]
+  W --> O["OpenRouter free models"]
+```
+
+Parsing and checks run in the browser; the Worker never parses documents. Detail: [docs/architecture/README.md](docs/architecture/README.md).
+
+## Screenshots
+
+| | |
+| --- | --- |
+| ![A finding expanded with its quoted evidence](docs/demo/img/04-finding-expanded.png) | ![Compare view with drift rows between two versions](docs/demo/img/08-compare.png) |
+| Every finding cites the document text and its location. | Compare related versions: drift rows with a short narrative. |
+| ![Counsel questions sheet](docs/demo/img/09-counsel.png) | ![Digitization gate showing blocked until answers arrive](docs/demo/img/10-gate.png) |
+| Confirmed issues become counsel questions, exportable as DOCX. | The gate stays blocked until every blocking question has an answer. |
+
+Full shot list: `docs/demo/storyboard.md`.
 
 ## What and why
 
@@ -72,6 +129,9 @@ Detail: [docs/architecture/README.md](docs/architecture/README.md).
 
 ## Run it locally
 
+<details>
+<summary>Requirements and commands (Node 24+, pnpm 11)</summary>
+
 Requires Node 24 or newer and pnpm 11.
 
 ```bash
@@ -82,7 +142,12 @@ pnpm dev:stack                        # build the SPA and run the Worker locally
 
 Secrets stay outside the repo. For local AI, put `OPENROUTER_API_KEY` in the gitignored `apps/worker/.dev.vars`.
 
+</details>
+
 ## Tests and gates
+
+<details>
+<summary>Gate commands and final counts (core 2,914, worker 525, web unit 223, scripts 150, e2e 173, stack-memory 10)</summary>
 
 | Gate                                  | Command                                                                                                                              |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
@@ -96,8 +161,10 @@ Secrets stay outside the repo. For local AI, put `OPENROUTER_API_KEY` in the git
 | Live smoke                            | `SLICE_BASE_URL=https://aduin-transaction-web.giathaowork.workers.dev pnpm --filter @aduin/web exec playwright test --project=stack` |
 | Safety guards                         | `pnpm guard:cf` and `pnpm secrets:scan`                                                                                              |
 
-There is no CI pipeline; every gate runs locally. Final counts: core 2,914, worker 525, web unit 214, scripts 120+ (87 of them live-script tests),
-preview e2e 171 passed plus 1 opt-in skip, stack-memory 10. The tool has 13 detectors covering 15 issue classes.
+There is no CI pipeline; every gate runs locally. Final counts: core 2,914, worker 525, web unit 223, scripts 150,
+preview e2e 173 passed plus 1 opt-in skip, stack-memory 10. The tool has 13 detectors covering 15 issue classes.
+
+</details>
 
 ## Cost and limits
 
@@ -117,6 +184,9 @@ preview e2e 171 passed plus 1 opt-in skip, stack-memory 10. The tool has 13 dete
 - Free models can log prompts; do not upload real investor data to the demo.
 
 ## Known misses
+
+<details>
+<summary>What the tool does not do or gets wrong today (structurer, citations, compare, live AI, Turnstile, CPU, burst)</summary>
 
 Honest list of what the tool does not do or gets wrong today.
 
@@ -138,11 +208,18 @@ Honest list of what the tool does not do or gets wrong today.
 - **D4 burst (rows_written under load) was not measured.**
 - Investor-path detectors have no human-checked ground truth. The `#documents` screen is still a placeholder.
 
+</details>
+
 ## Not built for production
+
+<details>
+<summary>No accounts, no CI, no tenant isolation, no paid-model path</summary>
 
 No accounts or real authentication (visitor cookie plus Turnstile), no CI, no tenant isolation beyond the sandbox
 workspace model, no paid-model path, no audit export beyond the in-app trail, and no support for documents over the
 upload limits. This is a challenge build, not a product.
+
+</details>
 
 ## Deploy
 
@@ -150,6 +227,11 @@ See [docs/DEPLOY.md](docs/DEPLOY.md). Deploys go to `*.workers.dev` only.
 
 ## Third-party notices
 
+<details>
+<summary>Dependency licenses and test-document sources</summary>
+
 Licenses of every direct dependency, the transitive license elections (sax BlueOak-1.0.0, pako, jszip under MIT) and the
 dev-only MPL-2.0 exception are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Test documents are real public SEC
 filings, listed with their known defects in [samples/sub-docs/README.md](samples/sub-docs/README.md).
+
+</details>

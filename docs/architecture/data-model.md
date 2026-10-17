@@ -2,7 +2,7 @@
 
 The server database (D1) holds snippets, hashes and metadata only, 20 tables across 5 migrations. Full documents stay in the visitor's browser. Source of truth: [apps/worker/migrations](../../apps/worker/migrations/0001_reference_and_workspace.sql).
 
-Status: schema and repository code are **Built** and tested against local D1. The tables are **Not live yet**: the live Worker has no D1 binding (see [status.md](status.md)).
+Status: schema and repository code are **Built** and tested against local D1. The tables are **live**: real D1 `aduin-transaction-db`, schema 5, demo seed, bound to the live Worker (version 23612b12, 17 Oct 2026; see [status.md](status.md)).
 
 ## Entity relationships
 

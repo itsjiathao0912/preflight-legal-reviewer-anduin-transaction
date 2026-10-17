@@ -8,7 +8,7 @@ A reviewer's guide to this repository. Pick a reading path by time budget, then 
 - It parses a document (HTML, text PDF, DOCX or scanned pages) into a logic graph, runs 13 deterministic checks, and uses free LLMs only to judge a few graph-selected passages.
 - It compares related versions, turns open items into a counsel query sheet (DOCX), tracks answers, and blocks digitization until every critical item is clear. A firm memory remembers earlier decisions.
 
-Live site: `https://aduin-transaction-web.giathaowork.workers.dev`. Today it runs without its database, so shared memory and fresh AI or OCR on uploads are closed; precomputed samples work. Details in [architecture/status.md](architecture/status.md).
+Live site: `https://aduin-transaction-web.giathaowork.workers.dev`. It runs with its real D1 database, Turnstile and an enforced CSP; shared memory is live and precomputed samples make zero upstream calls. Details in [architecture/status.md](architecture/status.md).
 
 ## Reading path
 

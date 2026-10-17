@@ -8,11 +8,11 @@ Twelve architecture decisions in ADR form: what was chosen, why, what was reject
 | ADR-2 | Deterministic detectors, LLM judges graph-selected candidates | Built |
 | ADR-3 | No Docxodus; one diff pipeline for every format | Built |
 | ADR-4 | Free OpenRouter models, precomputed results, no-LLM mode | Built |
-| ADR-5 | Cloudflare Workers Free plus D1, no R2, KV or Durable Objects | Built; D1 Not live yet |
+| ADR-5 | Cloudflare Workers Free plus D1, no R2, KV or Durable Objects | Built; D1 live (update 17 Oct 2026) |
 | ADR-6 | Exact-match memory fingerprints, no fuzzy matching | Built |
 | ADR-7 | AI suggestions cannot gate | Built |
 | ADR-8 | AI fails closed when the platform is unavailable | Built |
-| ADR-9 | Per-visitor sandbox workspaces plus a read-only seeded demo | Built; Not live yet |
+| ADR-9 | Per-visitor sandbox workspaces plus a read-only seeded demo | Built; live (update 17 Oct 2026) |
 | ADR-10 | Vertical sidebar and "show less by default" UI | Built |
 | ADR-11 | Counsel stays outside the app (DOCX out, answer recorded in) | Built |
 | ADR-12 | Product defaults D-1 to D-9 | Built |
@@ -52,6 +52,8 @@ Twelve architecture decisions in ADR form: what was chosen, why, what was reject
 - **Alternatives rejected.** R2 (nothing to store). Durable Objects (not on the free plan). KV (1,000 writes a day). IndexedDB-only memory (no shared audit trail, and breaks the snippets-on-server rule). No custom domain; the owner's personal domain is never touched, and only `*.workers.dev` is used.
 - **Consequences.** D1 Free allows 100k rows written a day, which is the main capacity risk; session minting is capped (5 per IP, 300 per day) to stay near a quarter of that. A daily cron purge exists, and a lazy purge from new sessions is the baseline. Free-plan CPU of 10 ms is why the Worker never parses.
 
+Update 17 Oct 2026: D1 + Turnstile live (version 23612b12); real D1 `aduin-transaction-db`, schema 5.
+
 ## ADR-6. Exact-match memory fingerprints, no fuzzy matching
 
 - **Decision.** A finding matches a past decision only if `sha256("fp1|firm|class|sha256(normalize(quote))")` is identical.
@@ -79,6 +81,8 @@ Twelve architecture decisions in ADR form: what was chosen, why, what was reject
 - **Context.** Reviewers must see memory working immediately, and must not be able to damage or leak into each other's data.
 - **Alternatives rejected.** A shared writable demo. A read-only overlay on shared data (breaks isolation). Accounts and logins.
 - **Consequences.** Isolation by composite keys, so every query binds `workspace_id`. Sandboxes expire after 30 days. Session creation is rate limited. Needs D1, so it is not live yet.
+
+Update 17 Oct 2026: D1 + Turnstile live (version 23612b12); the sandbox and demo seed run on the live Worker.
 
 ## ADR-10. Vertical sidebar and "show less by default" UI
 

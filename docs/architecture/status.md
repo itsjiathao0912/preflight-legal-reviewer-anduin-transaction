@@ -1,8 +1,8 @@
 # Status
 
-As of 17 Oct 2026 (`main` at `a8dbd4b`): Phases 00-09 and 08b are code-complete. The live site runs without its database, so shared memory and fresh AI or OCR on uploads are closed there. Phase 10 (real D1, Turnstile, headers, deploy guide, demo materials) is next.
+As of 17 Oct 2026 (live version `23612b12-51c7-4d75-a324-f4f2f6392ba8`, code `af59da6`): Phases 00-10 are done and the site is live with its real database, Turnstile and an enforced CSP. A human-operator live AI sweep, the AC51 echo and the D4 burst are still pending.
 
-Status key: **Built / Partial / Planned / Not live yet**.
+Status key: **Built / Partial / Planned / Not live yet**. Live in the table means built and running on the deployed Worker.
 
 ## Status by area
 
@@ -13,61 +13,58 @@ Status key: **Built / Partial / Planned / Not live yet**.
 | Deterministic detectors | Partial | 13 detectors built; missing-target cross-reference detector deferred (feasibility inconclusive) |
 | Review and triage (W2) | Built | Edit of finding text or severity not built (backlog B-EDIT) |
 | Open a document (W1) | Partial | Interim open dialog built; full `#documents` screen is still a placeholder route |
-| AI lane (W3) | Built | Live uploads closed (no D1, no Turnstile) |
+| AI lane (W3) | Built | Live on the Worker; live AI sweep pending a human-operator run |
 | Counsel sheet, gate, DOCX export (W4) | Built | Live AI draft quality not measured |
 | Compare versions (W5) | Built | No compare for scanned documents; diff-only rows cannot become counsel questions |
 | Structure and investor types (W6) | Built | |
 | Logic outline JSON export | Built | |
-| Firm memory UI, rules, audit (W7) | Built | Needs D1 live |
-| Demo sandbox (W8) | Partial | Built and tested locally; Not live yet |
-| Memory API (19 routes) and D1 schema (20 tables) | Built | Not live yet: not applied remotely |
-| AI/OCR proxy, limits, spend ledger | Built | Needs D1 for quotas and cache |
-| Turnstile | Partial | Worker verify built; widget and secret are Phase 10 |
-| CSP and security headers | Planned | Phase 10 |
+| Firm memory UI, rules, audit (W7) | Built | Live on D1 |
+| Demo sandbox (W8) | Built | Live (demo seed: 3 law firms, 1 workspace, 3 firm rules, 8 decisions) |
+| Memory API (19 routes) and D1 schema | Built | Live: real D1 `aduin-transaction-db`, schema 5 |
+| AI/OCR proxy, limits, spend ledger | Built | Live with D1 quotas and cache |
+| Turnstile | Built | Managed widget live; automated browsers cannot pass it |
+| CSP and security headers | Built | Enforced; `style-src 'unsafe-inline'` residual |
 | CI pipeline | Planned | None today; every gate runs locally |
-| Deploy guide, README, demo video, slides | Planned | Phase 10 |
+| Deploy guide, README, demo script and slides | Built | [DEPLOY.md](../DEPLOY.md), root README, [demo](../demo/); 13-memory and 14-audit screenshots need manual capture |
 
 ## Live deployment
 
-URL: `https://aduin-transaction-web.giathaowork.workers.dev` (Worker `aduin-transaction-web`, `*.workers.dev` only). Active version `4325e4e4-9aca-4ae8-8985-cc0b73097c3e`, built from commit `2de6749` (Phase 08b).
+URL: `https://aduin-transaction-web.giathaowork.workers.dev` (Worker `aduin-transaction-web`, `*.workers.dev` only). Version `23612b12-51c7-4d75-a324-f4f2f6392ba8`, code `af59da6`.
 
-The deployed Worker has **no D1 binding and no Turnstile secret**. The committed `wrangler.jsonc` still holds a placeholder all-zero database id, so the deploy used a generated config without the D1 section.
+A live probe on 17 Oct 2026: `/` returns 200, `/api/health` returns 200, and `/api/quota` with the `x-aduin-client` header returns `global_ok:true`. Response headers include `content-security-policy` with `script-src 'self' https://challenges.cloudflare.com` and a `style-src 'unsafe-inline'` residual, plus `referrer-policy: no-referrer`.
 
-| Works on the live site now | Closed on the live site now |
-|---|---|
-| Opening the 12 HTML samples and the 22-page scan set | Shared firm memory and the demo sandbox (`/api/session` and memory routes answer `memory_unavailable`) |
-| Precomputed AI results for samples (zero upstream calls) | Fresh AI on uploads (`/api/ai` fails closed) |
-| Precomputed OCR for the scan set | Fresh OCR on uploaded scans (`/api/ocr` fails closed) |
-| All deterministic review, structure, investor paths | Server-side quota (`/api/quota` answers `global_ok:false`) |
-| Compare versions, counsel drafts from templates, DOCX export | Turnstile bot check |
-| Logic outline export, local triage and gate | |
-| `/api/health` | |
+Behavior on the live site:
 
-Live smoke checks from the last deploy: `/` returns 200, `/api/health` ok, the stack Playwright slice passes, the memory page shows its empty state, and zero upstream AI or OCR calls were made.
+- Firm documents render deterministic findings first; memory and AI load in the background.
+- Shared firm memory, the demo sandbox, server-side quotas and the AI/OCR proxy run against real D1.
+- Bundled samples use precomputed AI and OCR results and make zero upstream calls.
+- Live AI/OCR calls to date: 0. AI spend: $0.
+- Automated browsers cannot get a Turnstile token, so live AI and OCR from scripts is untested.
 
-## What Phase 10 adds
+## What changed at go-live
 
 Plan: [Phase 10](../../process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-10-deploy-final_PLAN_17-10-26.md).
 
-| Item | Result |
-|---|---|
-| Real D1 `aduin-transaction-db` | Migrations 0001-0005 applied remotely; demo seed loaded; real id recorded in `wrangler.jsonc` |
-| Turnstile | Widget loader in the app, secret via `wrangler secret put` |
-| Security headers and CSP | `_headers` file, verified with zero violations in tests |
-| `/api/health` | `no-store` header |
-| Live probes | Rows written per day on D1, Worker timing at 10,000 output tokens, header check, quota conformance |
-| Quality sweep | One capped live pass over judgment, drift narrative, counsel draft and OCR |
-| Accessibility | Fixes for the remaining serious axe items; keyboard test |
-| Deliverables | Root README, [DEPLOY.md](../DEPLOY.md), [demo materials](../demo/) |
-
-`docs/DEPLOY.md` and `docs/demo/` are added at final deploy and may not exist yet.
+| Item | Before | Now |
+|---|---|---|
+| Database | No D1 binding, placeholder id | Real D1 `aduin-transaction-db`, schema 5, demo seed |
+| Turnstile | Worker verify only | Managed widget live |
+| Headers and CSP | None | CSP enforced, `referrer-policy: no-referrer` |
+| Memory and demo sandbox | `memory_unavailable` | Live |
+| Quotas | `/api/quota` answered `global_ok:false` | `global_ok:true` |
+| Documents | Findings waited on memory | Findings first, memory and AI in the background |
+| Deliverables | Planned | Root README, DEPLOY.md, demo materials |
 
 ## Known gaps and backlog
 
 | Gap | Where tracked |
 |---|---|
+| Live AI sweep, the AC51 echo and the D4 burst (rows_written under load) pending a human-operator run | Phase 10 closeout |
+| Worker CPU p99 16 ms observed (0 errors), above the 10 ms Free-plan figure | Phase 10 closeout |
+| `style-src 'unsafe-inline'` residual (Radix) | Phase 10 closeout |
+| 13-memory and 14-audit screenshots need manual capture | `docs/demo/` |
 | Missing-target cross-reference detector deferred (feasibility inconclusive) | `process/general-plans/backlog/missing-target-xref_17-10-26/` |
-| `#documents` screen is a placeholder | Phase 10 and UI notes |
+| `#documents` screen is a placeholder | UI notes |
 | Edit finding text or severity (B-EDIT) | `process/general-plans/backlog/b-edit_17-10-26/` |
 | Diff-only rows cannot become counsel questions | Backlog (version drift questions) |
 | No compare for scanned documents | `process/general-plans/backlog/compare-ocr-documents_NOTE_17-10-26.md` |
@@ -75,29 +72,29 @@ Plan: [Phase 10](../../process/general-plans/active/subdoc-qa-mvp_17-10-26/subdo
 | Live OCR confidence is flat (0.95) | same note |
 | Live quality of AI counsel drafts and drift summaries untested | `process/general-plans/backlog/drift-narrative-live-quality_NOTE_17-10-26.md` |
 | Investor-path detectors lack a human-checked ground truth | `process/general-plans/backlog/investor-path-ground-truth_NOTE_17-10-26.md` |
-| D1 daily write capacity must be re-measured remotely | Phase 10 probe |
 | Memory page polish items (P8b-1 to P8b-6) | `process/general-plans/backlog/core-followups_17-10-26/` |
 | No CI; gates run locally | Planned |
 
 ## Test counts
 
-Source: the "Current Execution State" section of the [umbrella plan](../../process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp-umbrella_PLAN_17-10-26.md), recording the closeout runs of Phase 08 and 08b. They were not re-run for this document.
+Source: the Phase 10 closeout, relayed by the build session (17 Oct 2026). Not re-run for this document.
 
-| Suite | Count | Run |
-|---|---|---|
-| Core (Vitest) | 2,914 | Phase 08b closeout |
-| Worker (Vitest, local D1) | 525 | Phase 08 serial run (not repeated in 08b notes) |
-| Web unit (Vitest) | 196 | Phase 08b closeout |
-| Playwright end-to-end (preview project) | 157, plus 1 opt-in skipped | Phase 08b closeout |
-| Stack-memory e2e (Worker plus local D1) | 10 | Phase 08b closeout |
+| Suite | Count |
+|---|---|
+| Core (Vitest) | 2,914 |
+| Worker (Vitest, local D1) | 525 |
+| Web unit (Vitest) | 223 |
+| Scripts | 150 |
+| Playwright end-to-end (preview project) | 173, plus 1 opt-in skipped |
+| Stack-memory e2e (Worker plus local D1) | 10 |
 
-Other gates recorded green at that closeout: typecheck, lint, `guard:cf`, `secrets:scan`, `slice:check`, `seed:check`. There is no CI workflow; run them with the root scripts in [package.json](../../package.json).
+Performance: largest sample 169 ms, a ~50 KB sample 104 ms. There is no CI workflow; run the gates with the root scripts in [package.json](../../package.json).
 
 Spend on AI to date: $0 (free models only).
 
 ## Related
 
 - [README.md](README.md): architecture overview
-- [decisions.md](decisions.md): ADR-8 explains why uploads fail closed today
+- [decisions.md](decisions.md): ADR-8 explains why uploads fail closed without D1 or Turnstile
 - [components.md](components.md): per-component status
 - [docs/README.md](../README.md): start here
