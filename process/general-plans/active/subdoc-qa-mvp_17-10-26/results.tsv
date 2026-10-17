@@ -78,3 +78,6 @@ iteration	timestamp	gaps_found	fail_count	concern_count	applied	saturation_statu
 76	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	phase=08 evl independent serial confirmation at eb53541 (core 2914, worker 525, web 189, e2e 138+1 skip, stack-memory 9; iteration-001 report)
 77	2026-10-17	1	0	1	1	ACTIVE	CONTINUE	phase=08b evl confirmation at 54ddaae all gates green (web 194, preview 157+1 skip, stack-memory 10, core 2914); review found M1 (reopen left counsel answer, gate stayed Ready), fix cycle follows (iteration-001 report)
 78	2026-10-17	0	0	0	1	SATURATED	HALTED_SUCCESS	phase=08b evl confirmation at 2de6749 after M1/m1/m4/NIT fixes (web 196, preview 157+1 skip, stack-memory 10, counsel-gate 4, gate-pill 3; iteration-002 report)
+79	2026-10-17	11	0	11	11	ACTIVE	CONTINUE	phase=10 pvl cycle 1 first-pass CONDITIONAL (0 FAIL/11 CONCERN G1-G11) supplement applied; re-validate (iteration-001 report)
+80	2026-10-17	8	0	8	8	ACTIVE	CONTINUE	phase=10 pvl cycle 2 CONDITIONAL (0 FAIL/8 CONCERN G12-G19; G1-G11 verified closed) supplement applied; re-validate (iteration-002 report)
+81	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	phase=10 pvl cycle 3 Gate PASS (0 FAIL/0 CONCERN; G1-G19 closed; E24-E26 added; residuals R1-R4 known) (iteration-003 report)
