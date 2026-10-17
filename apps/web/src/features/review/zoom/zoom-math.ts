@@ -8,6 +8,8 @@ export const ZOOM_MAX = 200;
 export const ZOOM_STEP = 10;
 export const FIT_MIN = 60;
 export const FIT_MAX = 175;
+/** Fit width never shrinks text below this; narrower areas reflow the page instead (D15 amendment 2). */
+export const FIT_TEXT_MIN = 85;
 export const PRESETS: readonly number[] = Object.freeze([75, 90, 100, 125, 150]);
 
 /** `pct` is meaningful only in manual mode. */
@@ -23,8 +25,21 @@ export function fitWidth(areaPx: number): number {
   return clamp(Math.round(((a - GUTTER_PX) / PAGE_PX) * 100), FIT_MIN, FIT_MAX);
 }
 
+/** `pageWidth` is set only when the page reflows to the area (fit scale would be below 85%). */
+export interface FitResult {
+  pct: number;
+  pageWidth?: number;
+}
+
+export function fitLayout(areaPx: number): FitResult {
+  const raw = fitWidth(areaPx);
+  if (raw >= FIT_TEXT_MIN) return { pct: raw };
+  const a = Number.isFinite(areaPx) ? areaPx : 0;
+  return { pct: FIT_TEXT_MIN, pageWidth: Math.max(1, Math.floor(a - GUTTER_PX)) };
+}
+
 export function effectivePct(s: ZoomState, areaPx: number): number {
-  return s.mode === 'fit' ? fitWidth(areaPx) : s.pct;
+  return s.mode === 'fit' ? fitLayout(areaPx).pct : s.pct;
 }
 
 export type ZoomAction =

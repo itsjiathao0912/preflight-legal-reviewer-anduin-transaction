@@ -5,6 +5,8 @@ import { isEditableTarget } from '../v2/shortcut-guard';
 import {
   DOCZOOM_KEY,
   effectivePct,
+  fitLayout,
+  PAGE_PX,
   parseZoom,
   zoomKeyAction,
   zoomReducer,
@@ -22,6 +24,8 @@ export interface DocZoom {
   dispatch(a: ZoomAction): void;
   style: CSSProperties;
   dataDz: string;
+  /** Reflowed page width in px (fit mode only, when the fit scale would be below 85%). */
+  pageWidth?: number;
 }
 
 function findMark(root: ParentNode, id: string): Element | null {
@@ -103,13 +107,22 @@ export function useDocZoom(
     if (mark) scrollIntoViewVertically(mark, 'center');
   }, [pct, state, scrollRef]);
 
+  const pageWidth = state.mode === 'fit' ? fitLayout(areaPx).pageWidth : undefined;
+  const style: Record<string, string | number> = { '--dz': pct / 100 };
+  if (pageWidth !== undefined) {
+    // reflow: page width follows the area; padding keeps the 700px page's padding-to-width ratio
+    style['--dz-page-w'] = `${pageWidth}px`;
+    style['--dz-box'] = pageWidth / PAGE_PX;
+  }
+
   return {
     state,
     pct,
     areaPx,
     dispatch,
-    style: { '--dz': pct / 100 } as CSSProperties,
+    style: style as CSSProperties,
     dataDz: String(pct),
+    ...(pageWidth !== undefined ? { pageWidth } : {}),
   };
 }
 

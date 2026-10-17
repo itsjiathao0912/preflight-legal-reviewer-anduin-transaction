@@ -732,13 +732,15 @@
   scrollbar-gutter: stable;
 }
 .docscroll[data-dz] .paper {
-  width: calc(700px * var(--dz));
-  max-width: calc(700px * var(--dz));
+  /* reflow (fit below 85%): --dz-page-w = area - 64px, --dz-box = that width / 700 */
+  width: var(--dz-page-w, calc(700px * var(--dz)));
+  max-width: var(--dz-page-w, calc(700px * var(--dz)));
   /* the white page on the grey reading area: centered when it fits, framed when it is wider */
   margin: 0 auto;
   background: var(--paper);
   border: 1px solid var(--step);
-  padding: calc(52px * var(--dz)) calc(60px * var(--dz)) calc(72px * var(--dz));
+  padding: calc(52px * var(--dz-box, var(--dz))) calc(60px * var(--dz-box, var(--dz)))
+    calc(72px * var(--dz-box, var(--dz)));
   font-size: calc(16px * var(--dz));
 }
 .docscroll[data-dz] .paper h1 {
@@ -803,7 +805,8 @@
     grid-template-columns: minmax(0, 1fr) max(40%, calc(var(--fpw, 55) * 1%));
   }
   .docscroll[data-dz] .paper {
-    padding: calc(40px * var(--dz)) calc(36px * var(--dz)) calc(56px * var(--dz));
+    padding: calc(40px * var(--dz-box, var(--dz))) calc(36px * var(--dz-box, var(--dz)))
+      calc(56px * var(--dz-box, var(--dz)));
   }
 }
 
@@ -826,7 +829,8 @@
     display: none;
   }
   .docscroll[data-dz] .paper {
-    padding: calc(24px * var(--dz)) calc(16px * var(--dz)) calc(40px * var(--dz));
+    padding: calc(24px * var(--dz-box, var(--dz))) calc(16px * var(--dz-box, var(--dz)))
+      calc(40px * var(--dz-box, var(--dz)));
   }
 }
 

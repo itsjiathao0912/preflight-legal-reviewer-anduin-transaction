@@ -114,6 +114,30 @@ describe('findings-v2-use-doc-zoom', () => {
     expect(el.style.getPropertyValue('--dz')).toBe('1');
   });
 
+  it('sets the reflow page width vars only when fit would be below 85% (D15 amendment 2)', () => {
+    mount();
+    const el = container!.querySelector('.docscroll') as HTMLElement;
+    expect(latest!.pageWidth).toBeUndefined();
+    expect(el.style.getPropertyValue('--dz-page-w')).toBe('');
+    expect(el.style.getPropertyValue('--dz-box')).toBe('');
+    resize(600);
+    expect(latest!.pct).toBe(85);
+    expect(latest!.pageWidth).toBe(536);
+    expect(el.getAttribute('data-dz')).toBe('85');
+    expect(el.style.getPropertyValue('--dz')).toBe('0.85');
+    expect(el.style.getPropertyValue('--dz-page-w')).toBe('536px');
+    expect(Number(el.style.getPropertyValue('--dz-box'))).toBeCloseTo(536 / 700, 6);
+    // manual zoom never reflows, even in a narrow area
+    act(() => latest!.dispatch({ type: 'preset', pct: 75 }));
+    expect(latest!.pageWidth).toBeUndefined();
+    expect(el.style.getPropertyValue('--dz-page-w')).toBe('');
+    // back to scale-only fit when the area grows
+    act(() => latest!.dispatch({ type: 'fit' }));
+    resize(764);
+    expect(latest!.pageWidth).toBeUndefined();
+    expect(el.style.getPropertyValue('--dz-page-w')).toBe('');
+  });
+
   it('ignores width deltas below 2px and recomputes fit at 2px or more', () => {
     mount();
     resize(765);

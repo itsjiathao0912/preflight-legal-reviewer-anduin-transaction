@@ -3,6 +3,7 @@ import {
   DOCZOOM_KEY,
   PRESETS,
   effectivePct,
+  fitLayout,
   fitWidth,
   parseZoom,
   zoomKeyAction,
@@ -26,6 +27,19 @@ describe('findings-v2-zoom-math', () => {
     expect(fitWidth(1900)).toBe(175);
     expect(fitWidth(4000)).toBe(175);
     expect(fitWidth(1000)).toBe(134);
+  });
+  it('fitLayout: scale only at 85% or more, reflow below (D15 amendment 2)', () => {
+    expect(fitLayout(764)).toEqual({ pct: 100 });
+    expect(fitLayout(1900)).toEqual({ pct: 175 });
+    // (659 - 64) / 700 = 85% exactly: still scale-only
+    expect(fitLayout(659)).toEqual({ pct: 85 });
+    // ~1440 reading area: raw fit 77% -> 85% with the page reflowed to area - 64
+    expect(fitLayout(600)).toEqual({ pct: 85, pageWidth: 536 });
+    expect(fitLayout(460)).toEqual({ pct: 85, pageWidth: 396 });
+    // tiny/invalid areas never produce a zero or negative page width
+    expect(fitLayout(10)).toEqual({ pct: 85, pageWidth: 1 });
+    expect(fitLayout(Number.NaN)).toEqual({ pct: 85, pageWidth: 1 });
+    expect(effectivePct({ mode: 'fit', pct: 100 }, 460)).toBe(85);
   });
   it('effectivePct', () => {
     expect(effectivePct({ mode: 'fit', pct: 150 }, 764)).toBe(100);
@@ -53,14 +67,14 @@ describe('findings-v2-zoom-math', () => {
     expect(zoomReducer({ mode: 'manual', pct: 60 }, { type: 'out' }, 0).pct).toBe(60);
     expect(zoomReducer({ mode: 'manual', pct: 75 }, { type: 'out' }, 0).pct).toBe(70);
     expect(zoomReducer({ mode: 'manual', pct: 63 }, { type: 'out' }, 0).pct).toBe(60);
-    // from a 60% fit: - is a no-op at 60, + goes to 70
+    // from an 85% reflow fit (D15 amendment 2): - goes to 80, + goes to 90
     expect(zoomReducer({ mode: 'fit', pct: 100 }, { type: 'out' }, 0)).toEqual({
       mode: 'manual',
-      pct: 60,
+      pct: 80,
     });
     expect(zoomReducer({ mode: 'fit', pct: 100 }, { type: 'in' }, 0)).toEqual({
       mode: 'manual',
-      pct: 70,
+      pct: 90,
     });
   });
   it('preset clamps and fit keeps the manual pct', () => {

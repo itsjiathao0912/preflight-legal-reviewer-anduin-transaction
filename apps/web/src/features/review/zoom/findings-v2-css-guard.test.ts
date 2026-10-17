@@ -67,7 +67,7 @@ function bodyOf(selector: string): string {
 const ZOOM_TABLE: [string, string[]][] = [
   [
     '.docscroll[data-dz] .paper',
-    ['max-width: calc(700px', 'calc(52px', 'calc(60px', 'calc(72px', 'font-size: calc(16px'],
+    ['max-width: var(--dz-page-w, calc(700px', 'var(--dz-box, var(--dz))', 'calc(52px', 'calc(60px', 'calc(72px', 'font-size: calc(16px'],
   ],
   ['.docscroll[data-dz] .paper h1', ['font-size: calc(28px', 'margin-bottom: calc(4px']],
   ['.docscroll[data-dz] .paper .sub', ['font-size: calc(16px', 'margin-bottom: calc(36px']],

@@ -230,7 +230,7 @@ test.describe('findings-v2', () => {
     await expect(fitBtn).toHaveAttribute('aria-pressed', 'true');
     const expectedFit = async () =>
       zoomPane(page).evaluate((el) =>
-        Math.min(175, Math.max(60, Math.round(((el.clientWidth - 64) / 700) * 100))),
+        Math.min(175, Math.max(85, Math.round(((el.clientWidth - 64) / 700) * 100))),
       );
     await expect.poll(async () => (await dz(page)) === (await expectedFit())).toBe(true);
     const fit = await dz(page);
@@ -351,8 +351,9 @@ test.describe('findings-v2', () => {
     });
   }
 
-  // D15 amendment: Fit width clamps 60-175; the page fits its area, and the reading area never
-  // extends under the findings panel. When even 60% is too wide, the area scrolls from the left.
+  // D15 amendments: Fit width clamps 85-175; the page fits its area, and the reading area never
+  // extends under the findings panel. Below 85% the text stays at 85% and the page reflows to
+  // the area width minus the gutters (no horizontal scroll).
   for (const [w, h, fpw] of [
     [1440, 900, null],
     [1024, 768, null],
@@ -393,6 +394,9 @@ test.describe('findings-v2', () => {
           pageRight: p.right,
           overflow: el.scrollWidth - el.clientWidth,
           fitNeeded: Math.round(((el.clientWidth - 64) / 700) * 100),
+          clientW: el.clientWidth,
+          pageW: p.width,
+          bodyFont: parseFloat(getComputedStyle(paper.querySelector('p') ?? paper).fontSize),
           hitInPanel: !!hit && !!hit.closest('[data-testid="findings-column"]'),
         };
       });
@@ -402,17 +406,21 @@ test.describe('findings-v2', () => {
       expect(m.paneRight).toBeLessThanOrEqual(m.panelLeft + 1);
       expect(m.hitInPanel).toBe(true);
       expect(m.pageLeft).toBeGreaterThanOrEqual(0);
-      if (m.fitNeeded >= 60) {
-        // fit suffices: the page's right edge (with its border) is inside the area, no scroll
+      // in every case the page's right edge (with its border) is inside the area, no scroll
+      expect(m.pageRight).toBeLessThanOrEqual(m.areaInner + 1);
+      expect(m.pageRight).toBeLessThanOrEqual(m.areaRight + 1);
+      expect(m.overflow).toBeLessThanOrEqual(1);
+      if (m.fitNeeded >= 85) {
         expect(pct).toBe(Math.min(175, m.fitNeeded));
-        expect(m.pageRight).toBeLessThanOrEqual(m.areaInner + 1);
-        expect(m.overflow).toBeLessThanOrEqual(1);
       } else {
-        // even 60% is too wide: horizontal scroll from the page's left edge
-        expect(pct).toBe(60);
-        expect(m.overflow).toBeGreaterThan(0);
+        // reflow: text stays at 85%, page width = area - 64px
+        expect(pct).toBe(85);
+        expect(Math.abs(m.pageW - (m.clientW - 64))).toBeLessThanOrEqual(1);
+        expect(m.bodyFont).toBeGreaterThanOrEqual(0.85 * 16 - 0.01);
       }
-      if (fpw !== null) expect(m.fitNeeded).toBeLessThan(60);
+      // the default 1440 / 1024 areas and the 65% panel all need the reflow
+      expect(m.fitNeeded).toBeLessThan(85);
+      console.log(`fit ${w}x${h} panel ${fpw ?? 'default'}: area ${m.clientW}px raw ${m.fitNeeded}% -> ${pct}% page ${m.pageW}px font ${m.bodyFont}px`);
       await page.close();
     });
   }
