@@ -109,4 +109,4 @@ No follow-up plan stub files were created in this phase.
 
 ## G3 final guards
 
-(recorded after the last commit)
+After commits c4d68bc, a027187, 9607860: `pnpm guard:cf` exit 0, `pnpm secrets:scan` exit 0. Nothing pushed.
