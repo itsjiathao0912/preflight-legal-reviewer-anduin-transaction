@@ -198,6 +198,9 @@ importers:
       '@types/node':
         specifier: 24.19.2
         version: 24.19.2
+      docx:
+        specifier: 9.11.0
+        version: 9.11.0
       esbuild:
         specifier: 0.28.2
         version: 0.28.2

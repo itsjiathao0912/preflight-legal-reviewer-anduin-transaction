@@ -125,3 +125,87 @@ Status: IN PROGRESS. Sub-steps 06a and 06b done (not committed). 06c to 06f and 
 
 CONTEXT_PARTIAL: none.
 Follow-up stubs created: none (the gaps are tracked as 06d notes above).
+
+## 06c-DOCX (DOCX adapter, fixtures, tests) — 2026-10-17
+
+### B0 findings (mammoth 1.13.0, runtime probe in Node)
+- Exports: `convertToHtml`, `convertToMarkdown`, `convert`, `extractRawText`, `images`, `transforms`, `styleMapping`, ... License BSD-2-Clause.
+- Node entry (`lib/`) reads only `{path}` or `{buffer}`; `{arrayBuffer}` alone fails with "Could not find file in options". The package `browser` field swaps `lib/unzip.js` and `lib/docx/files.js` for browser versions, which read `{arrayBuffer}`. A Vite web-worker bundle resolves the browser entry automatically (no Node `fs`/`path` needed). The adapter passes BOTH `buffer` and `arrayBuffer` (same copy), so one call works in vitest and in the worker. Real Vite worker bundle is not proven here (06d owns the web wiring).
+- Numbering: Word list numbering becomes nested `<ol><li>` (level formats such as `%1.%2`, `(%3)`, lower-roman are all lost; only nesting survives). Headings map to `<h1>`/`<h2>` by default.
+- Messages: `[]` for the clean fixture. Corrupt or empty input rejects with a JSZip "End of data reached ... Corrupted zip ?" error (mapped to `CoreError('unsupported_type')`).
+- `docx@9.11.0` output is NOT byte-deterministic across runs (creation time in `docProps/core.xml`); the drift check compares zip entries and skips that file.
+
+### What was done
+- `packages/core/src/adapters/docx.ts`: `docxToLines(bytes)` (async) = 10 MB cap -> `guardZip` (bounded central-directory parse: EOCD search window, <= 2000 entries, ZIP64 refused, every offset bounds-checked; then streamed `DecompressionStream('deflate-raw')` inflate of every entry with a shared 64 MB budget, so forged header sizes do not help a zip bomb; requires `word/document.xml`) -> mammoth `convertToHtml` with `DOCX_STYLE_MAP` (Title/Subtitle/Heading 1-4/List Number/List Bullet) and images dropped -> `reconstructNumbering` (htmlparser2 re-serialize, label per `<ol>` depth `1.` / `1.1` / `(a)` / `(i)` / `(A)` / `(n)`, `<ul>` unlabelled, list depth capped at `MAX_FRAME_DEPTH`) -> `htmlToLines` (inherits MAX_PARSE_DEPTH and the HTML byte cap). Result = `HtmlAdapterResult` + `reconstructedNumbering`, `listItems`, `messages` (bounded), optional `notice` (dropped content from mammoth warnings/errors, no headings or lists in a 20+ line doc, reconstructed numbering). `docHash`/`bytes` are of the original DOCX bytes. Exports `RECONSTRUCTED_NUMBERING_LABEL = 'based on reconstructed numbering'` for 06d to attach to xref findings on DOCX (no frozen contract change; not exported from `index.ts` — 06d appends).
+- Errors: empty / non-zip / corrupt / not-a-Word-zip / unknown compression -> `unsupported_type`; > 10 MB / too many entries / expands past 64 MB -> `payload_too_large`.
+- `scripts/package.json`: devDependency `docx` 9.11.0 (single `pnpm install`, lockfile updated). THIRD_PARTY_NOTICES left to 06f.
+- `scripts/src/fixtures/make-docx.ts` -> `fixtures/docx/{legal-numbering.docx, corrupt.docx, empty.docx}`; regenerate with `pnpm --filter @aduin/scripts exec tsx src/fixtures/make-docx.ts`. `scripts/src/fixtures/check.ts` extended: missing / drift (entry-level) / stray checks for `fixtures/docx`. `fixtures:build` (build-seeded.ts) not changed.
+- Tests: `packages/core/test/unit/ingest-all-formats-docx.test.ts` (4), `test/unit/docx-numbering.test.ts` (5), `test/security/docx-zip-bomb.test.ts` (6; bomb archives built in-test with zlib, not committed).
+
+### Test gate outcomes
+- `pnpm --filter @aduin/core test ingest-all-formats`: 4/4 (DOCX file only at that time). `test docx`: 15/15. `test security`: 33/33 (7 files). `test:golden`: 57/57. Full core: 383/383 (55 files). `pnpm --filter @aduin/scripts test`: 49/49. `fixtures:check`: OK (49 files). scripts typecheck: clean. core typecheck: my files clean; one error in the PDF agent's `src/adapters/pdf.ts:152` (`isEvalSupported`), not in 06c-DOCX scope. eslint + prettier on touched files: clean.
+
+### Deviations / concerns
+- Plan B0 asked for a Vite web-worker bundle probe; only the Node runtime probe and the `browser`-field analysis were done here (06d wires the worker and should confirm in the real bundle).
+- Concern for 06d: top-level DOCX list items ("1. Definitions") are plain (not bold), so the structurer makes them `list_item` blocks, not sections; on the fixture `runDeterministic` returns no xref findings (one conditional edge only). Existing HTML also needs bold section headings. Consider a docx-specific bold cue for depth-0 items or a structurer rule in 06d.
+- Zip-bomb guard inflates the archive once more than mammoth does (bounded by 10 MB in, 64 MB out).
+
+## 06c-PDF (B0 PDF probe, PDF adapter, page noise, format detect, fixtures) — 2026-10-17
+
+**TL;DR:** text PDFs now become lines with page + region; image-only pages are reported for OCR; encrypted, corrupt, empty, oversize and over-30-page PDFs get a clear error before any page work. The pdf.js versions match (6.4.299 on both sides), so one pdf.js can ship. unpdf stays a core-only dependency (no web manifest change). No new deps, no manifest or lockfile edits.
+
+### B0 probe (PDF part, Node; run before adapter code)
+| Check | Result |
+|---|---|
+| unpdf 1.9.0 exports | `getDocumentProxy`, `definePDFJSModule`, `extractText`, `extractTextItems`, `getResolvedPDFJS`, `renderPageAsImage`, … all present |
+| unpdf bundled pdf.js vs `pdfjs-dist` | both **6.4.299** (`unpdf/pdfjs` `version` and `pdfjs-dist` `version`) |
+| `definePDFJSModule(() => import('pdfjs-dist/legacy/…/pdf.mjs'))` | works in Node: `getResolvedPDFJS().version` 6.4.299, `getDocumentProxy` + `extractText` read text.pdf |
+| Encrypted stub (`/Encrypt` Standard V1 R2, /U not matching the empty password) | `PasswordException` (code 1, "No password given"), `instanceof` the injected build's class: true. **No committed-binary fallback needed.** |
+| Corrupt (truncated) / empty | `InvalidPDFException` ("Invalid PDF structure." / "…size is zero bytes") |
+| pdf.js 6 API notes | `PDFDocumentProxy.destroy()` is gone, so release goes through `doc.loadingTask.destroy()`. The `isEvalSupported` option no longer exists (type error), so it is not passed. Font `bold` flags resolve only after `page.getOperatorList()`, so this runs on text pages only. `fontFamily` in `styles` is generic ("sans-serif"). |
+
+**Web dependency decision: `@aduin/core` adapter, no `unpdf` in `apps/web`.** `pdf.ts` loads unpdf lazily (`await import('unpdf')`) and takes an optional `pdfjs` loader that it passes to `definePDFJSModule`. The web worker can pass `() => import('pdfjs-dist')`, so only one pdf.js ships (the versions match). 06d still owns: (a) the Vite web-worker bundle probe (apps/web is outside 06c), (b) confirming Vite resolves core's `unpdf` import through the workspace symlink. If (b) fails, the fallback is to add `unpdf` 1.9.0 to `apps/web/package.json`, (c) whether to export `pdfToLines`/`detectFormat` from `index.ts`. Note: if `index.ts` re-exports `pdf.ts`, the Worker bundle (`apps/worker`) could pick up the lazy `unpdf` chunk, so 06d should check the worker bundle size or keep the PDF exports on a separate entry.
+
+### What was done
+| File | Change |
+|---|---|
+| `packages/core/src/adapters/page-noise.ts` (new) | `stripPageNoise(pages)`: page numbers (`PAGE_N_OF_M_RE`, `PAGE_BARE_RE`: "Page 2 of 9", "1/8", "- 3 -") and digit-normalized repeated header/footer lines in the band (region y < 0.1 or bottom > 0.9; without regions, the first/last 2 lines) on ≥ 3 pages AND ≥ 50% of pages. Dropped lines are kept per page with their rule. All regexes are bounded and exported. |
+| `packages/core/src/adapters/format-detect.ts` (new) | `detectFormat(name, bytes)`: extension + magic (`%PDF-`, PK + `word/document.xml` + `[Content_Types].xml`, JPEG `FFD8FF`, PNG signature, HTML = text with no NUL byte). Rejections: empty → `invalid_request`; > 10 MB → `payload_too_large`; unknown extension/SVG, mismatch, polyglot (PDF/JPEG/PNG with a Word package, HTML with `%PDF` in its first 1 KB) → `unsupported_type`. |
+| `packages/core/src/adapters/pdf-text.ts` (new) | Pure `pdfPagesToLines(pages)`. Items are clustered into rows by baseline (40% of font size) and ordered by x; a gap over 0.2 em becomes a space. A row is one Line, so table cells and option grids merge like the HTML `<tr>` rule. Each Line gets `page` (1-based) and a normalized top-left `region` (the same convention as the OCR bbox). Also: bold by majority of characters, indent in pt from the document's left edge, a `center` cue, and raised small digits recorded as `SupSegment`s through `sup-segments.ts`. Rows over 4000 chars split at whitespace. A page with < 20 non-space chars is a scan page (`scanPages`, 0-based). Page noise is applied last. |
+| `packages/core/src/adapters/pdf.ts` (new) | `pdfToLines(bytes, {pdfjs?, onPage?})`. Checks run in this order: empty, 10 MB, `%PDF-` magic, open (`PasswordException` → `unsupported_type` "password-protected"; anything else → `invalid_request` "damaged"), pages 1..30 (checked BEFORE any page is read). Then, per page: viewport-mapped items (rotation-safe) and progress. pdf.js gets a copy of the buffer (pdf.js may detach it). Options: `verbosity: 0`, `disableFontFace`, `useSystemFonts: false`, `enableXfa: false`. It never renders a page and never sends anything over the network. |
+| `scripts/src/fixtures/make-pdf.ts` (new) | Hand-built PDFs with a correct xref and no dates/ids, so the output is deterministic: `text.pdf` (3 pages; Helvetica/Helvetica-Bold, 2-column table, checkbox row, repeated header, "Page n of 3"), `scanned.pdf` (DCT image only), `mixed.pdf` (text + image page), `encrypted.pdf`, `pages-31.pdf`, `corrupt.pdf` (300-byte truncation), `empty.pdf`. Run: `pnpm --filter @aduin/scripts exec tsx src/fixtures/make-pdf.ts`. |
+| `fixtures/pdf/src/appa1-pg1-crop.jpg` (new, committed source, 27 KB) | Crop of the A-1 page 1 grid of `09-rw-holdings-scans/appa1-pg1.jpg`, made once with macOS `sips` (crop 2612x1200, resize to 900 px, quality 55). No dependency. |
+| `fixtures/pdf/*.pdf` (new, generated) | the 7 fixtures above |
+| `scripts/src/fixtures/check.ts` | Additive PDF block: rebuilds in memory, byte-exact compare, stray-file check (the `src/` crop is allowed). Sits beside the DOCX agent's block. |
+| `packages/core/test/unit/ingest-all-formats-pdf.test.ts` (new) | Both contract stubs (red first, then green), plus: encrypted, 31 pages refused with 0 pages parsed, 10 MB + 1, per-page progress, determinism, and the engine pipeline with `source: 'pdf'` |
+| `packages/core/test/unit/{page-noise,format-detect,pdf-text}.test.ts` (new) | 7 + 7 + 7 tests |
+| `packages/core/test/security/redos.test.ts` | Collects every regex exported by `page-noise`, `pdf-text`, `format-detect`, plus 4 new adversarial 1 MB lines. New test `should bound every page-noise regex`, including `stripPageNoise` on 30 pages × 200 hostile lines. |
+
+### Gates (06c-PDF)
+| Gate | Result |
+|---|---|
+| `pnpm --filter @aduin/core test ingest-all-formats-pdf` | red first (2 stubs failed), then 6/6 |
+| `pnpm --filter @aduin/core test ingest-all-formats` | 2 files / 10 tests pass (PDF + DOCX halves) |
+| `test page-noise` / `format-detect` / `pdf-text` | 7/7, 7/7, 7/7 |
+| `pnpm --filter @aduin/core test security` | 7 files / 34 tests pass (includes the DOCX agent's zip-bomb file) |
+| `pnpm --filter @aduin/core test:golden` | 6 / 57 pass (unchanged) |
+| `pnpm --filter @aduin/core test` (full) | 59 files / 411 tests pass (with the DOCX agent's files at that moment) |
+| `pnpm --filter @aduin/scripts fixtures:check` | OK (56 files) |
+| core typecheck, scripts typecheck | clean |
+| eslint + prettier on touched files | clean |
+
+### Deviations (06c-PDF, all inside the blast radius)
+1. A separate wrapper `adapters/pdf.ts` holds the unpdf I/O, and `pdf-text.ts` is pure (D4 names only `pdf-text.ts`). This keeps the clustering testable with no pdf.js, as the task asked.
+2. The ingest test is `ingest-all-formats-pdf.test.ts`, not one shared file. This avoids write collisions with the DOCX agent; the gate token `ingest-all-formats` matches both halves.
+3. Error codes reuse the frozen `ERROR_CODES` (no contract change): encrypted → `unsupported_type`, corrupt/empty/zero-page → `invalid_request`, too big / too many pages → `payload_too_large`.
+4. The page limit (30) applies to every PDF, not only scans: an adversarial huge page count is capped before any page is read (E9).
+5. The scan crop was made with macOS `sips` (one-time). jpeg-js is not installed yet (06f), and no dependency was added.
+6. Columns: wide gaps inside a row merge into the same Line with a space; they are not split into separate column lines. Why: parity with the HTML adapter, so option grids stay one row. True two-column page layouts are not split (see residual).
+7. The Vite web-worker bundle probe (B0 item 2) moves to 06d (apps/web is outside 06c).
+
+### Residuals / for 06d
+- Real-world PDFs: two-column page layouts, fonts without ToUnicode, and rotated text runs are not covered by the synthetic fixtures (the contract's "does NOT prove" list already says so).
+- 06d: export `pdfToLines`, `detectFormat`, `stripPageNoise` and the types from `index.ts`; feed `scanPages` to render + OCR; reuse `stripPageNoise` in the OCR adapter (the `1/8` footer seen in 06a is matched by `PAGE_N_OF_M_RE`). Optionally add a `PdfAdapterResult.pages[].dropped` view for the scan viewer raw text.
+- web `ingest-all-formats` e2e (render paths) is 06d/06e.
+
+CONTEXT_PARTIAL: none. Follow-up stubs created: none.

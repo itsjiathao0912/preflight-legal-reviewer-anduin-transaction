@@ -17,6 +17,9 @@ import * as unreachableFlow from '../../src/detectors/unreachable-flow';
 import * as investorPaths from '../../src/investor/paths';
 import { TYPE_RULES } from '../../src/investor/types';
 import { htmlSamples, readSample } from '../helpers/samples';
+import * as pageNoise from '../../src/adapters/page-noise';
+import * as pdfText from '../../src/adapters/pdf-text';
+import * as formatDetect from '../../src/adapters/format-detect';
 
 /** redos-budget: every heading/reference/statutory/detector regex on the largest sample and on 1 MB adversarial single lines. */
 const MB = 1024 * 1024;
@@ -44,6 +47,11 @@ const ADVERSARIAL: Record<string, string> = {
   capsDigits: fill('ABCD123'),
   ofSection: fill(' of Section '),
   asDefined: fill('Fund (as defined '),
+  // Phase 06 page-noise / PDF
+  pageOf: fill('Page 1 of '),
+  slashes: fill('1 / '),
+  dashDigits: fill('- 1 - '),
+  tabsSpaces: fill(' \t '),
 };
 
 const HEADING_RES: RegExp[] = [
@@ -80,6 +88,10 @@ const ALL: RegExp[] = [
   ...TYPE_RULES.map((r) => r.re),
 ];
 
+// Phase 06 (D7): page-noise, pdf-text and format-detect regexes.
+const PHASE06: RegExp[] = [...collect(pageNoise), ...collect(pdfText), ...collect(formatDetect)];
+ALL.push(...PHASE06);
+
 function scan(re: RegExp, text: string): number {
   const g = new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g');
   let n = 0;
@@ -88,6 +100,29 @@ function scan(re: RegExp, text: string): number {
 }
 
 describe('redos-budget', () => {
+  it('should bound every page-noise regex', () => {
+    expect(collect(pageNoise).length).toBeGreaterThanOrEqual(4);
+    expect(PHASE06.every((re) => ALL.includes(re))).toBe(true);
+    for (const re of PHASE06) {
+      for (const [name, text] of Object.entries(ADVERSARIAL)) {
+        const t0 = performance.now();
+        scan(re, text);
+        expect(performance.now() - t0, `${re.source.slice(0, 40)} on ${name}`).toBeLessThan(2000);
+      }
+    }
+    const t0 = performance.now();
+    pageNoise.stripPageNoise(
+      Array.from({ length: 30 }, (_, p) =>
+        Array.from({ length: 200 }, (_, i) => ({
+          text: i % 2 ? ADVERSARIAL.pageOf!.slice(0, 4000) : `${'1 / '.repeat(500)}`,
+          cue: { bold: false, caps: false, indent: 0, position: 'left' as const },
+          page: p + 1,
+        })),
+      ),
+    );
+    expect(performance.now() - t0).toBeLessThan(5000);
+  });
+
   it('collects every exported regex (sanity)', () => {
     expect(ALL.length).toBeGreaterThanOrEqual(45);
   });
