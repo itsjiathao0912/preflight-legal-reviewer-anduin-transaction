@@ -1,0 +1,83 @@
+/* Intake Phase 3a: Package lens inside Structure (tokens only, no new colors). */
+.pkg-lens {
+  display: grid;
+  gap: 20px;
+}
+.pkg-lens-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+.pkg-lens-sec h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.pkg-lens-sec h4 {
+  margin: 8px 0 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.pkg-lens-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.pkg-lens-table th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--ink-3);
+  padding: 4px 6px;
+}
+.pkg-lens-table td {
+  padding: 6px;
+  vertical-align: top;
+  border-top: 1px solid var(--step);
+}
+.pkg-lens-table select {
+  font: inherit;
+  max-width: 180px;
+}
+.pkg-lens-name {
+  overflow-wrap: anywhere;
+  max-width: 240px;
+}
+.pkg-lens-reason {
+  color: var(--ink-2);
+  max-width: 280px;
+}
+.pkg-lens-st {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pkg-lens-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.pkg-lens-ref,
+.pkg-lens-term {
+  padding: 8px 0;
+  border-top: 1px solid var(--step);
+  font-size: 13px;
+}
+.pkg-lens-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.pkg-lens-quote {
+  display: block;
+  color: var(--ink-2);
+}
+.pkg-lens-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+}

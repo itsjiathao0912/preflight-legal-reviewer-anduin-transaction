@@ -1,4 +1,3 @@
-import type { LensId } from '@aduin/core';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import '../../styles/structure.css';
 import { Icon } from '../../components/ui/icon';
@@ -6,7 +5,9 @@ import { useReview } from '../../state/review';
 import { useShell } from '../../state/shell';
 import { ExportOutlineButton } from '../outline/ExportOutlineButton';
 import { InvestorTypesLens } from '../investor-paths/InvestorTypesLens';
-import { DEFAULT_LENS, LENSES, lineFor } from './model';
+import { PackageLens } from '../package/PackageLens';
+import { usePackageView } from '../package/package-view';
+import { DEFAULT_LENS, lensesFor, lineFor, PACKAGE_LENS, type StructureLensId } from './model';
 import { StructureDrawer } from './StructureDrawer';
 import { TableLens } from './StructureLenses';
 
@@ -22,7 +23,8 @@ export function StructureScreen() {
   const failed = useReview((s) => s.result?.failedStage ?? null);
   const select = useReview((s) => s.select);
   const setRoute = useShell((s) => s.setRoute);
-  const [lens, setLens] = useState<LensId>(DEFAULT_LENS);
+  const pkg = usePackageView();
+  const [lens, setLens] = useState<StructureLensId>(DEFAULT_LENS);
   const [all, setAll] = useState(false);
   const [flow, setFlow] = useState(false);
   const [row, setRow] = useState<string | null>(null);
@@ -35,6 +37,13 @@ export function StructureScreen() {
     setRow(null);
     setType(null);
   }, [docKey]);
+
+  // the Package lens falls back to the default only when the open document has no package
+  // (never while a store-initiated re-open runs: the view stays non-null with refreshing)
+  useEffect(() => {
+    if (lens === PACKAGE_LENS && phase === 'ready' && !pkg) setLens(DEFAULT_LENS);
+  }, [lens, phase, pkg]);
+  const lenses = lensesFor(!!pkg);
 
   const closeDrawer = (refocus = false) => {
     setRow(null);
@@ -54,7 +63,7 @@ export function StructureScreen() {
     );
   };
 
-  const pickLens = (id: LensId) => {
+  const pickLens = (id: StructureLensId) => {
     setLens(id);
     closeDrawer();
     requestAnimationFrame(() => document.getElementById(`st-l-${id}`)?.focus());
@@ -62,10 +71,10 @@ export function StructureScreen() {
 
   const onTabKey = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-    const i = LENSES.findIndex((l) => l.id === lens);
+    const i = lenses.findIndex((l) => l.id === lens);
     const n =
-      e.key === 'ArrowRight' ? (i + 1) % LENSES.length : (i - 1 + LENSES.length) % LENSES.length;
-    pickLens(LENSES[n]!.id);
+      e.key === 'ArrowRight' ? (i + 1) % lenses.length : (i - 1 + lenses.length) % lenses.length;
+    pickLens(lenses[n]!.id);
     e.preventDefault();
   };
 
@@ -90,7 +99,7 @@ export function StructureScreen() {
               : 'No document open'}
         </p>
       </div>
-      {view ? (
+      {view && lens !== PACKAGE_LENS ? (
         <div className="hacts">
           <button
             className="btn"
@@ -146,7 +155,7 @@ export function StructureScreen() {
       {header}
       <div className="subbar">
         <div className="seg segx" role="tablist" aria-label="Structure lists" onKeyDown={onTabKey}>
-          {LENSES.map((l) => (
+          {lenses.map((l) => (
             <button
               key={l.id}
               type="button"
@@ -158,7 +167,14 @@ export function StructureScreen() {
               onClick={() => pickLens(l.id)}
             >
               {l.label}
-              {view.counts[l.id] ? (
+              {l.id === PACKAGE_LENS ? (
+                pkg && pkg.coverageStatus !== 'full' ? (
+                  <span className="fl" data-testid="structure-package-warn">
+                    <Icon name="warn" />
+                    <span className="sr"> coverage partial</span>
+                  </span>
+                ) : null
+              ) : view.counts[l.id] ? (
                 <span className="fl" data-testid={`structure-issue-count-${l.id}`}>
                   <Icon name="warn" />
                   {view.counts[l.id]}
@@ -168,9 +184,15 @@ export function StructureScreen() {
             </button>
           ))}
         </div>
-        <p className="mut" role="status" data-testid="structure-line">
-          {lineFor(view, lens, all)}
-        </p>
+        {lens === PACKAGE_LENS ? (
+          <p className="mut" role="status" data-testid="package-lens-line">
+            {pkg?.coverageLine ?? ''}
+          </p>
+        ) : (
+          <p className="mut" role="status" data-testid="structure-line">
+            {lineFor(view, lens, all)}
+          </p>
+        )}
       </div>
       <div className={`stwrap${row ? ' has-drawer' : ''}`}>
         <div className="pgbody" role="tabpanel" aria-labelledby={`st-l-${lens}`}>
@@ -209,7 +231,11 @@ export function StructureScreen() {
               </div>
             </>
           ) : null}
-          {lens === 'investors' ? (
+          {lens === PACKAGE_LENS ? (
+            pkg ? (
+              <PackageLens view={pkg} onShow={(blockId) => showInDoc(blockId, null)} />
+            ) : null
+          ) : lens === 'investors' ? (
             <InvestorTypesLens
               view={view.investors}
               type={investorType}

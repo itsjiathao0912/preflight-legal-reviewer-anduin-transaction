@@ -13,6 +13,17 @@ export const LENSES: ReadonlyArray<{ id: LensId; label: string }> = [
 /** Default lens on first open (app.html: Cross-references). */
 export const DEFAULT_LENS: LensId = 'crossrefs';
 
+/** Intake Phase 3a: the Package lens id (web-local, not a core LensId). */
+export const PACKAGE_LENS = 'package';
+export type StructureLensId = LensId | typeof PACKAGE_LENS;
+
+/** The six lenses, plus a trailing Package lens only when a package is open. */
+export function lensesFor(
+  hasPackage: boolean,
+): ReadonlyArray<{ id: StructureLensId; label: string }> {
+  return hasPackage ? [...LENSES, { id: PACKAGE_LENS, label: 'Package' }] : LENSES;
+}
+
 /** Rows shown for a lens: "Issues only" (default) or everything. */
 export function visibleCount(v: StructureView, lens: LensId, all: boolean): number {
   if (lens === 'investors') return v.investors.types.length;
