@@ -28,7 +28,7 @@ test.describe('provenance', () => {
     await interceptQuota(page);
     await enableLane(page);
     await openSample(page, '01');
-    await expect(aiRows(page)).toHaveCount(2);
+    await expect(aiRows(page)).toHaveCount(3); // 3 since review M1 (was 2)
     await aiRows(page).first().click();
     const prov = page.getByTestId('finding-provenance');
     await expect(prov).toHaveAttribute('data-provenance', 'cache');

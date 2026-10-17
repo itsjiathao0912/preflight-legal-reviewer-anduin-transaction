@@ -9,12 +9,15 @@ import { quoteHash } from '../memory/fingerprint';
 import { mask, sensitiveSpans } from '../memory/mask';
 import { snapToSentence } from '../memory/snap';
 import { makeAnchor } from '../model/anchors';
+import { runDeterministic } from '../engine';
+import { buildAiCandidatesWithSites, type AiCandidateSite } from './candidates';
 import { AI_SUGGESTION_LABEL, type AiSource } from './provenance';
 
 /**
  * Client verify chain for AI results (runs in the engine worker, G12):
- * envelope check -> per-finding schema -> locate quote (case / whitespace / quote-style tolerant)
- * -> reject + log if unlocatable -> snapToSentence (memory/snap.ts) -> severity cap (AI <= high)
+ * envelope check -> per-finding schema -> minimum quote length (>= 12 normalized chars and
+ * >= 3 words, else `quote_too_short`) -> locate quote INSIDE the cited candidate's own sentence
+ * (case / whitespace / quote-style tolerant; review M1) -> reject + log if unlocatable -> snapToSentence (memory/snap.ts) -> severity cap (AI <= high)
  * -> mask BEFORE hashing -> schema-valid Finding. The fingerprint quote is always the document's
  * own sentence, never the model's wording. Cached results go through the same chain on open.
  */
@@ -114,7 +117,62 @@ export function locateQuote(g: DocGraph, quote: string): QuoteLocation | null {
   return null;
 }
 
-export type AiRejectReason = 'schema' | 'quote_too_long' | 'quote_not_found' | 'invalid_finding';
+/** Minimum model quote (review M1): a one-word or tiny quote cannot pin a finding to a sentence. */
+export const MIN_QUOTE_CHARS = 12;
+export const MIN_QUOTE_WORDS = 3;
+
+/** True when the normalized quote is long enough to pin a finding. */
+export function quoteLongEnough(quote: string): boolean {
+  const q = normalizeForLocate(trimQuote(quote)).text;
+  return (
+    q.length >= MIN_QUOTE_CHARS &&
+    q.split(' ').filter((w) => w.length > 0).length >= MIN_QUOTE_WORDS
+  );
+}
+
+/**
+ * Locate a model quote inside the cited candidate's site(s) only (review M1). A quote present
+ * elsewhere in the document but not in the cited candidate's sentence is not found.
+ */
+export function locateQuoteInSites(
+  g: DocGraph,
+  quote: string,
+  sites: readonly AiCandidateSite[],
+): QuoteLocation | null {
+  const q = normalizeForLocate(trimQuote(quote)).text;
+  if (q.length === 0) return null;
+  for (const site of sites) {
+    const block = g.structure.blocks[site.blockIndex];
+    if (!block) continue;
+    const text = block.lines.map((l) => l.text).join(' ');
+    const start = Math.max(0, Math.min(site.start, text.length));
+    const end = Math.max(start, Math.min(site.end, text.length));
+    const n = normalizeForLocate(text.slice(start, end));
+    const at = n.text.indexOf(q);
+    if (at < 0) continue;
+    return {
+      blockIndex: site.blockIndex,
+      start: start + n.origStart[at]!,
+      end: start + n.origEnd[at + q.length - 1]!,
+    };
+  }
+  return null;
+}
+
+const siteCache = new WeakMap<DocGraph, AiCandidateSite[]>();
+
+/** Deterministic recompute of the candidate sites (same functions the engine worker uses). */
+export function candidateSitesFor(g: DocGraph): AiCandidateSite[] {
+  let hit = siteCache.get(g);
+  if (!hit) {
+    hit = buildAiCandidatesWithSites(g, runDeterministic(g)).sites;
+    siteCache.set(g, hit);
+  }
+  return hit;
+}
+
+export type AiRejectReason =
+  'schema' | 'quote_too_long' | 'quote_too_short' | 'quote_not_found' | 'invalid_finding';
 
 export interface RejectedAiFinding {
   candidate_id?: string;
@@ -129,6 +187,11 @@ export interface VerifyAiContext {
   model: string;
   provenance: AiSource;
   task?: AiTaskId;
+  /**
+   * Candidate sites the request was built from (`buildAiCandidatesWithSites`). Omitted: recomputed
+   * deterministically from the graph (`candidateSitesFor`). An unknown candidate_id matches nothing.
+   */
+  sites?: readonly AiCandidateSite[];
 }
 
 function snippet(q: string): string {
@@ -157,6 +220,12 @@ export function verifyAiResult(
   const findings: Finding[] = [];
   const rejected: RejectedAiFinding[] = [];
   const seen = new Set<string>();
+  const byId = new Map<string, AiCandidateSite[]>();
+  for (const site of ctx.sites ?? candidateSitesFor(g)) {
+    const list = byId.get(site.id);
+    if (list) list.push(site);
+    else byId.set(site.id, [site]);
+  }
   for (const raw of result['findings'] as unknown[]) {
     const cid =
       isRecord(raw) && typeof raw['candidate_id'] === 'string'
@@ -177,7 +246,11 @@ export function verifyAiResult(
       continue;
     }
     const a = p.data;
-    const loc = locateQuote(g, a.quote);
+    if (!quoteLongEnough(a.quote)) {
+      rejected.push({ candidate_id: a.candidate_id, reason: 'quote_too_short' });
+      continue;
+    }
+    const loc = locateQuoteInSites(g, a.quote, byId.get(a.candidate_id) ?? []);
     if (!loc) {
       rejected.push({ candidate_id: a.candidate_id, reason: 'quote_not_found' });
       continue;

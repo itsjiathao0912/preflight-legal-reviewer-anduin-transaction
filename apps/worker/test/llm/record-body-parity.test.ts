@@ -4,6 +4,7 @@
 // recording's inputHash (the single choke point). Replaying the recorded raw model reply through
 // the Worker yields exactly `task.validate(parsed)` (task-aware classify, validate once).
 import {
+  AI_MAX_TOKENS,
   TASKS,
   inputHash,
   responseFormat,
@@ -31,7 +32,7 @@ function expectedBody(r: RecordingFile): string {
   return (
     `{"model":${JSON.stringify(m)},"models":${JSON.stringify([m])},` +
     `"messages":${JSON.stringify(expectedMessages(r))},"temperature":0,` +
-    `"max_tokens":${MAX_TOKENS.ai},` +
+    `"max_tokens":${AI_MAX_TOKENS},` +
     `"response_format":${JSON.stringify(responseFormat(TASKS[r.request.task], r.request.mode))}}`
   );
 }
@@ -55,6 +56,10 @@ async function forward(r: RecordingFile) {
 const recordings = loadRecordings();
 
 describe('record-body-parity (AC28, Worker side)', () => {
+  test('the Worker max_tokens is the single core AI_MAX_TOKENS (review L1)', () => {
+    expect(MAX_TOKENS.ai).toBe(AI_MAX_TOKENS);
+  });
+
   test('the recordings are loaded (JSON import probe) and use the Worker text model', () => {
     expect(recordings.length).toBeGreaterThanOrEqual(9);
     for (const r of recordings) expect(r.rec.model).toBe(DEFAULT_TEXT_MODELS);

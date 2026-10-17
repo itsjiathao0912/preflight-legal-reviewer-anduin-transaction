@@ -1,0 +1,98 @@
+{
+  "task": "subdoc-qa-mvp phase 05 LLM AI lane (review fix cycle after Stage 2 security review)",
+  "commands": [
+    {
+      "command": "pnpm --filter @aduin/core test llm-quote-scoped-to-candidate",
+      "result": "PASS",
+      "notes": "5 tests (one-word, short, elsewhere-not-in-candidate x3, unknown id, deterministic sites)"
+    },
+    {
+      "command": "pnpm --filter @aduin/core test wrap-envelope-item-cap",
+      "result": "PASS",
+      "notes": "1 test"
+    },
+    {
+      "command": "pnpm --filter @aduin/core test (whole suite)",
+      "result": "PASS",
+      "notes": "51 files, 355 tests; recorded tests unchanged (sample-03: 2 findings + 2 quote_not_found)"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test active-rule-cap",
+      "result": "PASS",
+      "notes": "3 tests (LIMIT 101, rows_read <= 102 measured 101, create 429, approve 429)"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test shape-ai-server-mask",
+      "result": "PASS",
+      "notes": "3 tests"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test record-body-parity",
+      "result": "PASS",
+      "notes": "21 tests (20 prior + MAX_TOKENS single-source); every recording inputHash unchanged after L2 mask"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test llm-failure-injection-matrix",
+      "result": "PASS",
+      "notes": "timeout now keeps all claims (M2)"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test (whole suite)",
+      "result": "PASS",
+      "notes": "62 files, 515 tests (query-budget rule_approve cap 7 -> 8)"
+    },
+    {
+      "command": "pnpm --filter @aduin/scripts test (whole suite)",
+      "result": "PASS",
+      "notes": "8 files, 49 tests incl. finish_reason length abort + sameBaseModel"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test (whole suite)",
+      "result": "PASS",
+      "notes": "12 files, 47 tests incl. ndjson-line-cap + rules 100+ label; engine-ai-api sample-01 now 3 findings"
+    },
+    {
+      "command": "playwright --project=preview sample-zero-calls",
+      "result": "PASS",
+      "notes": "4 passed"
+    },
+    {
+      "command": "playwright --project=preview provenance",
+      "result": "PASS",
+      "notes": "2 passed"
+    },
+    {
+      "command": "playwright --project=preview ai-banners",
+      "result": "PASS",
+      "notes": "4 passed"
+    },
+    {
+      "command": "pnpm typecheck",
+      "result": "PASS",
+      "notes": "all workspaces"
+    },
+    {
+      "command": "pnpm lint",
+      "result": "PASS",
+      "notes": "eslint + prettier clean"
+    },
+    {
+      "command": "pnpm secrets:scan",
+      "result": "PASS",
+      "notes": "OK"
+    }
+  ],
+  "manualChecks": [
+    {
+      "check": "Sample-01 count change reviewed",
+      "result": "PASS",
+      "notes": "c_bbfb16d50ab9577f quote occurs in b221 and b222; before M1 the global first-occurrence locate anchored it in b221 and it deduplicated into c_a3a1fd5641d412c0 (2 findings). It now anchors in its own candidate b222: 3 findings. Expectations updated deliberately in engine-ai-api + 3 e2e specs. Sample-03 unchanged (2 + 2 rejections)."
+    },
+    {
+      "check": "No live LLM calls, no paid model, no deploy, no commit",
+      "result": "PASS",
+      "notes": "all tests use recordings / stubs"
+    }
+  ],
+  "result": "PASS"
+}

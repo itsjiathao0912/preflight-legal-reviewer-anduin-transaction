@@ -23,6 +23,10 @@ export const RULES_SQL = {
   reject:
     "UPDATE firm_rule SET status = 'rejected', decided_by_name = ?3, decided_at = ?4 " +
     "WHERE workspace_id = ?1 AND id = ?2 AND status = 'proposed'",
+  /** bounded count of active rules for the per-firm cap (reads at most 101 index rows) */
+  activeCount:
+    'SELECT COUNT(*) AS n FROM (SELECT 1 FROM firm_rule WHERE workspace_id = ?1 AND law_firm_id = ?2 ' +
+    "AND status = 'active' LIMIT 101)",
   revoke:
     "UPDATE firm_rule SET status = 'revoked', revoked_by_name = ?3, revoked_at = ?4, revoke_reason = ?5 " +
     "WHERE workspace_id = ?1 AND id = ?2 AND status = 'active'",
@@ -56,4 +60,10 @@ export async function rulesForFirm(db: Db, workspaceId: string, firm: string): P
 
 export async function ruleById(ctx: MemoryCtx, id: string): Promise<RuleDbRow | null> {
   return ctx.db.prepare(RULES_SQL.byId).bind(ctx.workspaceId, id).first<RuleDbRow>();
+}
+
+/** Active rules for a firm in the workspace, counted up to 101 (cap check, review M3). */
+export async function activeRuleCount(db: Db, workspaceId: string, firm: string): Promise<number> {
+  const r = await db.prepare(RULES_SQL.activeCount).bind(workspaceId, firm).first<{ n: number }>();
+  return Number(r?.n ?? 0);
 }

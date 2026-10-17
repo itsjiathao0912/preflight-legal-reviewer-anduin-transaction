@@ -384,3 +384,31 @@ CONTEXT_PARTIAL: none.
 - Blast radius changes: files listed above (apps/web only).
 - Commands to stay green: web `test` + `test:e2e` whole, `no-e2e-hook-in-dist`, `import-graph`.
 - Dependency changes: none. Phase 06 OCR should reuse `api/ndjson.ts` + `api/http.ts`.
+
+
+## Review fix cycle (2026-10-17, after Stage 2 security review APPROVE_WITH_FIXES; HEAD a9732a6, no commit)
+
+**Result:** M1-M3 and L1-L3 are fixed, and each fix has a regression test. All gates are green. The evidence pack is in `harness/phase-05/` (validate-risk-artifacts: 0 failures, 0 warnings).
+
+| Item | Fix | Proving test(s) |
+|---|---|---|
+| M1 | `verifyAiResult` requires >= 12 normalized chars and >= 3 words (`quote_too_short`). It also locates the quote only inside the cited candidate's site (`buildAiCandidatesWithSites`; the engine worker retains and passes sites; core recomputes them when absent) | core `llm-quote-scoped-to-candidate` (5), `ai-mask-before-storage` (quote lengthened), web `engine-ai-api` |
+| M2 | An upstream timeout no longer refunds visitor-scoped claims. The refund applies to network/5xx/429/402 only | worker `llm-failure-injection-matrix` (timeout keeps ALL claims) |
+| M3 | `RULES_PORT_SQL.active` reads `LIMIT 101` (measured rows_read 101). Create/approve refuse the 101st active rule per firm per workspace with `quota_exhausted` 429 / `active_rule_cap`. The web notice shows `100+` | worker `active-rule-cap` (3), `rules-port-scoped`, `query-budget` (rule_approve 8); web `ndjson-line-cap` (rules label) |
+| L1 | `AI_MAX_TOKENS = 10000` in core `llm/wire.ts`, used by the Worker `MAX_TOKENS.ai` and scripts `ai-request.ts`. record-ai aborts on `finish_reason: length`. The served-model check uses exact base-id equality | scripts `record-ai` (2 new), scripts + worker `record-body-parity` (20/20 recordings still pass, plus one new single-source check) |
+| L2 | `shapeAi` applies a server-side `mask(text, sensitiveSpans(text))` to candidate quotes (idempotent) | worker `shape-ai-server-mask` (3); `record-body-parity` inputHashes unchanged |
+| L3 | The NDJSON line buffer is capped at 4 MiB (`bad_frame`). `wrapEnvelope` validates at most `aiCandidates * 3` items | web `ndjson-line-cap`, core `wrap-envelope-item-cap` |
+
+**New numbers (deliberate):** sample-01 now yields 3 cached AI findings (was 2). Candidate `c_bbfb16d50ab9577f` anchors in its own block b222 instead of collapsing into `c_a3a1fd5641d412c0` at b221. Sample-03 is unchanged at 2 findings + 2 `quote_not_found`.
+
+**Gates run (all PASS):** core 51 files / 355 tests; worker 62 / 515; scripts 8 / 49; web unit 12 / 47; e2e preview `sample-zero-calls` 4, `provenance` 2, `ai-banners` 4; `pnpm typecheck`; `pnpm lint`; `pnpm secrets:scan`.
+
+**For UPDATE PROCESS:** update the worker refund-policy context note (timeout now keeps all claims), the M3 rule cap and error code, and `AI_MAX_TOKENS` single-source.
+
+**Backlog (not implemented):**
+- L4: Phase 08 `computeGate` must exclude `detector_kind: 'ai'`, with a test.
+- L5: the Worker should echo `meta.rules_hash8` / `rules_applied`, and the client should re-read rules on Retry.
+- L6: mask and clamp `drafts[].text` before the drafts UI is wired (Phase 08).
+- I1: re-verify firm-rule isolation end to end in Phase 08.
+
+**Deviations:** recorded in the plan `## Deviations` (Review fix cycle).

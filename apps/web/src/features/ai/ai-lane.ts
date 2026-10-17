@@ -166,9 +166,14 @@ function applyVerified(v: Extract<VerifyAiResponse, { ok: true }>, status: 'fres
     rejected: v.rejected.length,
     rulesNotice:
       v.rulesApplied < v.rulesTotal
-        ? `${v.rulesApplied} of ${v.rulesTotal} firm rules applied`
+        ? `${v.rulesApplied} of ${rulesTotalLabel(v.rulesTotal)} firm rules applied`
         : null,
   });
+}
+
+/** The Worker reads at most 101 active rules (review M3): more than 100 shows as "100+". */
+export function rulesTotalLabel(total: number): string {
+  return total > 100 ? '100+' : String(total);
 }
 
 function downgrade(key: BannerKey, retryAfterS?: number): void {

@@ -343,6 +343,12 @@ Stage 1c (core-fixtures-scripts, 2026-10-17), all within blast radius:
 - Recording files carry two extra keys beyond `LlmRecordingSchema` (`case`, `request`) and live ones carry `meta.cost_usd` / `meta.response_mode`; the schema is non-strict, so they parse.
 - Precomputed files are keyed `rulesHash8 = none` (bundled samples carry no active firm rules; E18(e) option "none").
 
+Review fix cycle (after Stage 2 security review APPROVE_WITH_FIXES, 2026-10-17), all within blast radius:
+- M1 changes the sample-01 cached AI count from 2 to 3 (one candidate's quote used to anchor at its first document occurrence and deduplicate into another candidate's finding). engine-ai-api and the e2e specs sample-zero-calls / provenance / ai-banners now expect 3. Sample-03 is unchanged (2 findings + 2 rejections). New reject reason `quote_too_short` (core internal, not a frozen contract).
+- M3 cap error: frozen `quota_exhausted` (429), reason `active_rule_cap`. `conflict_active_decision` was rejected because its body carries a `current` decision, and `rate_limited` was rejected because it is time-based. query-budget `rule_approve` goes from 7 to 8 (one bounded count query).
+- M2 changes the 04a refund policy for upstream `timeout`: it now keeps all claims. The context doc update is deferred to UPDATE PROCESS.
+- L1: the scripts copy of `AI_MAX_TOKENS` was stale (6000) and is now re-exported from core (10000). max_tokens is not part of inputHash, so no recording changed.
+
 ## Test Infra Improvement Notes
 
 `RecordedTransport` promoted to `packages/core/test/helpers` in this phase; candidate: shared OpenRouter fetchMock helper for worker tests.

@@ -30,6 +30,9 @@ export interface PostStreamOptions {
 
 type Parsed = { t: 'hb' } | ResultTerminal | ErrorTerminal | null;
 
+/** Max NDJSON line held in memory (4 MiB of text, review L3); longer -> `bad_frame`. */
+export const MAX_LINE_CHARS = 4 * 1024 * 1024;
+
 const malformed = (reason: string): ErrorTerminal => ({
   kind: 'error',
   error: { code: 'upstream_failed', reason, message: 'The AI answer could not be read.' },
@@ -118,6 +121,7 @@ export async function postNdjson(
   const dec = new TextDecoder();
   let buf = '';
   const handle = (line: string): StreamTerminal | null => {
+    if (line.length > MAX_LINE_CHARS) return malformed('bad_frame');
     if (line.trim().length === 0) return null;
     const fr = parseFrame(line);
     if (fr === null) return malformed('bad_frame');
@@ -128,6 +132,11 @@ export async function postNdjson(
     for (;;) {
       const { done, value } = await reader.read();
       if (value) buf += dec.decode(value, { stream: true });
+      // review L3: a server that never sends a newline cannot grow the buffer without bound
+      if (buf.length > MAX_LINE_CHARS && buf.indexOf('\n') < 0) {
+        void reader.cancel().catch(() => undefined);
+        return malformed('bad_frame');
+      }
       let nl = buf.indexOf('\n');
       while (nl >= 0) {
         const t = handle(buf.slice(0, nl));

@@ -22,14 +22,34 @@ interface Pick {
   priority: number;
 }
 
+/**
+ * Where a candidate came from: the snapped sentence range in the document (review M1). The client
+ * verify chain only accepts an AI quote found inside the cited candidate's own range.
+ */
+export interface AiCandidateSite {
+  id: string;
+  blockIndex: number;
+  start: number;
+  end: number;
+}
+
 export function buildAiCandidates(
   g: DocGraph,
   findings: readonly Finding[],
   max: number = limits.aiCandidates,
 ): AiCandidate[] {
+  return buildAiCandidatesWithSites(g, findings, max).candidates;
+}
+
+/** Same selection as `buildAiCandidates`, plus each candidate's document site. */
+export function buildAiCandidatesWithSites(
+  g: DocGraph,
+  findings: readonly Finding[],
+  max: number = limits.aiCandidates,
+): { candidates: AiCandidate[]; sites: AiCandidateSite[] } {
   const s = g.structure;
   const cap = Math.max(0, Math.min(max, limits.aiCandidates));
-  if (cap === 0) return [];
+  if (cap === 0) return { candidates: [], sites: [] };
   const blockIndexById = new Map(s.blocks.map((b, i) => [b.id, i] as const));
   const picks: Pick[] = [];
   for (const f of findings) {
@@ -67,7 +87,7 @@ export function buildAiCandidates(
   }
   picks.sort((a, b) => a.priority - b.priority || a.blockIndex - b.blockIndex || a.start - b.start);
 
-  const chosen = new Map<string, AiCandidate & { _order: number }>();
+  const chosen = new Map<string, AiCandidate & { _order: number; _site: AiCandidateSite }>();
   for (const p of picks) {
     if (chosen.size >= cap) break;
     const block = s.blocks[p.blockIndex];
@@ -79,14 +99,20 @@ export function buildAiCandidates(
     if (quote.trim().length === 0) continue;
     const key = `${block.id}:${snap.start}`;
     if (chosen.has(key)) continue;
-    const c: AiCandidate & { _order: number } = {
-      id: 'c_' + sha256Hex(`${s.docHash}|${key}`).slice(0, 16),
+    const id = 'c_' + sha256Hex(`${s.docHash}|${key}`).slice(0, 16);
+    const c: AiCandidate & { _order: number; _site: AiCandidateSite } = {
+      id,
       quote,
       section_path: block.section_path.slice(0, 8).map((x) => x.slice(0, 300)),
       _order: p.blockIndex * 1e6 + snap.start,
+      _site: { id, blockIndex: p.blockIndex, start: snap.start, end: snap.end },
     };
     if (p.hint) c.issue_class_hint = p.hint;
     chosen.set(key, c);
   }
-  return [...chosen.values()].sort((a, b) => a._order - b._order).map(({ _order: _o, ...c }) => c);
+  const ordered = [...chosen.values()].sort((a, b) => a._order - b._order);
+  return {
+    candidates: ordered.map(({ _order: _o, _site: _s, ...c }) => c),
+    sites: ordered.map((c) => c._site),
+  };
 }

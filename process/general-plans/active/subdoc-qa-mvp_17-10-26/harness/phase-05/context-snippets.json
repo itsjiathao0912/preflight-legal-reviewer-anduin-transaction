@@ -1,0 +1,65 @@
+{
+  "task": "subdoc-qa-mvp phase 05 LLM AI lane (review fix cycle after Stage 2 security review)",
+  "snippets": [
+    {
+      "file": "packages/core/src/llm/verify-quote.ts",
+      "lines": "verifyAiResult + quoteLongEnough + locateQuoteInSites + candidateSitesFor",
+      "description": "M1: model quote must be >= 12 normalized chars and >= 3 words (quote_too_short) and must be located inside the cited candidate's own sentence site; unknown candidate_id matches nothing; sites recomputed deterministically when not passed"
+    },
+    {
+      "file": "packages/core/src/llm/candidates.ts",
+      "lines": "AiCandidateSite + buildAiCandidatesWithSites",
+      "description": "M1: candidate selection now also returns each candidate's (blockIndex, start, end) snapped-sentence site; buildAiCandidates output unchanged (recorded candidates still byte-equal)"
+    },
+    {
+      "file": "apps/web/src/engine/engine.worker.ts",
+      "lines": "analyze stage 3 + verifyAi",
+      "description": "M1: engine worker retains the sites of the candidates it sent and passes them to verifyAiResult"
+    },
+    {
+      "file": "apps/worker/src/proxy/pipeline.ts",
+      "lines": "once() catch branch",
+      "description": "M2: providerFault only for network failures; an upstream timeout keeps ALL claims (no visitor refund) like malformed/200-with-error"
+    },
+    {
+      "file": "apps/worker/src/platform/rules.ts",
+      "lines": "ACTIVE_RULES_CAP + RULES_PORT_SQL.active",
+      "description": "M3: active rules read is LIMIT 101 (measured rows_read 101 with 150+ rows)"
+    },
+    {
+      "file": "apps/worker/src/routes/memory/rules.ts",
+      "lines": "atRuleCap + create/approve",
+      "description": "M3: create/approve refuse the 101st active rule per firm per workspace with frozen quota_exhausted (429), reason active_rule_cap; replays still return the original result"
+    },
+    {
+      "file": "apps/worker/src/memory/repo/rules.ts",
+      "lines": "RULES_SQL.activeCount + activeRuleCount",
+      "description": "M3: bounded COUNT over a LIMIT 101 subquery"
+    },
+    {
+      "file": "packages/core/src/llm/wire.ts",
+      "lines": "AI_MAX_TOKENS",
+      "description": "L1: single source (10000) imported by apps/worker/src/upstream/models-config.ts and scripts/src/record/ai-request.ts (scripts previously had a stale 6000)"
+    },
+    {
+      "file": "scripts/src/record/record-ai.ts",
+      "lines": "sameBaseModel + finish_reason length abort",
+      "description": "L1: served-model check is exact base-id equality; a truncated reply aborts and is never written"
+    },
+    {
+      "file": "apps/worker/src/proxy/guards.ts",
+      "lines": "shapeAi",
+      "description": "L2: server-side mask(text, sensitiveSpans(text)) on candidate quotes, idempotent (record-body-parity inputHashes unchanged)"
+    },
+    {
+      "file": "apps/web/src/api/ndjson.ts",
+      "lines": "MAX_LINE_CHARS + reader loop",
+      "description": "L3: 4 MiB line buffer cap -> bad_frame"
+    },
+    {
+      "file": "packages/core/src/llm/tasks/shared.ts",
+      "lines": "wrapEnvelope",
+      "description": "L3: model items sliced to limits.aiCandidates * 3 before validation; excess counted as dropped"
+    }
+  ]
+}

@@ -6,7 +6,7 @@
  */
 import * as Comlink from 'comlink';
 import {
-  buildAiCandidates,
+  buildAiCandidatesWithSites,
   buildDocGraph,
   buildStructureView,
   htmlToLines,
@@ -15,6 +15,7 @@ import {
   selectInjectedRules,
   sensitiveSpans,
   verifyAiResult,
+  type AiCandidateSite,
   type DocGraph,
   type Finding,
   type HtmlAdapterResult,
@@ -119,6 +120,8 @@ interface Retained {
   g: DocGraph;
   blocks: BlockView[];
   idx: Map<string, number>;
+  /** candidate sites of the sent candidates (review M1: verify scopes quotes to them) */
+  aiSites?: AiCandidateSite[];
 }
 const RETAIN_MAX = 2;
 const retained = new Map<string, Retained>();
@@ -242,7 +245,10 @@ export const api: EngineApi = {
       result.findings = findings.map((f) => toView(f, v.blocks, idx, g));
       // Phase 05: graph-selected AI candidates (optional on the wire; the AI lane is skipped without them)
       try {
-        result.aiCandidates = buildAiCandidates(g, findings);
+        const ai = buildAiCandidatesWithSites(g, findings);
+        result.aiCandidates = ai.candidates;
+        const kept = touch(lines.docHash);
+        if (kept) kept.aiSites = ai.sites;
       } catch (e) {
         console.warn('[engine] ai_candidates_failed', e instanceof Error ? e.name : 'unknown');
       }
@@ -271,7 +277,12 @@ export const api: EngineApi = {
     const model = typeof ctx?.model === 'string' && ctx.model ? ctx.model.slice(0, 120) : 'unknown';
     let out: ReturnType<typeof verifyAiResult>;
     try {
-      out = verifyAiResult(r.g, aiResult, { model, provenance });
+      // sites absent (candidate build failed) -> core recomputes them deterministically
+      out = verifyAiResult(r.g, aiResult, {
+        model,
+        provenance,
+        ...(r.aiSites ? { sites: r.aiSites } : {}),
+      });
     } catch {
       return { ok: false, error: 'schema' };
     }

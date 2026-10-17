@@ -1,0 +1,14 @@
+{
+  "task": "subdoc-qa-mvp phase 05 LLM AI lane (review fix cycle after Stage 2 security review)",
+  "planPath": "process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-05-llm-ai-lane_PLAN_17-10-26.md",
+  "riskLevel": "high",
+  "riskClasses": [
+    "auth or identity",
+    "public API or external contract changes",
+    "permission, secret, or trust-boundary logic",
+    "billing or credits"
+  ],
+  "mustStopBeforeFinalize": true,
+  "humanApprovalRequired": false,
+  "why": "Phase 05 forwards graph-selected document text and workspace firm rules to OpenRouter through the Worker (trust boundary: untrusted model output re-enters the client verify chain; firm rules are read per workspace claim from the cookie = identity), extends the frozen /api/ai request (task, law_firm_id) and the memory rules routes (public contract), and spends free-model provider quota with visitor/global claims and refunds (credits). No paid call, no deploy, no commit in this cycle."
+}

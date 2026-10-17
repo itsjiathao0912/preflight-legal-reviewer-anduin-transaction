@@ -1,0 +1,90 @@
+{
+  "task": "subdoc-qa-mvp phase 05 LLM AI lane (review fix cycle after Stage 2 security review)",
+  "method": "STRIDE pass by the execute agent over the review findings; the scenarios the Stage 2 review left not-ruled-out (M1-M3, L1-L3) are now covered by named regression tests",
+  "scenarios": [
+    {
+      "stride": "S",
+      "scenario": "Model cites a real candidate id but quotes a sentence from elsewhere in the document to plant a finding on a different clause",
+      "ruled_out": true,
+      "rationale": "M1: quote located only inside the cited candidate site (llm-quote-scoped-to-candidate 'elsewhere')"
+    },
+    {
+      "stride": "S",
+      "scenario": "Model returns a one-word or tiny quote that trivially matches anywhere",
+      "ruled_out": true,
+      "rationale": "M1: quote_too_short below 12 chars / 3 words"
+    },
+    {
+      "stride": "T",
+      "scenario": "Hallucinated quote or unknown candidate id becomes a finding",
+      "ruled_out": true,
+      "rationale": "quote_not_found for unknown ids and absent quotes (hostile-hallucinated recording + ghost test)"
+    },
+    {
+      "stride": "T",
+      "scenario": "Firm rule text used to remove/downgrade issues",
+      "ruled_out": true,
+      "rationale": "rules are delimited untrusted context; AI severity capped at high; prompt states rules never filter (existing rules-injection tests)"
+    },
+    {
+      "stride": "R",
+      "scenario": "Visitor denies having used AI quota after an induced timeout",
+      "ruled_out": true,
+      "rationale": "M2: timeout keeps all claims; ledger/claims unchanged"
+    },
+    {
+      "stride": "I",
+      "scenario": "Raw account digits reach OpenRouter from a client that skipped masking",
+      "ruled_out": true,
+      "rationale": "L2: shapeAi server mask (shape-ai-server-mask upstream body test)"
+    },
+    {
+      "stride": "I",
+      "scenario": "Cross-workspace / cross-firm rule leakage into prompts",
+      "ruled_out": true,
+      "rationale": "workspace-bound RulesPort (rules-port-scoped, firm-rule-isolation); end-to-end re-verify tracked as I1 for Phase 08"
+    },
+    {
+      "stride": "D",
+      "scenario": "Visitor loops slow prompts to get free refunded upstream calls",
+      "ruled_out": true,
+      "rationale": "M2 no refund on timeout"
+    },
+    {
+      "stride": "D",
+      "scenario": "Workspace creates thousands of active rules to blow D1 rows_read per AI call",
+      "ruled_out": true,
+      "rationale": "M3 LIMIT 101 (rows_read 101 measured) + 100-rule cap at create/approve"
+    },
+    {
+      "stride": "D",
+      "scenario": "Malicious/broken server streams an endless line to exhaust browser memory",
+      "ruled_out": true,
+      "rationale": "L3 4 MiB line cap -> bad_frame"
+    },
+    {
+      "stride": "D",
+      "scenario": "Model returns a huge findings array to burn client/worker CPU",
+      "ruled_out": true,
+      "rationale": "L3 slice to aiCandidates*3 before per-item validation"
+    },
+    {
+      "stride": "E",
+      "scenario": "Truncated (finish_reason length) or non-free served model recorded as fixture and trusted",
+      "ruled_out": true,
+      "rationale": "L1 record-ai aborts; exact base-id equality"
+    },
+    {
+      "stride": "E",
+      "scenario": "AI findings unblock digitization gate",
+      "ruled_out": false,
+      "rationale": "L4 open: Phase 08 computeGate must exclude detector_kind 'ai' (not yet implemented; gate does not exist yet)"
+    },
+    {
+      "stride": "I",
+      "scenario": "Unmasked counsel draft text shown in UI",
+      "ruled_out": false,
+      "rationale": "L6 open: drafts UI not wired yet; mask+clamp required in Phase 08"
+    }
+  ]
+}

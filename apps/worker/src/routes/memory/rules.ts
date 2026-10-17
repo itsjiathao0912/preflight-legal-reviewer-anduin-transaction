@@ -10,7 +10,7 @@ import {
 import type { Handler } from '../../app';
 import { ProxyError, jsonNoStore } from '../../proxy/errors';
 import { newId } from '../../db/ids';
-import { memoryCtx } from '../../memory/ctx';
+import { memoryCtx, type MemoryCtx } from '../../memory/ctx';
 import {
   ConflictError,
   handle,
@@ -23,8 +23,28 @@ import {
 } from '../../memory/http';
 import { maskFree } from '../../memory/mask';
 import { AUDIT_SQL, auditStmt, replayed, type AuditAction } from '../../memory/repo/audit';
-import { ruleById, RULES_SQL, rulesForFirm, toRule } from '../../memory/repo/rules';
+import {
+  activeRuleCount,
+  ruleById,
+  RULES_SQL,
+  rulesForFirm,
+  toRule,
+} from '../../memory/repo/rules';
+import { ACTIVE_RULES_CAP } from '../../platform/rules';
 import { onBatchError, replayResponse } from './decisions';
+
+/**
+ * Per-firm active-rule cap (review M3): a create/approve that would make the 101st active rule is
+ * refused with the frozen `quota_exhausted` code (429), reason `active_rule_cap`. Chosen over
+ * `conflict_active_decision` (its body carries a `current` decision) and `rate_limited` (time
+ * based, implies a retry). Check-then-write: a concurrent race may overshoot by a few rows, which
+ * the LIMIT 101 rules read still bounds.
+ */
+async function atRuleCap(ctx: MemoryCtx, firm: string, op: string): Promise<boolean> {
+  if ((await activeRuleCount(ctx.db, ctx.workspaceId, firm)) < ACTIVE_RULES_CAP) return false;
+  // a replay of the op that already wrote is answered by the caller's replay path
+  return !(await replayed(ctx, op));
+}
 
 function firmQuery(request: Request): string {
   const q = parseWith(LawFirmQuerySchema, {
@@ -49,6 +69,9 @@ export function createRuleHandler(deps: MemoryDeps): Handler {
     const firm = firmQuery(request);
     const body = parseWith(RuleActionRequestSchema, raw);
     if (!body.text) throw new ProxyError('invalid_request', 'text_required');
+    if (await atRuleCap(ctx, firm, body.client_op_id)) {
+      throw new ProxyError('quota_exhausted', 'active_rule_cap');
+    }
     const id = newId('fr', ctx.now);
     const text = maskFree(body.text);
     const result = {
@@ -96,6 +119,10 @@ export function ruleActionHandler(deps: MemoryDeps, action: RuleAction): Handler
       if (await replayed(ctx, body.client_op_id))
         return replayResponse(ctx, body.client_op_id, a.audit);
       throw new ProxyError('invalid_request', 'rule_state');
+    }
+    if (action === 'approve' && rule.law_firm_id) {
+      if (await atRuleCap(ctx, rule.law_firm_id, body.client_op_id))
+        throw new ProxyError('quota_exhausted', 'active_rule_cap');
     }
     const text = body.text !== undefined ? maskFree(body.text) : null;
     const after = {

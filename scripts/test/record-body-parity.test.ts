@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { TASKS, inputHash, responseFormat } from '@aduin/core';
+import { AI_MAX_TOKENS, TASKS, inputHash, responseFormat } from '@aduin/core';
 import {
-  AI_MAX_TOKENS,
+  AI_MAX_TOKENS as SCRIPT_MAX_TOKENS,
   TEXT_MODEL,
   forwardedMessages,
   upstreamBody,
@@ -15,6 +15,11 @@ import { CASES, caseRequest } from '../src/record/casebook';
  * template in apps/worker/test (`record-body-parity`, Stage 1a).
  */
 describe('record-body-parity (scripts)', () => {
+  it('max_tokens comes from the single core constant (review L1)', () => {
+    expect(SCRIPT_MAX_TOKENS).toBe(AI_MAX_TOKENS);
+    expect(AI_MAX_TOKENS).toBe(10_000);
+  });
+
   it.each(CASES.map((c) => [c.id, c] as const))(
     '%s: body = Worker template over core messages',
     (_id, c) => {

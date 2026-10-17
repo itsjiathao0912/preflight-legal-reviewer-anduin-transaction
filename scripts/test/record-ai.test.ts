@@ -7,6 +7,7 @@ import {
   recordLive,
   redact,
   resolveOptions,
+  sameBaseModel,
   type FetchLike,
 } from '../src/record/record-ai';
 import { caseById } from '../src/record/casebook';
@@ -79,6 +80,53 @@ describe('record-ai guards (G8)', () => {
     expect(calls).toBe(1);
     expect(out.aborted).toMatch(/cost/);
     expect(out.outcomes[0]!.wrote).toBeUndefined();
+  });
+
+  it('aborts a truncated reply (finish_reason length) and writes nothing (review L1)', async () => {
+    let calls = 0;
+    const f: FetchLike = () => {
+      calls++;
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            model: 'nvidia/nemotron-3-super-120b-a12b:free',
+            choices: [{ message: { content: '{"drafts":[' }, finish_reason: 'length' }],
+            usage: { cost: 0, prompt_tokens: 1, completion_tokens: 10000 },
+          }),
+          { status: 200 },
+        ),
+      );
+    };
+    const opts = {
+      ...resolveOptions(['--max-requests', '5'], LIVE),
+      cases: [caseById('counsel-draft-03'), caseById('sample-01')],
+      spaceMs: 0,
+    };
+    const out = await recordLive(opts, { OPENROUTER_API_KEY: KEY }, f, () => {});
+    expect(calls).toBe(1);
+    expect(out.aborted).toMatch(/finish_reason length/);
+    expect(out.outcomes[0]!.wrote).toBeUndefined();
+  });
+
+  it('served-model check is exact base-id equality, not a prefix match (review L1)', async () => {
+    expect(
+      sameBaseModel('nvidia/nemotron-3-super-120b-a12b:free', 'nvidia/nemotron-3-super-120b-a12b'),
+    ).toBe(true);
+    expect(sameBaseModel('nvidia/nemotron-3-super-120b-a12b:free', 'nvidia/nemotron')).toBe(false);
+    expect(
+      sameBaseModel(
+        'nvidia/nemotron-3-super-120b-a12b:free',
+        'nvidia/nemotron-3-super-120b-a12b-paid',
+      ),
+    ).toBe(false);
+    const f: FetchLike = () => Promise.resolve(completion(0, 'nvidia/nemotron'));
+    const opts = {
+      ...resolveOptions(['--max-requests', '5'], LIVE),
+      cases: [caseById('counsel-draft-03')],
+      spaceMs: 0,
+    };
+    const out = await recordLive(opts, { OPENROUTER_API_KEY: KEY }, f, () => {});
+    expect(out.aborted).toMatch(/not free/);
   });
 
   it('stops at the request cap and never prints the key', async () => {

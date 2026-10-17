@@ -4,7 +4,7 @@
  * Single source of the request: messages come from core `TASKS[task].buildMessages`, the
  * `response_format` from core `responseFormat`, and the cache/recording key from core `inputHash`.
  * The upstream body template mirrors the Worker's `buildBody` (apps/worker/src/upstream/openrouter.ts):
- *   {"model":M,"models":[M],"messages":[...],"temperature":0,"max_tokens":6000,"response_format":{...}}
+ *   {"model":M,"models":[M],"messages":[...],"temperature":0,"max_tokens":AI_MAX_TOKENS,"response_format":{...}}
  * so a recorded request is byte-identical to what the Worker forwards (record-body-parity).
  *
  * Samples are untrusted input: read and parse only.
@@ -13,6 +13,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  AI_MAX_TOKENS,
   TASKS,
   analyzeHtml,
   buildAiCandidates,
@@ -34,8 +35,8 @@ export const PRECOMPUTED_DIR = join(ROOT, 'apps', 'web', 'public', 'precomputed'
 
 /** The only text model (free). Never `openrouter/free`, never a paid id. */
 export const TEXT_MODEL = 'nvidia/nemotron-3-super-120b-a12b:free';
-/** Mirrors the Worker `MAX_TOKENS.ai`. */
-export const AI_MAX_TOKENS = 6000;
+/** Single source in core (review L1), the same value as the Worker `MAX_TOKENS.ai`. */
+export { AI_MAX_TOKENS };
 
 /** Request description stored inside every recording (`request` key; extra to LlmRecordingSchema). */
 export interface RecordedRequest {

@@ -17,7 +17,7 @@ const CAPS: Record<string, number> = {
   counsel_question: 10,
   counsel_answer: 13,
   rules_list: 3,
-  rule_approve: 7,
+  rule_approve: 8, // +1 bounded active-rule cap count (review M3)
   firm: 5,
   audit: 3,
   run_export: 8, // +1 global budget claim (N1), +1 budget pre-check (N8)

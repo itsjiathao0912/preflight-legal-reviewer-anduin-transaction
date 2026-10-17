@@ -8,10 +8,11 @@
 // ledger write -> terminal frame.
 // Refunds: refusals before dispatch, pre-dispatch aborts and NON_CONSUMING_STATUS 4xx refund
 // everything. A client abort after dispatch keeps ALL claims. Provider-side failures after
-// dispatch (timeout, network, 5xx/429/402) refund the visitor-scoped claims (request/doc/seen/
+// dispatch (network, 5xx/429/402) refund the visitor-scoped claims (request/doc/seen/
 // ocr pages, AC26) but KEEP the global counter and spend reservation, since the provider may
 // have counted/billed the call (review F1). Malformed output and 200-with-error bodies keep ALL
-// claims: a visitor can induce them via prompt injection (review F11).
+// claims: a visitor can induce them via prompt injection (review F11). An upstream timeout also
+// keeps ALL claims (Phase 05 review M2: a slow reply is visitor-inducible).
 // Pre-stream refusals are HTTP via errorStatus; post-open failures are terminal error frames.
 import {
   TASKS,
@@ -457,7 +458,9 @@ async function once(
       retryable: false,
       // dispatched: the provider may have accepted (and counted) it -> keep the claims
       consumed: dispatched,
-      ...(timedOut || !signal.aborted ? { providerFault: true } : {}),
+      // network only: a timeout keeps the visitor claims too (review M2: a slow-to-answer prompt
+      // is visitor-inducible, so refunding it would let a visitor loop free upstream calls)
+      ...(!timedOut && !signal.aborted ? { providerFault: true } : {}),
     };
   } finally {
     ctx.timers.clearTimeout(timer);

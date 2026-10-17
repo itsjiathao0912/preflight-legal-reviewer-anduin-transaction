@@ -1,5 +1,6 @@
 // Server-side model selection. The client never chooses a model: `settings.model_tier` maps to a
 // server tier (unknown -> default) and the tier maps to the env-configured free lists.
+import { AI_MAX_TOKENS } from '@aduin/core';
 import { assertFreeOnly, type ProxyConfig } from '../config';
 
 export type ProxyKind = 'ai' | 'ocr';
@@ -26,7 +27,7 @@ export const SCHEMA_VER = 's1';
  * Output token caps. AI raised 6000 -> 10000 in Phase 05: live sample #3 used 5783 output
  * tokens; a truncated reply (finish_reason "length") is classified malformed.
  */
-export const MAX_TOKENS = { ai: 10_000, ocr: 8000 } as const;
+export const MAX_TOKENS = { ai: AI_MAX_TOKENS, ocr: 8000 } as const; // ai: single source in core (L1)
 
 const FREE_SUFFIX = ':free';
 const baseId = (id: string): string =>

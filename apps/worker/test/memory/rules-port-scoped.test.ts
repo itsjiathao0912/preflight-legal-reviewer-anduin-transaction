@@ -42,10 +42,15 @@ describe('rules-port-scoped (AC47, AC51)', () => {
   });
 
   test('the module exports only the workspace-bound factory (no unscoped read)', () => {
-    expect(Object.keys(rulesModule).sort()).toEqual(['RULES_PORT_SQL', 'createRulesPort']);
+    expect(Object.keys(rulesModule).sort()).toEqual([
+      'ACTIVE_RULES_CAP',
+      'RULES_PORT_SQL',
+      'createRulesPort',
+    ]);
     expect(rulesModule.RULES_PORT_SQL.active).toMatch(
       /workspace_id = \?1 AND law_firm_id = \?2 AND status = 'active'/,
     );
+    expect(rulesModule.RULES_PORT_SQL.active).toMatch(/LIMIT 101$/); // review M3 read bound
     expect(() => rulesModule.createRulesPort(env.DB, '')).toThrow();
   });
 });

@@ -5,6 +5,8 @@ import {
   AiRequestSchema,
   OcrRequestSchema,
   limits,
+  mask,
+  sensitiveSpans,
   type AiRequest,
   type AiTaskId,
 } from '@aduin/core';
@@ -127,7 +129,9 @@ export function shapeAi(raw: Record<string, unknown>): ShapedAi {
     law_firm_id: r.data.law_firm_id,
     candidates: r.data.candidates.map((c) => ({
       id: c.id,
-      quote: c.quote,
+      // server-side mask (review L2): a client that skipped `buildAiCandidates` masking still never
+      // forwards raw account digits upstream. Idempotent on already-masked text (inputHash stable).
+      quote: mask(c.quote, sensitiveSpans(c.quote)),
       section_path: c.section_path,
       ...(c.issue_class_hint ? { issue_class_hint: c.issue_class_hint } : {}),
     })),

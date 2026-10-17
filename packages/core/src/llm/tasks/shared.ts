@@ -1,3 +1,4 @@
+import { limits } from '../../config/limits';
 import { AiResultSchema } from '../../contracts/ai';
 import {
   UNTRUSTED_DOCUMENT_TAG,
@@ -58,7 +59,11 @@ export function wrapEnvelope(
   const ids = new Set(input.candidates.map((c) => c.id));
   const kept: unknown[] = [];
   let dropped = 0;
-  for (const raw of modelJson[key] as unknown[]) {
+  // review L3: bound the per-item work; items past the cap count as dropped
+  const items = modelJson[key] as unknown[];
+  const capped = items.slice(0, limits.aiCandidates * 3);
+  dropped += items.length - capped.length;
+  for (const raw of capped) {
     const r = item.safeParse(raw);
     const id = r.success && isRecord(r.data) ? r.data['candidate_id'] : undefined;
     if (r.success && typeof id === 'string' && ids.has(id)) kept.push(r.data);

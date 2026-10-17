@@ -53,6 +53,15 @@ function flag(argv: readonly string[], name: string): string | undefined {
   return eq?.slice(name.length + 1);
 }
 
+/**
+ * Served-model check (review L1): exact equality of the `:free`-stripped base ids. A prefix match
+ * (`startsWith`) would accept e.g. a served `nvidia/nemotron` for `nvidia/nemotron-3-...:free`.
+ */
+export function sameBaseModel(requested: string, served: string): boolean {
+  const base = (id: string) => (id.endsWith(':free') ? id.slice(0, -':free'.length) : id);
+  return base(requested) === base(served);
+}
+
 export function isAllowedModel(id: string): boolean {
   return id.endsWith(':free') && id !== 'openrouter/free' && FREE_MODEL_ALLOW_LIST.includes(id);
 }
@@ -124,7 +133,7 @@ export function baseUrlFrom(env: Record<string, string | undefined>): string {
 
 interface Completion {
   model?: unknown;
-  choices?: { message?: { content?: unknown } }[];
+  choices?: { message?: { content?: unknown }; finish_reason?: unknown }[];
   usage?: { prompt_tokens?: unknown; completion_tokens?: unknown; cost?: unknown };
 }
 
@@ -203,7 +212,7 @@ export async function recordLive(
       });
       return { requests, outcomes, aborted: `usage.cost ${cost} > 0` };
     }
-    if (served !== 'unknown' && !served.endsWith(':free') && !opts.model.startsWith(served)) {
+    if (served !== 'unknown' && !served.endsWith(':free') && !sameBaseModel(opts.model, served)) {
       outcomes.push({
         caseId: c.id,
         status: res.status,
@@ -212,6 +221,17 @@ export async function recordLive(
         note: 'non-free served model, aborted',
       });
       return { requests, outcomes, aborted: `served model ${served} is not free` };
+    }
+    if (j.choices?.[0]?.finish_reason === 'length') {
+      // truncated at max_tokens: never written as a recording (review L1)
+      outcomes.push({
+        caseId: c.id,
+        status: res.status,
+        servedModel: served,
+        cost,
+        note: 'finish_reason length (truncated), aborted, not written',
+      });
+      return { requests, outcomes, aborted: 'finish_reason length (truncated reply)' };
     }
     const raw = j.choices?.[0]?.message?.content;
     if (typeof raw !== 'string' || raw.length === 0) {

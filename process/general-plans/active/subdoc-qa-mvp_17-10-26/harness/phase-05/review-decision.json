@@ -1,0 +1,22 @@
+{
+  "task": "subdoc-qa-mvp phase 05 LLM AI lane (review fix cycle after Stage 2 security review)",
+  "reviewer": "automated vc-code-reviewer security-reviewer (sonnet), independent of the implementing execute-agent",
+  "decision": "approved-with-concerns",
+  "reviewDecision": "APPROVE_WITH_FIXES",
+  "date": "2026-10-17",
+  "timestamp": "2026-10-17",
+  "blockingFindings": [],
+  "nonBlockingFindings": [
+    "M1 MEDIUM FIXED: quote-must-exist was weak (any document occurrence, any length). Now >=12 chars and >=3 words and scoped to the cited candidate site. Tests: core llm-quote-scoped-to-candidate (5), ai-mask-before-storage updated; web engine-ai-api (sample-01 = 3).",
+    "M2 MEDIUM FIXED: upstream timeout refunded visitor claims (visitor-inducible free loop). Now keeps all claims. Test: worker llm-failure-injection-matrix 'timeout ... keeps ALL claims'. Context note (worker refund policy) deferred to UPDATE PROCESS.",
+    "M3 MEDIUM FIXED: unbounded active rules read. LIMIT 101 + 100 active rules per firm per workspace at create/approve (quota_exhausted 429, reason active_rule_cap); UI shows '100+'. Tests: worker active-rule-cap (3), rules-port-scoped, query-budget; web ndjson-line-cap 'rules total label'.",
+    "L1 LOW FIXED: AI_MAX_TOKENS single source in core; record-ai aborts finish_reason length; exact base-id served check. Tests: scripts record-ai (2 new), scripts + worker record-body-parity.",
+    "L2 LOW FIXED: server-side mask of candidate quotes in shapeAi. Tests: worker shape-ai-server-mask (3); record-body-parity inputHashes unchanged.",
+    "L3 LOW FIXED: NDJSON 4 MiB line cap (bad_frame); wrapEnvelope item slice to aiCandidates*3. Tests: web ndjson-line-cap, core wrap-envelope-item-cap.",
+    "L4 LOW OPEN (backlog Phase 08): computeGate must exclude detector_kind 'ai' findings, with a test.",
+    "L5 LOW OPEN (backlog): Worker should echo meta.rules_hash8 / rules_applied; client should re-read rules on Retry.",
+    "L6 LOW OPEN (backlog Phase 08): mask + clamp drafts[].text before the drafts UI is wired.",
+    "I1 INFO OPEN (Phase 08): re-verify firm-rule isolation end to end."
+  ],
+  "notes": "Fix cycle run by vc-execute-agent (opus) after the security review; no commit. Vocabulary mismatch: validate-risk-artifacts.mjs accepts decision approved | approved-with-concerns | rejected, while validate-evidence-pack.mjs / the skill text use APPROVE | REJECT style values, so both 'decision' (approved-with-concerns) and 'reviewDecision' (APPROVE_WITH_FIXES) are recorded."
+}

@@ -59,7 +59,9 @@ describe('engine-ai-api', () => {
     });
     expect(v1.ok).toBe(true);
     if (!v1.ok) return;
-    expect(v1.findings).toHaveLength(2);
+    // 3 since review M1: c_bbfb16d50ab9577f now anchors in its own candidate (b222) instead of the
+    // first document occurrence (b221), where it used to collapse into c_a3a1fd5641d412c0
+    expect(v1.findings).toHaveLength(3);
     expect(v1.rejected).toEqual([]);
     expect(v1.rulesHash8).toBe('none');
     expect(v1.rulesHash8).toBe(p1.rulesHash8);

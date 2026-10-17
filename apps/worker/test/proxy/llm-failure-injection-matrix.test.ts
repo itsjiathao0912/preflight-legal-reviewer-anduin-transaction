@@ -119,7 +119,7 @@ describe('llm-failure-injection-matrix (AC26)', () => {
     });
   }
 
-  test('timeout (120 s) aborts upstream and refunds visitor claims, keeps global', async () => {
+  test('timeout (120 s) aborts upstream and keeps ALL claims (review M2, no visitor refund)', async () => {
     const h = makeHarness({ fakeTimers: true });
     h.or.reply({ hang: true });
     const res = await send(h);
@@ -132,7 +132,7 @@ describe('llm-failure-injection-matrix (AC26)', () => {
     })();
     expect(terminal).toMatchObject({ t: 'error', code: 'upstream_failed', reason: 'timeout' });
     expect(h.or.aborted).toBe(1);
-    expectVisitorRefundedGlobalKept(h);
+    expectAllKept(h);
     expect(h.platform.ledgerRows).toHaveLength(0);
   });
 

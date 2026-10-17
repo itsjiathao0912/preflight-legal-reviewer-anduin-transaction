@@ -17,7 +17,7 @@ describe('ai-mask-before-storage (AC28, R2 mask path)', () => {
           aiFinding({
             issue_class: 'sensitive_data',
             severity: 'medium',
-            quote: 'account 021000021',
+            quote: 'funds to account 021000021', // >= 3 words (review M1 minimum)
             explanation: 'Account 021000021 is printed in the form.',
             interpretations: ['Remove 021000021 from the form.'],
           }),

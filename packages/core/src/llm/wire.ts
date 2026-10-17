@@ -1,6 +1,13 @@
 import { sha256Hex } from '../model/hash';
 import type { LlmMessage, LlmTask } from './task';
 
+/**
+ * AI output token cap: the single source for the Worker body (`MAX_TOKENS.ai`) and the recording
+ * scripts (review L1). Live sample #3 used 5783 output tokens. Not part of `inputHash`, so a change
+ * never invalidates recordings or cache keys.
+ */
+export const AI_MAX_TOKENS = 10_000;
+
 /** Response mode chosen by the live probe (R1 strict json_schema, R2 json_object fallback). */
 export type AiResponseMode = 'json_schema' | 'json_object';
 
