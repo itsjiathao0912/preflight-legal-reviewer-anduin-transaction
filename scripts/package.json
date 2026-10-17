@@ -18,7 +18,10 @@
     "spike:s06-local": "tsx src/spikes/s06-local/run.ts",
     "record:author": "tsx src/record/author-recordings.ts",
     "record:ai": "tsx src/record/record-ai.ts",
-    "precompute:ai": "tsx src/precompute/precompute-ai.ts"
+    "precompute:ai": "tsx src/precompute/precompute-ai.ts",
+    "precompute:ocr": "tsx src/precompute/precompute-ocr.ts",
+    "record:ocr": "tsx src/record/record-ocr.ts",
+    "ocr:cer": "tsx src/ocr/cer.ts"
   },
   "dependencies": {
     "@aduin/core": "workspace:*",
@@ -32,6 +35,7 @@
     "@types/node": "24.19.2",
     "docx": "9.11.0",
     "esbuild": "0.28.2",
+    "jpeg-js": "0.4.4",
     "pdfjs-dist": "6.4.299",
     "tsx": "4.23.15",
     "typescript": "6.0.3",

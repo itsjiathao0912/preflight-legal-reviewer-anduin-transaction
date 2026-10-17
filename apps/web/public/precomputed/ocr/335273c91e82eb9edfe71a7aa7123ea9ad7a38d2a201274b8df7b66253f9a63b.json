@@ -1,0 +1,214 @@
+{
+  "v": 1,
+  "kind": "aduin-precomputed-ocr",
+  "sample": "09",
+  "page": 22,
+  "sourceHash": "6e9f5add3292104ed40975646e0cbd633b1cd6ae8fd703b48fb14ac6a97b1ae8",
+  "key": "335273c91e82eb9edfe71a7aa7123ea9ad7a38d2a201274b8df7b66253f9a63b",
+  "params": "w1600q80",
+  "model": "nvidia/nemotron-3.5-super-vl:free",
+  "served_model": "nvidia/nemotron-3.5-super-vl:free",
+  "promptVer": "ocr2",
+  "schemaVer": "s1",
+  "recorded": "2026-10-17",
+  "result": {
+    "v": 1,
+    "pages": [
+      {
+        "index": 21,
+        "lines": [
+          {
+            "text": "3. Signature",
+            "bbox": {
+              "x": 0.05,
+              "y": 0.015,
+              "w": 0.15,
+              "h": 0.025
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "By signing below, I (we) authorize RW Holdings NNN REIT, Inc. to register the shares in beneficiary form as designated above. I",
+            "bbox": {
+              "x": 0.06,
+              "y": 0.045,
+              "w": 0.9,
+              "h": 0.02
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "(we) agree on behalf of myself (ourselves) and my (our) heirs, assigns, executors, administrators and beneficiaries to indemnify and",
+            "bbox": {
+              "x": 0.06,
+              "y": 0.065,
+              "w": 0.9,
+              "h": 0.02
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "hold harmless RW Holdings NNN REIT, Inc. and any and all of its affiliates, agents, successors and assigns, and their respective",
+            "bbox": {
+              "x": 0.06,
+              "y": 0.085,
+              "w": 0.9,
+              "h": 0.02
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "directors, officers and employees, from and against any and all claims, liabilities, damages, actions and expenses arising directly or",
+            "bbox": {
+              "x": 0.06,
+              "y": 0.105,
+              "w": 0.9,
+              "h": 0.02
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "indirectly relating to this TOD designation or the transfer of my (our) shares in accordance with this TOD designation. If any claims",
+            "bbox": {
+              "x": 0.06,
+              "y": 0.125,
+              "w": 0.9,
+              "h": 0.02
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "are made or disputes are raised in connection with this TOD designation or account, RW Holdings NNN REIT, Inc. reserves the",
+            "bbox": {
+              "x": 0.06,
+              "y": 0.145,
+              "w": 0.9,
+              "h": 0.02
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "right to require the claimants or parties in interest to arrive at a final resolution by adjudication, arbitration, or other acceptable",
+            "bbox": {
+              "x": 0.06,
+              "y": 0.165,
+              "w": 0.9,
+              "h": 0.02
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "method, prior to transferring any TOD account assets. I (we) have reviewed all the information set forth on pages 1 and 3 of this",
+            "bbox": {
+              "x": 0.06,
+              "y": 0.185,
+              "w": 0.9,
+              "h": 0.02
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "form.",
+            "bbox": {
+              "x": 0.06,
+              "y": 0.205,
+              "w": 0.05,
+              "h": 0.02
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "I (we) further understand that RW Holdings NNN REIT, Inc. cannot provide any legal advice and I (we) agree to consult with my",
+            "bbox": {
+              "x": 0.06,
+              "y": 0.225,
+              "w": 0.9,
+              "h": 0.02
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "(our) attorney, if necessary, to make certain that any TOD designation is consistent with my (our) estate and tax planning and is",
+            "bbox": {
+              "x": 0.06,
+              "y": 0.245,
+              "w": 0.9,
+              "h": 0.02
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "valid. Sign exactly as the name(s) appear(s) on the statement of account. All investors must sign.",
+            "bbox": {
+              "x": 0.06,
+              "y": 0.265,
+              "w": 0.9,
+              "h": 0.02
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "This TOD is effective subject to the acceptance of RW Holdings NNN REIT, Inc.",
+            "bbox": {
+              "x": 0.06,
+              "y": 0.285,
+              "w": 0.6,
+              "h": 0.02
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Signature - Investor (Required)",
+            "bbox": {
+              "x": 0.06,
+              "y": 0.315,
+              "w": 0.3,
+              "h": 0.02
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Signature - Co-Investor (If Applicable)",
+            "bbox": {
+              "x": 0.5,
+              "y": 0.315,
+              "w": 0.4,
+              "h": 0.02
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Date",
+            "bbox": {
+              "x": 0.06,
+              "y": 0.435,
+              "w": 0.05,
+              "h": 0.02
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Date",
+            "bbox": {
+              "x": 0.5,
+              "y": 0.435,
+              "w": 0.05,
+              "h": 0.02
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "4/4",
+            "bbox": {
+              "x": 0.48,
+              "y": 0.96,
+              "w": 0.04,
+              "h": 0.02
+            },
+            "conf": 0.95
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,132 @@
+/* Scan viewer (Phase 06e): review-workspace tokens only, no literal colors. */
+.sc-nav {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+.sc-chips {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0 0 14px;
+  padding: 0;
+}
+.sc-chip {
+  min-width: 28px;
+  height: 24px;
+  border: 0;
+  border-radius: 3px;
+  font: 500 12px/24px var(--sans);
+  background: var(--step);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.sc-chip.st-running {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+.sc-chip.st-done {
+  background: var(--ok-bg);
+  color: var(--ok-fg);
+}
+.sc-chip.st-done.low {
+  background: var(--fix-bg);
+  color: var(--fix-fg);
+}
+.sc-chip.st-failed,
+.sc-chip.st-unavailable {
+  background: var(--card);
+  color: var(--ink-3);
+  outline: 1px dashed var(--ink-3);
+  outline-offset: -1px;
+}
+.sc-chip[aria-pressed='true'] {
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.sc-view {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.sc-fig {
+  margin: 0;
+  background: var(--paper);
+  border-radius: var(--r);
+  padding: 10px;
+}
+.sc-img-wrap {
+  position: relative;
+  line-height: 0;
+}
+.sc-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.sc-img-wait {
+  aspect-ratio: 8.5 / 11;
+  display: grid;
+  place-items: center;
+  color: var(--ink-3);
+  font-size: 13px;
+  background: var(--panel);
+}
+.sc-region {
+  position: absolute;
+  background: color-mix(in srgb, var(--mark) 35%, transparent);
+  outline: 2px solid var(--mark);
+  border-radius: 2px;
+  pointer-events: none;
+}
+.sc-region.page {
+  inset: 0;
+  background: transparent;
+  outline-width: 4px;
+  outline-offset: -4px;
+}
+.sc-cap {
+  color: var(--ink-3);
+  font-size: 12px;
+  padding-top: 6px;
+  line-height: 1.4;
+}
+.sc-text {
+  background: var(--paper);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  min-width: 0;
+}
+.sc-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.sc-warn {
+  background: var(--fix-bg);
+  color: var(--fix-fg);
+  border-radius: var(--r);
+  padding: 8px 10px;
+  font-size: 13px;
+  margin: 0 0 10px;
+}
+.sc-wait {
+  color: var(--ink-3);
+  font-size: 13px;
+}
+.sc-line {
+  margin: 0 0 4px;
+  font: 400 14px/1.6 var(--serif);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.sc-line.k-heading {
+  font-weight: 600;
+}
+@media (max-width: 1100px) {
+  .sc-view {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

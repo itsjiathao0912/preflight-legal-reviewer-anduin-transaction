@@ -1,0 +1,104 @@
+{
+  "v": 1,
+  "kind": "aduin-precomputed-ocr",
+  "sample": "09",
+  "page": 11,
+  "sourceHash": "2656935db46782845ba65fb859c1c1adece77bbd76247c7de1b210757a4096db",
+  "key": "adb6255062fa276027a2a04ab43e56c13efe1b4ac24b2c47340e7add616bed02",
+  "params": "w1600q80",
+  "model": "nvidia/nemotron-3.5-super-vl:free",
+  "served_model": "nvidia/nemotron-3.5-super-vl:free",
+  "promptVer": "ocr2",
+  "schemaVer": "s1",
+  "recorded": "2026-10-17",
+  "result": {
+    "v": 1,
+    "pages": [
+      {
+        "index": 10,
+        "lines": [
+          {
+            "text": "Investment Form",
+            "conf": 1
+          },
+          {
+            "text": "RW HOLDINGS NNN REIT, INC. | WEALTH MANAGEMENT",
+            "conf": 1
+          },
+          {
+            "text": "SUBSCRIPTION AGREEMENT FOR CLASS C SHARES",
+            "conf": 1
+          },
+          {
+            "text": "1. Investment                                                                 Date",
+            "conf": 1
+          },
+          {
+            "text": "US $500 minimum at US $10.16 per Share                                     $",
+            "conf": 1
+          },
+          {
+            "text": "2. Account Type                                                             (Check One Box Only)",
+            "conf": 1
+          },
+          {
+            "text": "☐ Individual                                                                ☐ Pension Plan ^{2}                                                             ☐ Traditional IRA",
+            "conf": 1
+          },
+          {
+            "text": "☐ Joint Tenants ^{1}                                                        ☐ Profit Sharing Plan ^{2}                                                    ☐ Simple IRA",
+            "conf": 1
+          },
+          {
+            "text": "☐ Tenants in Common ^{1}                                                    ☐ KEOGH Plan ^{2}                                                               ☐ SEP IRA",
+            "conf": 1
+          },
+          {
+            "text": "☐ Community Property ^{1}                                                  ☐ Other ^{2}                                                                    ☐ ROTH IRA",
+            "conf": 1
+          },
+          {
+            "text": "☐ Trust ^{2}                                                               ☐ Corporation ^{2}                                                              ☐ Partnership/LLC",
+            "conf": 1
+          },
+          {
+            "text": "☐ Solo 401K",
+            "conf": 1
+          },
+          {
+            "text": "1 All parties must sign.",
+            "conf": 1
+          },
+          {
+            "text": "2 Please attach pages of Trust/Plan document (or corporate/entity resolution) which lists the name of Trust/Plan/Entity, Trustees/officers or authorized signatories, signatures and date.",
+            "conf": 1
+          },
+          {
+            "text": "3. Investor Information",
+            "conf": 1
+          },
+          {
+            "text": "Investor 1 Name",
+            "conf": 1
+          },
+          {
+            "text": "US Tax ID#                                                                 Date of Birth",
+            "conf": 1
+          },
+          {
+            "text": "Profession / Occupation                                                    Street Address",
+            "conf": 1
+          },
+          {
+            "text": "City                                                                       State                                 Zip Code",
+            "conf": 1
+          },
+          {
+            "text": "3/10",
+            "conf": 1
+          }
+        ]
+      }
+    ]
+  }
+}

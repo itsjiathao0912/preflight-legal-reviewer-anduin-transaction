@@ -1,0 +1,344 @@
+{
+  "v": 1,
+  "kind": "aduin-precomputed-ocr",
+  "sample": "09",
+  "page": 10,
+  "sourceHash": "a38629d002e54f2d6d9fae7a5499c1b7e8da1e4a620c7c4856a283cd30b2d6c6",
+  "key": "05c91464e6b70a3cc03548c862ac576be2f812c131516ab0c25b809a4e848682",
+  "params": "w1600q80",
+  "model": "nvidia/nemotron-3.5-super-vl:free",
+  "served_model": "nvidia/nemotron-3.5-super-vl:free",
+  "promptVer": "ocr2",
+  "schemaVer": "s1",
+  "recorded": "2026-10-17",
+  "result": {
+    "v": 1,
+    "pages": [
+      {
+        "index": 9,
+        "lines": [
+          {
+            "text": "California – Investors must have either (a) a net worth of at least $250,000 or (b) a gross annual income of at",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.02,
+              "w": 0.9,
+              "h": 0.04
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "least $75,000 and a net worth of at least $75,000, and the investment must not exceed ten percent (10%) of",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.05,
+              "w": 0.9,
+              "h": 0.04
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "the net worth of the investor.",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.08,
+              "w": 0.3,
+              "h": 0.03
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "Idaho – Investors must have either (i) a liquid net worth of $85,000 and annual gross income of",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.1,
+              "w": 0.8,
+              "h": 0.04
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "$85,000 or (ii) a liquid net worth of $300,000. Additionally, an Idaho investor's total investment in us shall not",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.13,
+              "w": 0.9,
+              "h": 0.04
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "exceed 10% of his or her liquid net worth. Liquid net worth is defined as that portion of net worth consisting of",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.16,
+              "w": 0.9,
+              "h": 0.04
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "cash, cash equivalents and readily marketable securities.",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.19,
+              "w": 0.5,
+              "h": 0.03
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "Kentucky – Investors must have a liquid net worth of at least ten times their investment in us. In addition, no",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.21,
+              "w": 0.9,
+              "h": 0.04
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "Kentucky investor shall invest, in aggregate, more than 10% of his or her liquid net worth in the Issuer or Issuer's",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.24,
+              "w": 0.9,
+              "h": 0.04
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "affiliates' non-publicly traded real estate investment trust. Liquid net worth is defined as that portion of a",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.27,
+              "w": 0.9,
+              "h": 0.04
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "person's net worth (total assets, exclusive of home, home furnishings and automobiles) minus total liabilities",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.3,
+              "w": 0.9,
+              "h": 0.04
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "that is comprised of cash, cash equivalents and readily marketable securities.",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.33,
+              "w": 0.65,
+              "h": 0.03
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "Missouri — Investors must have a liquid net worth of at least ten times their investment in us.",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.35,
+              "w": 0.75,
+              "h": 0.03
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "Virginia — Investors may not invest more than 10% of their liquid net worth in RW Holdings NNN REIT, Inc. and",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.38,
+              "w": 0.9,
+              "h": 0.04
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "in other illiquid direct participation programs.",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.41,
+              "w": 0.4,
+              "h": 0.03
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "For purposes of determining the suitability of an investor, net worth in all cases should be calculated excluding",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.43,
+              "w": 0.9,
+              "h": 0.04
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "the value of an investor's home, home furnishings and automobiles. In the case of sales to fiduciary accounts,",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.46,
+              "w": 0.9,
+              "h": 0.04
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "these suitability standards must be met by the fiduciary account, by the person who directly or indirectly",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.49,
+              "w": 0.9,
+              "h": 0.04
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "supplied the funds for the purchase of the Class C shares if such person is the fiduciary or by the beneficiary of",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.52,
+              "w": 0.9,
+              "h": 0.04
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "the account.",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.55,
+              "w": 0.15,
+              "h": 0.03
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "Forms of Ownership",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.58,
+              "w": 0.25,
+              "h": 0.03
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "Please check the appropriate box in Section 2 to indicate the type of entity or type of individuals subscribing.",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.61,
+              "w": 0.8,
+              "h": 0.03
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "• Individual Owner: Owner must sign.",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.63,
+              "w": 0.35,
+              "h": 0.03
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "• Community Property: All parties must sign.",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.66,
+              "w": 0.4,
+              "h": 0.03
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "• Tenants in Common, Tenants by Entirety, Joint Tenant: Each tenant must sign.",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.69,
+              "w": 0.6,
+              "h": 0.03
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "• Corporation, Partnership/LLC: An authorized officer must sign. Please provide Articles of Incorporation.",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.72,
+              "w": 0.75,
+              "h": 0.03
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "• Pension Plan, 401(k), Profit Sharing Plan and Trust: Each trustee must sign. For a trust, please provide the title and signature",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.75,
+              "w": 0.9,
+              "h": 0.04
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "pages of the trust or a trust certification form.",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.78,
+              "w": 0.4,
+              "h": 0.03
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "• IRAs and KEOGHs: The owner and officer (or other authorized signer) of the custodian of the account must sign. Please",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.81,
+              "w": 0.9,
+              "h": 0.04
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "provide the mailing address as well as the email address of the custodian to receive checks and other pertinent",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.84,
+              "w": 0.85,
+              "h": 0.04
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "information regarding the investment.",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.87,
+              "w": 0.35,
+              "h": 0.03
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "2/10",
+            "bbox": {
+              "x": 0.48,
+              "y": 0.97,
+              "w": 0.05,
+              "h": 0.02
+            },
+            "conf": 0.99
+          }
+        ]
+      }
+    ]
+  }
+}

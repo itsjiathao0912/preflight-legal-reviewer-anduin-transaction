@@ -1,0 +1,284 @@
+{
+  "v": 1,
+  "kind": "aduin-precomputed-ocr",
+  "sample": "09",
+  "page": 9,
+  "sourceHash": "ca93adda8a236f5190766bcb72fcb90d87d596809de08fc703af8b021b878b8f",
+  "key": "bb601e145fc3255a3833d2e5a6e677efc5115fb400a0a4ae796e949098ebcd92",
+  "params": "w1600q80",
+  "model": "nvidia/nemotron-3.5-super-vl:free",
+  "served_model": "nvidia/nemotron-3.5-super-vl:free",
+  "promptVer": "ocr2",
+  "schemaVer": "s1",
+  "recorded": "2026-10-17",
+  "result": {
+    "v": 1,
+    "pages": [
+      {
+        "index": 8,
+        "lines": [
+          {
+            "text": "RW Holdings NNN REIT, Inc.",
+            "bbox": {
+              "x": 40,
+              "y": 15,
+              "w": 470,
+              "h": 40
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Subscription Agreement Instructions for Class C Shares",
+            "bbox": {
+              "x": 40,
+              "y": 40,
+              "w": 500,
+              "h": 55
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Wealth Management",
+            "bbox": {
+              "x": 40,
+              "y": 55,
+              "w": 230,
+              "h": 70
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Thank you for considering RW Holdings NNN REIT, Inc. for an alternative investment. Please carefully review the following information and contact [INSERT BROKERAGE FIRM HERE] at [INSERT BROKERAGE CONTACT NUMBER HERE] should you have questions.",
+            "bbox": {
+              "x": 40,
+              "y": 85,
+              "w": 860,
+              "h": 130
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "REIT Offering",
+            "bbox": {
+              "x": 50,
+              "y": 150,
+              "w": 200,
+              "h": 170
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "RW Holdings NNN REIT, Inc. is currently selling Class C shares in the following states: CA, CO, CT, FL, GA, HI, ID, IL, IN, KY, LA, MO, MT, NH, NV, NY, SC, SD, TX, UT, VA, VT, WI, WY. A minimum investment of $500 and a completed Subscription Agreement is required for each investment.",
+            "bbox": {
+              "x": 60,
+              "y": 180,
+              "w": 910,
+              "h": 230
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "For a current copy of our Prospectus, please visit www.richuncles.com/prospectus",
+            "bbox": {
+              "x": 70,
+              "y": 245,
+              "w": 620,
+              "h": 260
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Registered Investment Advisor Instructions",
+            "bbox": {
+              "x": 50,
+              "y": 300,
+              "w": 460,
+              "h": 320
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Provide a copy of the Prospectus as supplemented to date to the investor.",
+            "bbox": {
+              "x": 70,
+              "y": 335,
+              "w": 560,
+              "h": 350
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Print, complete and sign the subscription agreement.",
+            "bbox": {
+              "x": 70,
+              "y": 355,
+              "w": 420,
+              "h": 370
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Section 1: Indicate investment amount.",
+            "bbox": {
+              "x": 110,
+              "y": 375,
+              "w": 390,
+              "h": 390
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Section 2: Choose type of ownership. Refer to “Form of Ownership” below for details.",
+            "bbox": {
+              "x": 110,
+              "y": 390,
+              "w": 710,
+              "h": 405
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Section 3: Complete information for all investors including email addresses.",
+            "bbox": {
+              "x": 110,
+              "y": 410,
+              "w": 650,
+              "h": 425
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Section 4: Carefully print the exact name in which the Class C shares are to be held.",
+            "bbox": {
+              "x": 110,
+              "y": 430,
+              "w": 700,
+              "h": 445
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Section 5: If Custodial, Trust or Entity investment, complete this section.",
+            "bbox": {
+              "x": 110,
+              "y": 450,
+              "w": 610,
+              "h": 465
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Section 6: Initials are required for letters A through C and the state suitability requirement if applicable (some states do not have suitability requirements).",
+            "bbox": {
+              "x": 110,
+              "y": 465,
+              "w": 860,
+              "h": 490
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Section 7: Select dividend allocation option. To receive cash dividends, bank account details are required.",
+            "bbox": {
+              "x": 110,
+              "y": 495,
+              "w": 840,
+              "h": 510
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Section 8: All investors must sign as indicated",
+            "bbox": {
+              "x": 110,
+              "y": 515,
+              "w": 450,
+              "h": 530
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Email the completed subscription agreement to [INSERT BROKERAGE EMAIL HERE]",
+            "bbox": {
+              "x": 70,
+              "y": 535,
+              "w": 640,
+              "h": 550
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Suitability Standards",
+            "bbox": {
+              "x": 70,
+              "y": 595,
+              "w": 240,
+              "h": 615
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "The shares we are offering through this prospectus are suitable only as a long-term investment for persons of adequate financial means and who have no need for liquidity in this investment. Because there is no public market for our Class C shares, and we have no plans to list our Class C shares on a national security exchange, you will have difficulty selling your Class C shares. Our articles do not require us to ever provide a liquidity event to our stockholders. Our articles of incorporation do not require us to liquidate our assets and dissolve by a specified date, nor do our articles require us to list our Class C shares for trading by a specified date. There are significant restrictions on our share repurchase program. No public market currently exists for our Class C shares, and we have no plans to list our Class C shares on a national securities exchange.",
+            "bbox": {
+              "x": 70,
+              "y": 630,
+              "w": 920,
+              "h": 745
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "In consideration of these factors, we have established suitability standards for investors in this offering and subsequent purchasers of our Class C shares. These suitability standards require that a purchaser of Class C shares have either:",
+            "bbox": {
+              "x": 70,
+              "y": 755,
+              "w": 860,
+              "h": 785
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "A net worth of at least $250,000; or",
+            "bbox": {
+              "x": 110,
+              "y": 805,
+              "w": 340,
+              "h": 820
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "A gross annual income of at least $70,000 and a net worth of at least $70,000.",
+            "bbox": {
+              "x": 110,
+              "y": 825,
+              "w": 630,
+              "h": 840
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "In addition, the states listed below have established additional suitability requirements that are more stringent than ours and investors in these states are directed to the following special suitability standards:",
+            "bbox": {
+              "x": 70,
+              "y": 855,
+              "w": 870,
+              "h": 890
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "1/10",
+            "bbox": {
+              "x": 480,
+              "y": 975,
+              "w": 520,
+              "h": 990
+            },
+            "conf": 0.95
+          }
+        ]
+      }
+    ]
+  }
+}

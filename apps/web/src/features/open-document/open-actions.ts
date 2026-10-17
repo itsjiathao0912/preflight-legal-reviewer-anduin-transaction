@@ -3,7 +3,7 @@ import { appDb, spendAllowance } from '../../storage/db';
 import { useReview, type DocMeta } from '../../state/review';
 import { useSession } from '../../state/session';
 import { useShell } from '../../state/shell';
-import type { FirmEntry, SampleEntry } from './samples';
+import { loadManifest, scanPagesOf, type FirmEntry, type SampleEntry } from './samples';
 
 function firmName(firms: FirmEntry[], id: string | null): string {
   if (!id) return '';
@@ -12,7 +12,37 @@ function firmName(firms: FirmEntry[], id: string | null): string {
 
 /** Open a bundled sample (cached: never counts against the fresh-AI allowance). */
 export async function openSample(s: SampleEntry, firms: FirmEntry[]): Promise<void> {
-  if (!s.file || s.disabled) return;
+  if (s.disabled) return;
+  if (s.kind === 'scan') {
+    // Phase 06f: multi-page scan set; pages come from the manifest page list (precomputed OCR first)
+    const pages = scanPagesOf(s);
+    if (!pages.length) throw new Error('scan set has no pages');
+    useShell.getState().setRoute('findings');
+    await useReview.getState().openDocument(
+      new Uint8Array(0),
+      {
+        name: s.title,
+        firmId: s.firmId,
+        firmName: firmName(firms, s.firmId),
+        fund: s.fund,
+        version: s.version,
+        source: 'sample',
+        sampleId: s.id,
+        ref: `scan:${s.id}`,
+      },
+      {
+        scan: {
+          pages: pages.map((p) => ({
+            n: p.n,
+            url: `/samples/${p.file}`,
+            sourceHash: p.sourceHash,
+          })),
+        },
+      },
+    );
+    return;
+  }
+  if (!s.file) return;
   const res = await fetch(`/samples/${s.file}`);
   if (!res.ok) throw new Error('sample not found');
   const bytes = new Uint8Array(await res.arrayBuffer());
@@ -76,6 +106,10 @@ export async function openUpload(
 /** Reopen a document from the switcher (samples re-fetch; uploads read back from IndexedDB). */
 export async function reopenRecent(d: DocMeta): Promise<void> {
   let bytes: Uint8Array | null = null;
+  if (d.source === 'sample' && d.ref.startsWith('scan:')) {
+    const entry = (await loadManifest()).find((s) => `scan:${s.id}` === d.ref);
+    if (entry) return openSample(entry, []);
+  }
   if (d.source === 'sample') {
     const res = await fetch(`/samples/${d.ref}`);
     if (res.ok) bytes = new Uint8Array(await res.arrayBuffer());

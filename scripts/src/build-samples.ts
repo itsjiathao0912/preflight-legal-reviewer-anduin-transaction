@@ -5,8 +5,8 @@
  * Single samples mechanism for @aduin/web (Phase 03): run by the prebuild / prebuild:e2e / predev /
  * pretest:e2e / pretest:a11y scripts. Idempotent. Output is gitignored.
  *
- * Corpus (D-7): 12 HTML samples (01-08, 10-13) plus the 22-page scan set #9, listed as disabled until
- * Phase 06. #14 (ILPA, local-only) is never copied.
+ * Corpus (D-7): 12 HTML samples (01-08, 10-13) plus the 22-page scan set #9 (Phase 06f: downscaled
+ * page images, see samples/scan-set.ts). #14 (ILPA, local-only) is never copied.
  */
 import {
   copyFileSync,
@@ -18,6 +18,7 @@ import {
 } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildScanSet, SCAN_URL_PREFIX } from './samples/scan-set';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const RAW = join(ROOT, 'samples', 'sub-docs', 'raw');
@@ -35,7 +36,8 @@ export interface SampleEntry {
   kind: 'html' | 'scan';
   disabled: boolean;
   note?: string;
-  pages?: number;
+  /** Scan set only (Phase 06f): ordered page images with the original-bytes sha256. */
+  pages?: { n: number; file: string; sourceHash: string }[];
 }
 
 /** Tags per sample number. #3-#6 are one firm (partners-group). Others carry no firm tag. */
@@ -140,14 +142,21 @@ export function buildSamples(): SampleEntry[] {
     if (id === '09') {
       const dir = files.find((f) => f.startsWith('09-'));
       if (!dir) fail('missing scan set 09-*');
+      // Phase 06f: downscaled page images + per-page original-bytes hash (OCR cache key)
+      const set = buildScanSet();
+      if (set.pages.length !== 22) fail(`expected 22 scan pages, found ${set.pages.length}`);
       entries.push({
         id,
         file: null,
         ...tag,
         kind: 'scan',
-        disabled: true,
-        pages: 22,
-        note: 'Scanned pages: supported in a later build',
+        disabled: false,
+        pages: set.pages.map((p) => ({
+          n: p.n,
+          file: `${SCAN_URL_PREFIX}/${p.file}`,
+          sourceHash: p.sourceHash,
+        })),
+        note: 'Scanned pages, read by OCR',
       });
       continue;
     }

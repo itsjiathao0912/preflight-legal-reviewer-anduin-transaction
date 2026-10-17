@@ -1,0 +1,60 @@
+{
+  "task": "subdoc-qa-mvp phase 06 PDF, DOCX, OCR and precompute (06a-06f)",
+  "snippets": [
+    {
+      "file": "packages/core/src/adapters/docx.ts",
+      "lines": "guardZip + docxToLines",
+      "description": "Bounded central-directory parse and streamed inflate budget (64 MB) before mammoth; 10 MB cap"
+    },
+    {
+      "file": "packages/core/src/adapters/pdf.ts",
+      "lines": "pdfToLines",
+      "description": "Empty / 10 MB / %PDF- magic / PasswordException / 30-page cap checked before any page is read; no render, no network"
+    },
+    {
+      "file": "packages/core/src/adapters/format-detect.ts",
+      "lines": "detectFormat",
+      "description": "Extension + magic, polyglot and SVG rejection"
+    },
+    {
+      "file": "packages/core/src/adapters/ocr.ts",
+      "lines": "OCR_MARKER_RE, ocrToLines",
+      "description": "1-3 digit markers only; 400 lines/page, 4000 chars/line; bbox clamped to the unit square"
+    },
+    {
+      "file": "apps/web/src/engine/render-pages.ts",
+      "lines": "imageSizeOf, renderImage, renderPdfPages",
+      "description": "Header size check (60 MP) before decode; canvas re-encode JPEG 0.8 (EXIF stripped); bounded 1600 px canvas"
+    },
+    {
+      "file": "apps/web/src/engine/ocr-queue.ts",
+      "lines": "buildOcrBody, runOcrQueue, sanitizeLines",
+      "description": "Only JPEG/PNG posted, <= 700 KB; precomputed -> cache -> /api/ocr; no API base / visitor cap / quota frames -> unavailable; response shape-checked"
+    },
+    {
+      "file": "apps/web/src/features/scan/scan-store.ts",
+      "lines": "useScan begin/setUrl/clear",
+      "description": "Owned object URLs revoked on the next document; late URLs for an old document revoked immediately"
+    },
+    {
+      "file": "apps/web/src/features/scan/ScanPane.tsx",
+      "lines": "ScanPane",
+      "description": "OCR text rendered as React text nodes only; region overlay from normalized bbox"
+    },
+    {
+      "file": "apps/worker/src/upstream/openrouter.ts",
+      "lines": "OCR_PROMPT, ocrResponseFormat",
+      "description": "ocr2 prompt with 'untrusted DATA'; strict schema without ext (frozen schema unchanged)"
+    },
+    {
+      "file": "scripts/src/precompute/precompute-ocr.ts",
+      "lines": "resolveOcrOptions, runOcrLive",
+      "description": "Live guards: ALLOW_LIVE_LLM, OCR_MAX_REQUESTS <= 26, :free allow-list, pinned host, abort cost > 0, 429 stop, retry budget 4, no key output"
+    },
+    {
+      "file": "scripts/src/samples/scan-set.ts",
+      "lines": "downscaleJpeg, scanPages",
+      "description": "jpeg-js decode with memory/resolution caps; sourceHash = sha256 of the original bytes"
+    }
+  ]
+}

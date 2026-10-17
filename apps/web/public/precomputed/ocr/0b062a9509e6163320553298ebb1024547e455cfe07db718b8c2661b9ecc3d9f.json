@@ -1,0 +1,174 @@
+{
+  "v": 1,
+  "kind": "aduin-precomputed-ocr",
+  "sample": "09",
+  "page": 5,
+  "sourceHash": "ed8a77c7cf931ef948fbc7f57ffaa03312694a48e68c34c4973a6df797731b21",
+  "key": "0b062a9509e6163320553298ebb1024547e455cfe07db718b8c2661b9ecc3d9f",
+  "params": "w1600q80",
+  "model": "nvidia/nemotron-3.5-super-vl:free",
+  "served_model": "nvidia/nemotron-3.5-super-vl:free",
+  "promptVer": "ocr2",
+  "schemaVer": "s1",
+  "recorded": "2026-10-17",
+  "result": {
+    "v": 1,
+    "pages": [
+      {
+        "index": 4,
+        "lines": [
+          {
+            "text": "7. Financial Suitability",
+            "bbox": {
+              "x": 0.06,
+              "y": 0.01,
+              "w": 0.28,
+              "h": 0.03
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "Investor suitability standards were created by the SEC and your State to provide minimum qualification guidelines which if not met, would indicate that the subject investment is not appropriate for the investor. Please refer to section 8 for suitability requirements.",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.05,
+              "w": 0.9,
+              "h": 0.08
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "The Investor had an annual gross income last year of",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.11,
+              "w": 0.48,
+              "h": 0.03
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "The Investor has a net worth of",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.16,
+              "w": 0.32,
+              "h": 0.03
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Approximately what dollar amount of your total net worth is invested in non-listed or private offerings and real estate other than your home? Non-listed or Private $ Real Estate $",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.19,
+              "w": 0.85,
+              "h": 0.06
+            },
+            "conf": 0.9
+          },
+          {
+            "text": "How many years of experience do you have investing in real estate other than your home?",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.27,
+              "w": 0.48,
+              "h": 0.04
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "How many years of experience do you have investing in non-listed or private offerings?",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.33,
+              "w": 0.48,
+              "h": 0.04
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Approximately what dollar amount of your total net worth can be converted to cash within 90 days? Please consider all liquid assets, including but not limited to, checking and savings accounts, money market accounts, mutual funds, stocks, bonds, publicly traded REITs, etc. Do not include real estate, private placements, or other illiquid assets",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.39,
+              "w": 0.48,
+              "h": 0.08
+            },
+            "conf": 0.9
+          },
+          {
+            "text": "How many years of experience do you have investing in mutual funds, stocks, bonds, publicly traded REITs?",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.5,
+              "w": 0.48,
+              "h": 0.04
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "How would you describe your investment objective?",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.57,
+              "w": 0.48,
+              "h": 0.03
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "When do you anticipate needing liquidity from your investment?",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.63,
+              "w": 0.46,
+              "h": 0.04
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "What is the highest level of education you have completed?",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.7,
+              "w": 0.43,
+              "h": 0.04
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Do you use a financial advisor or consultant?",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.76,
+              "w": 0.41,
+              "h": 0.03
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Do you believe you have sufficient knowledge and experience in financial and business affairs to evaluate the merits and risks of an investment in our company? Yes No",
+            "bbox": {
+              "x": 0.07,
+              "y": 0.81,
+              "w": 0.85,
+              "h": 0.07
+            },
+            "conf": 0.9
+          },
+          {
+            "text": "5/8",
+            "bbox": {
+              "x": 0.48,
+              "y": 0.97,
+              "w": 0.04,
+              "h": 0.02
+            },
+            "conf": 0.99
+          }
+        ]
+      }
+    ]
+  }
+}

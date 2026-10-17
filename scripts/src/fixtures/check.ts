@@ -9,6 +9,14 @@ import { buildFixtures, SEEDED_DIR } from './build-seeded';
 import { ROOT } from './find-shared-passages';
 import { buildDocxFixtures, DOCX_DIR, sameDocx } from './make-docx';
 import { buildPdfFixtures, PDF_CROP, PDF_DIR } from './make-pdf';
+import { OcrResultSchema } from '@aduin/core';
+import {
+  OCR_PRECOMPUTED_DIR,
+  ocrPageKey,
+  readPrecomputed,
+  strayPrecomputed,
+} from '../precompute/precompute-ocr';
+import { scanPages } from '../samples/scan-set';
 
 const fresh = buildFixtures();
 const problems: string[] = [];
@@ -52,6 +60,60 @@ for (const f of readdirSync(join(ROOT, PDF_DIR))) {
       if (`${rel}/${g}` !== PDF_CROP) problems.push(`stray: ${rel}/${g}`);
   } else if (!freshPdf.has(rel)) problems.push(`stray: ${rel}`);
 }
+// Phase 06f: scan ground truth, OCR recordings, shipped precomputed OCR (integrity only).
+let ocrFiles = 0;
+const GT = join(ROOT, 'fixtures', 'scans-ground-truth');
+const rawPages = new Set(scanPages().map((p) => p.raw.replace(/\.jpg$/, '')));
+if (
+  !existsSync(join(GT, 'README.md')) ||
+  !/agent-transcribed, human spot-check recommended/i.test(
+    readFileSync(join(GT, 'README.md'), 'utf8'),
+  )
+)
+  problems.push('missing: fixtures/scans-ground-truth/README.md label');
+const gtFiles = readdirSync(GT).filter((f) => f !== 'README.md' && !f.startsWith('.'));
+if (gtFiles.length < 3 || gtFiles.length > 5)
+  problems.push(`ground truth: expected 3-5 pages, found ${gtFiles.length}`);
+for (const f of gtFiles) {
+  ocrFiles++;
+  if (!f.endsWith('.txt') || !rawPages.has(f.slice(0, -4)))
+    problems.push(`stray: fixtures/scans-ground-truth/${f}`);
+  else if (readFileSync(join(GT, f), 'utf8').trim().length === 0)
+    problems.push(`empty: fixtures/scans-ground-truth/${f}`);
+}
+const KEYLIKE = new RegExp(['sk', 'or', ''].join('-') + '|Bearer ');
+const REC = join(ROOT, 'fixtures', 'llm-recordings', 'ocr');
+for (const f of existsSync(REC) ? readdirSync(REC) : []) {
+  ocrFiles++;
+  const text = readFileSync(join(REC, f), 'utf8');
+  if (KEYLIKE.test(text)) problems.push(`secret-like text: fixtures/llm-recordings/ocr/${f}`);
+  try {
+    const j = JSON.parse(text) as { result?: unknown };
+    if (!OcrResultSchema.safeParse(j.result).success) problems.push(`invalid OCR result: ${f}`);
+  } catch {
+    problems.push(`invalid JSON: fixtures/llm-recordings/ocr/${f}`);
+  }
+}
+if (existsSync(join(OCR_PRECOMPUTED_DIR, 'index.json'))) {
+  const idx = JSON.parse(readFileSync(join(OCR_PRECOMPUTED_DIR, 'index.json'), 'utf8')) as Record<
+    string,
+    { page: number; file: string; key: string }[]
+  >;
+  const byN = new Map(scanPages().map((p) => [p.n, p] as const));
+  for (const e of idx['09'] ?? []) {
+    ocrFiles++;
+    const p = byN.get(e.page);
+    if (
+      !p ||
+      e.key !== ocrPageKey(p.sourceHash, p.n - 1) ||
+      !readPrecomputed(OCR_PRECOMPUTED_DIR, e.key)
+    )
+      problems.push(`precomputed OCR: bad index entry for page ${e.page}`);
+    if (KEYLIKE.test(readFileSync(join(OCR_PRECOMPUTED_DIR, e.file), 'utf8')))
+      problems.push(`secret-like text: ${e.file}`);
+  }
+  for (const f of strayPrecomputed()) problems.push(`stray: apps/web/public/precomputed/ocr/${f}`);
+}
 if (problems.length) {
   console.error(`fixtures:check FAILED (${problems.length})`);
   for (const p of problems) console.error(`  ${p}`);
@@ -61,5 +123,5 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `fixtures:check OK (${fresh.size + freshDocx.size + freshPdf.size} files match a fresh build)`,
+  `fixtures:check OK (${fresh.size + freshDocx.size + freshPdf.size} files match a fresh build; ${ocrFiles} OCR/ground-truth files valid)`,
 );

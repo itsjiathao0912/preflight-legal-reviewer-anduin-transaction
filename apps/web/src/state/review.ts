@@ -5,7 +5,13 @@ import type { MemoryApi } from '../api/memoryApi';
 import { e2eSettings, e2eTransform } from '../e2e-hook';
 import { analyzeInWorker, rememberInput } from '../engine/client';
 import { runOcrQueue, sha256Hex, type OcrJob } from '../engine/ocr-queue';
-import { imageKindOf, renderImage, renderPdfPages } from '../engine/render-pages';
+import {
+  imageKindOf,
+  renderImage,
+  renderPdfPages,
+  type RenderedPage,
+} from '../engine/render-pages';
+import { useScan } from '../features/scan/scan-store';
 import { aiBeginOpen, aiOnOpen, aiRunFresh, setAiSink } from '../features/ai/ai-lane';
 import type {
   AnalyzeInput,
@@ -72,7 +78,7 @@ interface ReviewState {
   openDocument: (
     bytes: Uint8Array,
     meta: Omit<DocMeta, 'id'>,
-    opts?: { fileName?: string },
+    opts?: { fileName?: string; scan?: ScanSetInput },
   ) => Promise<void>;
   select: (id: string | null) => void;
   toggleReveal: () => void;
@@ -93,6 +99,13 @@ let toastSeq = 0;
 let loadSeq = 0;
 
 type InputKind = 'html' | 'pdf' | 'docx' | 'image';
+
+/** Phase 06f: a bundled multi-page scan set (sample #9): page image URLs + original-bytes hashes. */
+export interface ScanSetInput {
+  pages: { n: number; url: string; sourceHash: string }[];
+}
+
+const HEX64 = /^[0-9a-f]{64}$/;
 
 /** Adapter by file extension (the worker re-checks extension + magic bytes). */
 export function inputKindOf(fileName: string | undefined): InputKind {
@@ -119,12 +132,40 @@ async function analyzeDocument(
   fileName: string | undefined,
   settings: EngineSettings,
   onStage: (s: StageReport) => void,
+  scanSet?: ScanSetInput,
 ): Promise<EngineResult> {
   const kind = inputKindOf(fileName);
   const name = fileName ?? '';
-  const onOcr = (pages: OcrPageInput[]) =>
+  const store = useScan.getState();
+  let seq = store.seq;
+  const onOcr = (pages: OcrPageInput[]) => {
+    store.setProgress(seq, pages);
     onStage({ id: 'read', state: 'running', sub: ocrProgressSub(pages) });
+  };
   let input: AnalyzeInput;
+  if (scanSet) {
+    const pages = scanSet.pages.filter((p) => HEX64.test(p.sourceHash)).slice(0, 30);
+    const urls: Record<number, string> = {};
+    pages.forEach((p, i) => (urls[i] = p.url));
+    seq = store.begin(pages.length, urls);
+    const sourceHash = await sha256Hex(pages.map((p) => p.sourceHash).join('|'));
+    const ocrPages = await runOcrQueue({
+      sourceHash,
+      jobs: pages.map((p, i) => ({
+        index: i,
+        sourceHash: p.sourceHash,
+        render: async () => {
+          const res = await fetch(p.url);
+          if (!res.ok) throw new Error('The page image could not be loaded.');
+          return renderImage(new Uint8Array(await res.arrayBuffer()), i);
+        },
+      })),
+      onProgress: onOcr,
+    });
+    input = { kind: 'ocr', sourceHash, pageCount: pages.length, pages: ocrPages };
+    rememberInput(bytes, input);
+    return analyzeInWorker(input, settings, onStage);
+  }
   if (kind === 'html' && fileName === undefined) {
     return analyzeInWorker(bytes, settings, onStage);
   } else if (kind === 'html' || kind === 'docx') {
@@ -133,6 +174,10 @@ async function analyzeDocument(
     // not a JPEG/PNG: the worker's format check refuses it with a clear message (never OCR'd)
     input = { kind: 'html', bytes, name };
   } else if (kind === 'image') {
+    seq = store.begin(1);
+    const mime = imageKindOf(bytes) === 'png' ? 'image/png' : 'image/jpeg';
+    // local display only (the bytes never leave the browser; OCR gets the re-encoded JPEG)
+    store.setUrl(seq, 0, URL.createObjectURL(new Blob([bytes.slice()], { type: mime })), true);
     const sourceHash = await sha256Hex(bytes);
     const pages = await runOcrQueue({
       sourceHash,
@@ -148,14 +193,28 @@ async function analyzeDocument(
       rememberInput(bytes, input);
       return first;
     }
-    const jobs: OcrJob[] = scan.map((index) => ({
-      index,
-      render: async () => {
-        const [p] = await renderPdfPages(bytes, [index]);
-        if (!p) throw new Error('The page could not be rendered.');
-        return p;
-      },
-    }));
+    seq = useScan.getState().begin(first.pageCount ?? 0);
+    const renders = new Map<number, Promise<RenderedPage>>();
+    const renderOnce = (index: number): Promise<RenderedPage> => {
+      let r = renders.get(index);
+      if (!r) {
+        r = renderPdfPages(bytes, [index]).then(([p]) => {
+          if (!p) throw new Error('The page could not be rendered.');
+          useScan.getState().setUrl(seq, index, URL.createObjectURL(p.jpeg), true);
+          return p;
+        });
+        renders.set(index, r);
+      }
+      return r;
+    };
+    // page images for the viewer, one page at a time (bounded memory); OCR reuses them
+    void (async () => {
+      for (const i of scan) {
+        if (useScan.getState().seq !== seq) return;
+        await renderOnce(i).catch(() => undefined);
+      }
+    })();
+    const jobs: OcrJob[] = scan.map((index) => ({ index, render: () => renderOnce(index) }));
     const ocrPages = await runOcrQueue({ sourceHash: first.docHash, jobs, onProgress: onOcr });
     input = { kind: 'pdf', bytes, name, ocrPages };
   }
@@ -295,6 +354,7 @@ export const useReview = create<ReviewState>((set, get) => {
     openDocument: async (bytes, meta, opts) => {
       const seq = ++loadSeq;
       aiBeginOpen();
+      useScan.getState().clear();
       set({
         phase: 'loading',
         error: null,
@@ -314,6 +374,7 @@ export const useReview = create<ReviewState>((set, get) => {
           (s) => {
             if (seq === loadSeq) set({ stages: { ...get().stages, [s.id]: s } });
           },
+          opts?.scan,
         );
       } catch {
         if (seq === loadSeq) {

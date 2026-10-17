@@ -1,0 +1,164 @@
+{
+  "v": 1,
+  "kind": "aduin-precomputed-ocr",
+  "sample": "09",
+  "page": 12,
+  "sourceHash": "2aa07de074dd3314606d53b88758b83e492e1f8e2a6a854f87b98f744055bde0",
+  "key": "44cce659b6fe342d1c40e47550522de0d6d3af7afdf643692cd9c2c5f98622ea",
+  "params": "w1600q80",
+  "model": "nvidia/nemotron-3.5-super-vl:free",
+  "served_model": "nvidia/nemotron-3.5-super-vl:free",
+  "promptVer": "ocr2",
+  "schemaVer": "s1",
+  "recorded": "2026-10-17",
+  "result": {
+    "v": 1,
+    "pages": [
+      {
+        "index": 11,
+        "lines": [
+          {
+            "text": "Phone Email",
+            "bbox": {
+              "x": 0.078,
+              "y": 0.031,
+              "w": 0.85,
+              "h": 0.045
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Alternative Street Address NOTE: You will receive investor communications electronically via email",
+            "bbox": {
+              "x": 0.078,
+              "y": 0.065,
+              "w": 0.85,
+              "h": 0.05
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Alternative City Alt. State Alt. Zip Code",
+            "bbox": {
+              "x": 0.078,
+              "y": 0.115,
+              "w": 0.85,
+              "h": 0.045
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Are you associated with a Broker Dealer?",
+            "bbox": {
+              "x": 0.078,
+              "y": 0.165,
+              "w": 0.4,
+              "h": 0.03
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "☐ No ☐ Yes",
+            "bbox": {
+              "x": 0.078,
+              "y": 0.19,
+              "w": 0.3,
+              "h": 0.03
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Employer Name",
+            "bbox": {
+              "x": 0.078,
+              "y": 0.245,
+              "w": 0.2,
+              "h": 0.03
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Employer Address",
+            "bbox": {
+              "x": 0.078,
+              "y": 0.285,
+              "w": 0.22,
+              "h": 0.03
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Street City",
+            "bbox": {
+              "x": 0.145,
+              "y": 0.32,
+              "w": 0.6,
+              "h": 0.03
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Country State Zip Code",
+            "bbox": {
+              "x": 0.145,
+              "y": 0.365,
+              "w": 0.75,
+              "h": 0.04
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "☐ I wish to receive written communications sent to my mailing address",
+            "bbox": {
+              "x": 0.09,
+              "y": 0.425,
+              "w": 0.7,
+              "h": 0.03
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "☐ US Citizen ☐ US Citizen residing outside the US",
+            "bbox": {
+              "x": 0.09,
+              "y": 0.47,
+              "w": 0.85,
+              "h": 0.03
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "☐ Foreign citizen - US green card holder ☐ Check here if you are subject to backup withholding",
+            "bbox": {
+              "x": 0.09,
+              "y": 0.51,
+              "w": 0.85,
+              "h": 0.04
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "☐ Foreign citizen, Country",
+            "bbox": {
+              "x": 0.09,
+              "y": 0.56,
+              "w": 0.35,
+              "h": 0.03
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "4/10",
+            "bbox": {
+              "x": 0.48,
+              "y": 0.975,
+              "w": 0.05,
+              "h": 0.02
+            },
+            "conf": 0.95
+          }
+        ]
+      }
+    ]
+  }
+}

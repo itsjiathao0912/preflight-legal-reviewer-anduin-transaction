@@ -1,0 +1,72 @@
+{
+  "v": 1,
+  "kind": "aduin-precomputed-ocr",
+  "sample": "09",
+  "page": 6,
+  "sourceHash": "8ae63c95dfd8777e151f67d2200d14d8ba6f2f45a881b8baa1dfac2e6270ed00",
+  "key": "2bf1a57f98bd286ee20c922426c84b77f4cdd34c219ff909293ed5f44362bad2",
+  "params": "w1600q80",
+  "model": "nvidia/nemotron-3.5-super-vl:free",
+  "served_model": "nvidia/nemotron-3.5-super-vl:free",
+  "promptVer": "ocr2",
+  "schemaVer": "s1",
+  "recorded": "2026-10-17",
+  "result": {
+    "v": 1,
+    "pages": [
+      {
+        "index": 5,
+        "lines": [
+          {
+            "text": "8. Investor Initials and Signatures",
+            "conf": 0.99
+          },
+          {
+            "text": "In order to induce RW Holdings NNN REIT, Inc. to accept this investment, I hereby represent and warrant as follows",
+            "conf": 0.99
+          },
+          {
+            "text": "(initial all Sections that apply to you):",
+            "conf": 0.99
+          },
+          {
+            "text": "Initials",
+            "conf": 0.99
+          },
+          {
+            "text": "☐ A. PROSPECTUS DELIVERY",
+            "conf": 0.99
+          },
+          {
+            "text": "I agree to receive the prospectus for the Company's common stock and other information regarding my investment in electronic format from the Company's website. I acknowledge receipt of the prospectus in electronic format. I may withdraw my consent to receive this information in electronic format at any time by notifying the Company in writing or via email. Information provided in electronic will remain available on the Company's website. I may request this information by mailing a written request to the Company at 3090 Bristol Street, Suite 550, Costa Mesa, California 92626. Delivery charges may apply to prospectuses and information requested in writing. The Company's prospectuses are always available for public inspection at the website of the Securities and Exchange Commission, www.sec.gov.",
+            "conf": 0.95
+          },
+          {
+            "text": "☐ B. TAXPAYER INFORMATION (OPTIONAL)",
+            "conf": 0.99
+          },
+          {
+            "text": "(REQUIRED FOR US CITIZENS) The investor signing below, under penalties of perjury, certifies that (i) the number shown above is my correct taxpayer identification number, (ii) I am not subject to backup withholding because I am exempt from back up withholding, (iii) I have not been notified by the Internal Revenue Service that I am subject to backup withholding, and (iv) I am a U.S. Citizen (including a U.S. resident alien). We are required by law to obtain and record certain personal information from you or persons on your behalf in order to accept your Investment. If you do not provide the information or documentation, we may not be able to accept your Investment. By signing this Investment form, you agree to provide this information and confirm that this information is true and correct.",
+            "conf": 0.95
+          },
+          {
+            "text": "☐ C. FINANCIAL SUITABILITY STANDARDS",
+            "conf": 0.99
+          },
+          {
+            "text": "I have (i) an annual gross income of at least US$70,000 and a net worth of at least US$70,000; and/or (ii) a net worth of at least US$250,000. (Net worth in all cases should be calculated excluding the value of your home, furnishings and automobiles. In the case of sales to fiduciary accounts, these suitability standards must be met by the fiduciary account, or by the person who directly or indirectly supplied the funds for the purchase of the Shares if such person is the fiduciary.) The investment I propose to make herein will not exceed 10% of my net worth, as defined above.",
+            "conf": 0.95
+          },
+          {
+            "text": "☐ D. Please initial in the box to the left if you would like to receive investor communications electronically Electronic delivery of investor communications is optional. Your consent to electronic delivery above authorizes RW Holdings NNN REIT, Inc. to deliver certain investor communications to you electronically via email or by making them available on your Rich Uncles dashboard through RW Holdings NNN REIT, Inc.'s website at https://www.richuncles.com/ and notifying you via email when such documents are available. Investor communications that may be delivered electronically include account statements, tax forms, annual reports, proxy statements and other investor communications. By electing electronic delivery, you (i) agree that you have provided a valid email address in Section 3 of this subscription agreement; (ii) agree that you have the appropriate hardware and software to receive email notifications and view PDF documents; (iii) understand you may incur certain costs associated with downloading and printing investor documents; and (iv) understand that electronic delivery also involves certain risks, including, among others, system or network outages that could impair your timely receipt of or access to your documents. RW Holdings NNN REIT, Inc. may choose to send one or more items to you in paper form despite your consent to electronic delivery. You may request a paper copy of any particular investor document. Your consent will be effective until you revoke it by either changing your delivery preference on your Rich Uncles dashboard through RW Holdings NNN REIT, Inc.'s website at https://www.richuncles.com/ or by sending the revocation request to accounts@richuncles.com.",
+            "conf": 0.95
+          },
+          {
+            "text": "6/8",
+            "conf": 0.99
+          }
+        ]
+      }
+    ]
+  }
+}

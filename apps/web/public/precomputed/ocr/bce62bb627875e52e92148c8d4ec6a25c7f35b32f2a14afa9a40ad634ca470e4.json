@@ -1,0 +1,124 @@
+{
+  "v": 1,
+  "kind": "aduin-precomputed-ocr",
+  "sample": "09",
+  "page": 20,
+  "sourceHash": "45c07cc0db0bba55bb0765096c792a5a704937a9ad373f6ead21c7d61810040f",
+  "key": "bce62bb627875e52e92148c8d4ec6a25c7f35b32f2a14afa9a40ad634ca470e4",
+  "params": "w1600q80",
+  "model": "nvidia/nemotron-3.5-super-vl:free",
+  "served_model": "nvidia/nemotron-3.5-super-vl:free",
+  "promptVer": "ocr2",
+  "schemaVer": "s1",
+  "recorded": "2026-10-17",
+  "result": {
+    "v": 1,
+    "pages": [
+      {
+        "index": 19,
+        "lines": [
+          {
+            "text": "8. Revocation or changes",
+            "conf": 0.99
+          },
+          {
+            "text": "An account owner or all joint owners may revoke or change a beneficiary designation. The Change of Transfer on Death (TOD) Form is available for this purpose on our website www.richuncles.com/documents/tod/ or from your registered representative.",
+            "conf": 0.99
+          },
+          {
+            "text": "9. Controlling terms",
+            "conf": 0.99
+          },
+          {
+            "text": "The language as set forth in the TOD account registration shall control at all times. Unless the transfer agent is expressly instructed by the account owner to change the status of the account or the beneficiary designation prior to the account owner's death, the person or persons set forth as the beneficiaries of the account shall remain the beneficiaries of the account, and events subsequent to the registration of the account as a TOD account shall not change either the rights of the persons designated as beneficiaries or the status of the account as a TOD account.",
+            "conf": 0.99
+          },
+          {
+            "text": "A - Divorce",
+            "conf": 0.99
+          },
+          {
+            "text": "If the account owner designated his or her spouse as a TOD beneficiary of the account, and subsequently the account owner and the beneficiary are divorced, the fact of the divorce will not automatically revoke the beneficiary designation. If the account owner wishes to revoke the beneficiary designation, the account owner must notify RW Holdings NNN REIT, Inc. of the desired change in writing as specified in paragraph 8 above.",
+            "conf": 0.99
+          },
+          {
+            "text": "B - Will or other testamentary document",
+            "conf": 0.99
+          },
+          {
+            "text": "The beneficiary designation may not be revoked by the account owner by the provisions of a will or a codicil to a will.",
+            "conf": 0.99
+          },
+          {
+            "text": "C - Distributions, interest, and capital gains after the account owner's death",
+            "conf": 0.99
+          },
+          {
+            "text": "i. Accruals to the account which occur after the death of the account owner or last surviving joint owner, and are still in the account when it is re-registered to the beneficiaries, stay with the account and pass to the beneficiaries.",
+            "conf": 0.99
+          },
+          {
+            "text": "ii. Where the account has been coded for cash distributions, and such distributions have actually been paid out prior to notice to the transfer agent of the death of the account owner, such distributions are deemed to be the property of the estate of the original account owner and do not pass with the account to the designated beneficiaries.",
+            "conf": 0.99
+          },
+          {
+            "text": "10. TOD registrations may not be made irrevocable.",
+            "conf": 0.99
+          },
+          {
+            "text": "1. Stockholder Information Name of stockholder(s) exactly as indicated on subscription agreement",
+            "conf": 0.99
+          },
+          {
+            "text": "Stockholder Name",
+            "conf": 0.99
+          },
+          {
+            "text": "Mr. Mrs. Ms. First Middle Last",
+            "conf": 0.99
+          },
+          {
+            "text": "☐ ☐ ☐",
+            "conf": 0.99
+          },
+          {
+            "text": "Co-Stockholder Name (if applicable)",
+            "conf": 0.99
+          },
+          {
+            "text": "Mr. Mrs. Ms. First Middle Last",
+            "conf": 0.99
+          },
+          {
+            "text": "☐ ☐ ☐",
+            "conf": 0.99
+          },
+          {
+            "text": "Stockholder Co-Stockholder",
+            "conf": 0.99
+          },
+          {
+            "text": "Social Security Number(s)",
+            "conf": 0.99
+          },
+          {
+            "text": "(Not accepted from residents of Louisiana, Puerto Rico or Texas)",
+            "conf": 0.99
+          },
+          {
+            "text": "Stockholder Co-Stockholder",
+            "conf": 0.99
+          },
+          {
+            "text": "Daytime Telephone",
+            "conf": 0.99
+          },
+          {
+            "text": "2/4",
+            "conf": 0.99
+          }
+        ]
+      }
+    ]
+  }
+}

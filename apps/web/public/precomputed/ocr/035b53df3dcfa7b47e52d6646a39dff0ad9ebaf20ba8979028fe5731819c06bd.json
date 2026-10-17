@@ -1,0 +1,142 @@
+{
+  "v": 1,
+  "kind": "aduin-precomputed-ocr",
+  "sample": "09",
+  "page": 4,
+  "sourceHash": "ea16a04bf00a6e959426a6312f71f72fca7afd7583e35178b66dc3deb61c5270",
+  "key": "035b53df3dcfa7b47e52d6646a39dff0ad9ebaf20ba8979028fe5731819c06bd",
+  "params": "w1600q80",
+  "model": "nvidia/nemotron-3.5-super-vl:free",
+  "served_model": "nvidia/nemotron-3.5-super-vl:free",
+  "promptVer": "ocr2",
+  "schemaVer": "s1",
+  "recorded": "2026-10-17",
+  "result": {
+    "v": 1,
+    "pages": [
+      {
+        "index": 3,
+        "lines": [
+          {
+            "text": "4. Certification as to U.S. Personhood of Investor(s)*",
+            "conf": 0.99
+          },
+          {
+            "text": "The investor, or each investor (if there is more than one), is a U.S. Person (as defined below) and is not acquiring Class C Shares in RW Holdings NNN REIT, Inc. for the account or benefit of a non-U.S. Person. A "
+          },
+          {
+            "text": "U.S. Person",
+            "conf": 0.99
+          },
+          {
+            "text": " means any one of the following:",
+            "conf": 0.99
+          },
+          {
+            "text": "• any natural person resident in the United States of America;",
+            "conf": 0.99
+          },
+          {
+            "text": "• any partnership or corporation organized or incorporated under the laws of the United States of America;",
+            "conf": 0.99
+          },
+          {
+            "text": "• any estate of which any executor or administrator is a U.S. Person;",
+            "conf": 0.99
+          },
+          {
+            "text": "• any trust of which any trustee is a U.S. Person;",
+            "conf": 0.99
+          },
+          {
+            "text": "• any agency or branch of a foreign entity located in the United States of America;",
+            "conf": 0.99
+          },
+          {
+            "text": "• any non-discretionary account or similar account (other than an estate or trust) held by a dealer or other fiduciary for the benefit or account of a U.S. Person;",
+            "conf": 0.99
+          },
+          {
+            "text": "• any discretionary account or similar account (other than an estate or trust) held by a deal or other fiduciary organized, incorporated or (if an individual) resident in the United States of America; and",
+            "conf": 0.99
+          },
+          {
+            "text": "• any partnership or corporation if: (A) organized or incorporated under the laws of any foreign jurisdiction; and (B) formed by a U.S. Person principally for the purpose of investing in securities not registered under the Securities Act, unless it is organized or incorporated, and owned, by accredited investors (as defined in Rule 501(a) under the Securities Act) who are not natural persons, estates, or trusts.",
+            "conf": 0.99
+          },
+          {
+            "text": "*Sales of Class C Shares are limited to U.S. Persons.",
+            "conf": 0.99
+          },
+          {
+            "text": "5. Account Title",
+            "conf": 0.99
+          },
+          {
+            "text": "Please print names in which shares of common stock are to be registered. Include trust/entity name if applicable. If IRA or qualified plan, include both custodian and investor names and IRA account number. If the same as in Section 3, please write "
+          },
+          {
+            "text": "SAME",
+            "conf": 0.99
+          },
+          {
+            "text": ".",
+            "conf": 0.99
+          },
+          {
+            "text": "Name of Account Line 1",
+            "conf": 0.99
+          },
+          {
+            "text": "Name of Account Line 2",
+            "conf": 0.99
+          },
+          {
+            "text": "US Tax ID#",
+            "conf": 0.99
+          },
+          {
+            "text": "Secondary US Tax ID#",
+            "conf": 0.99
+          },
+          {
+            "text": "6. Custodian/Trustee/Manager/General Partner/Administrator Information",
+            "conf": 0.99
+          },
+          {
+            "text": "Name CUSTODIAN/TRUSTEE/ MANAGER/GENERAL PARTNER/ADMINISTRATOR",
+            "conf": 0.99
+          },
+          {
+            "text": "Address",
+            "conf": 0.99
+          },
+          {
+            "text": "Phone",
+            "conf": 0.99
+          },
+          {
+            "text": "Email",
+            "conf": 0.99
+          },
+          {
+            "text": "Tax Identification Number CUSTODIAN/TRUSTEE/MANAGER/ GENERAL PARTNER/ADMINISTRATOR",
+            "conf": 0.99
+          },
+          {
+            "text": "Investor's Account Number with CUSTODIAN/TRUSTEE/MANAGER/ /GENERAL PARTNER/ADMINISTRATOR",
+            "conf": 0.99
+          },
+          {
+            "text": "For Custodian Accounts, such as IRAs and other qualified plans, a completed copy of this investment form should be sent directly to the Custodian who will then forward the necessary documentation and payment to RW Holdings NNN REIT, Inc.",
+            "conf": 0.99
+          },
+          {
+            "text": "4/8",
+            "conf": 0.99
+          }
+        ]
+      }
+    ]
+  }
+}

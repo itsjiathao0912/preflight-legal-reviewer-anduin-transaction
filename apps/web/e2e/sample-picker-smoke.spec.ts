@@ -26,13 +26,14 @@ test.describe('sample-picker-smoke', () => {
     }
   });
 
-  test('the 22-page scan set (#9) is listed but disabled until P06; ILPA #14 is not listed', async ({
+  // Phase 06f (deliberate flip): #9 is enabled and opens in the scan viewer; still 13 options.
+  test('the 22-page scan set (#9) is listed and enabled; ILPA #14 is not listed', async ({
     page,
   }) => {
     await gotoApp(page);
     await openDialog(page);
     await expect(page.getByTestId('sample-option')).toHaveCount(13);
-    await expect(sample(page, '09')).toBeDisabled();
+    await expect(sample(page, '09')).toBeEnabled();
     await expect(sample(page, '09')).toContainText('22 pages');
     await expect(sample(page, '14')).toHaveCount(0);
   });

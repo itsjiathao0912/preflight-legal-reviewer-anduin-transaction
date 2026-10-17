@@ -15,7 +15,7 @@ metadata:
 
 # Phase 06 Report: PDF, DOCX, OCR and Precompute
 
-Status: IN PROGRESS. Sub-steps 06a and 06b done (not committed). 06c to 06f and Step F come next.
+Status: 06a-06f and Step F done (not committed). Independent review of the evidence pack, EVL and UPDATE PROCESS come next.
 
 ## 06a: Worker OCR prompt ocr2 + live probes
 
@@ -306,3 +306,110 @@ CONTEXT_PARTIAL: none. Follow-up stubs created: none.
 - Precompute file format the queue reads: `index.json {sampleId:[{page,file,key}]}` (key = 64 hex, file `[A-Za-z0-9._-]`), and each file is `{result: OcrResult}` or a bare `OcrResult`. For sample #9 jobs, pass the per-page original-bytes `sourceHash` on each `OcrJob` (`job.sourceHash`).
 
 CONTEXT_PARTIAL: none. Follow-up stubs created: none (the deviation 2 detector idea is left to the orchestrator).
+
+## 06e (scan viewer + unavailable mode) — 2026-10-17
+
+**TL;DR:** scanned documents now open in a scan viewer inside the Findings route: page image beside the OCR text, per-page progress chips, a confidence badge with a low-confidence (< 0.6) warning, and a box on the image for the selected finding (whole page when no region). When OCR cannot run, the image stays and a clear banner says why. DOCX shows a "Numbering reconstructed" notice. All new e2e gates are green.
+
+### What was done
+| File | Change |
+|---|---|
+| `apps/web/src/features/scan/scan-store.ts` (new) | zustand store: page image URLs, live per-page progress, shown page. Owned object URLs are revoked when the next document opens; a late URL for an older document is revoked at once. |
+| `apps/web/src/features/scan/scan-model.ts` (new) | Pure helpers: `isScanResult`, `viewerPages`, `pageStatuses` (engine views win over live progress; low = conf < `limits.ocrLowConfidence`), `highlightFor` (region clamped, whole page when no region or a `{0,0,1,1}` region), `ocrBanner`. |
+| `apps/web/src/features/scan/ScanPane.tsx` (new) | Viewer: chips (`data-state` queued/running/done/failed/unavailable, `data-low`), prev/next, page image + `scan-region` overlay, state badge, confidence badge, "Text not extracted for this page", OCR lines as React text nodes with the selected quote marked. Follows the selected finding to its page. |
+| `apps/web/src/features/scan/ScanNotices.tsx` (new) | Banners: `ocr-unavailable` ("OCR unavailable in this build"), `ocr-down` (service down / daily page limit), `scan-notice` (the engine's "Text not extracted for N of M pages"), `numbering-notice` (DOCX). |
+| `apps/web/src/features/scan/scan.css` (new) | Tokens only (no hex). |
+| `apps/web/src/features/review/FindingsScreen.tsx` | Renders `ScanPane` instead of `DocPane` for scanned documents (also while loading once pages are known). |
+| `apps/web/src/features/review/components/Banners.tsx` | Appends `<ScanNotices />`. |
+| `apps/web/src/state/review.ts` | Clears the scan store on every open; image uploads get a local object URL; PDF scan pages render once (memoized) for display and OCR reuses the same render; OCR progress goes to the store; new `opts.scan` path for the sample #9 page list. |
+| `apps/web/e2e/{ocr-unavailable,ocr-position-confidence,ingest-all-formats}.spec.ts` (new) | See gates. |
+| `packages/core/test/unit/ocr-unavailable.test.ts` (new) | Core side of AC24 (no lines, empty page = low confidence, partial OCR keeps page order, no throw). |
+| `apps/web/test/scan-viewer-model.test.ts` (new) | URL revocation (30 pages), highlight rules, low-confidence/banners, image decompression bomb refused before decode. |
+
+### Deviations (06e, inside the blast radius except where noted)
+1. **No `features/registry.ts` line.** The viewer lives inside the Findings route, so it needs no new nav item (a new route would change the approved nav and the shell/layout specs; replacing `findings` would duplicate the screen). Integration is two small edits in `features/review/` (`FindingsScreen.tsx`, `Banners.tsx`), which are Phase 03 files outside the listed Phase 06 paths. Documented, additive only.
+2. The DOCX "numberingNote" is shown as a banner, not on each finding row (the row component was not touched).
+3. `design/mockups/scan-viewer.html` (A0) not made (optional per D9/E11); the viewer reuses the app.html docpane/paper/banner/badge styles.
+
+## 06f (sample #9 assets, precompute, recorded fixtures, ground truth, notices, evidence pack) — 2026-10-17
+
+**TL;DR:** sample #9 is enabled: 22 downscaled page images (3.9 MB), all 22 pages precomputed live on the free model and shipped, so the set opens fully read with no API call. 25 live requests used in 06f (27 of 30 for the phase), cost 0. CER on 3 agent-transcribed pages: 1.3 %, 0.0 %, 0.4 % (weighted 0.6 %). Evidence pack validates with 0 failures; the review decision is a provisional self-assessment pending independent review. Nothing committed.
+
+### What was done
+| File | Change |
+|---|---|
+| `scripts/package.json`, `pnpm-lock.yaml` | devDependency `jpeg-js` 0.4.4 (one `pnpm add`); scripts `precompute:ocr`, `record:ocr`, `ocr:cer`. |
+| `scripts/src/samples/scan-set.ts` (new) | Page order (A-1 1-8, A-2 1-10, B 1-4 -> p01..p22), `sourceHash` = sha256 of the original raw bytes, jpeg-js decode (512 MB / 60 MP caps) + area-average downscale to 1600 px + q80 encode, idempotent stamp (second run 0.6 s). |
+| `scripts/src/build-samples.ts` | `'09'` entry flipped: `disabled: false`, `pages: [{n, file, sourceHash}]`; writes `apps/web/public/samples/09-rw-holdings-scans/pNN.jpg` (generated, gitignored). |
+| `apps/web/src/features/open-document/{samples.ts,open-actions.ts}` | `scanPagesOf` (validated page list), `openSample` opens a scan entry through `openDocument(…, {scan})`; reopen from the switcher works for the scan set. |
+| `scripts/src/precompute/precompute-ocr.ts` (new) | Live precompute with every E8 guard (see evidence pack); writes `apps/web/public/precomputed/ocr/{key}.json` + `index.json {"09":[{page,file,key}]}`; key = the web queue formula with `promptVer ocr2`; `--dry-run`, `--index-only`, resumable. |
+| `scripts/src/record/record-ocr.ts` (new) | Offline thin wrapper (no spend): copies pages 1, 2, 6, 8, 19 into `fixtures/llm-recordings/ocr/{raw}.ocr2.precomputed.json` (content only). |
+| `scripts/src/ocr/cer.ts` (new) | CER vs ground truth (with and without `^{n}` markers), reported, not gated. |
+| `fixtures/scans-ground-truth/{README.md,appa1-pg1.txt,appa1-pg2.txt,appa1-pg8.txt}` (new) | Labelled "Agent-transcribed, human spot-check recommended". |
+| `scripts/src/fixtures/check.ts` | Adds: ground-truth label, 3-5 pages, names match raw pages; every OCR recording parses with `OcrResultSchema` and has no key-like text; every precomputed index entry matches its key formula and file; no stray precomputed files. |
+| `scripts/test/ocr-live-guard.test.ts` (new) | 11 tests: cost > 0 abort, non-free served model, missing cap / cap 31 / above ceiling refused, paid/router model and foreign host refused, dry-run, cap stop + no key in files/logs + resume, 429 stops, retry budget counted, **byte parity of the upstream body with the Worker's `buildBody`/`ocrMessages`/`ocrResponseFormat`**, key formula, content parsing. |
+| `apps/web/e2e/{scan-set-smoke}.spec.ts` (new), `sample-picker-smoke.spec.ts` | Scan set smoke; #9 assertion flipped deliberately (`toBeEnabled`, still 13 options). |
+| `apps/web/public/precomputed/ocr/*` (new, committed output) | 22 page files + `index.json` (176 KB). |
+| `THIRD_PARTY_NOTICES.md` | jpeg-js BSD-3 row; docx now also `@aduin/scripts`; transitive notes for mammoth/unpdf/pdfjs. `argparse@1.0.10` is **MIT** per `pnpm licenses list` (Python-2.0 in some mirrors; permissive either way). jszip is dual MIT/GPL, used under MIT. |
+| `harness/phase-06/*.json` (new) | Five-file evidence pack, 15 adversarial scenarios each tied to a test. |
+
+### Live calls (APPROVED-LIVE 30, free model `nvidia/nemotron-3.5-super-vl:free`)
+| Run | Requests | Result |
+|---|---|---|
+| 06a (earlier) | 2 | S4 probe |
+| 06f run 1 | 3 | pages 1, 2 ok; page 3 timed out while reading the body, which crashed the script (fixed: body read now inside the retry/timeout handling, timeout 240 -> 300 s) |
+| 06f run 2 (resume, cap 23) | 22 | pages 3-22 ok; 2 retries (page 14 HTTP 502, page 16 truncated JSON `finish_reason length`) |
+| **Total** | **27 of 30** | every `usage.cost` 0, no abort, no 429. Latency 18-139 s per page. |
+
+- Pages precomputed: **22 of 22**. Missing pages: **none** (no backlog "finish next UTC day" needed).
+- E2 (golden page live): page 1 grid came back `☐ Trust ^{2} ☐ Corporation ^{2} ☐ Partnership/LLC`, correct as printed.
+
+### CER (reported, not gated; agent-transcribed ground truth)
+| Page | CER (markers kept) | CER (markers removed) | Ref chars |
+|---|---|---|---|
+| appa1-pg1 | 1.3 % | 0.1 % | 770 |
+| appa1-pg2 | 0.0 % | 0.0 % | 516 |
+| appa1-pg8 | 0.4 % | 0.4 % | 781 |
+| weighted | 0.6 % | | |
+The page 1 gap is the model's space before `^{n}` (the adapter strips it).
+
+### Gates (06e + 06f)
+| Gate | Result |
+|---|---|
+| web e2e `ocr-unavailable` | 3/3 |
+| web e2e `ocr-position-confidence` | 2/2 (AC3 running->done, AC4 region box at the grid row, low confidence, EXIF marker not posted) |
+| web e2e `scan-set-smoke` | 1/1 (22 chips, running while held back, all 22 done, 0 `/api` calls) |
+| web e2e `sample-picker-smoke`, `ocr-render-path`, `upload-limits`, `ingest-all-formats` | 2/2, 2/2, 5/5, 2/2 |
+| web e2e whole suite | 95 passed, 1 skipped (opt-in design probe) |
+| web unit whole; `import-graph`, `source-guard`, `no-e2e-hook-in-d` | 15 files / 64; 4, 4, 2 |
+| scripts `ocr-live-guard`; scripts whole | 11/11; 9 files / 60 |
+| core `golden-09-ocr-footnote2`; core `ocr-unavailable`; core full | 13/13; 3/3; 62 files / 425 |
+| worker full | 64 files / 520 |
+| `pnpm --filter @aduin/scripts fixtures:check` | OK (56 + 32 files) |
+| `pnpm typecheck`, `pnpm lint`, `pnpm guard:cf`, `pnpm secrets:scan` | clean / OK |
+| evidence validator on `harness/phase-06` | 0 failures, 0 warnings (on `harness/` root it reports the pre-existing "no root-level files" failure, same as earlier phases) |
+
+### Deviations (06f, inside the blast radius)
+1. New helper `scripts/src/samples/scan-set.ts` (shared by build-samples, precompute, record, cer).
+2. In-code live ceiling = 26 (30 approved minus 2 used in 06a minus 2 headroom); a cap above it is **refused**, not clamped.
+3. Precompute calls OpenRouter directly with a byte-identical copy of the Worker OCR body; parity is enforced by `ocr-live-guard` (the Worker file was not edited).
+4. Recorded fixtures are named `*.ocr2.precomputed.json` (the 06a `appa1-pg1.ocr2.recorded.json` stays for golden-09). Page 19 added as the 5th page.
+5. Ground truth is 3 pages (minimum of 3-5): dense pages 6/19 were left out to save effort; CER covers 3.
+6. `review-decision.json` is a provisional self-assessment (`reviewer: pending independent review`).
+
+### Test Infra Gaps Found
+- The live script crashed on a body-read timeout (fixed). Free model latency up to 139 s/page.
+- `harness/` root path in the contract's validator command has no root files; validate `harness/phase-06` directly.
+
+### Forward Preview
+#### Commands to Stay Green
+- `pnpm --filter @aduin/web test:e2e ocr-unavailable` / `ocr-position-confidence` / `scan-set-smoke` / `ingest-all-formats` / `sample-picker-smoke`; `pnpm --filter @aduin/scripts test ocr-live-guard`; `pnpm --filter @aduin/core test ocr-unavailable`; `pnpm --filter @aduin/scripts fixtures:check`; `pnpm --filter @aduin/scripts ocr:cer` (report).
+#### Dependency Changes
+- `jpeg-js` 0.4.4 devDependency in `@aduin/scripts` (lockfile updated once).
+#### Blast Radius Changes
+- Added outside the listed paths: `apps/web/src/features/review/{FindingsScreen.tsx,components/Banners.tsx}` (two additive edits), `scripts/src/samples/scan-set.ts`.
+#### Notes
+- Redeploy (Phase 10) is still needed for the ocr2 prompt + schema fix on the live Worker.
+- If prompts change, re-run `precompute:ocr` (the key changes with `promptVer`); the next run needs a fresh APPROVED-LIVE line (3 left).
+
+CONTEXT_PARTIAL: none. Follow-up stubs created: none.

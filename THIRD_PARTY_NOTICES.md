@@ -14,11 +14,12 @@ Project rule: only MIT / BSD / Apache-2.0 / ISC code (fonts: OFL). Keep upstream
 | zustand                                         | 5.0.15                    | MIT               | @aduin/web                                 |
 | dexie                                           | 4.4.6                     | Apache-2.0        | @aduin/web                                 |
 | comlink                                         | 4.4.2                     | Apache-2.0        | @aduin/web                                 |
-| docx                                            | 9.11.0                    | MIT               | @aduin/web                                 |
+| docx                                            | 9.11.0                    | MIT               | @aduin/web, @aduin/scripts (dev, fixtures) |
 | pdfjs-dist                                      | 6.4.299                   | Apache-2.0        | @aduin/web, @aduin/scripts (dev)           |
 | htmlparser2                                     | 12.0.0                    | MIT               | @aduin/core, @aduin/scripts                |
 | unpdf                                           | 1.9.0                     | MIT               | @aduin/core                                |
 | mammoth                                         | 1.13.0                    | BSD-2-Clause      | @aduin/core                                |
+| jpeg-js                                         | 0.4.4                     | BSD-3-Clause      | @aduin/scripts (dev, scan-set downscale)   |
 | diff (jsdiff)                                   | 9.0.0                     | BSD-3-Clause      | @aduin/core                                |
 | zod                                             | 4.6.7                     | MIT               | @aduin/core, @aduin/worker, @aduin/scripts |
 | @noble/hashes                                   | 2.4.0                     | MIT               | @aduin/core, @aduin/worker, @aduin/scripts |
@@ -50,3 +51,16 @@ Phase 03: `@axe-core/playwright` 4.14.0 and `axe-core` (MPL-2.0) installed as de
 MPL-2.0 exception (D-8, user-decided): axe-core via @axe-core/playwright is a dev-only test dependency of
 @aduin/web; it is never bundled or shipped. Geist and Newsreader are licensed under the SIL Open Font License 1.1
 and are self-hosted from @fontsource (upstream notices kept in the font packages).
+
+## Phase 06 parsing stack: transitive license notes (checked with `pnpm licenses list`, 2026-10-17)
+
+- mammoth 1.13.0 (BSD-2-Clause) pulls: `argparse` 1.0.10 (**MIT** per `pnpm licenses list`; some
+  registry mirrors label the 1.x line Python-2.0, which is also permissive, so either way it is
+  allowed), `jszip` 3.10.2 (dual `MIT OR GPL-3.0-or-later`; used under **MIT**), `pako` 1.0.11
+  (`MIT AND Zlib`), `lop` 0.4.2, `option` 0.2.4, `dingbat-to-unicode` 1.0.2 (BSD-2-Clause),
+  `underscore` 1.13.8, `xmlbuilder` 10.1.1, `@xmldom/xmldom` 0.8.15, `base64-js` 1.5.1 (MIT),
+  `sprintf-js` 1.0.3 (BSD-3-Clause).
+- unpdf 1.9.0 (MIT) bundles pdf.js (Apache-2.0); pdfjs-dist 6.4.299 (Apache-2.0) ships its own
+  NOTICE/LICENSE in the package, which the web bundle carries through the emitted pdf.js chunks.
+- jpeg-js 0.4.4 (BSD-3-Clause) is a dev-only dependency of `@aduin/scripts`; it never ships in the
+  web or Worker bundle (it only downscales the bundled sample #9 page images at sample-copy time).

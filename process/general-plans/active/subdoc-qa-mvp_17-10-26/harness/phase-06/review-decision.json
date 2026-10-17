@@ -1,0 +1,17 @@
+{
+  "task": "subdoc-qa-mvp phase 06 PDF, DOCX, OCR and precompute (06a-06f)",
+  "reviewer": "pending independent review",
+  "decision": "approved-with-concerns",
+  "reviewDecision": "PROVISIONAL_SELF_ASSESSMENT",
+  "date": "2026-10-17",
+  "timestamp": "2026-10-17",
+  "blockingFindings": [],
+  "nonBlockingFindings": [
+    "Provisional self-assessment by the implementing execute agent; NOT an independent approval. The orchestrator overwrites this file after the independent reviewer runs.",
+    "Image uploads skip the core polyglot check (bytes never enter the engine worker); mitigated by magic check + header size cap + canvas re-encode (06d deviation 6).",
+    "Deployed Worker still runs ocr1 + the schema with propertyNames until redeploy (06a deviation 1); Phase 10.",
+    "Ground truth is agent-transcribed (3 pages); human spot-check recommended.",
+    "Live bbox is row-level and conf is uninformative (always 0.95); region highlight is row-level."
+  ],
+  "notes": "Validator vocabulary: decision uses approved | approved-with-concerns | rejected."
+}

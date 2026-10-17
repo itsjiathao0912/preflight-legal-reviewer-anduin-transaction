@@ -1,0 +1,164 @@
+{
+  "v": 1,
+  "kind": "aduin-precomputed-ocr",
+  "sample": "09",
+  "page": 2,
+  "sourceHash": "afb091ef0b3d1406c3ea1cd05fc95a1e747043026b407cdef7bb50c92611d07a",
+  "key": "38c8b3999afd789f4f957928d0a4c16b89c5e283020a17eec35778a2de4bb00b",
+  "params": "w1600q80",
+  "model": "nvidia/nemotron-3.5-super-vl:free",
+  "served_model": "nvidia/nemotron-3.5-super-vl:free",
+  "promptVer": "ocr2",
+  "schemaVer": "s1",
+  "recorded": "2026-10-17",
+  "result": {
+    "v": 1,
+    "pages": [
+      {
+        "index": 1,
+        "lines": [
+          {
+            "text": "Phone Email",
+            "bbox": {
+              "x": 70,
+              "y": 20,
+              "w": 900,
+              "h": 50
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Alternative Street Address NOTE: You will receive investor communications electronically via email",
+            "bbox": {
+              "x": 70,
+              "y": 55,
+              "w": 900,
+              "h": 90
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Alternative City Alt. State Alt. Zip Code",
+            "bbox": {
+              "x": 70,
+              "y": 105,
+              "w": 900,
+              "h": 50
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Are you associated with a Broker Dealer?",
+            "bbox": {
+              "x": 70,
+              "y": 160,
+              "w": 400,
+              "h": 30
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "☐ No ☐ Yes",
+            "bbox": {
+              "x": 70,
+              "y": 185,
+              "w": 300,
+              "h": 30
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Employer Name",
+            "bbox": {
+              "x": 70,
+              "y": 240,
+              "w": 200,
+              "h": 30
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Employer Address",
+            "bbox": {
+              "x": 70,
+              "y": 280,
+              "w": 200,
+              "h": 30
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Street City",
+            "bbox": {
+              "x": 140,
+              "y": 310,
+              "w": 800,
+              "h": 40
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "Country State Zip Code",
+            "bbox": {
+              "x": 130,
+              "y": 355,
+              "w": 900,
+              "h": 50
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "☐ I wish to receive written communications sent to my mailing address",
+            "bbox": {
+              "x": 70,
+              "y": 420,
+              "w": 700,
+              "h": 30
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "☐ US Citizen ☐ US Citizen residing outside the US",
+            "bbox": {
+              "x": 70,
+              "y": 460,
+              "w": 900,
+              "h": 30
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "☐ Foreign citizen - US green card holder ☐ Check here if you are subject to backup withholding",
+            "bbox": {
+              "x": 70,
+              "y": 500,
+              "w": 900,
+              "h": 40
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "☐ Foreign citizen, Country",
+            "bbox": {
+              "x": 70,
+              "y": 550,
+              "w": 600,
+              "h": 30
+            },
+            "conf": 0.95
+          },
+          {
+            "text": "2/8",
+            "bbox": {
+              "x": 480,
+              "y": 970,
+              "w": 50,
+              "h": 20
+            },
+            "conf": 0.95
+          }
+        ]
+      }
+    ]
+  }
+}

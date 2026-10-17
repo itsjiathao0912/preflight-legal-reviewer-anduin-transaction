@@ -1,0 +1,92 @@
+{
+  "v": 1,
+  "kind": "aduin-precomputed-ocr",
+  "sample": "09",
+  "page": 21,
+  "sourceHash": "55ac729fc7085b32841f2e232e25cd0a5e725634f522f1a3683a0e6013ce40da",
+  "key": "4f493ef6248f1f6c0d1833025e3534ca102f330fdbe87e894c00217933d72cf6",
+  "params": "w1600q80",
+  "model": "nvidia/nemotron-3.5-super-vl:free",
+  "served_model": "nvidia/nemotron-3.5-super-vl:free",
+  "promptVer": "ocr2",
+  "schemaVer": "s1",
+  "recorded": "2026-10-17",
+  "result": {
+    "v": 1,
+    "pages": [
+      {
+        "index": 20,
+        "lines": [
+          {
+            "text": "2. Transfer On Death (Not permitted in Louisiana, Puerto Rico or Texas)",
+            "conf": 0.99
+          },
+          {
+            "text": "I (we) authorize RW Holdings NNN REIT, Inc. to register the percentage of shares of common stock set forth below in beneficiary form, assigning investorship on my (our) death to the TOD beneficiary(ies) named below. Use an additional sheet of paper if space is needed to designate more TOD beneficiaries. Complete information must be provided for all TOD beneficiaries.",
+            "conf": 0.95
+          },
+          {
+            "text": "Select Beneficiary Type: ☐ Primary ☐ Contingent",
+            "conf": 0.95
+          },
+          {
+            "text": "Name Relationship Birth Date",
+            "conf": 0.95
+          },
+          {
+            "text": "Social Security Number or Tax ID # TOD Share Percentage",
+            "conf": 0.95
+          },
+          {
+            "text": "Select Beneficiary Type: ☐ Primary ☐ Contingent",
+            "conf": 0.95
+          },
+          {
+            "text": "Name Relationship Birth Date",
+            "conf": 0.95
+          },
+          {
+            "text": "Social Security Number or Tax ID # TOD Share Percentage",
+            "conf": 0.95
+          },
+          {
+            "text": "Select Beneficiary Type: ☐ Primary ☐ Contingent",
+            "conf": 0.95
+          },
+          {
+            "text": "Name Relationship Birth Date",
+            "conf": 0.95
+          },
+          {
+            "text": "Social Security Number or Tax ID # TOD Share Percentage",
+            "conf": 0.95
+          },
+          {
+            "text": "Select Beneficiary Type: ☐ Primary ☐ Contingent",
+            "conf": 0.95
+          },
+          {
+            "text": "Name Relationship Birth Date",
+            "conf": 0.95
+          },
+          {
+            "text": "Social Security Number or Tax ID # TOD Share Percentage",
+            "conf": 0.95
+          },
+          {
+            "text": "☐ Lineal Descendants per Stirpes (”LDPS”)",
+            "conf": 0.95
+          },
+          {
+            "text": "Check if you wish to have the account pass to children of the above-designated beneficiary(ies) if the designated beneficiary(ies) predeceases the stockholder. The LDPS designation will apply to all designated beneficiaries.",
+            "conf": 0.95
+          },
+          {
+            "text": "3/4",
+            "conf": 0.99
+          }
+        ]
+      }
+    ]
+  }
+}

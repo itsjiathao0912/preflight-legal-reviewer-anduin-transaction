@@ -1,0 +1,114 @@
+{
+  "v": 1,
+  "kind": "aduin-precomputed-ocr",
+  "sample": "09",
+  "page": 13,
+  "sourceHash": "d725646539298a30d341326c58914919b37f7bc48292556a25b323c99fa38d20",
+  "key": "b21ba9c95d5c3dafab8bf327a3e4cbdf1a4d074b3bebfe07afb469ce0ccde801",
+  "params": "w1600q80",
+  "model": "nvidia/nemotron-3.5-super-vl:free",
+  "served_model": "nvidia/nemotron-3.5-super-vl:free",
+  "promptVer": "ocr2",
+  "schemaVer": "s1",
+  "recorded": "2026-10-17",
+  "result": {
+    "v": 1,
+    "pages": [
+      {
+        "index": 12,
+        "lines": [
+          {
+            "text": "Investor 2 Name"
+          },
+          {
+            "text": "US Tax ID#"
+          },
+          {
+            "text": "Date of Birth"
+          },
+          {
+            "text": "Profession / Occupation"
+          },
+          {
+            "text": "Street Address"
+          },
+          {
+            "text": "City"
+          },
+          {
+            "text": "State"
+          },
+          {
+            "text": "Zip Code"
+          },
+          {
+            "text": "Phone"
+          },
+          {
+            "text": "Email"
+          },
+          {
+            "text": "Alternative Street Address"
+          },
+          {
+            "text": "NOTE: You will receive investor communications electronically via email"
+          },
+          {
+            "text": "Alternative City"
+          },
+          {
+            "text": "Alt. State"
+          },
+          {
+            "text": "Alt. Zip Code"
+          },
+          {
+            "text": "Are you associated with a Broker Dealer?"
+          },
+          {
+            "text": "☐ No ☐ Yes"
+          },
+          {
+            "text": "Employer Name"
+          },
+          {
+            "text": "Employer Address"
+          },
+          {
+            "text": "Street"
+          },
+          {
+            "text": "City"
+          },
+          {
+            "text": "Country"
+          },
+          {
+            "text": "State"
+          },
+          {
+            "text": "Zip Code"
+          },
+          {
+            "text": "☐ I wish to receive written communications sent to my mailing address"
+          },
+          {
+            "text": "☐ US Citizen"
+          },
+          {
+            "text": "☐ US Citizen residing outside the US"
+          },
+          {
+            "text": "☐ Foreign citizen - US green card holder"
+          },
+          {
+            "text": "☐ Check here if you are subject to backup withholding"
+          },
+          {
+            "text": "☐ Foreign citizen, Country"
+          }
+        ]
+      }
+    ]
+  }
+}

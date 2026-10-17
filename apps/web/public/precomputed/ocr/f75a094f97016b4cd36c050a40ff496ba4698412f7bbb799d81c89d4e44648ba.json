@@ -1,0 +1,184 @@
+{
+  "v": 1,
+  "kind": "aduin-precomputed-ocr",
+  "sample": "09",
+  "page": 18,
+  "sourceHash": "9ce6cf88316cf4624a960bb1049b6235f3a6ad5ee8c31a65acbd60bd9dc0adf1",
+  "key": "f75a094f97016b4cd36c050a40ff496ba4698412f7bbb799d81c89d4e44648ba",
+  "params": "w1600q80",
+  "model": "nvidia/nemotron-3.5-super-vl:free",
+  "served_model": "nvidia/nemotron-3.5-super-vl:free",
+  "promptVer": "ocr2",
+  "schemaVer": "s1",
+  "recorded": "2026-10-17",
+  "result": {
+    "v": 1,
+    "pages": [
+      {
+        "index": 17,
+        "lines": [
+          {
+            "text": "10. Signatures",
+            "bbox": {
+              "x": 66,
+              "y": 16,
+              "w": 206,
+              "h": 36
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "E-Signature Consent:",
+            "bbox": {
+              "x": 78,
+              "y": 66,
+              "w": 252,
+              "h": 20
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "The parties agree that this agreement may be electronically signed. The parties agree that the",
+            "bbox": {
+              "x": 112,
+              "y": 88,
+              "w": 810,
+              "h": 16
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "electronic signatures appearing on this agreement are the same as handwritten signatures for the",
+            "bbox": {
+              "x": 112,
+              "y": 106,
+              "w": 830,
+              "h": 16
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "purposes of validity, enforceability, and admissibility.",
+            "bbox": {
+              "x": 112,
+              "y": 120,
+              "w": 490,
+              "h": 16
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "☐ Yes ☐ No",
+            "bbox": {
+              "x": 400,
+              "y": 146,
+              "w": 190,
+              "h": 20
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "A. INDIVIDUAL INVESTOR, JOINT TENANTS, TENANTS IN COMMON OR COMMUNITY PROPERTY",
+            "bbox": {
+              "x": 78,
+              "y": 198,
+              "w": 880,
+              "h": 20
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "Signature – Investor 1 Signature – Investor 2",
+            "bbox": {
+              "x": 78,
+              "y": 228,
+              "w": 690,
+              "h": 20
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "B. FOR OTHER INVESTORS (PENSION PLAN, IRA, CORPORATION, PARTNERSHIP, LLC, TRUST, etc.)",
+            "bbox": {
+              "x": 78,
+              "y": 336,
+              "w": 900,
+              "h": 20
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "Print Name of Entity (Investor)",
+            "bbox": {
+              "x": 78,
+              "y": 370,
+              "w": 310,
+              "h": 20
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "Print Name of Authorized Representative By:",
+            "bbox": {
+              "x": 78,
+              "y": 410,
+              "w": 380,
+              "h": 30
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "Title",
+            "bbox": {
+              "x": 78,
+              "y": 460,
+              "w": 110,
+              "h": 20
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "Signature (Representative)",
+            "bbox": {
+              "x": 78,
+              "y": 506,
+              "w": 280,
+              "h": 20
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "You have the right to rescind this sale within five days from your investment date. You will receive full funds without interest of",
+            "bbox": {
+              "x": 78,
+              "y": 686,
+              "w": 910,
+              "h": 16
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "your investment as a result.",
+            "bbox": {
+              "x": 78,
+              "y": 704,
+              "w": 260,
+              "h": 16
+            },
+            "conf": 0.99
+          },
+          {
+            "text": "10/10",
+            "bbox": {
+              "x": 480,
+              "y": 970,
+              "w": 50,
+              "h": 15
+            },
+            "conf": 0.99
+          }
+        ]
+      }
+    ]
+  }
+}

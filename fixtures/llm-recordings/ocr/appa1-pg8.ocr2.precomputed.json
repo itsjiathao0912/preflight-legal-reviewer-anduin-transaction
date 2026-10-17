@@ -1,0 +1,88 @@
+{
+  "_meta": {
+    "source": "samples/sub-docs/raw/09-rw-holdings-scans/appa1-pg8.jpg",
+    "page": 8,
+    "downscale": "1600px long edge, JPEG q80 (jpeg-js)",
+    "model": "nvidia/nemotron-3.5-super-vl:free",
+    "served_model": "nvidia/nemotron-3.5-super-vl:free",
+    "prompt_ver": "ocr2",
+    "schema_ver": "s1",
+    "recorded": "2026-10-17",
+    "usage_cost": 0,
+    "note": "Live free-model response content only (no headers, no key). Phase 06f precompute."
+  },
+  "result": {
+    "v": 1,
+    "pages": [
+      {
+        "index": 7,
+        "lines": [
+          {
+            "text": "10. Signatures",
+            "conf": 1
+          },
+          {
+            "text": "E-Signature Consent:",
+            "conf": 1
+          },
+          {
+            "text": "The parties agree that this agreement may be electronically signed. The parties agree that the",
+            "conf": 1
+          },
+          {
+            "text": "electronic signatures appearing on this agreement are the same as handwritten signatures for the",
+            "conf": 1
+          },
+          {
+            "text": "purposes of validity, enforceability, and admissibility.",
+            "conf": 1
+          },
+          {
+            "text": "☐ Yes ☐ No",
+            "conf": 1
+          },
+          {
+            "text": "A. INDIVIDUAL INVESTOR, JOINT TENANTS, TENANTS IN COMMON OR COMMUNITY PROPERTY",
+            "conf": 1
+          },
+          {
+            "text": "Signature – Investor 1 Signature – Investor 2",
+            "conf": 1
+          },
+          {
+            "text": "B. FOR OTHER INVESTORS (PENSION PLAN, IRA, CORPORATION, PARTNERSHIP, LLC, TRUST, etc.)",
+            "conf": 1
+          },
+          {
+            "text": "Print Name of Entity (Investor)",
+            "conf": 1
+          },
+          {
+            "text": "Print Name of Authorized Representative By:",
+            "conf": 1
+          },
+          {
+            "text": "Title",
+            "conf": 1
+          },
+          {
+            "text": "Signature (Representative)",
+            "conf": 1
+          },
+          {
+            "text": "You have the right to rescind this sale within five days from your investment date. You will receive full funds without interest of",
+            "conf": 1
+          },
+          {
+            "text": "your investment as a result.",
+            "conf": 1
+          },
+          {
+            "text": "8/8",
+            "conf": 1
+          }
+        ]
+      }
+    ]
+  }
+}

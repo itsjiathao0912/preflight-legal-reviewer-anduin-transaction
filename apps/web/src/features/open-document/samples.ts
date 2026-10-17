@@ -9,7 +9,33 @@ export interface SampleEntry {
   kind: 'html' | 'scan';
   disabled: boolean;
   note?: string;
-  pages?: number;
+  /** Scan set (Phase 06f): ordered page images with the sha256 of each ORIGINAL page. */
+  pages?: ScanPageEntry[];
+}
+
+export interface ScanPageEntry {
+  n: number;
+  file: string;
+  sourceHash: string;
+}
+
+const PAGE_FILE_RE = /^[A-Za-z0-9._-]{1,80}\/p\d{2}\.jpg$/;
+
+/** Validated page list of a scan entry (manifest is static, but checked like any input). */
+export function scanPagesOf(s: SampleEntry): ScanPageEntry[] {
+  if (s.kind !== 'scan' || !Array.isArray(s.pages)) return [];
+  return s.pages
+    .filter(
+      (p): p is ScanPageEntry =>
+        !!p &&
+        typeof p === 'object' &&
+        Number.isInteger(p.n) &&
+        typeof p.file === 'string' &&
+        PAGE_FILE_RE.test(p.file) &&
+        typeof p.sourceHash === 'string' &&
+        /^[0-9a-f]{64}$/.test(p.sourceHash),
+    )
+    .slice(0, 30);
 }
 
 export interface FirmEntry {

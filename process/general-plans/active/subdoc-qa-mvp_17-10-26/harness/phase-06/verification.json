@@ -1,0 +1,118 @@
+{
+  "task": "subdoc-qa-mvp phase 06 PDF, DOCX, OCR and precompute (06a-06f)",
+  "commands": [
+    {
+      "command": "pnpm --filter @aduin/web test:e2e (whole suite)",
+      "result": "PASS",
+      "notes": "95 passed, 1 skipped (opt-in design-probe)"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test:e2e ocr-unavailable",
+      "result": "PASS",
+      "notes": "3 tests (no API base, quota_exhausted, budget_cap); 0 /api/ocr requests in the no-API case"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test:e2e ocr-position-confidence",
+      "result": "PASS",
+      "notes": "2 tests: per-page progress running->done, confidence badge, region highlight, low confidence < 0.6, EXIF marker not posted"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test:e2e scan-set-smoke",
+      "result": "PASS",
+      "notes": "1 test: 22 chips, running while held back, all 22 done from shipped precomputed OCR, 0 /api calls"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test:e2e sample-picker-smoke",
+      "result": "PASS",
+      "notes": "2 tests (#9 flipped to enabled)"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test:e2e ingest-all-formats",
+      "result": "PASS",
+      "notes": "2 tests: html, text pdf, docx, scanned pdf, image; corrupt/encrypted/corrupt docx -> Reading failed"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test:e2e ocr-render-path",
+      "result": "PASS",
+      "notes": "2 tests"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test:e2e upload-limits",
+      "result": "PASS",
+      "notes": "5 tests incl. 31-page refusal before any OCR call"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test",
+      "result": "PASS",
+      "notes": "15 files, 64 tests (incl. scan-viewer-model, import-graph, source-guard, no-e2e-hook-in-dist, ocr-never-sends-pdf)"
+    },
+    {
+      "command": "pnpm --filter @aduin/core test",
+      "result": "PASS",
+      "notes": "62 files, 425 tests (incl. golden-09-ocr-footnote2 13/13, ocr-unavailable 3/3, security, redos)"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test",
+      "result": "PASS",
+      "notes": "64 files, 520 tests"
+    },
+    {
+      "command": "pnpm --filter @aduin/scripts test",
+      "result": "PASS",
+      "notes": "9 files, 60 tests (incl. ocr-live-guard 11/11)"
+    },
+    {
+      "command": "pnpm --filter @aduin/scripts fixtures:check",
+      "result": "PASS",
+      "notes": "56 generated files + 32 OCR/ground-truth/precomputed files valid, no key-like text"
+    },
+    {
+      "command": "pnpm typecheck",
+      "result": "PASS",
+      "notes": ""
+    },
+    {
+      "command": "pnpm lint",
+      "result": "PASS",
+      "notes": "eslint + prettier"
+    },
+    {
+      "command": "pnpm guard:cf",
+      "result": "PASS",
+      "notes": ""
+    },
+    {
+      "command": "pnpm secrets:scan",
+      "result": "PASS",
+      "notes": ""
+    },
+    {
+      "command": "pnpm --filter @aduin/scripts ocr:cer",
+      "result": "PASS (reported, not gated)",
+      "notes": "CER 1.3% / 0.0% / 0.4% on appa1-pg1/pg2/pg8, weighted 0.6% (agent-transcribed ground truth)"
+    }
+  ],
+  "manualChecks": [
+    {
+      "check": "Live precompute under APPROVED-LIVE (free model nvidia/nemotron-3.5-super-vl:free)",
+      "result": "PASS",
+      "notes": "25 requests in 06f (22 pages + 1 body-read timeout + 2 retries), 27 of 30 for the phase incl. 06a; every response usage.cost 0; no abort; 22 of 22 pages in index.json"
+    },
+    {
+      "check": "Live marker fidelity on the golden page (E2)",
+      "result": "PASS",
+      "notes": "page 1 grid row: '☐ Trust ^{2} ☐ Corporation ^{2} ☐ Partnership/LLC' (correct, as printed)"
+    },
+    {
+      "check": "Precomputed key formula equals the web queue key",
+      "result": "PASS",
+      "notes": "scan-set-smoke opens all 22 pages from the static files with zero /api calls"
+    },
+    {
+      "check": "Independent security review",
+      "result": "PENDING",
+      "notes": "orchestrator runs an independent reviewer next"
+    }
+  ],
+  "result": "PASS (automated gates); independent review pending"
+}

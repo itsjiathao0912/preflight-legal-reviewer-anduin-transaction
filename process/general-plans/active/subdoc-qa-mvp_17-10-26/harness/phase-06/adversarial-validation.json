@@ -1,0 +1,111 @@
+{
+  "task": "subdoc-qa-mvp phase 06 PDF, DOCX, OCR and precompute (06a-06f)",
+  "method": "STRIDE pass by the execute agent over the E9 scenario list; each scenario is tied to a named automated test",
+  "scenarios": [
+    {
+      "stride": "T",
+      "scenario": "DOCX zip bomb: archive that lies about uncompressed sizes, extreme ratio, too many entries, nested archives",
+      "ruled_out": true,
+      "rationale": "guardZip parses the central directory with bounds checks (<=2000 entries, no ZIP64) and stream-inflates every entry under a shared 64 MB budget before mammoth sees it; 10 MB input cap first.",
+      "test": "core test security (docx-zip-bomb: 'refuses a bomb that LIES about its size', 'too many entries', 'over 10 MB')"
+    },
+    {
+      "stride": "D",
+      "scenario": "PDF with a huge page count or page dimensions / huge canvas",
+      "ruled_out": true,
+      "rationale": "pdfToLines refuses > 30 pages before any page is read; render-pages always renders so the long side is 1600 px whatever the declared page size; pdf.js runs with enableXfa false, no font face, no eval option (removed in pdf.js 6).",
+      "test": "web e2e upload-limits 'should refuse a 31-page scan before any OCR call'; core ingest-all-formats-pdf (31 pages, 0 pages parsed)"
+    },
+    {
+      "stride": "D",
+      "scenario": "Image decompression bomb via createImageBitmap",
+      "ruled_out": true,
+      "rationale": "renderImage reads width/height from the PNG IHDR / JPEG SOFn header and refuses > 60 MP before decode.",
+      "test": "web test scan-viewer-model 'refuses an image decompression bomb from its header, before any decode'; ocr-never-sends-pdf 'reads image size from the header without decoding'"
+    },
+    {
+      "stride": "S",
+      "scenario": "Polyglot or extension vs magic mismatch (PDF named .png, PDF/JPEG carrying a Word package, HTML with %PDF, SVG)",
+      "ruled_out": true,
+      "rationale": "format-detect rejects mismatches, polyglots and SVG; the engine worker refuses a name/content mismatch; a non-image under an image extension goes to that check, never to OCR.",
+      "test": "core test format-detect (mismatch, polyglots, SVG); web e2e upload-limits ('.png' holding PDF bytes -> 'does not match')"
+    },
+    {
+      "stride": "D",
+      "scenario": "Encrypted PDF",
+      "ruled_out": true,
+      "rationale": "PasswordException -> CoreError unsupported_type 'password-protected' message; no crash.",
+      "test": "core ingest-all-formats-pdf (encrypted); web e2e ingest-all-formats 'should reject a corrupt file with a clear message' (encrypted.pdf)"
+    },
+    {
+      "stride": "T",
+      "scenario": "Prompt injection inside page images or extracted PDF/DOCX text",
+      "ruled_out": true,
+      "rationale": "ocr2 prompt states the image is untrusted DATA, never instructions; strict json_schema response; OCR lines are parsed by OcrResultSchema and shape-checked (sanitizeLines) and only ever become document text; the AI lane quotes must be located in graph-selected candidate sites (Phase 05).",
+      "test": "worker test ocr-prompt-version; web ocr-never-sends-pdf; core llm-quote-scoped-to-candidate (Phase 05)"
+    },
+    {
+      "stride": "T",
+      "scenario": "^{n} marker and checkbox-glyph injection in line text (fake footnote markers, 4+ digit markers)",
+      "ruled_out": true,
+      "rationale": "OCR_MARKER_RE accepts only 1-3 digits; malformed or long markers stay as plain text; sup segments are zero-width and only feed the footnote detectors (no markup).",
+      "test": "core test ocr-adapter 'keeps unbounded or malformed markers as text'"
+    },
+    {
+      "stride": "D",
+      "scenario": "ReDoS in page-noise / OCR / format-detect regexes",
+      "ruled_out": true,
+      "rationale": "All regexes bounded and collected into the ReDoS suite with 1 MB hostile lines and 30 pages x 200 hostile lines.",
+      "test": "core test redos 'should bound every page-noise regex'"
+    },
+    {
+      "stride": "D",
+      "scenario": "Oversized OCR response (line text, line count)",
+      "ruled_out": true,
+      "rationale": "OcrResultSchema text <= 4000; adapter caps 400 lines/page and 4000 chars/line; queue sanitizeLines caps the same on the way in; NDJSON 4 MiB line cap (Phase 05).",
+      "test": "core test ocr-adapter 'caps lines per page'; web ndjson-line-cap"
+    },
+    {
+      "stride": "D",
+      "scenario": "Memory growth over 30 pages of page images",
+      "ruled_out": true,
+      "rationale": "Rendered PDF pages render one at a time and destroy the pdf.js task; image bitmaps are closed; every object URL is owned by the scan store and revoked when the next document opens (late URLs for an old document are revoked immediately).",
+      "test": "web test scan-viewer-model 'revokes every owned page URL when the next document opens'"
+    },
+    {
+      "stride": "I",
+      "scenario": "EXIF / GPS metadata leaving the browser with the page image",
+      "ruled_out": true,
+      "rationale": "Every image sent to OCR is a canvas re-encode (JPEG 0.8); the sample #9 assets are a jpeg-js decode + re-encode (no metadata segments).",
+      "test": "web e2e ocr-position-confidence (upload with an injected EXIF APP1 GPS marker; the posted bytes do not contain it)"
+    },
+    {
+      "stride": "I",
+      "scenario": "OCR egress before limits and the privacy acknowledgement",
+      "ruled_out": true,
+      "rationale": "Upload size/type/empty/page limits run before analysis; the open dialog requires the privacy acknowledgement; with no API base nothing is rendered or posted; the visitor OCR page cap from /api/quota stops posting; quota/budget errors mark pages unavailable.",
+      "test": "web e2e upload-limits; web e2e ocr-unavailable (0 /api/ocr requests in the preview build; quota and budget frames); web ocr-never-sends-pdf (visitor cap, no API base)"
+    },
+    {
+      "stride": "I",
+      "scenario": "PDFs or original files leave the browser",
+      "ruled_out": true,
+      "rationale": "buildOcrBody refuses anything that is not JPEG/PNG magic; the Worker returns 415 for application/pdf before any claim; only downscaled page JPEGs are posted.",
+      "test": "web test ocr-never-sends-pdf; worker test ocr-never-sends-pdf; web e2e ocr-render-path (posted base64 starts /9j/, never JVBER)"
+    },
+    {
+      "stride": "I",
+      "scenario": "API key in logs, recordings or precomputed files",
+      "ruled_out": true,
+      "rationale": "Key read from env only, sent only to the pinned openrouter.ai host with redirect error, never logged; error text redacted; recordings/precomputed files hold response content only; fixtures:check fails on key-like text.",
+      "test": "scripts test ocr-live-guard ('never print the key'); pnpm --filter @aduin/scripts fixtures:check; pnpm secrets:scan"
+    },
+    {
+      "stride": "E",
+      "scenario": "Live precompute runs paid or unbounded",
+      "ruled_out": true,
+      "rationale": "ALLOW_LIVE_LLM=1 + OCR_MAX_REQUESTS required; cap above the in-code ceiling (26) refused; :free allow-list; abort at usage.cost > 0 or a non-free served model; 429 stops the run; retries <= 4 and counted.",
+      "test": "scripts test ocr-live-guard (cost > 0, served model, missing cap, cap 31, 429, retry budget)"
+    }
+  ]
+}
