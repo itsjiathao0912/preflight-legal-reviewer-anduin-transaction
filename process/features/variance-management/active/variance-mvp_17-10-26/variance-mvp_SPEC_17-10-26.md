@@ -12,6 +12,8 @@ metadata:
 
 # SPEC delta: Variance management, slim MVP (V1 + V2)
 
+**Changelog 17-10-26:** the baseline now comes from the fund package (documents with role "baseline", intake U4), same law firm only; added L10, a Depends-on section and build order (intake first); AC-V1, AC-V8 and the flow updated. Everything else unchanged.
+
 **BLUF:** Today the app finds defects inside one document. This delta adds the question the analyst really asks
 on every new fund: "what is different from what we already know, what does it do to the form, and who must
 confirm it?" It compares a new document to the same law firm's earlier fund, hides cosmetic noise (214 raw changes
@@ -35,7 +37,12 @@ Sources: the user's PRD "Legal Reviewer" (sections 3, 6.2, 8, 9, 11, 12), the UI
 | L6 | Rules config (routing table, cosmetic-vs-logic criteria, gate policy) lives in a versioned, schema-validated config file. Its version/hash is recorded in finding provenance. No UI for it in the MVP |
 | L7 | Cut as future work: market-standard template baseline (Tier 2) and "Unusual vs market"; first-review logic groups; cross-doc mismatch; rules-in-effect UI; generalized regression checks; 3-state gate; adversarial investor personas (PRD F13); multi-document cross-check (PRD F14) |
 | L8 | Carried constraints: free models only; AI never gates and must quote real text; memory never crosses law firms or workspaces; other firms' documents are never a baseline; deterministic results reproducible; Cloudflare Workers Free + D1; TypeScript stack (the PRD's Python/Streamlit suggestion is NOT adopted) |
+| L10 | Baseline source (17-10-26): the baseline is the document(s) marked role "baseline" in the current fund package (intake U4), same law firm only. The Findings "vs Fund II" control is a shortcut that changes that role in the package. No baseline in the package: Errors only, and the document becomes the firm's baseline (as L5). Prior funds in firm memory may be offered as candidates only if their text is available in the browser (24 h); otherwise the analyst adds the prior document to the package |
 | L9 | Demo: Hartwell & Crane LLP, Northgate Infrastructure Fund III vs Fund II baseline. Second real-data test: public samples #5 to #6 |
+
+## Depends On
+
+Depends on: **fund-package-intake (U1 to U9)** (`process/features/fund-package-intake/active/intake-mvp_17-10-26/intake-mvp_SPEC_17-10-26.md`): the package, the document role "baseline" (AC-I9) and the confirmation table. Build order: intake first, then variance V1 and V2. Prior funds from firm memory are only a candidate list; because full text lives in the browser for 24 h, an older fund must be re-added to the package to be compared.
 
 ## Summary
 
@@ -66,7 +73,7 @@ without guessing for the lawyer or the GP.
 
 | ID | As a... | I want... | So that... |
 |---|---|---|---|
-| VS1 | Analyst | to pick a baseline from this firm's earlier funds or versions of this fund | the app compares against the right precedent |
+| VS1 | Analyst | the baseline to be the package document I marked "baseline" (or an earlier same-firm fund whose text is in the browser) | the app compares against the right precedent |
 | VS2 | Analyst | cosmetic changes hidden by default, shown on request, grouped | I read 7 changes, not 214 |
 | VS3 | Analyst | each change labelled new / changed logic with old and new text and the quoted clause | I can verify it without hunting |
 | VS4 | Analyst | the effect on the form: affected investor types, affected conditional paths, whether the old form rule can be reused | I know the build impact before asking anyone |
@@ -83,7 +90,7 @@ without guessing for the lawyer or the GP.
 
 ## What The User Wants (Behavioral Outcomes)
 
-1. **Choose a baseline.** A baseline control in the Findings header lists only this firm's earlier documents (prior funds, prior versions). Documents of other firms never appear. One or more may be ticked.
+1. **Choose a baseline.** The baseline is the document(s) with role "baseline" in the current package (set at intake). The baseline control in the Findings header is a shortcut that changes that role in the package; it also offers this firm's earlier funds, but only those whose text is available in the browser. Otherwise the analyst adds the prior document to the package. Documents of other firms never appear.
 2. **See what changed, quietly.** Findings has a filter All / Errors / Changes. Changes shows only `new` and `changed_logic` rows. Cosmetic rows are off by default; a filter option reveals them as a few grouped rows with counts.
 3. **Read each change.** Expanding a change row shows old text above new text with removed and added words marked in text, not by colour alone, plus the quoted clause and location.
 4. **See the impact.** The row says which investor types are affected, which conditional paths are affected, and "old form rule reusable: yes/no". It is labelled "from the logic graph, deterministic".
@@ -102,9 +109,9 @@ Analyst journey (new steps marked V):
 ```
  [Open document: firm + fund + version] --> checks as today (Errors)
         |
-        V: does this firm have an earlier document?
+        V: does the package have a document with role "baseline" (same firm)?
         |--no--> "Errors only; this becomes the baseline" (muted line) ------------------+
-        |--yes--> pick baseline (Tier 1 only) --> raw diff (e.g. 214 changes)            |
+        |--yes--> baseline from package (header control edits the role) --> raw diff (e.g. 214 changes)  |
                          |                                                              |
                          V: classify each: new | changed_logic | changed_cosmetic        |
                          V: cosmetic hidden (filter reveals, grouped)                    |
@@ -141,8 +148,8 @@ Strategy tags as in the base SPEC: **FA** Fully-Automated, **H** Hybrid, **AP** 
 
 ### A. Baseline and classification (V1)
 
-**AC-V1. [P0] The baseline list contains only this firm's documents.** The baseline control offers prior funds and versions of the same law firm and workspace; documents of another firm or workspace are never offered or used, even if the text is identical.
-- proven by: `variance-baseline-same-firm-only-e2e` (two firms, same text); strategy: FA
+**AC-V1. [P0] The baseline comes from the package and is same-firm only.** The baseline is the document(s) marked role "baseline" in the current package (intake AC-I9); the Findings header control changes that role and may also list this firm's earlier funds whose text is in the browser. Documents of another firm or workspace are never offered or used, even if the text is identical.
+- proven by: `variance-baseline-from-package-e2e` (role set in package drives the diff; header control changes the role) plus `variance-baseline-same-firm-only-e2e` (two firms, same text); strategy: FA
 
 **AC-V2. [P0] Every change is classified.** Each raw change is exactly one of `new`, `changed_logic`, `changed_cosmetic`, with the matched old and new passages and the rule that decided it.
 - proven by: `variance-classification-contract` (property test: one class per change, evidence present); strategy: FA
@@ -162,7 +169,7 @@ Strategy tags as in the base SPEC: **FA** Fully-Automated, **H** Hybrid, **AP** 
 **AC-V7. [P0] Real-data case #5 to #6.** Units to Shares is cosmetic (hidden); class-specific fees are `changed_logic`; Appendix C removed is shown as a change; both swapped references fixed stay in the existing diff.
 - proven by: `variance-golden-05-06` (extends `golden-05-06-drift`); strategy: FA for classification, H for any AI wording
 
-**AC-V8. [P0] No baseline means Errors only.** A firm with no earlier document gets the muted line, an empty Changes filter and normal errors; after review that document is offered as the firm's baseline for the next one.
+**AC-V8. [P0] No baseline means Errors only.** A package with no baseline document gets the muted line, an empty Changes filter and normal errors; after review that document becomes the firm's baseline and is offered, when its text is in the browser, for the next one.
 - proven by: `variance-no-baseline-errors-only-e2e` (new firm, then second document finds the first as baseline); strategy: FA
 
 **AC-V9. [P0] Changes are never AI-gated.** Classification and the gate use deterministic results only; AI text appears only as labelled suggestions that quote real document text, and never changes class, owner or gate.
@@ -231,7 +238,7 @@ Strategy tags as in the base SPEC: **FA** Fully-Automated, **H** Hybrid, **AP** 
 | Question **owner** and link to its finding; one finding may have two questions | AC-V12, AC-V13 |
 | Answer gains **intent** (text) and **scope** (this fund only / firm template) | AC-V14 |
 | **Regression assertion** record: firm, source answer, source fund, the statement checked, last result per document (holds / violated / not applicable) with quote | AC-V16 |
-| Per-firm **baseline marker** on a document (earlier funds and versions of the firm; the first document of a firm) | AC-V1, AC-V8 |
+| **Baseline role** on a package document (from intake, same firm); firm's first document becomes baseline | AC-V1, AC-V8 |
 | **Rules config version and hash** on every variance finding | AC-V19 |
 | Append-only: nothing deleted, only revoked (as today) | base AC42 |
 
@@ -271,7 +278,7 @@ Strategy tags as in the base SPEC: **FA** Fully-Automated, **H** Hybrid, **AP** 
 | # | PRD question / assumption | Assumption used here | Effect if wrong |
 |---|---|---|---|
 | A1 | Law firms reuse templates across funds | Yes; the baseline is the same firm's prior fund | Changes view shows mostly "new"; value drops, nothing breaks |
-| A2 | Analyst can pick the right baseline | Yes; the app pre-checks the firm's most recent earlier document and the analyst can change it | Wrong baseline gives noisy changes; baseline shown in the header |
+| A2 | Analyst can pick the right baseline | Yes; the analyst marks the baseline in the package at intake (auto-suggest is future work) and can change it from the Findings header | Wrong baseline gives noisy changes; baseline shown in the header |
 | A3 | Some questions belong to GP or fund admin | Yes; routing table: drafting/ambiguity/meaning to counsel; thresholds/policy/investor types to GP; new structure or country to GP + counsel; AML/KYC to fund admin | Change table values; no code change |
 | A4 | How does the analyst find changes today? | Manually reading both versions | None; we target that pain |
 | A5 | Who contacts counsel? | The analyst, by sending the exported sheet | If the account manager or GP sends it, the export is still the artifact |
