@@ -28,7 +28,9 @@ type Run =
   | { state: 'done'; result: DiffResult; ms: number }
   | { state: 'error'; side: 'a' | 'b'; code: string };
 
-const COUNSEL_LATER = 'Available after counsel sheet (Phase 08)';
+/** Needs counsel is enabled only for a row linked to a finding of the open document. */
+const COUNSEL_NOT_LINKED =
+  'Only changes linked to a finding in the open document can be sent to counsel.';
 
 const KIND_ICON: Record<ItemKind, IconName> = {
   added: 'plus',
@@ -481,14 +483,16 @@ export function CompareScreen() {
             disabled={!counselEnabled}
             aria-pressed={flagged}
             title={
-              counselEnabled ? 'Add this finding to the counsel questions draft' : COUNSEL_LATER
+              counselEnabled
+                ? 'Add this finding to the counsel questions draft'
+                : COUNSEL_NOT_LINKED
             }
             onClick={() => counselEnabled && void needsCounsel(current.findingId!)}
           >
             <Icon name="counsel" />
             Needs counsel
           </button>
-          {!counselEnabled ? <span className="mut">{COUNSEL_LATER}</span> : null}
+          {!counselEnabled ? <span className="mut">{COUNSEL_NOT_LINKED}</span> : null}
         </div>
       </div>
     </>

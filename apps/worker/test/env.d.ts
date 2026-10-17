@@ -6,7 +6,7 @@ declare namespace Cloudflare {
     PAID_FALLBACK_ENABLED: string;
     /** Phase 04b: D1 migrations read by vitest.config.ts (readD1Migrations). */
     TEST_MIGRATIONS: import('cloudflare:test').D1Migration[];
-    /** Phase 04b: generated seed/demo.sql (one statement per line). */
+    /** Generated seed/test-seed.sql (Firm X/Y test spec; one statement per line). */
     DEMO_SEED_SQL: string;
   }
 }

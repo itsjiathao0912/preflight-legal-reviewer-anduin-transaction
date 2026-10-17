@@ -1,6 +1,7 @@
-// seed:check — regenerates migration 0003 and seed/demo.sql and diffs them against the committed
-// files. The demo seed is regenerated from the spec path RECORDED in the committed header (never
-// auto-selected), so a later Phase 02 `demo-seed-spec.json` cannot turn a committed seed red.
+// seed:check — regenerates migration 0003, seed/demo.sql and seed/test-seed.sql and diffs them
+// against the committed files. Each seed file must RECORD its expected spec (demo.sql ->
+// fixtures/memory/demo-seed-spec.json, test-seed.sql -> fixtures/memory/_test-seed-spec.json), so
+// the deployed demo seed can never silently fall back to the Firm X/Y test spec.
 // Also runs the guard:cf and secrets:scan `scanText` over every migration and the seed, since
 // the repo-wide guards skip `.sql` files.
 import { readdirSync, readFileSync } from 'node:fs';
@@ -13,7 +14,9 @@ import {
   REFERENCE_SQL_PATH,
   ROOT,
   generate,
+  SPEC_FOR,
   TEST_SPEC,
+  TEST_SQL_PATH,
   PHASE02_SPEC,
 } from './gen-demo-seed';
 
@@ -21,7 +24,7 @@ const SPEC_LINE = /^-- spec: (\S+)$/m;
 
 export function recordedSpecPath(demoSql: string): string {
   const m = SPEC_LINE.exec(demoSql);
-  if (!m?.[1]) throw new Error('seed/demo.sql has no "-- spec:" header line');
+  if (!m?.[1]) throw new Error('seed file has no "-- spec:" header line');
   const p = m[1];
   if (p !== TEST_SPEC && p !== PHASE02_SPEC) throw new Error(`unexpected recorded spec path ${p}`);
   return p;
@@ -45,19 +48,26 @@ export function checkSeed(root: string = ROOT): string[] {
       return null;
     }
   };
-  const committedDemo = read(DEMO_SQL_PATH);
   const committedRef = read(REFERENCE_SQL_PATH);
-  if (committedDemo !== null && committedRef !== null) {
-    const specPath = recordedSpecPath(committedDemo);
-    const fresh = generate(root, specPath);
-    if (fresh.reference !== committedRef)
+  if (committedRef !== null) {
+    const fresh = generate(root, PHASE02_SPEC).reference;
+    if (fresh !== committedRef)
       problems.push(
-        `${REFERENCE_SQL_PATH}: differs from the generator (${firstDiff(fresh.reference, committedRef)})`,
+        `${REFERENCE_SQL_PATH}: differs from the generator (${firstDiff(fresh, committedRef)})`,
       );
-    if (fresh.demo !== committedDemo)
-      problems.push(
-        `${DEMO_SQL_PATH}: differs from the generator (${firstDiff(fresh.demo, committedDemo)})`,
-      );
+  }
+  for (const rel of [DEMO_SQL_PATH, TEST_SQL_PATH]) {
+    const committed = read(rel);
+    if (committed === null) continue;
+    const want = SPEC_FOR[rel]!;
+    const recorded = recordedSpecPath(committed);
+    if (recorded !== want) {
+      problems.push(`${rel}: built from ${recorded}, expected ${want} (run pnpm seed:gen)`);
+      continue;
+    }
+    const fresh = generate(root, want).demo;
+    if (fresh !== committed)
+      problems.push(`${rel}: differs from the generator (${firstDiff(fresh, committed)})`);
   }
   const migDir = 'apps/worker/migrations';
   const sqlFiles = [
@@ -65,6 +75,7 @@ export function checkSeed(root: string = ROOT): string[] {
       .filter((f) => f.endsWith('.sql'))
       .map((f) => `${migDir}/${f}`),
     DEMO_SQL_PATH,
+    TEST_SQL_PATH,
   ];
   for (const rel of sqlFiles) {
     const text = read(rel);

@@ -40,11 +40,18 @@ The core has no DOM: root `eslint.config.js` bans `document`/`window` in `packag
 ## Pinned algorithms and final thresholds (all pinned values kept; no tuning)
 
 - **H (headings)**: title max 120 chars, no sentence-final period (abbrev exceptions `No|Inc|Ltd|Co|Corp.`); caps = >=80% uppercase letters (min 3) on the title minus parentheticals and trailing `*`; bold = >=60% of letters bold, measured after the number/`Part X`/`Appendix X`/`Section X` prefix and before the first `(`; gap acceptance prev+2..prev+3 (`gap: true`). Scope openers: `Appendix X`, `Signature Page(s)`, `Terms and/& Conditions`, `Instructions`, document-level `Part X`, and a reset to 1 after a larger number.
-- **R (ref-this-section)**: pattern `\bthis\s+Section\s+(\d{1,3}[A-Z]?)((?:\([a-z0-9]{1,6}\)){0,6})(?![.]\d|\d|\s+of\s)`; decimal sections excluded; guards (a) continuation-paragraph before bold "1." then (b); confidence 0.9, severity high.
-- **L (ref-label-coherence)**: window = last 4 raw tokens, strip non-alphanumerics, stopwords `{to,the,of,in,for,as,a,an,and,or,with,by}`, lowercase, singular-fold; fires iff p < 0.25 and t >= 0.5; confidence 0.7, severity high (cap). Label precision on non-golden docs is a Phase 02 item.
+- **R (ref-this-section)**: pattern `\bthis\s+Section\s+(\d{1,3}[A-Z]?)((?:\([a-z0-9]{1,6}\)){0,6})(?![.]\d|\d|\s+of\s)`; decimal sections excluded; guards (a) continuation-paragraph before bold "1." then (b); confidence 0.9; severity by routing context (see Severity of broken cross-references below).
+- **L (ref-label-coherence)**: window = last 4 raw tokens, strip non-alphanumerics, stopwords `{to,the,of,in,for,as,a,an,and,or,with,by}`, lowercase, singular-fold; fires iff p < 0.25 and t >= 0.5; confidence 0.7; severity by routing context (below). The explanation text never prints the fit scores (`cited_overlap`/`expected_overlap` stay in facts). Label precision on non-golden docs is a Phase 02 item.
 - **U (undefined-term)**: offering nouns `{Units, Unit, Interests, Interest, Stock, Common Stock, Shares, Share, Securities}`; fires only when exactly one offering family is defined; carve-out "not defined herein ... meanings given/ascribed/assigned to them in the <Name>" gives severity medium, confidence 0.6, 2 interpretations (0.75 without).
 - **S (statutory)**: 40-char marker window, `of the ... Act`, subsection chains `Section 3(c)(1)`, bare-repeat within 400 chars, Rule/U.S.C./C.F.R. are statutory, out-of-range numbers become `external`, decimal `Section 3.10` is internal-unresolved (recorded only).
 - Goldens on real samples: #1 = 2, #3 = 2, #5 = 2, #11 = 1 findings; zero extra `broken_cross_reference` on #1, #2, #5, #10, #12.
+
+## Severity of broken cross-references (demo-readiness, 17-10-26)
+
+- **Rule:** `ref-label-coherence` and `ref-this-section` emit **critical** (blocks digitization) when the reference is in a routing context, else **high**. `refRoutingContext(g, blockIndex)` in `detectors/util.ts`, in priority order: `instructions` (block in an `instructions` scope), `answer option` (block kind `option` or member of an option group), `conditional` (block hosts a `structure.conditionals` entry); `null` otherwise. The value is recorded as fact `routing_context` (`none` when null). Detector max severity is `critical`.
+- **Why:** a wrong target inside a form instruction, an answer choice or a conditional sends the investor (or the digitized form logic) to the wrong place. A wrong pointer in body/representation text is a drafting error the analyst still flags, but it does not mis-route the form.
+- **Corpus effect (12 HTML samples):** only the 4 swapped Part B refs on #3/#5 change (high -> critical, all `instructions` + `answer option`); #1 "this Section 11" (2 findings, body list item in Section 12) stays high. No other sample has a broken cross-reference finding. Fund fixtures (6/8/8, 62.5%), seeded matrix, fingerprints, finding ids, pattern keys, AI candidates and recordings are unchanged (none depend on severity or explanation text).
+- AI findings still never gate (cap high, L4) and `computeGate` stays critical-only.
 
 ## Frozen Contracts v1 (`contracts/`)
 

@@ -319,6 +319,12 @@ nav.snav ul {
   background: var(--ok-bg);
   color: var(--ok-fg);
 }
+/* no document open: neutral, never the green Ready state */
+.gate.none {
+  background: var(--panel);
+  color: var(--ink-3);
+  font-weight: 500;
+}
 .gate svg:first-child {
   width: 18px;
   height: 18px;
@@ -352,7 +358,8 @@ nav.snav ul {
   line-height: 16px;
   padding: 0 4px;
 }
-.app.rail .gate.ready .gn {
+.app.rail .gate.ready .gn,
+.app.rail .gate.none .gn {
   display: none;
 }
 .airow {

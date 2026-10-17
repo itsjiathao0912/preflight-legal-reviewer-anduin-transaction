@@ -1,15 +1,17 @@
 import { Icon } from '../components/ui/icon';
 import { Popover } from '../components/ui/popover';
+import { gatePillView } from '../features/gate/gate-pill';
 import { useGatePopover } from '../features/gate/gate-store';
 import { GateReasons } from '../features/gate/GateReasons';
 import { useReviewView } from '../features/review/use-review-view';
+import { useReview } from '../state/review';
 
 export function GateButton() {
   const open = useGatePopover((s) => s.open);
   const setOpen = useGatePopover((s) => s.setOpen);
+  const hasDocument = useReview((s) => s.result !== null);
   const { gate, rows } = useReviewView();
-  const n = gate.reasons.length;
-  const blocked = gate.status === 'blocked';
+  const v = gatePillView(hasDocument, gate);
   return (
     <Popover
       open={open}
@@ -20,25 +22,28 @@ export function GateButton() {
       side="right"
       align="end"
       trigger={
-        <button className={blocked ? 'gate' : 'gate ready'} type="button" data-testid="gate-button">
-          <Icon name={blocked ? 'lock' : 'unlock'} />
-          <span className="lbl">{blocked ? `Blocked · ${n}` : 'Ready to digitize'}</span>
-          {blocked ? (
+        <button
+          className={v.className}
+          type="button"
+          data-testid="gate-button"
+          data-gate-state={v.state}
+        >
+          <Icon name={v.icon} />
+          <span className="lbl">{v.label}</span>
+          {v.state === 'blocked' ? (
             <span className="gn" aria-hidden="true">
-              {n}
+              {gate.reasons.length}
             </span>
           ) : null}
           <Icon name="chev" />
         </button>
       }
     >
-      <h2>{blocked ? 'Digitization is blocked' : 'All critical items are resolved'}</h2>
-      <p>
-        {blocked
-          ? 'These critical items are not resolved. Select one to go to it.'
-          : 'Every item that blocks digitization has been dismissed with a reason or answered by counsel.'}
-      </p>
-      <GateReasons reasons={gate.reasons} rows={rows} onGo={() => setOpen(false)} />
+      <h2>{v.title}</h2>
+      <p>{v.body}</p>
+      {v.state === 'none' ? null : (
+        <GateReasons reasons={gate.reasons} rows={rows} onGo={() => setOpen(false)} />
+      )}
     </Popover>
   );
 }

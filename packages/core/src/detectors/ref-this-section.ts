@@ -3,7 +3,7 @@ import { buildFinding, patternKey } from '../findings/make-finding';
 import type { Finding } from '../findings/schema';
 import { labelOf } from '../structure/headings';
 import type { Detector, ExplainFacts } from './registry';
-import { fact } from './util';
+import { fact, refRoutingContext, refSeverity } from './util';
 
 /**
  * R. ref-this-section (AC11): "this Section N" whose cited N differs from the
@@ -19,7 +19,8 @@ function explain(f: ExplainFacts): string {
 export const refThisSection: Detector = {
   id: REF_THIS_SECTION_ID,
   class: 'broken_cross_reference',
-  severity: 'high',
+  // maximum: critical in a routing context (instructions / answer option / conditional), else high
+  severity: 'critical',
   explain,
   patternKey: () => patternKey(REF_THIS_SECTION_ID, 'this-section'),
   run(g: DocGraph): Finding[] {
@@ -34,12 +35,14 @@ export const refThisSection: Detector = {
       const block = g.structure.blocks[r.blockIndex]!;
       if (block.kind === 'list_item' && info.listNumber === r.sectionNumber) continue;
       if (r.sectionNumber === enc.number) continue;
+      const ctx = refRoutingContext(g, r.blockIndex);
       const facts: ExplainFacts = {
         reference: r.ref.text,
         cited_section: r.sectionNumber,
         enclosing_section: enc.number,
         enclosing_title: labelOf(enc.title),
         expected: enc.number,
+        routing_context: ctx ?? 'none',
       };
       r.ref.status = 'suspicious';
       r.ref.expected = { sectionNumber: enc.number, label: labelOf(enc.title) };
@@ -47,7 +50,7 @@ export const refThisSection: Detector = {
         buildFinding(g, {
           detectorId: REF_THIS_SECTION_ID,
           issueClass: 'broken_cross_reference',
-          severity: 'high',
+          severity: refSeverity(ctx),
           confidence: 0.9,
           blockIndex: r.blockIndex,
           matchStart: r.start,

@@ -9,7 +9,9 @@ import { defineConfig } from 'vitest/config';
 // by test/setup.ts (idempotent), so every test file sees the real schema on local D1 (SQLite).
 const here = (p: string) => fileURLToPath(new URL(p, import.meta.url).href);
 const migrations = await readD1Migrations(here('./migrations'));
-const demoSeed = readFileSync(here('./seed/demo.sql'), 'utf8');
+// Firm X/Y test seed (fixtures/memory/_test-seed-spec.json); the deployed seed/demo.sql (Partners
+// Group, bundled samples) is exercised by the stack-memory e2e project instead.
+const demoSeed = readFileSync(here('./seed/test-seed.sql'), 'utf8');
 
 export default defineConfig({
   plugins: [

@@ -4,7 +4,7 @@ import type { Finding } from '../findings/schema';
 import { labelOf } from '../structure/headings';
 import type { RefInfo, Scope } from '../structure/types';
 import type { Detector, ExplainFacts } from './registry';
-import { fact } from './util';
+import { fact, refRoutingContext, refSeverity } from './util';
 
 /**
  * L. ref-label-coherence (AC12): "<noun window> indicated|specified|set forth|described in
@@ -148,13 +148,14 @@ export function scoreReference(g: DocGraph, r: RefInfo): LabelScore | null {
 }
 
 function explain(f: ExplainFacts): string {
-  return `"${fact(f, 'noun_window', 'the cited words')}" is said to be in ${fact(f, 'reference', 'the cited target')}, but that target is "${fact(f, 'cited_label', '(missing)')}" (fit ${fact(f, 'cited_overlap', 'n/a')}); it fits ${fact(f, 'expected_target', 'another target')} better (fit ${fact(f, 'expected_overlap', 'n/a')}).`;
+  return `"${fact(f, 'noun_window', 'the cited words')}" is said to be in ${fact(f, 'reference', 'the cited target')}, but that target is "${fact(f, 'cited_label', '(missing)')}"; it fits ${fact(f, 'expected_target', 'another target')} better.`;
 }
 
 export const refLabelCoherence: Detector = {
   id: REF_LABEL_COHERENCE_ID,
   class: 'broken_cross_reference',
-  severity: 'high',
+  // maximum: critical in a routing context (instructions / answer option / conditional), else high
+  severity: 'critical',
   explain,
   patternKey: (f) =>
     patternKey(REF_LABEL_COHERENCE_ID, `part-${String(f.cited_part ?? 'x')}-of-section`),
@@ -163,6 +164,7 @@ export const refLabelCoherence: Detector = {
     for (const r of g.structure.references) {
       const s = scoreReference(g, r);
       if (!s || !s.fire || !s.best) continue;
+      const ctx = refRoutingContext(g, r.blockIndex);
       const facts: ExplainFacts = {
         reference: r.ref.text,
         noun_window: s.window.join(' '),
@@ -173,6 +175,7 @@ export const refLabelCoherence: Detector = {
         expected_target: s.best.display,
         expected_label: s.best.label,
         expected_overlap: Number(s.t.toFixed(2)),
+        routing_context: ctx ?? 'none',
       };
       r.ref.status = 'suspicious';
       r.ref.expected = { sectionNumber: s.best.sectionNumber, label: s.best.label };
@@ -181,7 +184,7 @@ export const refLabelCoherence: Detector = {
         buildFinding(g, {
           detectorId: REF_LABEL_COHERENCE_ID,
           issueClass: 'broken_cross_reference',
-          severity: 'high',
+          severity: refSeverity(ctx),
           confidence: LABEL_COHERENCE.confidence,
           blockIndex: r.blockIndex,
           matchStart: s.windowStart,

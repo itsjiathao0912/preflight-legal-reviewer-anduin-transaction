@@ -1,9 +1,11 @@
 // seed:gen — generates (1) apps/worker/migrations/0003_reference_seed.sql from core ISSUE_CLASSES,
 // LAW_FIRMS and normalizeFirmAlias, and (2) apps/worker/seed/demo.sql from a DemoSeedSpec using
 // core fingerprint/mask code, so seeds can never drift from the real formula.
-// Spec selection (seed:gen only): fixtures/memory/demo-seed-spec.json when present (Phase 02),
-// else fixtures/memory/_test-seed-spec.json. The chosen path is recorded in the demo.sql header;
-// seed:check regenerates from that RECORDED path and never auto-selects.
+// Spec per output (demo-readiness 17-10-26): apps/worker/seed/demo.sql (applied to the deployed
+// D1) is ALWAYS built from fixtures/memory/demo-seed-spec.json (Partners Group, quotes from
+// bundled samples #3/#5/#6); apps/worker/seed/test-seed.sql (Worker vitest fixture only, Firm X/Y)
+// is built from fixtures/memory/_test-seed-spec.json. Each file records its spec path in its
+// header; seed:check requires each file to record its own expected spec.
 // Every statement is emitted on one line (the worker test setup splits on newlines).
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -25,6 +27,8 @@ import {
 export const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../..');
 export const REFERENCE_SQL_PATH = 'apps/worker/migrations/0003_reference_seed.sql';
 export const DEMO_SQL_PATH = 'apps/worker/seed/demo.sql';
+/** Worker vitest seed (Firm X/Y test spec); never applied to a deployed database. */
+export const TEST_SQL_PATH = 'apps/worker/seed/test-seed.sql';
 export const PHASE02_SPEC = 'fixtures/memory/demo-seed-spec.json';
 export const TEST_SPEC = 'fixtures/memory/_test-seed-spec.json';
 export const DEMO_WORKSPACE_ID = 'ws_demo';
@@ -259,10 +263,11 @@ export function buildDemoSeedSql(spec: DemoSeedSpec, specPath: string): string {
   return out.join('\n') + '\n';
 }
 
-/** seed:gen only: Phase 02 spec when present, else the 04b test spec. */
-export function selectSpecPath(root: string = ROOT): string {
-  return existsSync(resolve(root, PHASE02_SPEC)) ? PHASE02_SPEC : TEST_SPEC;
-}
+/** The spec each generated seed file must be built from. */
+export const SPEC_FOR: Readonly<Record<string, string>> = Object.freeze({
+  [DEMO_SQL_PATH]: PHASE02_SPEC,
+  [TEST_SQL_PATH]: TEST_SPEC,
+});
 
 export function loadSpec(root: string, specPath: string): DemoSeedSpec {
   const raw: unknown = JSON.parse(readFileSync(resolve(root, specPath), 'utf8'));
@@ -270,6 +275,7 @@ export function loadSpec(root: string, specPath: string): DemoSeedSpec {
 }
 
 export function generate(root: string, specPath: string): { reference: string; demo: string } {
+  if (!existsSync(resolve(root, specPath))) throw new Error(`seed spec ${specPath} is missing`);
   return {
     reference: buildReferenceSql(),
     demo: buildDemoSeedSql(loadSpec(root, specPath), specPath),
@@ -277,16 +283,16 @@ export function generate(root: string, specPath: string): { reference: string; d
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
-  const specPath = selectSpecPath();
-  const { reference, demo } = generate(ROOT, specPath);
+  const { reference, demo } = generate(ROOT, PHASE02_SPEC);
+  const test = generate(ROOT, TEST_SPEC).demo;
   for (const [rel, text] of [
     [REFERENCE_SQL_PATH, reference],
     [DEMO_SQL_PATH, demo],
+    [TEST_SQL_PATH, test],
   ] as const) {
     const abs = resolve(ROOT, rel);
     mkdirSync(dirname(abs), { recursive: true });
     writeFileSync(abs, text);
-    console.log(`seed:gen: wrote ${rel}`);
+    console.log(`seed:gen: wrote ${rel}${SPEC_FOR[rel] ? ` (spec ${SPEC_FOR[rel]})` : ''}`);
   }
-  console.log(`seed:gen: spec ${specPath}`);
 }

@@ -207,10 +207,13 @@ test.describe('diff-pairs', () => {
     await pickPair(page, V5, V6);
     await waitDiff(page);
     const counsel = page.getByTestId('cmp-counsel');
-    // diff-only row: disabled with the Phase 08 tooltip
+    // diff-only row (no linked finding): disabled with the not-linked tooltip
     await page.locator('[data-testid="cmp-item"][data-group="renames"]').first().click();
     await expect(counsel).toBeDisabled();
-    await expect(counsel).toHaveAttribute('title', 'Available after counsel sheet (Phase 08)');
+    await expect(counsel).toHaveAttribute(
+      'title',
+      'Only changes linked to a finding in the open document can be sent to counsel.',
+    );
     // findings-delta row of the open document (#6): enabled, toggles the triage
     await page.locator('[data-testid="cmp-item"][data-kind="still"]').first().click();
     await expect(counsel).toBeEnabled();

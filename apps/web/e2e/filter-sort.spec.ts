@@ -78,14 +78,15 @@ test.describe('filter-sort', () => {
   test('should keep filter state after reload', async ({ page }) => {
     await gotoApp(page);
     await openSample(page, '03');
-    await page.getByTestId('severity-chip-fix').click();
+    // the 2 swapped Part B refs on #3 are critical (instructions scope, demo-readiness 17-10-26)
+    await page.getByTestId('severity-chip-block').click();
     await page.getByTestId('filter-button').click();
     await page.getByTestId('filter-status').selectOption('open');
     await page.getByTestId('filter-sort').selectOption('cls');
     await page.getByTestId('filter-detector').selectOption('ref-label-coherence');
     await page.keyboard.press('Escape');
     await page.reload();
-    await expect(page.getByTestId('severity-chip-fix')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByTestId('severity-chip-block')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByTestId('filter-count')).toContainText('3');
     await openSample(page, '03');
     await page.getByTestId('filter-button').click();

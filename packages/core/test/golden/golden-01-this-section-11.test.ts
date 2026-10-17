@@ -38,6 +38,9 @@ describe('golden-01-this-section-11 (AC11, sample #1)', () => {
       expect(f.detail.facts.expected).toBe('12');
       expect(f.detail.expected).toMatch(/^Section 12 \(Qualified Client Status/);
       expect(f.section_path.join(' > ')).toMatch(/^12\. Qualified Client Status/);
+      // demo-readiness 17-10-26: a body representation paragraph (no instructions scope, option
+      // or conditional) -> stays high; the investor still answers Section 12's own tests.
+      expect(f.detail.facts.routing_context).toBe('none');
       expect(f.severity).toBe('high');
     }
   });

@@ -68,17 +68,49 @@ test.describe('gate-pill', () => {
     await expect(page.getByTestId('gate-button')).toHaveText(new RegExp(`Blocked · ${n}`));
   });
 
-  test('gate popover reasons jump to the finding; ready state when nothing blocks', async ({
+  test('no document open: the pill is neutral (never the green Ready state)', async ({ page }) => {
+    await gotoApp(page);
+    const gate = page.getByTestId('gate-button');
+    await expect(gate).toHaveText(/No document/);
+    await expect(gate).not.toHaveText(/Ready to digitize/);
+    await expect(gate).toHaveAttribute('data-gate-state', 'none');
+    await expect(gate).not.toHaveClass(/ready/);
+    await gate.click();
+    await expect(page.getByTestId('gate-popover')).toContainText('No document open');
+    await expect(page.getByTestId('gate-reason')).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    // a document with nothing critical (#6) -> Ready
+    await openSample(page, '06');
+    expect(engineFindings('06').some((f) => f.severity === 'critical')).toBe(false);
+    await expect(gate).toHaveText(/Ready to digitize/);
+    await expect(gate).toHaveAttribute('data-gate-state', 'ready');
+  });
+
+  test('real #5 blocks with no forced severity: the 2 swapped instruction refs are critical', async ({
     page,
   }) => {
     await gotoApp(page);
-    await expect(page.getByTestId('gate-button')).toHaveText(/Ready to digitize/);
+    await openSample(page, '05');
+    const critical = engineFindings('05').filter((f) => f.severity === 'critical');
+    expect(critical.map((f) => f.detector_id)).toEqual([
+      'ref-label-coherence',
+      'ref-label-coherence',
+    ]);
+    await expect(page.getByTestId('gate-button')).toHaveText(new RegExp(`Blocked · 2`));
+    await expect(page.getByTestId('gate-button')).toHaveAttribute('data-gate-state', 'blocked');
+  });
+
+  test('gate popover reasons jump to the finding', async ({ page }) => {
+    await gotoApp(page);
     const b = goldens('05')[1]!;
-    await forceSeverity(
-      page,
-      'critical',
-      engineFindings('05').findIndex((f) => f.id === b.id),
-    );
+    // only b is critical; every other finding (incl. the other golden) is forced to high
+    await page.evaluate((id) => {
+      const h = (window as unknown as { __aduinE2E: { transform: (fn: unknown) => void } })
+        .__aduinE2E;
+      h.transform((fs: { id: string; severity: string }[]) =>
+        fs.map((f) => ({ ...f, severity: f.id === id ? 'critical' : 'high' })),
+      );
+    }, b.id);
     await openSample(page, '05');
     await page.getByTestId('nav-structure').click();
     await page.getByTestId('gate-button').click();

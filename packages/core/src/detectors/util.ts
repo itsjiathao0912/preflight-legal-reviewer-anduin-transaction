@@ -1,6 +1,7 @@
 import type { DocGraph } from '../graph/graph';
 import { mask, sensitiveSpans } from '../memory/mask';
 import { snapToSentence } from '../memory/snap';
+import type { Severity } from '../findings/severity';
 import type { ExplainFacts } from './registry';
 
 /** Shared helpers for the Phase 02 detectors (pure, linear-time). */
@@ -146,4 +147,26 @@ export function sectionIndex(g: DocGraph): SectionIndex {
   const idx = { all, byScope, parts };
   sectionIndexCache.set(g, idx);
   return idx;
+}
+
+/**
+ * Routing context of a cross-reference (demo-readiness 17-10-26): where a wrong reference
+ * sends the investor or the analyst to the wrong place. `instructions` = the block sits in an
+ * instructions scope; `answer option` = the block is a selectable option; `conditional` = the
+ * block hosts a conditional ("If ..., complete Section N"). `null` = body / representation text.
+ */
+export type RefRoutingContext = 'instructions' | 'answer option' | 'conditional';
+
+export function refRoutingContext(g: DocGraph, blockIndex: number): RefRoutingContext | null {
+  if (g.structure.info[blockIndex]?.scope.kind === 'instructions') return 'instructions';
+  if (g.structure.blocks[blockIndex]?.kind === 'option') return 'answer option';
+  if (g.structure.optionGroups.some((o) => o.blockIndices.includes(blockIndex)))
+    return 'answer option';
+  if (g.structure.conditionals.some((c) => c.blockIndex === blockIndex)) return 'conditional';
+  return null;
+}
+
+/** Broken cross-reference severity: critical (blocks digitization) in a routing context, else high. */
+export function refSeverity(ctx: RefRoutingContext | null): Severity {
+  return ctx ? 'critical' : 'high';
 }
