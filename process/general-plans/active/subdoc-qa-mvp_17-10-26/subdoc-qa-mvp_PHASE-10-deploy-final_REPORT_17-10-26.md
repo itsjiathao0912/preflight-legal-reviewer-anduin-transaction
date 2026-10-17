@@ -158,3 +158,10 @@ Session ledger: smoke 1, probe:live-session 2 claimed. No real `POST /api/sessio
 
 ### Rollback
 `wrangler rollback 4325e4e4-9aca-4ae8-8985-cc0b73097c3e`; `wrangler secret delete TURNSTILE_SECRET`; delete the widget by site key; drop `aduin-transaction-db`.
+
+## Wave D results (17-10-26, HEAD 38a3b2f)
+
+- Screenshots: `docs/demo/img/02-shell.png` only (read-only run, 1440x900, no session). `shots:live` shows only the empty hash views (no document open), and a throwaway probe that opened sample 5 stayed on "Reading the document" with the Turnstile prompt showing, so the other shots were discarded. Shots 1 and 3-16 are marked "capture manually" in `docs/demo/storyboard.md`; slides.html shows "(capture manually)" for the findings shot.
+- Placeholders: all `P10:FILL` markers filled in README.md, docs/DEPLOY.md, docs/demo/script.md, storyboard.md, slides.html (live version 67c796ff, D1 and Turnstile live, test counts, rows_written 238 baseline, known misses added: Turnstile in automation, CPU p99 16 ms, D4 burst not run, live AI sweep pending).
+- Gates: `grep P10:FILL` empty; `pnpm guard:cf` OK; `pnpm secrets:scan` OK; `pnpm lint` OK (eslint + prettier).
+- Note: web unit count written as 214 per the handoff; the AE section recorded 210 before later additions.

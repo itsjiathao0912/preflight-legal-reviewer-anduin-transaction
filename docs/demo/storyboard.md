@@ -25,6 +25,6 @@ Route note: Firm memory is reached through the sidebar nav. A direct `#memory` l
 | 15 | `docs/` README known-misses section, or slide 11 | Hold | "What it does not do yet" | 0:20 | `img/15-known-misses.png` |
 | 16 | Closing slide | Hold | "Free models, free tier, browser-side parsing" | 0:15 | `img/16-close.png` |
 
-<!-- P10:FILL storyboard-capture: Wave D replaces any shot that cannot be captured on the live site and confirms filenames -->
+Capture status: only `img/02-shell.png` was captured automatically (read-only run, no session, 1440x900). Capture manually: shots 1, 3-16 (`img/01-title.png`, `img/03-findings.png` through `img/16-close.png`). Opening a sample on the live site needs a Turnstile-verified session, which automated Chromium cannot obtain.
 
 Total about 4:35. Capture at 1440x900; also keep a 1024 px set only if a shot looks cramped.

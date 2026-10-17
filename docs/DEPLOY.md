@@ -15,8 +15,8 @@ Target: one Cloudflare Worker `aduin-transaction-web` on `*.workers.dev`, Worker
 | Web build var | `VITE_TURNSTILE_SITE_KEY` | public Turnstile site key, read at web build time; not a secret |
 
 Live URL: https://aduin-transaction-web.giathaowork.workers.dev
-<!-- P10:FILL deploy-version: final Worker version id and date -->
-<!-- P10:FILL d1-id: real D1 database id is recorded in wrangler.jsonc (not here) -->
+Live Worker version: 67c796ff-477c-4900-ba89-4ff3109e0c56 (code 38a3b2f), deployed 2026-10-17. Previous version for rollback: 4325e4e4-9aca-4ae8-8985-cc0b73097c3e.
+D1 `aduin-transaction-db` is live with migrations 0001-0005; its id is recorded in `apps/worker/wrangler.jsonc`.
 
 ## Prerequisites
 

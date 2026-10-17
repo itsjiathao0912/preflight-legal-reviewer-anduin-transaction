@@ -6,8 +6,9 @@ graph, finds what would break a digitized form, and turns confirmed issues into 
 that blocks digitization until the critical items are answered.
 
 Live demo: https://aduin-transaction-web.giathaowork.workers.dev
-<!-- P10:FILL live-version-id: Worker version id of the final deploy, e.g. "Version 1234abcd-..." -->
-<!-- P10:FILL live-status: one line on what is live (D1 + Turnstile on or off), from the final smoke -->
+Live version: 67c796ff-477c-4900-ba89-4ff3109e0c56 (code 38a3b2f).
+Live status: D1 `aduin-transaction-db` is live (schema v5, demo seed of 3 law firms, 1 workspace, 3 firm rules, 8 decisions),
+the Turnstile managed widget is live, and CSP is enforced (`style-src` keeps `unsafe-inline` for Radix). The zero-upstream smoke run passed.
 
 ## What and why
 
@@ -31,7 +32,7 @@ This tool does the mechanical part deterministically and shows its evidence, the
    exports as JSON.
 6. **Firm memory** remembers earlier decisions for a law firm and proposes a rule after three matching
    dismissals. Reach it from the sidebar (a direct `#memory` link lands on Findings on first load by design:
-   routes are never persisted). <!-- P10:FILL memory-live: memory is shared and writable on the live site only once D1 is live -->
+   routes are never persisted). Memory is shared and writable on the live site (D1 is live), behind the visitor session and Turnstile.
 
 Screenshots: `docs/demo/img/` (added at final deploy). Video and slides: `docs/demo/`.
 
@@ -93,8 +94,8 @@ Secrets stay outside the repo. For local AI, put `OPENROUTER_API_KEY` in the git
 | Live smoke                            | `SLICE_BASE_URL=https://aduin-transaction-web.giathaowork.workers.dev pnpm --filter @aduin/web exec playwright test --project=stack` |
 | Safety guards                         | `pnpm guard:cf` and `pnpm secrets:scan`                                                                                              |
 
-There is no CI pipeline; every gate runs locally. Last recorded counts (Phase 08b closeout): core 2,914, worker 525,
-web unit 196. <!-- P10:FILL test-counts: final counts from the Wave B run -->
+There is no CI pipeline; every gate runs locally. Final counts: core 2,914, worker 525, web unit 214, scripts 120+ (87 of them live-script tests),
+preview e2e 171 passed plus 1 opt-in skip, stack-memory 10. The tool has 13 detectors covering 15 issue classes.
 
 ## Cost and limits
 
@@ -103,7 +104,7 @@ web unit 196. <!-- P10:FILL test-counts: final counts from the Wave B run -->
 - Per visitor per UTC day: 3 fresh-AI documents, 8 AI requests, 6 OCR pages. A global daily provider allowance caps
   everything else. Bundled samples use precomputed AI and OCR results and make zero upstream calls.
 - Hosted on Cloudflare Workers Free with D1 Free; the binding limit is D1 `rows_written` (100k per day), handled by
-  write caps that refuse rather than overspend. <!-- P10:FILL d1-rows: remote rows_written measurement from the Wave C probe -->
+  write caps that refuse rather than overspend. Remote baseline measured at 238 `rows_written` for the day (migrations plus seed); the burst test was not run.
 
 ## Privacy and retention
 
@@ -128,7 +129,11 @@ Honest list of what the tool does not do or gets wrong today.
 - **Edit of finding text or severity (B-EDIT)** is not built; you can accept, dismiss or send to counsel.
 - **Live AI quality is unproven at scale:** one capped live sweep only; counsel drafts and drift narratives
   were not measured against a human. OCR ground truth was transcribed by an agent and live OCR confidence is flat.
-  <!-- P10:FILL live-quality: summary of the Wave C quality sweep -->
+  The live AI sweep was not run in Phase 10: automated browsers cannot get a Turnstile token. Samples 1 and 3 have
+  precomputed AI and recorded results; a human-operator live run is still pending and is a known miss.
+- **Automated browsers cannot get a Turnstile token**, so live AI and OCR from CI or scripts is untested.
+- **Worker CPU p99 was 16 ms**, above the 10 ms Free limit, with 0 errors observed (p50 1.6 ms).
+- **D4 burst (rows_written under load) was not measured.**
 - Investor-path detectors have no human-checked ground truth. The `#documents` screen is still a placeholder.
 
 ## Not built for production
