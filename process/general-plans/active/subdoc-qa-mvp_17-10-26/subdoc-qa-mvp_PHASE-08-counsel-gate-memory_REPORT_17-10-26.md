@@ -244,3 +244,85 @@ Red evidence: the tests were written after the code (same step). As a check, I m
 - **Bootstrap:** call `RealMemoryApi.bootstrap(storedName)` at startup when `isRealMemoryApi(memoryApi())`. Without this call, the client bootstraps itself with `Linh Tran` before the first lookup.
 - **Commands to stay green:** the gate table above.
 - **Dependencies:** none added.
+
+## S2 - Integration (2026-10-17, HEAD 84cdb49 + working tree, no commit)
+
+TL;DR: decisions, revokes and counsel answers now go through the outbox; the session uses the stored analyst name; the real Counsel questions view, gate links, DOCX export, metrics panel, audit list and unsynced chip are in. All S2 gates are green, including the whole preview e2e (114 passed, 1 skipped) and `pnpm slice:check`. One pre-existing S1 regression was found and fixed (see Deviations 1).
+
+### Files
+
+| File | Change |
+|---|---|
+| `apps/web/src/state/memory-sync.ts` (new) | App-wide `Outbox` (started once), `useSync` (unsynced count, deferred flag, last refusal), `flushOutbox`, `outboxDocFor` (doc key; `settings_hash` = sha256 of `aduin-web/settings@1`), `toFindingWire` (drops `quote` and display fields), `setFindingsProvider`, `onSyncEvent`, `writesDisabled`. Session: `loadAnalystName` (Dexie uiState `session:analystName`, default `Linh Tran`), `ensureSession` (one `bootstrap(name)` per real client, before the first memory call; sets `readOnly` from the response and on `onSession`), `changeAnalystName` |
+| `apps/web/src/state/session.ts` | `ANALYST_NAME` removed -> `DEFAULT_ANALYST_NAME`, `analystName`, `readOnly` (the named `useSession().readOnly` accessor), `setAnalystName`, `setReadOnly`, `cleanAnalystName` (trim, 1-80) |
+| `apps/web/src/state/review.ts` | `decide` -> `outbox.enqueueDecide` (optimistic `pending:<op>` id, `decided_by_name` = session name); `revoke` -> `enqueueRevoke` (pending ids cancel or queue) + flush; new `recordAnswer` (A/B/C/unclear + note + who + when; `enqueueAnswer` with the stored question id or a question to create at send time; undoable; toast "Answer recorded. N items left on the gate."); t0 captured at the top of `openDocument`, `recordOpen(docHash, t0)` once the hash exists; before the lookup: `ensureSession()` (firm documents only) + `flushOutbox()`; wire findings cached per document at enqueue time (last 4 docs) so an op that drains after a switch still persists its findings; 409 conflict -> memory refresh. No-firm and read-only: triage stays local, nothing queued |
+| `apps/web/src/features/review/gateInterim.ts` | Thin re-export: `computeGate as gateInterim`, `GATE_REASON_TEXT`, types `TriageStatus GateReasonKind GateFinding GateState GateReason GateResult` (E13 names) |
+| `apps/web/src/features/review/model.ts` | `computeGate` passes `detector_kind` (E4); `Triage` gains optional `counselNote`, `answeredBy`, `answeredAt`, `answerId` |
+| `apps/web/src/features/counsel/**` (new) | `CounselScreen.tsx`, `QuestionRow.tsx`, `AnswerForm.tsx`, `PriorCard.tsx`, `ExportDialog.tsx`, `sheet-model.ts`, `counsel-store.ts` (drafts in Dexie `drafts` as `counsel:{docId}`), `ai-draft.ts` (`task: 'counsel-draft'`, masked candidates, `lawFirmId: null`), `exportDocx.ts` (lazy `import('docx')`, `Packer.toBlob`), `export-flow.ts`, `question-ids.ts` (uiState `questions:{docId}`) |
+| `apps/web/src/features/gate/**` (new) | `GateReasons.tsx` (links into counsel or findings; reconfirm text "Dismissed in [fund], re-confirm"; "Awaiting counsel (asked in [fund])"), `gate-store.ts` (shared popover open state) |
+| `apps/web/src/features/metrics/**` (new) | `metrics-store.ts` (`metrics:{docHash}`: t0 rewritten until the first export; first export only; `computeMetrics`), `MetricsPanel.tsx` |
+| `apps/web/src/features/audit/AuditList.tsx` (new) | Presentational `AuditList({events, loading?, onMore?})`, no fetching, labels for all `AUDIT_ACTIONS` |
+| `apps/web/src/shell/{AnalystBadge,GateButton,Sidebar,UnsyncedChip}.tsx` | Inline dismissible name edit; GateButton uses `GateReasons` + shared open state; unsynced chip (hidden at 0) between the gate and the AI switch |
+| `apps/web/src/features/ai/ai-lane.ts` | L5: `rulesEchoMismatch(meta, expected)`; on mismatch the cached rule texts are dropped (Retry re-reads), AI findings cleared, downgrade `rules_changed`; read-only sessions skip the check |
+| `apps/web/src/api/client.ts` | Preview (`--mode e2e`) build keeps the stub memory client even after `setApiBase('/')` (Deviation 1) |
+| `apps/web/src/features/registry.ts` | Appended `{id:'counsel', ..., component: CounselScreen}` after the Phase 07 compare entry |
+| `apps/web/src/icons/sprite.tsx`, `src/styles/counsel.css`, `src/index.css`, `src/main.tsx` | Icons `edit`, `pin`, `down` (from app.html); counsel/dialog/metrics/audit/chip styles ported from app.html (outside the hex-guarded dirs); `loadAnalystName()` at startup |
+| `apps/web/test/import-graph.test.ts` | ALLOWED += `computeGate`, `GATE_REASON_TEXT`, `buildCounselSheet`, `templateInterpretations`, `templateQuestionText`, `maskQuote`, `maskAndClamp`, `INTERPRETATION_MAX_CHARS`, `computeMetrics`, `sensitiveSpans` (all S1-core names) |
+| Repairs | `src/smoke.test.tsx` (counsel appended to the id list; `featureFor('counsel')` = `CounselScreen`), `e2e/placeholder-routes.spec.ts` (counsel row removed; "counsel is no longer a placeholder"), `e2e/a11y-smoke.spec.ts` (counsel view audited; placeholder audit moved to Firm memory). `app-shell.spec.ts` needed no change |
+| `apps/web/package.json`, `pnpm-lock.yaml` | `mammoth` 1.13.0 devDependency (single install) |
+| Tests (new) | `review-sync` (9), `counsel-export-contents` (3, node env, mammoth parse-back), `counsel-draft` (4), `gate-reexport` (4: re-export names, Phase 03 call shape, L4, L5 echo) |
+
+### A0 conformance (counsel UI vs app.html `#counsel`)
+
+Matches: header (title, "N questions · N unanswered", All / Unanswered segment, Export DOCX), compact gate line with "See reasons" (opens the sidebar gate popover) and the "Accepting a finding does not open the gate" tail, one row per question (severity icon, Qn, wording, tag New / Accepted / Answered / Unclear, ref), expanded body (masked quote with pin citation, A/B/C readings, provenance Template draft / AI suggestion / Edited by you, Edit wording with Ctrl/Cmd+Enter and Esc, reconfirm memory note, Record answer / Change answer form with A/B/C/unclear, note, Answered by, Date, validation message), collapsed "Already answered (n) · Awaiting counsel (n)" with "Not exported to counsel" and "Record counsel's answer" on awaiting items (D-3), export preview (summary "N unanswered questions go to counsel: x New, y Accepted", gate warning callout, item list, "Left out of this export (n)", Download DOCX, "DOCX is the only export format"). Questions = Needs counsel + Accepted blocking findings (app_NOTES). Differences (design autonomy): an "AI draft" toggle button in the header; a no-firm note "Memory needs a law firm tag ..." and a read-only note; a metrics panel under the sheet after the first export; the dialog is a Radix dialog with the mockup `.dlg/.dl` styling instead of a native `<dialog>`. E9/D-1: the preview and the DOCX list only unanswered New/Accepted questions; recorded answers show in the app only.
+
+### New test ids (for S3)
+
+Counsel: `counsel-view`, `counsel-meta`, `counsel-filter-all`, `counsel-filter-open`, `counsel-ai-draft`, `counsel-export`, `counsel-gate-line`, `counsel-gate-reasons`, `counsel-no-firm`, `counsel-read-only`, `counsel-empty`, `counsel-list`, `counsel-none`, `counsel-row` (`data-finding-id`, `data-state` new/accepted/answered/unclear), `counsel-row-toggle`, `counsel-question-text`, `counsel-quote`, `counsel-interp`, `counsel-provenance`, `counsel-ai-chip`, `counsel-template-chip`, `counsel-edited-chip`, `counsel-edit`, `counsel-edit-text`, `counsel-edit-save`, `counsel-edit-cancel`, `counsel-edit-reset`, `counsel-reconfirm-note`, `counsel-record`, `counsel-answer` (`data-option`), `counsel-prior-toggle`, `counsel-prior-list`, `counsel-prior` (`data-finding-id`, `data-kind` answered/awaiting), `counsel-prior-record`. Answer form: `answer-form`, `answer-option` (value A/B/C/unclear), `answer-note`, `answer-by`, `answer-date`, `answer-error`, `answer-save`, `answer-cancel`. Export: `export-dialog`, `export-summary`, `export-gate-warning`, `export-no-firm`, `export-preview`, `export-item` (`data-finding-id`), `export-left-out`, `export-error`, `export-close`, `export-download`. Metrics: `metrics-panel`, `metric-defects`, `metric-questions`, `metric-time`. Audit: `audit-list`, `audit-event` (`data-action`), `audit-empty`, `audit-more`. Shell: `unsynced-chip`, `analyst-name-edit`, `analyst-name-input`. Gate: `gate-reason` gains `data-target` (counsel/findings).
+
+### UI strings (new)
+
+"Counsel questions", "N question(s) · N unanswered", "AI draft" / "Drafting…", "Export DOCX", "Digitization is blocked · N critical item(s) open", "See reasons", "Accepting a finding does not open the gate. Only a counsel answer does.", "Ready to digitize · every critical item is resolved", "Memory needs a law firm tag: answers stay in this browser and are not remembered for the next fund. Export still works.", "This demo workspace is read-only: answers and exports are not written to memory.", "No questions yet. Mark a finding \"Needs counsel\" in Findings and it appears here.", "Every question on this sheet has an answer. You can still export it.", "Template draft", "AI suggestion", "Edited by you", "Record answer", "Change answer", "Record counsel's answer", "Save answer", "Unclear: counsel could not answer. This keeps the gate blocked for a critical item.", "Choose an option or \"unclear\", and say who answered.", "Answer recorded. N items left on the gate." / "The gate is now Ready.", "Recorded as unclear. ...", "Export preview", "Left out of this export (n)", "Download DOCX", "Query sheet exported: N questions.", export failure messages (memory busy / unavailable / generic, "Nothing was marked as exported"), "The AI draft is not available right now. The template draft is used.", "Delivery metrics (first export)", "Defects found before build", "Questions batched", "Time to exportable sheet", "N unsynced" (+ "memory limit reached, retries tomorrow"), gate reasons "Dismissed in [fund], re-confirm" and "Awaiting counsel (asked in [fund])". Default "Answered by" is "Counsel, [firm name]".
+
+### Gates (S2, one token per call)
+
+| Gate | Result |
+|---|---|
+| `pnpm --filter @aduin/web test review-sync` | 9/9 |
+| `pnpm --filter @aduin/web test counsel-export-contents` | 3/3 |
+| `pnpm --filter @aduin/web test counsel-draft` | 4/4 |
+| `pnpm --filter @aduin/web test api-contract` | 32/32 |
+| `pnpm --filter @aduin/web test outbox` | 17/17 |
+| `pnpm --filter @aduin/web test import-graph` | 4/4 |
+| `pnpm --filter @aduin/web test source-guard` | 4/4 |
+| `pnpm --filter @aduin/web test smoke` | 2/2 |
+| `pnpm --filter @aduin/web test` (whole web unit) | 25 files, 173 tests |
+| `pnpm --filter @aduin/core test` | 76 files, 2914 tests |
+| `pnpm --filter @aduin/worker test` | 65 files, 525 tests |
+| `pnpm --filter @aduin/web test:e2e` (whole preview, single serial invocation) | 114 passed, 1 skipped (design-probe opt-in) |
+| `pnpm slice:check` | PASS (full) |
+| `pnpm typecheck`, `pnpm lint`, `pnpm guard:cf`, `pnpm secrets:scan` | clean / OK |
+
+Red evidence: tests were written right after the code. Mutation checks: with `cleanWording` not masking, `counsel-draft` fails 3/4; with `decide` returning null before enqueue, `review-sync` fails 2/9. Both restored and green. The first whole-preview run failed 10 AI specs (Deviation 1); the first `slice:check` failed on a console 503 (Deviation 2). Both were fixed and re-run green.
+
+### Deviations
+
+1. **`apps/web/src/api/client.ts` (S1 file) edited.** Since S1, `client.ts` picks the real Worker client whenever the API base is not `''`. The 10 preview AI specs (`ai-banners`, `ai-resume`, `auto-downgrade`, `provenance`, `sample-zero-calls`) call `setApiBase('/')` and intercept only `/api/ai` and `/api/quota`, so `firmRules` went to the preview server, failed, and the lane downgraded to `rules_unavailable`. S1 did not run the whole preview e2e, so this regression was already present at HEAD 84cdb49. Fix: the `--mode e2e` build (`IS_E2E`) keeps the Dexie stub. Production, vitest and the `stack`/`stack-memory` builds are unchanged (`realMemoryApi` 28/28 still green, including the client switch case).
+2. **Lazy bootstrap.** `bootstrap(storedName)` runs in `ensureSession()` just before the first memory call (lookup on a firm document, the first write, export), not eagerly at startup. An eager POST /api/session logged a 503 on the M1 local stack (no D1) and broke `slice.spec`'s "no console errors". Bootstrap still always precedes the first lookup.
+3. `stream-client.ts` was not edited: the optional `task` argument (default `clause-judgment`) already existed (Phase 07).
+4. The AI draft supplies the question wording. Interpretations A/B/C stay the template ones (the `counsel-draft` task returns only `drafts[].text`). The wording is masked and clamped to 500 characters (L6).
+5. "Answered by" (counsel) is stored only with the local triage. Memory `decided_by_name` is the analyst's session name.
+6. Undoing a changed answer restores the earlier answer only locally; the earlier memory decision stays revoked. This is a rare path.
+7. Answering an Awaiting-counsel prior item (D-3) creates a new question in the current run, then answers it. Prior question ids are not on `ActiveDecision`.
+8. The Counsel nav badge still counts Needs-counsel findings only (Phase 03 behaviour, kept so `triage-actions`/`app-shell` stay unchanged). It does not count Accepted blocking questions.
+9. The stub `createQuestions` does not write an `awaiting_counsel` decision. S3's `memory-prior-answer` / awaiting cases may need a stub extension (S3 scope).
+10. Extra test file `gate-reexport.test.ts` (the task's "gate re-export compatibility" test), which also covers the L5 echo helper.
+
+Backlog: `phase08-version-drift-questions` already exists (left unchanged). No new backlog stub.
+
+### Forward Preview (for S3)
+
+- **Test infra:** preview specs use the stub (`IS_E2E`) even after `setApiBase('/')`. AI draft e2e: `setApiBase('/')`, then fulfil `/api/ai` with the `counsel-draft` recording (task `counsel-draft`, candidate ids = finding ids). Export downloads go through `downloadBlob`; catch them with Playwright `page.waitForEvent('download')` and parse with mammoth. Metrics appear after the first export. Gate reasons carry `data-target`.
+- **Blast radius changes:** new dirs `features/{counsel,gate,metrics,audit}`, `state/memory-sync.ts`, `styles/counsel.css`.
+- **Commands to stay green:** the gate table above.
+- **Dependency changes:** `mammoth` 1.13.0 devDependency in `@aduin/web`.

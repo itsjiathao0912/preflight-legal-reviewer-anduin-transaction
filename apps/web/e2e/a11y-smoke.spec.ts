@@ -64,8 +64,12 @@ test.describe('a11y-smoke', () => {
     await page.getByTestId('sidebar-toggle').click();
     await audit(page, 'findings rail');
 
-    // Phase 07: Compare is a real view now; the placeholder audit moves to Counsel questions
+    // Phase 08: Counsel questions is a real view now; the placeholder audit moves to Firm memory
     await page.getByTestId('nav-counsel').click();
+    await expect(page.getByTestId('counsel-view')).toBeVisible();
+    await audit(page, 'counsel');
+
+    await page.getByTestId('nav-memory').click();
     await expect(page.getByTestId('placeholder-view')).toBeVisible();
     await audit(page, 'placeholder');
 

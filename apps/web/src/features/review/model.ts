@@ -12,8 +12,14 @@ export interface Triage {
   reasonCode?: ReasonCode;
   note?: string;
   counselAnswer?: CounselOption | null;
+  /** Phase 08: counsel's note, who answered and when (epoch ms), recorded with the answer. */
+  counselNote?: string;
+  answeredBy?: string;
+  answeredAt?: number;
   /** Memory decision created in this document for this finding (revoked on undo/restore). */
   decisionId?: string | null;
+  /** Phase 08: memory decision written by the recorded counsel answer (revoked on undo). */
+  answerId?: string | null;
 }
 
 export interface Row {
@@ -119,7 +125,7 @@ export function computeGate(rows: readonly Row[]): GateResult {
     labels[r.f.id] = r.label;
   }
   return gateInterim(
-    rows.map((r) => ({ id: r.f.id, severity: r.f.severity })),
+    rows.map((r) => ({ id: r.f.id, severity: r.f.severity, detector_kind: r.f.detector_kind })),
     states,
     labels,
   );

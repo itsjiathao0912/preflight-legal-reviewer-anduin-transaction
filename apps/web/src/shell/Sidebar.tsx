@@ -8,6 +8,7 @@ import { AnalystBadge } from './AnalystBadge';
 import { DocSwitcher } from './DocSwitcher';
 import { GateButton } from './GateButton';
 import { NavGroup } from './NavGroup';
+import { UnsyncedChip } from './UnsyncedChip';
 
 const GROUPS: { id: NavGroupId; label: string }[] = [
   { id: 'review', label: 'Review' },
@@ -66,6 +67,7 @@ export function Sidebar() {
       </nav>
       <div className="sbbot">
         <GateButton />
+        <UnsyncedChip />
         <AiSwitch />
         <AnalystBadge />
       </div>

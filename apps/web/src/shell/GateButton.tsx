@@ -1,21 +1,15 @@
-import { useState } from 'react';
 import { Icon } from '../components/ui/icon';
 import { Popover } from '../components/ui/popover';
-import { GATE_REASON_TEXT } from '../features/review/gateInterim';
+import { useGatePopover } from '../features/gate/gate-store';
+import { GateReasons } from '../features/gate/GateReasons';
 import { useReviewView } from '../features/review/use-review-view';
-import { useFilters } from '../state/filters';
-import { useReview } from '../state/review';
-import { useShell } from '../state/shell';
 
 export function GateButton() {
-  const [open, setOpen] = useState(false);
+  const open = useGatePopover((s) => s.open);
+  const setOpen = useGatePopover((s) => s.setOpen);
   const { gate, rows } = useReviewView();
-  const select = useReview((s) => s.select);
-  const setRoute = useShell((s) => s.setRoute);
-  const reset = useFilters((s) => s.reset);
   const n = gate.reasons.length;
   const blocked = gate.status === 'blocked';
-  const byId = new Map(rows.map((r) => [r.f.id, r]));
   return (
     <Popover
       open={open}
@@ -44,43 +38,7 @@ export function GateButton() {
           ? 'These critical items are not resolved. Select one to go to it.'
           : 'Every item that blocks digitization has been dismissed with a reason or answered by counsel.'}
       </p>
-      <ul>
-        {gate.reasons.map((r) => {
-          const row = byId.get(r.findingKey);
-          return (
-            <li key={r.findingKey}>
-              <button
-                className="gli"
-                type="button"
-                data-testid="gate-reason"
-                data-finding-id={r.findingKey}
-                data-kind={r.kind}
-                onClick={() => {
-                  setOpen(false);
-                  setRoute('findings');
-                  reset();
-                  select(r.findingKey);
-                  requestAnimationFrame(() =>
-                    document
-                      .querySelector<HTMLElement>(
-                        `[data-testid="finding-row"][data-finding-id="${r.findingKey}"]`,
-                      )
-                      ?.focus({ preventScroll: true }),
-                  );
-                }}
-              >
-                <Icon name="stop" />
-                <span>
-                  <b>{row?.f.title ?? r.findingKey}</b>
-                  <span className="why">
-                    {row?.f.loc ?? ''} · {GATE_REASON_TEXT[r.kind]}
-                  </span>
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      <GateReasons reasons={gate.reasons} rows={rows} onGo={() => setOpen(false)} />
     </Popover>
   );
 }

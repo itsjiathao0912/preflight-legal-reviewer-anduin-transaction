@@ -4,6 +4,7 @@
 import type { ComponentType } from 'react';
 import type { IconName } from '../icons/sprite';
 import { CompareScreen } from './compare/CompareScreen';
+import { CounselScreen } from './counsel/CounselScreen';
 import { FindingsScreen } from './review/FindingsScreen';
 import { placeholder } from './placeholders/PlaceholderView';
 import { StructureScreen } from './structure/StructureScreen';
@@ -67,6 +68,14 @@ export const features: readonly FeatureModule[] = [
     group: 'check',
     icon: 'compare',
     component: CompareScreen,
+  },
+  // Phase 08: the real #counsel view replaces the placeholder (last entry with an id wins)
+  {
+    id: 'counsel',
+    label: 'Counsel questions',
+    group: 'review',
+    icon: 'counsel',
+    component: CounselScreen,
   },
 ];
 

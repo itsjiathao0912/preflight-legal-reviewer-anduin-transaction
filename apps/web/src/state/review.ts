@@ -1,7 +1,14 @@
 import { create } from 'zustand';
-import type { ReasonCode } from '@aduin/core';
+import {
+  templateInterpretations,
+  type CounselOption,
+  type FindingWire,
+  type ReasonCode,
+} from '@aduin/core';
 import { memoryApi } from '../api/client';
 import type { MemoryApi } from '../api/memoryApi';
+import { recordOpen } from '../features/metrics/metrics-store';
+import { readQuestionIds } from '../features/counsel/question-ids';
 import { e2eSettings, e2eTransform } from '../e2e-hook';
 import { analyzeInWorker, rememberInput } from '../engine/client';
 import { runOcrQueue, sha256Hex, type OcrJob } from '../engine/ocr-queue';
@@ -32,7 +39,17 @@ import {
 import { fingerprintFindings, type MemoryResult } from '../memory/fingerprintFindings';
 import { appDb } from '../storage/db';
 import { useFilters } from './filters';
-import { ANALYST_NAME, useSession } from './session';
+import {
+  ensureSession,
+  flushOutbox,
+  onSyncEvent,
+  outbox,
+  outboxDocFor,
+  setFindingsProvider,
+  toFindingWire,
+  writesDisabled,
+} from './memory-sync';
+import { useSession } from './session';
 
 export interface DocMeta {
   id: string;
@@ -91,8 +108,23 @@ interface ReviewState {
   clearToast: () => void;
   /** E2E seam: set a counsel answer recorded for a finding in this document. */
   setCounselAnswer: (id: string, option: Triage['counselAnswer']) => Promise<void>;
+  /**
+   * Phase 08: record counsel's answer (A/B/C/unclear + note + who + when) for a finding of this
+   * document. Writes counsel_answer + a superseding `answered` decision through the outbox (the
+   * question is created at send time when it was not exported yet); undoable.
+   */
+  recordAnswer: (id: string, answer: RecordedAnswer) => Promise<void>;
   /** Phase 05: replace this document's AI findings (verified in the engine worker) and re-label memory. */
   setAiFindings: (docId: string, findings: FindingView[]) => Promise<void>;
+}
+
+export interface RecordedAnswer {
+  option: CounselOption;
+  note?: string;
+  /** Who answered (counsel), free text. */
+  by: string;
+  /** Answer date, epoch ms. */
+  at: number;
 }
 
 let toastSeq = 0;
@@ -285,6 +317,19 @@ function opId(): string {
   return `op_${crypto.randomUUID().replace(/-/g, '')}`;
 }
 
+/** Wire findings captured at enqueue time per document (an op may drain after a switch). */
+const WIRE_DOCS = 4;
+const wireCache = new Map<string, Map<string, FindingWire>>();
+function rememberWires(docHash: string, wires: FindingWire[]): void {
+  let m = wireCache.get(docHash);
+  if (!m) {
+    m = new Map();
+    wireCache.set(docHash, m);
+    while (wireCache.size > WIRE_DOCS) wireCache.delete(wireCache.keys().next().value!);
+  }
+  for (const w of wires) m.set(w.id, w);
+}
+
 export const useReview = create<ReviewState>((set, get) => {
   const findingById = (id: string): FindingView | undefined =>
     get().result?.findings.find((f) => f.id === id);
@@ -307,7 +352,33 @@ export const useReview = create<ReviewState>((set, get) => {
     await saveTriage(doc.id, triage);
   };
 
-  /** Write a memory decision when the document has a firm; returns the decision id (or null). */
+  /** Wire findings for keys of the open document (fingerprinted ones only). */
+  const wiresFor = (keys: readonly string[]): FindingWire[] => {
+    const { result, memory } = get();
+    const want = new Set(keys);
+    const out: FindingWire[] = [];
+    for (const f of result?.findings ?? []) {
+      const fp = want.has(f.id) ? memory?.byId[f.id]?.fingerprint : null;
+      if (fp) out.push(toFindingWire(f, fp));
+    }
+    return out;
+  };
+
+  setFindingsProvider((key, keys) => {
+    const cached = wireCache.get(key.doc_hash);
+    const out = keys.flatMap((k) => {
+      const w = cached?.get(k);
+      return w ? [w] : [];
+    });
+    if (out.length === keys.length) return out;
+    return get().doc?.id === key.doc_hash ? wiresFor(keys) : out;
+  });
+
+  /**
+   * Queue a memory decision when the document has a firm (outbox, Phase 08). Returns the optimistic
+   * `pending:<op>` id (mapped to the real id when the op drains), or null when nothing is written
+   * (no firm, no fingerprint, read-only session, no storage).
+   */
   const decide = async (
     id: string,
     decision: 'dismissed' | 'accepted',
@@ -317,10 +388,13 @@ export const useReview = create<ReviewState>((set, get) => {
     const { doc, memory } = get();
     const f = findingById(id);
     const fp = memory?.byId[id]?.fingerprint ?? null;
-    const a = api();
-    if (!doc || !f || !doc.firmId || !fp || !a) return null;
+    const box = outbox();
+    if (!doc || !f || !doc.firmId || !fp || !box || writesDisabled()) return null;
     try {
-      const d = await a.decide({
+      await ensureSession();
+      if (writesDisabled()) return null;
+      rememberWires(doc.id, wiresFor([id]));
+      const d = await box.enqueueDecide(await outboxDocFor(doc), {
         client_op_id: opId(),
         law_firm_id: doc.firmId,
         finding_ref: f.id,
@@ -335,23 +409,81 @@ export const useReview = create<ReviewState>((set, get) => {
         doc_version_label: doc.version,
         section_path: f.section_path,
         quote_snippet: f.quote_snippet,
-        decided_by_name: ANALYST_NAME,
+        decided_by_name: useSession.getState().analystName,
       });
-      return d.id;
+      void flushOutbox();
+      return d;
     } catch {
       return null;
     }
   };
 
+  /** Revoke a decision: a still-pending one is cancelled, a synced one is revoked by its id. */
   const revoke = async (decisionId: string | null | undefined, reason: string) => {
-    const a = api();
-    if (!decisionId || !a) return;
+    const box = outbox();
+    if (!decisionId || !box || writesDisabled()) return;
     try {
-      await a.revoke(decisionId, reason);
+      await box.enqueueRevoke(decisionId, reason);
     } catch {
-      /* already revoked or unavailable */
+      /* storage unavailable */
+    }
+    await flushOutbox();
+  };
+
+  /** Queue a counsel answer; returns the optimistic `pending:<op>` id or null when not persisted. */
+  const persistAnswer = async (id: string, a: RecordedAnswer): Promise<string | null> => {
+    const { doc, memory } = get();
+    const f = findingById(id);
+    const fp = memory?.byId[id]?.fingerprint ?? null;
+    const box = outbox();
+    // no firm: the Worker refuses questions and answers (`firm_required`); triage stays local
+    if (!doc || !f || !doc.firmId || !fp || !box || writesDisabled()) return null;
+    try {
+      await ensureSession();
+      if (writesDisabled()) return null;
+      rememberWires(doc.id, wiresFor([id]));
+      const qid = (await readQuestionIds(doc.id))[id];
+      const note = a.note?.trim();
+      const pid = await box.enqueueAnswer(
+        await outboxDocFor(doc),
+        {
+          client_op_id: opId(),
+          law_firm_id: doc.firmId,
+          ...(qid ? { question_id: qid } : {}),
+          quote_text: f.quote,
+          fingerprint: fp,
+          issue_class: f.issue_class,
+          counsel_option: a.option,
+          ...(note ? { counsel_note: note.slice(0, 1000) } : {}),
+          ...(doc.fund ? { fund_name: doc.fund } : {}),
+          quote_snippet: f.quote_snippet,
+          decided_by_name: useSession.getState().analystName,
+        },
+        qid
+          ? undefined
+          : {
+              finding_ref: f.id,
+              fingerprint: fp,
+              interpretations: templateInterpretations(f.issue_class),
+            },
+      );
+      void flushOutbox();
+      return pid;
+    } catch {
+      return null;
     }
   };
+
+  const gateLine = (): string => {
+    const n = computeGate(buildRows(get().result?.findings ?? [], get().memory, get().triage))
+      .reasons.length;
+    return n ? `${n} item${n > 1 ? 's' : ''} left on the gate.` : 'The gate is now Ready.';
+  };
+
+  onSyncEvent((e) => {
+    // 409: another decision is active for this finding; show the current one
+    if (e.type === 'conflict') void refreshMemory();
+  });
 
   /** Restore a previous triage snapshot (undo), re-creating its memory decision when it had one. */
   const restoreSnapshot = async (id: string, prev: Triage | null, created: string | null) => {
@@ -385,6 +517,8 @@ export const useReview = create<ReviewState>((set, get) => {
     error: null,
 
     openDocument: async (bytes, meta, opts) => {
+      // AC64: time to an exportable sheet starts when the analyst opens the document
+      const t0 = Date.now();
       const seq = ++loadSeq;
       loadAbort?.abort();
       const ctrl = new AbortController();
@@ -441,7 +575,13 @@ export const useReview = create<ReviewState>((set, get) => {
         result = { ...result, findings: [...result.findings, ...ai.findings] };
       const stages: Partial<Record<StageId, StageReport>> = {};
       for (const s of result.stages) stages[s.id] = s;
+      void recordOpen(doc.id, t0);
       const triage = await loadTriage(doc.id);
+      // bootstrap precedes the first lookup (firm documents only: no firm, no memory call);
+      // queued writes land before memory is read back
+      if (doc.firmId) await ensureSession();
+      await flushOutbox();
+      if (seq !== loadSeq) return;
       const memory = await fingerprintFindings(result.findings, doc.firmId, api());
       if (seq !== loadSeq) return;
       const recent = [doc, ...get().recent.filter((r) => r.id !== doc.id)].slice(0, 6);
@@ -546,6 +686,34 @@ export const useReview = create<ReviewState>((set, get) => {
     setCounselAnswer: async (id, option) => {
       const prev = get().triage[id] ?? { status: 'open' as const };
       await writeTriage(id, { ...prev, counselAnswer: option });
+    },
+
+    recordAnswer: async (id, a) => {
+      const prev = get().triage[id] ?? null;
+      const base: Triage = prev ?? { status: 'open' };
+      // a changed answer supersedes the earlier one in memory (revoke it first)
+      if (prev?.answerId) await revoke(prev.answerId, 'Answer changed by analyst');
+      const note = a.note?.trim();
+      const next: Triage = {
+        ...base,
+        counselAnswer: a.option,
+        answeredBy: a.by.trim().slice(0, 120),
+        answeredAt: a.at,
+        answerId: null,
+      };
+      if (note) next.counselNote = note.slice(0, 1000);
+      else delete next.counselNote;
+      await writeTriage(id, next);
+      const created = await persistAnswer(id, a);
+      if (created) await writeTriage(id, { ...next, answerId: created });
+      get().showToast(
+        (a.option === 'unclear' ? 'Recorded as unclear. ' : 'Answer recorded. ') + gateLine(),
+        () =>
+          void (async () => {
+            await revoke(created, 'Answer undone by analyst');
+            await writeTriage(id, prev);
+          })(),
+      );
     },
 
     setAiFindings: async (docId, findings) => {

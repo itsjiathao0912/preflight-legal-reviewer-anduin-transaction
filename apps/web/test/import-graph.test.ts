@@ -29,6 +29,17 @@ const ALLOWED = new Set([
   // Phase 07c drift narrative (pure: masked candidates from a DiffResult, filtered reader)
   'buildDriftNarrativeCandidates',
   'readDriftNarrative',
+  // Phase 08 counsel gate, query sheet, template / AI draft masking, metrics (S1-core names)
+  'computeGate',
+  'GATE_REASON_TEXT',
+  'buildCounselSheet',
+  'templateInterpretations',
+  'templateQuestionText',
+  'maskQuote',
+  'maskAndClamp',
+  'INTERPRETATION_MAX_CHARS',
+  'computeMetrics',
+  'sensitiveSpans',
 ]);
 
 function files(dir: string): string[] {

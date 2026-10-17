@@ -35,7 +35,10 @@ export type IconName =
   | 'scan'
   | 'shield'
   | 'folder'
-  | 'clock';
+  | 'clock'
+  | 'edit'
+  | 'pin'
+  | 'down';
 
 export function IconSprite() {
   return (
@@ -186,6 +189,17 @@ export function IconSprite() {
       </symbol>
       <symbol id="folder" viewBox="0 0 24 24">
         <path d="M3.500 7A1.500 1.500 0 015 5.500h4l2 2.500h8A1.500 1.500 0 0120.500 9.500v8A1.500 1.500 0 0119 19H5a1.500 1.500 0 01-1.500-1.500z" />
+      </symbol>
+      <symbol id="edit" viewBox="0 0 24 24">
+        <path d="M4 20h4L19 9a2.100 2.100 0 00-3-3L5 17z" />
+        <path d="M14 8l3 3" />
+      </symbol>
+      <symbol id="pin" viewBox="0 0 24 24">
+        <path d="M12 21s6.500-5.800 6.500-11A6.500 6.500 0 005.500 10c0 5.200 6.500 11 6.500 11z" />
+        <circle cx="12" cy="10" r="2.200" />
+      </symbol>
+      <symbol id="down" viewBox="0 0 24 24">
+        <path d="M12 4v11M7.500 11l4.500 4.500 4.500-4.500M5 20h14" />
       </symbol>
     </svg>
   );

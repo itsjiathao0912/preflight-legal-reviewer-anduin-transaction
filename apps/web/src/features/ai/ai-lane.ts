@@ -300,6 +300,14 @@ export async function aiRunFresh(): Promise<void> {
   if (t.kind === 'aborted') return;
   if (t.kind === 'error') return downgrade(bannerFor(t.error), t.error.retryAfterS);
   if (t.resultKind !== 'ai') return downgrade('result_unusable');
+  // L5: the Worker echoes the rules it injected; on a mismatch drop the cached rule texts so the
+  // next Retry re-reads the firm's rules, and never show findings computed for other rules
+  // (read-only sessions never get rules injected server-side, so they skip the check)
+  if (rulesEchoMismatch(t.meta, useSession.getState().readOnly ? null : before)) {
+    c.ruleTexts = null;
+    sink(c.doc.id, []);
+    return downgrade('rules_changed');
+  }
   const provenance = t.cache === 'hit' ? 'cache' : 'fresh';
   const v = await verify(c, t.data, rules, { model: t.model, provenance });
   if (my !== seq) return;
@@ -316,6 +324,19 @@ export async function aiRunFresh(): Promise<void> {
   applyVerified(v, provenance);
   sink(c.doc.id, v.findings);
   if (t.cache === 'miss') void useSession.getState().refreshQuota();
+}
+
+/**
+ * L5 rules echo: true when the AI result frame carries `meta.rules_hash8` and it differs from the
+ * hash of the rules this client holds (`'none'` when no rules were sent). No echo = no check.
+ */
+export function rulesEchoMismatch(
+  meta: Record<string, unknown> | undefined,
+  expected: string | null,
+): boolean {
+  const echo = meta?.['rules_hash8'];
+  if (typeof echo !== 'string' || expected === null) return false;
+  return echo !== expected;
 }
 
 /** Resume a downgraded lane once its reset time has passed (timer or tab focus). */

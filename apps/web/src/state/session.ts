@@ -4,10 +4,30 @@ import { fetchQuota } from '../api/quota';
 import { allowanceLeft, appDb } from '../storage/db';
 import { KEYS, safeGet, safeSet } from './storage';
 
-/** Analyst name: placeholder constant until sign-in exists (app_NOTES open question 4). */
-export const ANALYST_NAME = 'Linh Tran';
+/**
+ * Default analyst name (approved mockup name). Phase 08: the shown name is the stored session name
+ * (Dexie uiState `session:analystName`), edited inline on the sidebar badge; it feeds
+ * `bootstrap(name)` and `decided_by_name`. The default is kept until the analyst changes it.
+ */
+export const DEFAULT_ANALYST_NAME = 'Linh Tran';
+export const ANALYST_NAME_MAX = 80;
+
+/** Trimmed analyst name, or null when it is not 1-80 characters. */
+export function cleanAnalystName(name: string): string | null {
+  const n = typeof name === 'string' ? name.trim().replace(/\s+/g, ' ') : '';
+  return n.length >= 1 && n.length <= ANALYST_NAME_MAX ? n : null;
+}
 
 interface SessionState {
+  /** Analyst display name (session name; default `Linh Tran`). */
+  analystName: string;
+  /**
+   * Read-only demo session (from the POST /api/session response `read_only`, never the cookie).
+   * True disables memory writes up front; the outbox is skipped.
+   */
+  readOnly: boolean;
+  setAnalystName: (name: string) => void;
+  setReadOnly: (readOnly: boolean) => void;
   /** AI switch (persisted as ui:v1:ai, AC38). Effect wired in P05. */
   aiOn: boolean;
   /** Privacy notice accepted in this session (never persisted). */
@@ -31,6 +51,13 @@ interface SessionState {
 }
 
 export const useSession = create<SessionState>((set, get) => ({
+  analystName: DEFAULT_ANALYST_NAME,
+  readOnly: false,
+  setAnalystName: (name) => {
+    const n = cleanAnalystName(name);
+    if (n) set({ analystName: n });
+  },
+  setReadOnly: (readOnly) => set({ readOnly }),
   aiOn: safeGet(KEYS.ai) !== 'off',
   privacyAck: false,
   allowance: limits.visitorAiDocsPerDay,
