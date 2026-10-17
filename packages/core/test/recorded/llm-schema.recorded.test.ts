@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AiResultSchema } from '../../src/contracts/ai';
-import { buildAiCandidates } from '../../src/llm/candidates';
+import { buildAiCandidatesWithSites } from '../../src/llm/candidates';
+import { rangesOverlap } from '../../src/llm/dedupe';
 import { TASKS } from '../../src/llm/registry';
 import { recordingPath } from '../../src/llm/transport';
 import { verifyAiResult } from '../../src/llm/verify-quote';
@@ -23,6 +24,7 @@ describe('llm-schema (recorded, AC28)', () => {
       'hostile-extra-keys',
       'hostile-severity-critical',
       'hostile-oversized-quote',
+      'ai-duplicate-of-rule',
     ])
       expect(ids).toContain(id);
     expect(new Set(ids).size).toBe(ids.length);
@@ -43,10 +45,39 @@ describe('llm-schema (recorded, AC28)', () => {
   it('recorded candidates are exactly what the engine selects for the sample', () => {
     for (const r of all) {
       if (r.request.sample === null) continue;
+      // counsel-draft candidates are the app's confirmed-finding sentences (fixed), not engine picks
+      if (r.request.task === 'counsel-draft') continue;
       const { g, findings } = analyzed(Number(r.request.sample));
-      const byId = new Map(buildAiCandidates(g, findings).map((c) => [c.id, c]));
-      for (const c of r.request.candidates) expect(byId.get(c.id), `${r.case} ${c.id}`).toEqual(c);
+      const { candidates, sites } = buildAiCandidatesWithSites(g, findings);
+      const byId = new Map(candidates.map((c) => [c.id, c]));
+      const siteById = new Map(sites.map((x) => [x.id, x]));
+      const rules = findings.filter((f) => f.detector_kind === 'rule');
+      for (const c of r.request.candidates) {
+        expect(byId.get(c.id), `${r.case} ${c.id}`).toEqual(c);
+        // AC9 over the corpus: no recorded candidate repeats a rule-flagged sentence
+        const site = siteById.get(c.id)!;
+        const blockId = g.structure.blocks[site.blockIndex]!.id;
+        const dup = rules.some(
+          (f) =>
+            f.anchor.blockId === blockId &&
+            rangesOverlap(site.start, site.end, f.anchor.offsetStart, f.anchor.offsetEnd),
+        );
+        expect(dup, `${r.case} ${c.id} overlaps a rule finding`).toBe(false);
+      }
     }
+  });
+
+  it('derived recordings are labeled authored and point at a 16-hex legacy hash', () => {
+    let derived = 0;
+    for (const r of all) {
+      const df = (r.request as { derived_from?: Record<string, unknown> }).derived_from;
+      if (df === undefined) continue;
+      derived++;
+      expect(r.recording.meta.source, r.case).toBe('authored');
+      expect(df['source'], r.case).toBe('live');
+      expect(String(df['inputHash16']), r.case).toMatch(/^[0-9a-f]{16}$/);
+    }
+    expect(derived).toBeGreaterThan(0);
   });
 
   function validate(caseId: string) {

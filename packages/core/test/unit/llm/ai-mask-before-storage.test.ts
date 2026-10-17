@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { quoteHash } from '../../../src/memory/fingerprint';
 import { buildAiCandidates } from '../../../src/llm/candidates';
 import { verifyAiResult } from '../../../src/llm/verify-quote';
-import { runDeterministic } from '../../../src/engine';
+import { analyzeHtml, runDeterministic } from '../../../src/engine';
 import { CTX, aiFinding, llmDoc } from '../../helpers/llm-docs';
 
 describe('ai-mask-before-storage (AC28, R2 mask path)', () => {
@@ -36,7 +36,16 @@ describe('ai-mask-before-storage (AC28, R2 mask path)', () => {
   });
 
   it('candidates sent to the Worker are masked too', () => {
-    const cands = buildAiCandidates(g, runDeterministic(g));
+    // with the real detectors the account sentence carries a sensitive_data rule finding, so it is
+    // never a candidate (ai-review-stream-dedup D3a); without findings the mask path still applies
+    const doc = analyzeHtml(
+      '<html><body><p><b>1. TERMS</b></p><p>If the investor is an IRA, wire to account 021000021, see Annex Z.</p></body></html>',
+    );
+    expect(JSON.stringify(buildAiCandidates(doc, runDeterministic(doc)))).not.toContain(
+      '021000021',
+    );
+    const cands = buildAiCandidates(doc, []);
+    expect(cands.length).toBeGreaterThan(0);
     expect(JSON.stringify(cands)).not.toContain('021000021');
     expect(JSON.stringify(cands)).toContain('#0021');
   });

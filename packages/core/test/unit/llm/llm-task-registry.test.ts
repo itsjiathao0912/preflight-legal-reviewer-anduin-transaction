@@ -162,8 +162,9 @@ describe('llm task registry and wire (Phase 05 Stage 0)', () => {
     expect(req.success).toBe(true);
     expect(buildAiCandidates(g, findings, 3)).toHaveLength(Math.min(3, a.length));
     expect(buildAiCandidates(g, findings, 0)).toEqual([]);
-    // the deterministic findings' sentences are always selected first
-    for (const f of findings.slice(0, 3)) expect(a.some((c) => c.quote === f.quote)).toBe(true);
+    // ai-review-stream-dedup D3(a): sentences of deterministic findings are never AI candidates
+    for (const f of findings.filter((x) => x.detector_kind === 'rule'))
+      expect(a.some((c) => c.quote === f.quote)).toBe(false);
   });
 
   it('provenance chips', () => {

@@ -135,7 +135,7 @@ test.describe('ai-banners', () => {
     });
     await enableLane(page);
     await openSample(page, '01');
-    await expect(aiRows(page)).toHaveCount(3); // 3 since review M1 (was 2)
+    await expect(aiRows(page)).toHaveCount(1); // 1 since ai-review-stream-dedup
     await page.getByTestId('ai-off').click();
     await expect(page.getByTestId('ai-off-banner')).toBeVisible();
     await expect(aiRows(page)).toHaveCount(0);

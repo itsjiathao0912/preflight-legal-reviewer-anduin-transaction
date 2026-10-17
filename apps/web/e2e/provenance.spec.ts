@@ -28,7 +28,7 @@ test.describe('provenance', () => {
     await interceptQuota(page);
     await enableLane(page);
     await openSample(page, '01');
-    await expect(aiRows(page)).toHaveCount(3); // 3 since review M1 (was 2)
+    await expect(aiRows(page)).toHaveCount(1); // 1 since ai-review-stream-dedup (rule sentences are not AI candidates)
     await aiRows(page).first().click();
     const prov = page.getByTestId('finding-provenance');
     await expect(prov).toHaveAttribute('data-provenance', 'cache');
@@ -60,8 +60,9 @@ test.describe('provenance', () => {
     await expectStage(page, /^Checks done · AI review not run/);
     await page.getByTestId('ai-run-sample').click();
     await expectStage(page, /^Checks done · AI review done/);
-    // live #3 recording: 4 model findings, 2 verified, 2 rejected (quote not found)
-    await expect(aiRows(page)).toHaveCount(2);
+    // derived #3 recording: 3 model findings (1 dropped with its rule-sentence candidate),
+    // 1 verified, 2 rejected (quote not found)
+    await expect(aiRows(page)).toHaveCount(1);
     await aiRows(page).first().click();
     await expect(page.getByTestId('finding-provenance')).toHaveAttribute(
       'data-provenance',

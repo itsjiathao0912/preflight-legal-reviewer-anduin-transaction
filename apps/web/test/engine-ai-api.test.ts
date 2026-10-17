@@ -1,8 +1,14 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { rulesHash, rulesHash8 as coreRulesHash8 } from '@aduin/core';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { rulesHash, rulesHash8 as coreRulesHash8, verifyAiResult } from '@aduin/core';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { api } from '../src/engine/engine.worker';
+
+// spy (real implementation) so the ruleFindings wiring of the engine worker is observable (E6)
+vi.mock('@aduin/core', async (orig) => {
+  const m = await orig<typeof import('@aduin/core')>();
+  return { ...m, verifyAiResult: vi.fn(m.verifyAiResult) };
+});
 import type { EngineResult } from '../src/engine/types';
 
 // G13 engine-worker AI API: candidates, verify chain and rules hash all run in the worker module.
@@ -59,9 +65,10 @@ describe('engine-ai-api', () => {
     });
     expect(v1.ok).toBe(true);
     if (!v1.ok) return;
-    // 3 since review M1: c_bbfb16d50ab9577f now anchors in its own candidate (b222) instead of the
-    // first document occurrence (b221), where it used to collapse into c_a3a1fd5641d412c0
-    expect(v1.findings).toHaveLength(3);
+    // 1 since ai-review-stream-dedup: rule-flagged sentences are no longer AI candidates, so the
+    // derived sample-01 recording keeps only the model's finding on a surviving candidate
+    // (c_624f0f476f804afb); c_a3a1fd5641d412c0 and c_bbfb16d50ab9577f were rule sentences
+    expect(v1.findings).toHaveLength(1);
     expect(v1.rejected).toEqual([]);
     expect(v1.rulesHash8).toBe('none');
     expect(v1.rulesHash8).toBe(p1.rulesHash8);
@@ -89,9 +96,26 @@ describe('engine-ai-api', () => {
     });
     expect(v3.ok).toBe(true);
     if (!v3.ok) return;
-    expect(v3.findings).toHaveLength(2);
+    // derived sample-03 keeps 3 of the 4 live findings (c_54cd421d8bdba4af was a rule sentence):
+    // 1 verified, the same 2 unlocatable quotes rejected as before
+    expect(v3.findings).toHaveLength(1);
     expect(v3.rejected.map((x) => x.reason)).toEqual(['quote_not_found', 'quote_not_found']);
     expect(v3.findings.every((f) => f.provenance === 'fresh')).toBe(true);
+  });
+
+  it('should pass the retained rule findings into verifyAiResult', async () => {
+    const r1 = await analyze('01');
+    const spy = vi.mocked(verifyAiResult);
+    spy.mockClear();
+    await api.verifyAi(precomputed('01').result, r1.docHash, [], {
+      model: 'm',
+      provenance: 'cache',
+    });
+    expect(spy).toHaveBeenCalledTimes(1);
+    const ctx = spy.mock.calls[0]![2];
+    const passed = (ctx.ruleFindings ?? []) as unknown as { id: string }[];
+    expect(passed.map((f) => f.id)).toEqual(r1.findings.map((f) => f.id));
+    expect(ctx.ruleFindings?.length).toBeGreaterThan(0);
   });
 
   it('analyze returns the graph-selected aiCandidates (same as the recorded request)', async () => {

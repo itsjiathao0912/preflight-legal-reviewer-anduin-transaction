@@ -1,12 +1,17 @@
 /**
  * author-recordings: writes the schema-valid AUTHORED recordings to
  * `fixtures/llm-recordings/{task}/{inputHash16}.json` (Phase 05, Stage 1c, F1). Offline, no network,
- * deterministic bytes. A file that already holds a LIVE recording (meta.source 'live') is kept.
+ * deterministic bytes.
+ *
+ * Kept files (never rewritten, their authored arm is not evaluated): a LIVE recording
+ * (`meta.source === 'live'`) or a recording DERIVED from a live one by `record:derive`
+ * (`request.derived_from` present). A `live: true` case with no file at its current hash is never
+ * given an authored fallback: write mode skips it and `--check` reports `missing (run record:derive)`.
+ * Order after a candidate change: `record:derive` -> `record:author` -> `git rm` the old-hash live
+ * files (archived first) -> `record:author --check` (zero orphans, zero missing).
  *
  *   pnpm --filter @aduin/scripts record:author            # write / refresh authored files
- *   pnpm --filter @aduin/scripts record:author --check    # exit 1 if any file is missing or stale
- *
- * Re-run after any prompt or candidate change (the inputHash moves; old files are reported stale).
+ *   pnpm --filter @aduin/scripts record:author --check    # exit 1 if any file is missing, stale or orphaned
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -50,17 +55,14 @@ export function authoredRaw(c: RecordingCase, r: RecordedRequest): string {
       return j({
         findings: [
           finding({
-            candidate_id: 'c_a3a1fd5641d412c0',
-            issue_class: 'broken_cross_reference',
-            severity: 'high',
-            confidence: 0.8,
-            quote: 'paragraphs 1 through 4 of this Section 11',
+            candidate_id: 'c_439057b9bc027023',
+            issue_class: 'defined_term_issue',
+            severity: 'low',
+            confidence: 0.5,
+            quote: quoteOf(r, 'c_439057b9bc027023', 10),
             explanation:
-              'The look-through test points to "this Section 11", but the paragraph sits in a different section, so the reference cannot be resolved.',
-            interpretations: [
-              'It means the accredited-investor tests in this section.',
-              'It means a Section 11 that is not in this document.',
-            ],
+              'The defined term is introduced here; check it is used the same way later.',
+            interpretations: [],
           }),
           finding({
             candidate_id: 'c_b30f291dff2535b6',
@@ -81,26 +83,13 @@ export function authoredRaw(c: RecordingCase, r: RecordedRequest): string {
       return j({
         findings: [
           finding({
-            candidate_id: 'c_fcfcb4a816686edb',
-            issue_class: 'broken_cross_reference',
-            severity: 'high',
-            confidence: 0.75,
-            quote: 'the Custodian indicated in Part B of Section 6',
-            explanation:
-              'The custodian details are collected in another part of the form, so Part B of Section 6 points to the wrong place.',
-            interpretations: [
-              'Part B of Section 6 holds the custodian.',
-              'The custodian is named in a different section.',
-            ],
-          }),
-          finding({
-            candidate_id: 'c_54cd421d8bdba4af',
-            issue_class: 'broken_cross_reference',
+            candidate_id: 'c_01c7b93e2d274052',
+            issue_class: 'broken_conditional',
             severity: 'medium',
             confidence: 0.6,
-            quote: 'the amount specified in Part B of Section 4',
+            quote: quoteOf(r, 'c_01c7b93e2d274052', 10),
             explanation:
-              'The subscription amount may not be in Part B of Section 4; the wire instruction could send the investor to the wrong field.',
+              'The ownership instructions route to parts of Section 2; check each route lands on a part that exists.',
             interpretations: [],
           }),
         ],
@@ -122,13 +111,13 @@ export function authoredRaw(c: RecordingCase, r: RecordedRequest): string {
       return j({
         findings: [
           finding({
-            candidate_id: 'c_53ded8db41297f0a',
-            issue_class: 'placeholder',
+            candidate_id: 'c_11be0ae0434514ea',
+            issue_class: 'ambiguity',
             severity: 'low',
             confidence: 0.55,
-            quote: '[insert investor name]',
+            quote: quoteOf(r, 'c_11be0ae0434514ea', 10),
             explanation:
-              'The firm rules say this placeholder is standard wording; it is still reported so the analyst can confirm it is filled in at funding time.',
+              'The firm rules were read as context; the finding is still reported so the analyst can confirm the wording.',
             interpretations: [],
           }),
         ],
@@ -137,7 +126,7 @@ export function authoredRaw(c: RecordingCase, r: RecordedRequest): string {
       return j({
         findings: [
           finding({
-            candidate_id: 'c_a3a1fd5641d412c0',
+            candidate_id: 'c_a603f23420e703bd',
             issue_class: 'logic_contradiction',
             severity: 'high',
             confidence: 0.9,
@@ -209,6 +198,32 @@ export function authoredRaw(c: RecordingCase, r: RecordedRequest): string {
             issue_class: 'ambiguity',
             quote: (quoteOf(r, 'c_624f0f476f804afb') + ' ').repeat(2).trim(),
             explanation: 'Quote longer than the 1000-character limit.',
+          }),
+        ],
+      });
+    case 'ai-duplicate-of-rule':
+      // finding 1: a real candidate sentence (kept); finding 2: the rule-flagged look-through
+      // sentence cited through the legacy candidate id c_a3a1... that the engine no longer sends
+      // (rule sentences are not AI candidates), so the verify chain never shows it as an AI row
+      return j({
+        findings: [
+          finding({
+            candidate_id: 'c_b30f291dff2535b6',
+            issue_class: 'ambiguity',
+            severity: 'low',
+            confidence: 0.5,
+            quote: quoteOf(r, 'c_b30f291dff2535b6', 12),
+            explanation: 'It is unclear when the escrow ends.',
+            interpretations: [],
+          }),
+          finding({
+            candidate_id: 'c_a3a1fd5641d412c0',
+            issue_class: 'broken_cross_reference',
+            severity: 'high',
+            confidence: 0.8,
+            quote: 'paragraphs 1 through 4 of this Section 11',
+            explanation: 'Repeats the deterministic cross-reference finding on this sentence.',
+            interpretations: [],
           }),
         ],
       });
@@ -299,24 +314,48 @@ function readJson(path: string): Json | undefined {
 export interface AuthorReport {
   written: string[];
   keptLive: string[];
+  keptDerived: string[];
   stale: string[];
   problems: string[];
 }
 
-export function authorAll(opts: { check: boolean }): AuthorReport {
-  const rep: AuthorReport = { written: [], keptLive: [], stale: [], problems: [] };
+/** True when a recording file must never be rewritten by this script (live or derived from live). */
+export function isKept(cur: Json | undefined): 'live' | 'derived' | undefined {
+  if (!cur) return undefined;
+  if ((cur['meta'] as Json | undefined)?.['source'] === 'live') return 'live';
+  const req = cur['request'] as Json | undefined;
+  if (req && req['derived_from'] !== undefined) return 'derived';
+  return undefined;
+}
+
+export function authorAll(
+  opts: { check: boolean },
+  cases: readonly RecordingCase[] = CASES,
+  dir: string = RECORDINGS_DIR,
+): AuthorReport {
+  const rep: AuthorReport = { written: [], keptLive: [], keptDerived: [], stale: [], problems: [] };
   const expected = new Set<string>();
-  for (const c of CASES) {
-    const rec = authoredRecording(c);
-    const path = fileFor(c, rec['inputHash'] as string);
+  for (const c of cases) {
+    // request + hash first: a kept file never evaluates its (possibly stale) authored arm
+    const hash = requestHash(caseRequest(c));
+    const path = fileFor(c, hash).replace(RECORDINGS_DIR, dir);
     expected.add(path);
     const cur = existsSync(path) ? readJson(path) : undefined;
-    const meta = cur?.['meta'] as Json | undefined;
-    if (meta?.['source'] === 'live') {
+    const kept = isKept(cur);
+    if (kept === 'live') {
       rep.keptLive.push(path);
       continue;
     }
-    const bytes = serialize(rec);
+    if (kept === 'derived') {
+      rep.keptDerived.push(path);
+      continue;
+    }
+    if (c.live && !cur) {
+      // live cases get no authored fallback; their file comes from record:ai or record:derive
+      if (opts.check) rep.problems.push(`${c.id}: missing (run record:derive) ${path}`);
+      continue;
+    }
+    const bytes = serialize(authoredRecording(c));
     if (cur && readFileSync(path, 'utf8') === bytes) continue;
     if (opts.check) {
       rep.problems.push(`${c.id}: ${cur ? 'stale' : 'missing'} ${path}`);
@@ -327,10 +366,10 @@ export function authorAll(opts: { check: boolean }): AuthorReport {
     rep.written.push(path);
   }
   for (const task of Object.keys(TASKS)) {
-    const dir = join(RECORDINGS_DIR, task);
-    if (!existsSync(dir)) continue;
-    for (const f of readdirSync(dir))
-      if (f.endsWith('.json') && !expected.has(join(dir, f))) rep.stale.push(join(dir, f));
+    const tdir = join(dir, task);
+    if (!existsSync(tdir)) continue;
+    for (const f of readdirSync(tdir))
+      if (f.endsWith('.json') && !expected.has(join(tdir, f))) rep.stale.push(join(tdir, f));
   }
   if (opts.check) for (const s of rep.stale) rep.problems.push(`orphan recording ${s}`);
   return rep;
@@ -341,6 +380,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const rep = authorAll({ check });
   for (const p of rep.written) console.log(`wrote ${p}`);
   for (const p of rep.keptLive) console.log(`kept live ${p}`);
+  for (const p of rep.keptDerived) console.log(`kept derived ${p}`);
   for (const p of rep.stale) console.log(`orphan (no case) ${p}`);
   if (rep.problems.length) {
     for (const p of rep.problems) console.error(p);

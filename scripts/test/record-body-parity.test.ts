@@ -54,6 +54,12 @@ describe('record-body-parity (scripts)', () => {
     },
   );
 
+  it('a fixedCandidates case sends exactly its fixed candidates (counsel-draft-03)', () => {
+    const c = CASES.find((x) => x.id === 'counsel-draft-03')!;
+    expect(c.fixedCandidates?.length).toBe(2);
+    expect(caseRequest(c).candidates).toEqual(c.fixedCandidates);
+  });
+
   it('json_object mode appends the schema instruction as the last system message', () => {
     const r = caseRequest(CASES[0]!, 'json_object');
     const m = forwardedMessages(r);

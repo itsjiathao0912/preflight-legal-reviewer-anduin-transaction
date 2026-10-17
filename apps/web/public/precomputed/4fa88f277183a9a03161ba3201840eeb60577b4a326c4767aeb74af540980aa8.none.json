@@ -7,10 +7,10 @@
   "task": "clause-judgment",
   "promptVersion": "clause-judgment@1",
   "schemaVersion": "clause-judgment.s1",
-  "inputHash": "e7e3ad45fe791fe5d37b45dd6f4ed4274bb3ae94a8849009dc9ce1c3f82497b8",
+  "inputHash": "89205ff1fc8c505ea465a0780f11a6e7580c8dd2ba5072dfafd01cb774744abb",
   "model": "nvidia/nemotron-3-super-120b-a12b:free",
   "served_model": "nvidia/nemotron-3-super-120b-a12b:free",
-  "source": "live",
+  "source": "authored",
   "result": {
     "v": 1,
     "findings": [
@@ -25,19 +25,6 @@
           "Send to the custodian indicated elsewhere",
           "Send to the fund administrator",
           "Send to the transfer agent"
-        ]
-      },
-      {
-        "candidate_id": "c_54cd421d8bdba4af",
-        "issue_class": "ambiguity",
-        "severity": "medium",
-        "confidence": 0.9,
-        "quote": "☐ Wire cleared funds equal to the amount specified in Part B of Section 4 to:",
-        "explanation": "The wire instruction ends with a colon but omits the beneficiary details, making it impossible to execute the wire as written.",
-        "interpretations": [
-          "Wire to the Fund's designated bank account",
-          "Wire to the custodian's account",
-          "Wire to the transfer agent"
         ]
       },
       {

@@ -8,6 +8,7 @@ export * from './rules';
 export * from './registry';
 export * from './verify-quote';
 export * from './candidates';
+export * from './dedupe';
 export {
   clauseJudgmentV1,
   CLAUSE_JUDGMENT_PROMPT_VERSION,
