@@ -497,9 +497,17 @@ test.describe('findings-v2', () => {
       expect(l.x + l.width).toBeLessThanOrEqual(panel.x + panel.width + 1);
       expect(r.x + r.width).toBeLessThanOrEqual(panel.x + panel.width + 1);
       // the open row hides its section label (the expanded block repeats it); collapsed rows keep it
-      const open = page.locator('[data-testid="finding-row"][aria-expanded="true"]').first();
-      if ((await open.count()) > 0) await expect(open.getByTestId('finding-loc')).toBeHidden();
-      await expect(loc).toBeVisible();
+      const rows = page.locator('[data-testid="finding-row"]');
+      const closed: number[] = [];
+      for (let i = 0; i < (await rows.count()) && closed.length < 2; i++) {
+        if ((await rows.nth(i).getAttribute('aria-expanded')) === 'false') closed.push(i);
+      }
+      expect(closed.length).toBe(2);
+      const opened = rows.nth(closed[0]!);
+      await opened.click();
+      await expect(opened).toHaveAttribute('aria-expanded', 'true');
+      await expect(opened.getByTestId('finding-loc')).toBeHidden();
+      await expect(rows.nth(closed[1]!).getByTestId('finding-loc')).toBeVisible();
       // 3: Previously handled (0) is hidden and is not a band above the bar
       await expect(page.getByTestId('previously-handled-count')).toHaveText('0');
       await expect(page.getByTestId('previously-handled-toggle')).toBeHidden();
