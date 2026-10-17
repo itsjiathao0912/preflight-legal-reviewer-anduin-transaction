@@ -1,0 +1,615 @@
+/* Findings v2 (design NOTES D1-D15). The one stylesheet for the v2 findings panel and the D15
+   document zoom overrides. Every selector starts with .fv2, .fv2-, .docscroll[data-dz],
+   .work.fv2-work or .work > .fv2. Values reuse tokens.css; new values are custom properties on
+   .fv2 (never :root). Imported only from the barrels features/review/v2/index.ts and
+   features/review/zoom/index.ts (E22). */
+
+/* ---------- panel root ---------- */
+.fv2 {
+  --fv2-ai-bg: rgb(230 227 240);
+  --fv2-ai-fg: rgb(61 53 102);
+  --fv2-shadow: 0 1px 2px rgb(21 24 27 / 0.04), 0 4px 12px rgb(21 24 27 / 0.04);
+  --fv2-modal-shadow: 0 18px 44px -16px rgb(21 24 27 / 0.3);
+  --fv2-hairline: rgb(21 24 27 / 0.08);
+  --fv2-fix-sev: rgb(138 90 0);
+  --fv2-hover: rgb(209 216 210);
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  min-height: 0;
+  min-width: 0;
+  background: var(--card);
+}
+
+/* ---------- progress header ---------- */
+.fv2-head {
+  padding: 16px 16px 8px;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.fv2-prog {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.fv2-prog-bar {
+  flex: 1 1 80px;
+  min-width: 48px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--step);
+  overflow: hidden;
+  position: relative;
+}
+.fv2-prog-bar > * {
+  display: block;
+  height: 100%;
+  width: var(--fv2-fill, 0%);
+  background: var(--ink);
+  border-radius: 2px;
+  transition: width 0.4s var(--ease);
+}
+.fv2-prog-counts {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+/* ---------- chips and segment ---------- */
+.fv2-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 16px 8px;
+}
+.fv2-chips button {
+  border: 0;
+  background: var(--panel);
+  border-radius: var(--r);
+  padding: 2px 8px;
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--ink-2);
+  min-height: 28px;
+}
+.fv2-chips button:hover {
+  background: var(--step);
+}
+.fv2-chips button[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.fv2-chips [data-severity='block'] svg {
+  color: var(--block-fg);
+}
+.fv2-chips [data-severity='fix'] svg {
+  color: var(--fv2-fix-sev);
+}
+.fv2-chips [data-severity='note'] svg {
+  color: var(--note-fg);
+}
+.fv2-chips button[aria-pressed='true'] svg {
+  color: inherit;
+}
+
+/* ---------- groups and list ---------- */
+.fv2-group {
+  margin: 0 0 8px;
+}
+.fv2-group-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 8px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.fv2-group-h[data-count='0'] {
+  color: var(--ink-3);
+}
+.fv2-group[data-group='closed'] .fv2-group-h {
+  color: var(--ink-3);
+}
+.fv2-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 8px 16px;
+  overflow: auto;
+  min-height: 0;
+}
+
+/* ---------- accordion row ---------- */
+.fv2-row {
+  list-style: none;
+  border-radius: var(--r);
+  border: 1px solid transparent;
+}
+.fv2-row-open {
+  background: var(--paper);
+  border-color: var(--step);
+  box-shadow: var(--fv2-shadow);
+  margin: 8px 0;
+}
+.fv2-rowb {
+  width: 100%;
+  min-height: 36px;
+  border: 0;
+  background: transparent;
+  border-radius: var(--r);
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 0 8px 0 12px;
+  text-align: left;
+  color: var(--ink);
+}
+.fv2-rowb:hover {
+  background: var(--panel);
+}
+.fv2-rowb[aria-expanded='true'] {
+  align-items: start;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.fv2-rowb[aria-expanded='true']:hover {
+  background: transparent;
+}
+.fv2-rowb:focus-visible {
+  outline-offset: -2px;
+}
+.fv2-sev {
+  display: inline-flex;
+}
+.fv2-sev svg {
+  width: 16px;
+  height: 16px;
+}
+.fv2-row[data-severity='block'] .fv2-sev {
+  color: var(--block-fg);
+}
+.fv2-row[data-severity='fix'] .fv2-sev {
+  color: var(--fv2-fix-sev);
+}
+.fv2-row[data-severity='note'] .fv2-sev {
+  color: var(--note-fg);
+}
+.fv2-title {
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fv2-rowb[aria-expanded='true'] .fv2-title {
+  font-weight: 600;
+  white-space: normal;
+}
+.fv2-row[data-status='accepted'] .fv2-title,
+.fv2-row[data-status='dismissed'] .fv2-title {
+  color: var(--ink-3);
+}
+.fv2-row[data-status='counsel'] .fv2-title {
+  color: var(--ink-2);
+}
+.fv2-row[data-kind='change'] .fv2-sev,
+.fv2-row[data-kind='regression'] .fv2-sev {
+  color: var(--ink-2);
+}
+.fv2-row[data-regression] .fv2-sev {
+  color: var(--block-fg);
+}
+.fv2-tag {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0 8px;
+  border-radius: 3px;
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  white-space: nowrap;
+  line-height: 20px;
+  background: var(--step);
+  color: var(--ink-2);
+}
+.fv2-tag-ai {
+  background: var(--fv2-ai-bg);
+  color: var(--fv2-ai-fg);
+}
+
+/* ---------- expanded body ---------- */
+.fv2-body {
+  padding: 8px 16px 16px 36px;
+  display: grid;
+  gap: 16px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.fv2-sec {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+.fv2-sec-h {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-3);
+  margin: 0;
+}
+.fv2-quote {
+  margin: 0;
+  padding: 0 0 0 16px;
+  border-left: 2px solid var(--step);
+  font: 400 16px/1.6 var(--serif);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.fv2-qfc {
+  background: var(--panel);
+  border-radius: var(--r);
+  padding: 8px 12px;
+  color: var(--ink);
+}
+.fv2-reading {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+.fv2-details {
+  border-top: 1px solid var(--step);
+  padding: 8px 0 0;
+}
+.fv2-details > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 32px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  border-radius: var(--r);
+}
+.fv2-details > summary::-webkit-details-marker {
+  display: none;
+}
+.fv2-details > summary svg {
+  width: 14px;
+  height: 14px;
+  color: var(--ink-3);
+  transition: transform 0.2s var(--ease);
+}
+.fv2-details[open] > summary svg {
+  transform: rotate(90deg);
+}
+
+/* ---------- sticky action bar ---------- */
+.fv2-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 16px;
+  background: var(--card);
+  border-top: 1px solid var(--fv2-hairline);
+}
+.fv2-btn {
+  border: 0;
+  border-radius: var(--r);
+  padding: 8px 16px;
+  min-height: 36px;
+  width: 100%;
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  background: var(--step);
+  color: var(--ink);
+}
+.fv2-btn:hover {
+  background: var(--fv2-hover);
+}
+.fv2-btn:active {
+  transform: scale(0.98);
+}
+.fv2-btn-fill {
+  background: var(--ink);
+  color: var(--paper);
+}
+.fv2-btn-fill:hover {
+  background: var(--ink-2);
+}
+.fv2-btn-outline {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.fv2-btn-outline:hover {
+  background: var(--step);
+}
+.fv2-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+}
+.fv2-btn:disabled:hover {
+  background: var(--step);
+}
+.fv2-btn-fill:disabled:hover {
+  background: var(--ink);
+}
+.fv2-btn-outline:disabled:hover {
+  background: transparent;
+}
+.fv2-bar [data-action='restore'] {
+  grid-column: 1 / -1;
+}
+
+/* ---------- close-issue modal ---------- */
+.fv2-modal {
+  --fv2-modal-shadow: 0 18px 44px -16px rgb(21 24 27 / 0.3);
+  background: var(--card);
+  border-radius: var(--r);
+  width: min(460px, 100%);
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+  box-shadow: var(--fv2-modal-shadow);
+  color: var(--ink);
+}
+.fv2-modal textarea {
+  width: 100%;
+  min-height: 72px;
+  border: 0;
+  border-radius: var(--r);
+  background: var(--panel);
+  padding: 8px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+}
+.fv2-modal textarea[aria-invalid='true'] {
+  box-shadow: inset 0 0 0 1px var(--block-fg);
+}
+.fv2-reasons {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.fv2-reasons [data-reason] {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 8px;
+  border-radius: var(--r);
+  font-size: 14px;
+  cursor: pointer;
+}
+.fv2-reasons [data-reason]:hover {
+  background: var(--panel);
+}
+
+/* ---------- resizer (inside the panel, left edge, P-2) ---------- */
+.fv2-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  width: 8px;
+  z-index: 2;
+  cursor: col-resize;
+  background: transparent;
+  touch-action: none;
+}
+.fv2-resizer:hover,
+.fv2-resizer:focus-visible {
+  background: var(--step);
+}
+.fv2-resizer:focus-visible {
+  outline-offset: -2px;
+}
+.fv2-resizer[aria-valuenow='40'],
+.fv2-resizer[aria-valuenow='65'] {
+  cursor: ew-resize;
+}
+
+/* ---------- done state ---------- */
+.fv2-done {
+  margin: 8px 16px;
+  background: var(--ok-bg);
+  color: var(--ok-fg);
+  border-radius: var(--r);
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+
+/* ---------- document zoom controls (D15) ---------- */
+.fv2-zoom {
+  position: relative;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex: none;
+  margin-left: auto;
+}
+.fv2-zoom-btn {
+  border: 0;
+  border-radius: var(--r);
+  padding: 4px 8px;
+  min-height: 32px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--ink);
+}
+.fv2-zoom-btn:hover,
+.fv2-zoom-btn[aria-expanded='true'] {
+  background: var(--step);
+}
+.fv2-zoom-btn[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.fv2-zoom-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 40;
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  min-width: 96px;
+  display: grid;
+  gap: 2px;
+  background: var(--card);
+  border-radius: var(--r);
+  box-shadow: 0 10px 30px -13px rgb(21 24 27 / 0.22);
+}
+.fv2-zoom-menu button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  border-radius: var(--r);
+  padding: 4px 8px;
+  min-height: 32px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--ink);
+}
+.fv2-zoom-menu button:hover,
+.fv2-zoom-menu button[aria-checked='true'] {
+  background: var(--panel);
+}
+
+/* ---------- work grid: panel width from --fpw (set by usePanelWidth) ---------- */
+.work.fv2-work {
+  grid-template-columns: minmax(0, 1fr) calc(var(--fpw, 50) * 1%);
+}
+
+/* ---------- D15 zoom overrides: the whole page scales with --dz ---------- */
+.docscroll[data-dz] {
+  padding-inline: 32px;
+  overflow-x: auto;
+  scrollbar-gutter: stable;
+}
+.docscroll[data-dz] .paper {
+  width: calc(700px * var(--dz));
+  max-width: calc(700px * var(--dz));
+  padding: calc(52px * var(--dz)) calc(60px * var(--dz)) calc(72px * var(--dz));
+  font-size: calc(16px * var(--dz));
+}
+.docscroll[data-dz] .paper h1 {
+  font-size: calc(28px * var(--dz));
+  margin-bottom: calc(4px * var(--dz));
+}
+.docscroll[data-dz] .paper .sub {
+  font-size: calc(16px * var(--dz));
+  margin-bottom: calc(36px * var(--dz));
+}
+.docscroll[data-dz] .paper h2 {
+  font-size: calc(17px * var(--dz));
+  margin: calc(38px * var(--dz)) 0 calc(10px * var(--dz));
+  scroll-margin-top: calc(24px * var(--dz));
+}
+.docscroll[data-dz] .paper h2 small {
+  font-size: calc(15px * var(--dz));
+  margin-left: calc(6px * var(--dz));
+}
+.docscroll[data-dz] .paper h3 {
+  font-size: calc(15px * var(--dz));
+  margin: calc(20px * var(--dz)) 0 calc(6px * var(--dz));
+}
+.docscroll[data-dz] .paper p {
+  margin-bottom: calc(13px * var(--dz));
+}
+.docscroll[data-dz] .paper .fields {
+  padding: calc(14px * var(--dz)) calc(16px * var(--dz));
+  font-size: calc(14px * var(--dz));
+}
+.docscroll[data-dz] .paper .opt {
+  gap: calc(10px * var(--dz));
+  font-size: calc(14px * var(--dz));
+}
+.docscroll[data-dz] .paper .opt .box {
+  width: calc(13px * var(--dz));
+  height: calc(13px * var(--dz));
+}
+.docscroll[data-dz] .paper ol.p {
+  padding-left: calc(22px * var(--dz));
+  margin-bottom: calc(13px * var(--dz));
+}
+.docscroll[data-dz] .paper ol.p li {
+  margin-bottom: calc(6px * var(--dz));
+}
+.docscroll[data-dz] .paper .fold {
+  font-size: calc(14px * var(--dz));
+}
+.docscroll[data-dz] .paper .mask {
+  font-size: calc(14px * var(--dz));
+  padding: calc(1px * var(--dz)) calc(6px * var(--dz));
+}
+.docscroll[data-dz] .paper mark.q {
+  padding: 0 calc(1px * var(--dz));
+  text-decoration-thickness: calc(2px * var(--dz));
+  text-underline-offset: calc(3px * var(--dz));
+}
+
+/* ---------- narrow desktop (1024) ---------- */
+@media (max-width: 1279px) {
+  .work.fv2-work {
+    grid-template-columns: minmax(0, 1fr) max(40%, calc(var(--fpw, 55) * 1%));
+  }
+  .docscroll[data-dz] .paper {
+    padding: calc(40px * var(--dz)) calc(36px * var(--dz)) calc(56px * var(--dz));
+  }
+}
+
+/* ---------- phone (<768): panel stacks above the document ---------- */
+@media (max-width: 767px) {
+  .work.fv2-work {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .work > .fv2 {
+    order: -1;
+  }
+  .fv2-resizer {
+    display: none;
+  }
+  .docscroll[data-dz] .paper {
+    padding: calc(24px * var(--dz)) calc(16px * var(--dz)) calc(40px * var(--dz));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fv2-prog-bar > *,
+  .fv2-details > summary svg {
+    transition: none;
+  }
+  .fv2-btn:active {
+    transform: none;
+  }
+}
