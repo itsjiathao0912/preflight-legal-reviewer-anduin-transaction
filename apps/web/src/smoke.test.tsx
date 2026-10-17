@@ -29,7 +29,8 @@ describe('@aduin/web smoke (jsdom)', () => {
     expect(featureFor('memory')?.component.name).toBe('MemoryView');
     expect(featureFor('memory')?.label).toBe('Firm memory');
     expect(featureFor('counsel')?.component.name).toBe('CounselScreen');
-    expect(featureFor('counsel')?.label).toBe('Counsel questions');
+    // Variance P04: the counsel route is labelled "Questions" (hash unchanged)
+    expect(featureFor('counsel')?.label).toBe('Questions');
     expect(featureFor('compare')?.component.name).toBe('CompareScreen');
     expect(featureFor('compare')?.label).toBe('Compare versions');
     expect(featureFor('structure')?.component.name).toBe('StructureScreen');

@@ -16,6 +16,7 @@ import {
   RulesResponseSchema,
   type ActiveDecision,
   type AuditEvent,
+  type RegressionCheckSummary,
   type Rule,
 } from '@aduin/core';
 import { expect, type Page, type Request, type Route } from '@playwright/test';
@@ -43,6 +44,8 @@ export interface FakeInit {
   rules?: FakeRule[];
   /** Pre-existing audit events (any order; served newest first). */
   audit?: AuditEvent[];
+  /** Variance P04 (additive): active regression checks returned by the lookup, per firm. */
+  regressionChecks?: (RegressionCheckSummary & { law_firm_id: string })[];
 }
 
 export interface Recorded {
@@ -200,7 +203,18 @@ export async function installFakeWorker(page: Page, init: FakeInit = {}): Promis
         .filter((d) => d.law_firm_id === r.law_firm_id && d.status === 'active')
         .filter((d) => want.has(d.fingerprint))
         .map(wireDecision);
-      return json(route, 200, MemoryLookupResponseSchema.parse({ decisions: out }));
+      // Variance P04: the firm's active regression checks ride the lookup (server-scoped by firm)
+      const checks = (init.regressionChecks ?? [])
+        .filter((c) => c.law_firm_id === r.law_firm_id)
+        .map(({ law_firm_id: _f, ...c }) => c);
+      return json(
+        route,
+        200,
+        MemoryLookupResponseSchema.parse({
+          decisions: out,
+          ...(checks.length ? { regression_checks: checks } : {}),
+        }),
+      );
     }
     if (method === 'GET' && (path === '/api/memory/firm' || path === '/api/rules')) {
       const firm = query['law_firm_id'] ?? '';

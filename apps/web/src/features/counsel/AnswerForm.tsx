@@ -1,12 +1,48 @@
-import type { CounselOption } from '@aduin/core';
+import {
+  mask,
+  sensitiveSpans,
+  type AnswerScope,
+  type AssertionCandidate,
+  type CounselOption,
+} from '@aduin/core';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Icon } from '../../components/ui/icon';
 import type { RecordedAnswer } from '../../state/review';
+import { AssertionPreview } from '../variance/AssertionPreview';
 
 /** Answer options: A/B/C readings plus "unclear" (keeps a critical item unresolved). */
 export const UNCLEAR_TEXT =
   'Unclear: counsel could not answer. This keeps the gate blocked for a critical item.';
 const LETTERS: Exclude<CounselOption, 'unclear'>[] = ['A', 'B', 'C'];
+
+/** Intent cap (Worker: 500 chars, masked server-side). */
+export const INTENT_MAX = 500;
+
+export const INTENT_REQUIRED_TEXT =
+  'Add the intent. A firm-template answer becomes a check, and the check needs a reason.';
+export const INTENT_MASKED_TEXT =
+  'The intent is only sensitive data once masked. Describe the reason in words.';
+
+/**
+ * Variance H8: the Worker refuses a firm-template intent whose masked form is blank (`intentIsBlank`:
+ * mask tokens `#n` removed). The client applies the same rule before the answer shows as recorded.
+ */
+export function intentMaskedBlank(intent: string): boolean {
+  const t = intent.trim().slice(0, INTENT_MAX);
+  return (
+    mask(t, sensitiveSpans(t))
+      .replace(/#\d{0,4}/g, '')
+      .trim().length === 0
+  );
+}
+
+/** Client refusal for intent + scope (null = valid). Whitespace-only intent counts as empty. */
+export function intentError(intent: string, scope: AnswerScope): string | null {
+  if (scope !== 'firm_template') return null;
+  if (!intent.trim()) return INTENT_REQUIRED_TEXT;
+  if (intentMaskedBlank(intent)) return INTENT_MASKED_TEXT;
+  return null;
+}
 
 function today(): string {
   const d = new Date();
@@ -34,20 +70,41 @@ export function AnswerForm({
   initial,
   onSave,
   onCancel,
+  variance,
 }: {
   id: string;
   /** Interpretation texts for A/B/C (at most three are offered). */
   readings: readonly string[];
   defaultBy: string;
-  initial?: { option?: CounselOption | null; note?: string; by?: string; at?: number };
+  initial?: {
+    option?: CounselOption | null;
+    note?: string;
+    by?: string;
+    at?: number;
+    intent?: string;
+    scope?: AnswerScope;
+  };
   onSave: (a: RecordedAnswer) => void | Promise<void>;
   onCancel: () => void;
+  /**
+   * Variance P04 (D1): intent + scope + preview for a change question. `candidate` is the
+   * worker-decoded `assertion_candidate` (a firm-template answer then creates that check).
+   */
+  variance?: { candidate: AssertionCandidate | undefined; owner: string };
 }) {
-  const [option, setOption] = useState<CounselOption | null>(initial?.option ?? null);
+  // change questions mark option A as the default (D1); error questions keep no preselection
+  const [option, setOption] = useState<CounselOption | null>(
+    initial?.option ?? (variance ? 'A' : null),
+  );
   const [note, setNote] = useState(initial?.note ?? '');
   const [by, setBy] = useState(initial?.by ?? defaultBy);
   const [when, setWhen] = useState(initial?.at ? isoDay(initial.at) : today());
+  // intent is human text only: no default value, no auto-fill, no AI draft path (AC-V15)
+  const [intent, setIntent] = useState(initial?.intent ?? '');
+  const [scope, setScope] = useState<AnswerScope>(initial?.scope ?? 'fund');
   const [err, setErr] = useState(false);
+  const [intentErr, setIntentErr] = useState<string | null>(null);
+  const intentRef = useRef<HTMLTextAreaElement | null>(null);
   const first = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     first.current?.focus({ preventScroll: true });
@@ -60,6 +117,28 @@ export function AnswerForm({
     e.preventDefault();
     if (!option || !by.trim()) {
       setErr(true);
+      return;
+    }
+    if (variance) {
+      const ie = intentError(intent, scope);
+      if (ie) {
+        setIntentErr(ie);
+        intentRef.current?.focus();
+        return;
+      }
+      const it = intent.trim().slice(0, INTENT_MAX);
+      void onSave({
+        option,
+        note: note.trim(),
+        by: by.trim(),
+        at: dateMs(when),
+        // H8: intent is sent only when non-blank (never '')
+        ...(it ? { intent: it } : {}),
+        scope,
+        ...(scope === 'firm_template' && variance.candidate && option !== 'unclear'
+          ? { assertion: { kind: 'scope_exists' as const, label: variance.candidate.label } }
+          : {}),
+      });
       return;
     }
     void onSave({ option, note: note.trim(), by: by.trim(), at: dateMs(when) });
@@ -95,7 +174,14 @@ export function AnswerForm({
               }}
             />
             <b>{k === 'unclear' ? '?' : k}</b>
-            <span>{t}</span>
+            <span>
+              {t}
+              {variance && k === 'A' && !initial?.option ? (
+                <span className="df" data-testid="answer-default">
+                  Default
+                </span>
+              ) : null}
+            </span>
           </label>
         ))}
       </fieldset>
@@ -110,6 +196,54 @@ export function AnswerForm({
           onChange={(e) => setNote(e.target.value)}
         />
       </label>
+      {variance ? (
+        <>
+          <label className="f">
+            Why is it written this way? (intent)
+            <textarea
+              ref={intentRef}
+              rows={2}
+              maxLength={INTENT_MAX}
+              data-testid="answer-intent"
+              autoComplete="off"
+              value={intent}
+              onChange={(e) => {
+                setIntent(e.target.value);
+                setIntentErr(null);
+              }}
+            />
+          </label>
+          <fieldset>
+            <legend>Applies to</legend>
+            <label className="r">
+              <input
+                type="radio"
+                name={`scope-${id}`}
+                value="fund"
+                data-testid="answer-scope-fund"
+                checked={scope === 'fund'}
+                onChange={() => {
+                  setScope('fund');
+                  setIntentErr(null);
+                }}
+              />
+              <span>This fund only</span>
+            </label>
+            <label className="r">
+              <input
+                type="radio"
+                name={`scope-${id}`}
+                value="firm_template"
+                data-testid="answer-scope-firm"
+                checked={scope === 'firm_template'}
+                onChange={() => setScope('firm_template')}
+              />
+              <span>Firm template (check future documents)</span>
+            </label>
+          </fieldset>
+          {scope === 'firm_template' ? <AssertionPreview candidate={variance.candidate} /> : null}
+        </>
+      ) : null}
       <div className="two">
         <label className="f">
           Answered by
@@ -135,11 +269,16 @@ export function AnswerForm({
           />
         </label>
       </div>
-      <div className={err ? 'err on' : 'err'} role="alert" data-testid="answer-error">
+      <div className={err || intentErr ? 'err on' : 'err'} role="alert" data-testid="answer-error">
         {err ? (
           <>
             <Icon name="warn" />
             Choose an option or &quot;unclear&quot;, and say who answered.
+          </>
+        ) : intentErr ? (
+          <>
+            <Icon name="warn" />
+            {intentErr}
           </>
         ) : null}
       </div>
@@ -171,12 +310,16 @@ export function RecordedAnswerView({
   note,
   by,
   at,
+  intent,
+  scope,
 }: {
   option: CounselOption;
   reading: string | null;
   note?: string | undefined;
   by?: string | undefined;
   at?: number | undefined;
+  intent?: string | undefined;
+  scope?: AnswerScope | undefined;
 }) {
   const unclear = option === 'unclear';
   return (
@@ -197,6 +340,20 @@ export function RecordedAnswerView({
           <>
             <dt>Note</dt>
             <dd>{note}</dd>
+          </>
+        ) : null}
+        {intent ? (
+          <>
+            <dt>Intent</dt>
+            <dd data-testid="answer-intent-view">{intent}</dd>
+          </>
+        ) : null}
+        {scope ? (
+          <>
+            <dt>Scope</dt>
+            <dd data-testid="answer-scope-view">
+              {scope === 'firm_template' ? 'Firm template' : 'This fund only'}
+            </dd>
           </>
         ) : null}
         {by ? (

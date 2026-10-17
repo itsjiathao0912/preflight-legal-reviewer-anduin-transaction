@@ -1,4 +1,4 @@
-import { GATE_REASON_TEXT, type GateReason } from '@aduin/core';
+import { GATE_REASON_TEXT, questionKey, type GateReason } from '@aduin/core';
 import { Icon } from '../../components/ui/icon';
 import { useFilters } from '../../state/filters';
 import { useReview } from '../../state/review';
@@ -7,6 +7,13 @@ import { useCounsel } from '../counsel/counsel-store';
 import { isQuestion } from '../counsel/sheet-model';
 import { memoryLabelText } from '../review/memory-labels';
 import type { Row } from '../review/model';
+import {
+  GATE_GROUP_LABEL,
+  GATE_GROUP_ORDER,
+  gateGroups,
+  isChangeRow,
+  type GroupedReason,
+} from '../variance/owner-groups';
 
 /**
  * Gate popover reasons (AC22). Each reason links to where it is resolved: a counsel question or an
@@ -28,6 +35,12 @@ export function reasonText(r: GateReason, row: Row | undefined): string {
   return GATE_REASON_TEXT[r.kind];
 }
 
+/**
+ * Variance P04 (F1, H6): reasons grouped by owner, list only: "You · Counsel · GP · Fund admin ·
+ * Earlier funds" with counts (from the shared owner model; group sizes sum to the reasons, which are
+ * per (finding, owner) pair). Documents without change rows or owner reasons keep the flat list.
+ * `GateButton` (Intake's merged gate, badge and three-part render) is unchanged.
+ */
 export function GateReasons({
   reasons,
   rows,
@@ -37,30 +50,57 @@ export function GateReasons({
   rows: readonly Row[];
   onGo: () => void;
 }) {
+  const grouped = reasons.some((r) => r.owner) || rows.some(isChangeRow);
+  if (!grouped) return <ReasonList items={reasons.map(plain(rows))} onGo={onGo} />;
+  const g = gateGroups(reasons, rows);
+  return (
+    <div className="gpgroups" data-testid="gate-groups">
+      {GATE_GROUP_ORDER.map((id) =>
+        g[id].length ? (
+          <div key={id} data-testid="gate-group" data-group={id} data-count={g[id].length}>
+            <p className="gh">
+              {GATE_GROUP_LABEL[id]} <span>{g[id].length}</span>
+            </p>
+            <ReasonList items={g[id]} onGo={onGo} />
+          </div>
+        ) : null,
+      )}
+    </div>
+  );
+}
+
+const plain =
+  (rows: readonly Row[]) =>
+  (reason: GateReason): GroupedReason => ({
+    reason,
+    row: rows.find((x) => x.f.id === reason.findingKey),
+    documentError: false,
+  });
+
+function ReasonList({ items, onGo }: { items: readonly GroupedReason[]; onGo: () => void }) {
   const select = useReview((s) => s.select);
   const setRoute = useShell((s) => s.setRoute);
   const reset = useFilters((s) => s.reset);
   const focusItem = useCounsel((s) => s.focusItem);
-  const byId = new Map(rows.map((r) => [r.f.id, r]));
   return (
     <ul>
-      {reasons.map((r) => {
-        const row = byId.get(r.findingKey);
+      {items.map(({ reason: r, row }) => {
         const target = reasonTarget(r, row);
         return (
-          <li key={r.findingKey}>
+          <li key={`${r.findingKey}@${r.owner ?? ''}`}>
             <button
               className="gli"
               type="button"
               data-testid="gate-reason"
               data-finding-id={r.findingKey}
+              data-owner={r.owner}
               data-kind={r.kind}
               data-target={target}
               onClick={() => {
                 onGo();
                 if (target === 'counsel') {
                   setRoute('counsel');
-                  focusItem(r.findingKey);
+                  focusItem(r.owner ? questionKey(r.findingKey, r.owner) : r.findingKey);
                   return;
                 }
                 setRoute('findings');

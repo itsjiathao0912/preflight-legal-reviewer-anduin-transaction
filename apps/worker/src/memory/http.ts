@@ -5,6 +5,7 @@ import {
   ConflictBodySchema,
   errorBody,
   limits,
+  parseQuestionKey,
   type ActiveDecision,
   type TurnstilePort,
 } from '@aduin/core';
@@ -138,7 +139,22 @@ export function writeHeaderGuards(request: Request): void {
 /** Persisted client-chosen id fields checked against ID_RE after every schema parse. */
 const SAFE_ID_KEYS = ['client_op_id', 'finding_ref'] as const;
 
-export function parseWith<S extends z.ZodType>(schema: S, raw: unknown): z.infer<S> {
+/**
+ * Variance (H2(d)): a question key `<findingId>@<owner>` is safe when the finding id uses the safe Id
+ * charset and the suffix is a known owner (`counsel | gp | fund_admin`); anything else is checked as
+ * a plain id (an unknown suffix keeps its "@" and is refused exactly as before).
+ */
+export function safeQuestionKey(v: string): boolean {
+  if (ID_RE.test(v)) return true;
+  const k = parseQuestionKey(v);
+  return k.owner !== undefined && ID_RE.test(k.findingId) && v.length <= 64;
+}
+
+export function parseWith<S extends z.ZodType>(
+  schema: S,
+  raw: unknown,
+  opts: { questionKey?: boolean } = {},
+): z.infer<S> {
   const r = schema.safeParse(raw);
   if (!r.success) throw new ProxyError('invalid_request', 'schema');
   // Review L2: client-chosen ids that are persisted must use the safe Id charset.
@@ -146,8 +162,9 @@ export function parseWith<S extends z.ZodType>(schema: S, raw: unknown): z.infer
   if (d && typeof d === 'object')
     for (const k of SAFE_ID_KEYS) {
       const v = (d as Record<string, unknown>)[k];
-      if (typeof v === 'string' && !ID_RE.test(v))
-        throw new ProxyError('invalid_request', 'id_charset');
+      if (typeof v !== 'string') continue;
+      const okId = opts.questionKey && k === 'finding_ref' ? safeQuestionKey(v) : ID_RE.test(v);
+      if (!okId) throw new ProxyError('invalid_request', 'id_charset');
     }
   return r.data;
 }

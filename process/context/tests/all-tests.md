@@ -320,6 +320,16 @@ Whole suites, serial: core 3190 (+3 skip; `size-cap` and `diff-determinism` hit 
 - **Stub SSE modes (`apps/worker/test/fakes/openrouter-stub.ts`):** a request with `"stream":true` and a `json` reply whose `choices[0].message.content` is a string is auto-converted to SSE (role chunk, 64-char deltas, finish chunk, usage chunk, `[DONE]`); a `text` reply forces the JSON path. Raw variants: `{ sse: { chunks } }`, `{ sseStall: { chunks } }` (never closes, errors on abort, `aborted++`), `{ sseLive: (ctl) => void }` (`push`/`close`/`error` interleaved with `FakeTimers.advance()`); helper `sseLines(opts)`. Harness opt `upstreamIdleMs`; harness `now` follows the fake timers.
 - **Core / scripts / web tokens:** core `ai-candidates-skip-rule-sentences`, `ai-dedupe-rule-overlap`, `ai-verify-suppresses-rule-duplicates`; scripts `derive-live-recordings`, `ocr-live-guard` (parity with the Worker body minus the trailing `"stream":true`); web e2e `ai-no-duplicates` (preview, port 4317).
 
+## Variance Phase 02 gate tokens (web Findings, HEAD 15aa796)
+
+Whole suites after Variance Phase 02, independent EVL (no deploy, 0 model calls): web unit 47 files / 338, full preview e2e 228 passed + 1 opt-in skip (was 217 + 1; +11 variance tests), typecheck and lint green. One token per call, no `--`; free port 4317 before each e2e call; never run two e2e agents at once.
+
+- **Web unit tokens (`pnpm --filter @aduin/web test <token>`):** `variance-counts-selector` (5), `variance-baseline-source-contract` (7), `variance-store` (5), `package-member-source` (6), `variance-no-llm-full-run-web` (2), `no-e2e-hook-in-d` (2), `import-graph` (4, no new ALLOWED line).
+- **E2E tokens (`pnpm --filter @aduin/web test:e2e <token>`):** `variance-render-first` (3: 3 s delay, failure, 20 s timeout; uses seam `varianceDelayMs` / `varianceFail`, IS_E2E only), `variance-cosmetic-hidden-default`, `variance-baseline-from-package` (3), `variance-baseline-same-firm-only`, `variance-no-baseline-errors-only` (2), `variance-ai-never-gates` (Hybrid: stubbed `/api/ai`, openrouter aborted; live path is operator R2).
+- **Regression block (23 tokens, keep green):** counsel-gate, gate-pill, diff-pairs, memory-no-reflag, turnstile-no-block, a11y-keyboard, layout-vs-mockup, no-llm-corpus, sample-zero-calls, filter-sort, app-shell, placeholder-routes, mobile-shell, restore-and-no-text, nine `intake-*` tokens (run `intake-demo-packages` alone); unit `package-store` 21, `package-view` 8, `package-gate-ui` 7, `gate-pill` 4, `restore-last-doc` 10.
+- **Fixtures and pitfalls:** `apps/web/e2e/fixtures/variance.ts` (`uploadOne`, `varianceSettled`, `changeRows`, `errorRows`, `ageUploads`, `NGI_2024/NGI_2026`). Use the NGI 2024/2026 pair for cosmetic and diff e2e (Hartwell gives 1 change, 0 cosmetic hunks). Specs that upload two same-firm documents now get change rows: count error rows with `:not([data-kind="change"])`. Samples never become a firm-pointer baseline.
+- **Known gaps:** agent-probe keyboard walk and `DESIGN_PROBE=1` not run; human keyboard pass and live Turnstile render-first are backlog residuals.
+
 ## Debugging Quick Reference
 
 - **Worker tests fail to find bindings:** bindings come from `apps/worker/wrangler.jsonc`; the plugin config points at it.

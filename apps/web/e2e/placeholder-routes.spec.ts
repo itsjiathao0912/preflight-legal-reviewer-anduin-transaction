@@ -30,7 +30,7 @@ test.describe('placeholder-routes', () => {
     await gotoApp(page);
     await page.getByTestId('nav-counsel').click();
     await expect(page.getByTestId('counsel-view')).toBeVisible();
-    await expect(page.getByTestId('counsel-view').locator('h1')).toHaveText('Counsel questions');
+    await expect(page.getByTestId('counsel-view').locator('h1')).toHaveText('Questions');
     await expect(page.getByTestId('placeholder-view')).toHaveCount(0);
   });
   test('Memory is a real view', async ({ page }) => {

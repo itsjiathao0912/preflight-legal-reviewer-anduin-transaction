@@ -65,6 +65,9 @@ const ALLOWED = new Set([
   // review Minor 6: stored package rows are validated before restore (pure zod schemas)
   'PackageDocumentSchema',
   'PackageFactsSchema',
+  // Variance Phase 04: the one question-key helper pair (composite `<findingId>@<owner>`)
+  'questionKey',
+  'parseQuestionKey',
 ]);
 
 function files(dir: string): string[] {

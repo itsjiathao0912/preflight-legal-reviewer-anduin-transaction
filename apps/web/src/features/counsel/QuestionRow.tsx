@@ -1,4 +1,4 @@
-import { maskQuote, templateInterpretations } from '@aduin/core';
+import { maskQuote, templateInterpretations, type AssertionCandidate } from '@aduin/core';
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from '../../components/ui/icon';
 import { useReview } from '../../state/review';
@@ -7,9 +7,10 @@ import { AI_SUGGESTION } from '../ai/Provenance';
 import { memoryLabelText } from '../review/memory-labels';
 import type { Row } from '../review/model';
 import { SEV } from '../review/severity';
+import { OWNER_LABEL, type QuestionItem } from '../variance/owner-groups';
 import { AnswerForm, fmtDay, RecordedAnswerView } from './AnswerForm';
 import { useCounsel } from './counsel-store';
-import { baseWording, questionState, wordingFor, type QuestionState } from './sheet-model';
+import { baseWording, itemState, wordingFor, type QuestionState } from './sheet-model';
 
 export type RowMode = 'view' | 'edit' | 'answer';
 
@@ -43,11 +44,18 @@ function Tag({ state }: { state: QuestionState }) {
   }
 }
 
-function WordingEditor({ r, onDone }: { r: Row; onDone: () => void }) {
+/** Readings A/B/C: change questions use the engine's deterministic old-vs-new options (C3). */
+export function readingsFor(r: Row): string[] {
+  return r.f.kind === 'change' && r.f.detail.interpretations.length
+    ? r.f.detail.interpretations
+    : templateInterpretations(r.f.issue_class);
+}
+
+function WordingEditor({ r, k, onDone }: { r: Row; k: string; onDone: () => void }) {
   const drafts = useCounsel((s) => s.drafts);
   const setEdit = useCounsel((s) => s.setEdit);
   const showToast = useReview((s) => s.showToast);
-  const [v, setV] = useState(wordingFor(r, drafts).text);
+  const [v, setV] = useState(wordingFor(r, drafts, k).text);
   const ref = useRef<HTMLTextAreaElement | null>(null);
   useEffect(() => {
     const el = ref.current;
@@ -63,11 +71,11 @@ function WordingEditor({ r, onDone }: { r: Row; onDone: () => void }) {
       ref.current?.focus();
       return;
     }
-    setEdit(r.f.id, t === base.text ? null : t);
+    setEdit(k, t === base.text ? null : t);
     showToast('Wording saved.');
     onDone();
   };
-  const id = `cs-ed-${r.f.id}`;
+  const id = `cs-ed-${k}`;
   return (
     <div className="edit">
       <label className="sr" htmlFor={id}>
@@ -97,13 +105,13 @@ function WordingEditor({ r, onDone }: { r: Row; onDone: () => void }) {
         <button type="button" className="btn" data-testid="counsel-edit-cancel" onClick={onDone}>
           Cancel
         </button>
-        {drafts.edits[r.f.id] ? (
+        {drafts.edits[k] ? (
           <button
             type="button"
             className="btn lnk"
             data-testid="counsel-edit-reset"
             onClick={() => {
-              setEdit(r.f.id, null);
+              setEdit(k, null);
               showToast('Wording reset to the draft.');
               onDone();
             }}
@@ -117,10 +125,10 @@ function WordingEditor({ r, onDone }: { r: Row; onDone: () => void }) {
   );
 }
 
-function ProvenanceTags({ r }: { r: Row }) {
+function ProvenanceTags({ r, k }: { r: Row; k: string }) {
   const drafts = useCounsel((s) => s.drafts);
   const aiOn = useSession((s) => s.aiOn);
-  const w = wordingFor(r, drafts);
+  const w = wordingFor(r, drafts, k);
   const base = w.source === 'edit' ? baseWording(r, drafts).source : w.source;
   return (
     <>
@@ -155,27 +163,51 @@ function ProvenanceTags({ r }: { r: Row }) {
 }
 
 export function QuestionRow({
-  r,
+  q,
   n,
   selected,
   mode,
   defaultBy,
+  candidate,
   onToggle,
   onMode,
 }: {
-  r: Row;
+  q: QuestionItem;
   n: number;
   selected: boolean;
   mode: RowMode;
   defaultBy: string;
+  /** Variance: worker-decoded `assertion_candidate` of a change question (firm-template preview). */
+  candidate?: AssertionCandidate | undefined;
   onToggle: () => void;
   onMode: (m: RowMode) => void;
 }) {
+  const r = q.row;
+  const k = q.key;
   const drafts = useCounsel((s) => s.drafts);
   const recordAnswer = useReview((s) => s.recordAnswer);
-  const state = questionState(r);
-  const readings = templateInterpretations(r.f.issue_class);
+  const state = itemState(q);
+  const readings = readingsFor(r);
   const t = r.triage;
+  // this question's recorded answer: the owner's answer for a change question
+  const info = q.change ? t?.ownerAnswerInfo?.[q.owner] : undefined;
+  const rec = q.change
+    ? {
+        option: q.answer,
+        note: info?.note,
+        by: info?.by,
+        at: info?.at,
+        intent: info?.intent,
+        scope: info?.scope,
+      }
+    : {
+        option: t?.counselAnswer ?? null,
+        note: t?.counselNote,
+        by: t?.answeredBy,
+        at: t?.answeredAt,
+        intent: undefined,
+        scope: undefined,
+      };
   const reconfirm = r.label === 'dismissed_reconfirm' && state !== 'answered';
   const reading = (o: string | null | undefined) => {
     const i = o ? LETTERS.indexOf(o) : -1;
@@ -186,6 +218,9 @@ export function QuestionRow({
       className={selected ? 'row sel' : 'row'}
       data-testid="counsel-row"
       data-finding-id={r.f.id}
+      data-key={k}
+      data-owner={q.owner}
+      data-kind={q.change ? 'change' : 'error'}
       data-state={state}
     >
       <button
@@ -201,7 +236,7 @@ export function QuestionRow({
         </span>
         <span className="t">
           <span className="qn">Q{n}</span>
-          <span data-testid="counsel-question-text">{wordingFor(r, drafts).text}</span>
+          <span data-testid="counsel-question-text">{wordingFor(r, drafts, k).text}</span>
         </span>
         <span className="rm">
           {reconfirm ? (
@@ -210,13 +245,18 @@ export function QuestionRow({
               <span className="sr">{memoryLabelText(r.label, r.prior?.fund_name)}. </span>
             </span>
           ) : null}
+          {q.change ? (
+            <span className="ochip" data-testid="question-owner">
+              {OWNER_LABEL[q.owner]}
+            </span>
+          ) : null}
           <Tag state={state} />
           <span>{r.f.ref}</span>
         </span>
       </button>
       {selected ? (
         <div className="rbody">
-          {mode === 'edit' ? <WordingEditor r={r} onDone={() => onMode('view')} /> : null}
+          {mode === 'edit' ? <WordingEditor r={r} k={k} onDone={() => onMode('view')} /> : null}
           <blockquote className="ev" data-testid="counsel-quote">
             {maskQuote(r.f.quote)}
             <span className="cite">
@@ -233,7 +273,7 @@ export function QuestionRow({
             ))}
           </ul>
           <div className="prov" data-testid="counsel-provenance">
-            <ProvenanceTags r={r} />
+            <ProvenanceTags r={r} k={k} />
             {mode !== 'edit' ? (
               <button
                 type="button"
@@ -255,29 +295,34 @@ export function QuestionRow({
           ) : null}
           {mode === 'answer' ? (
             <AnswerForm
-              id={r.f.id}
+              id={k}
               readings={readings}
-              defaultBy={defaultBy}
+              defaultBy={q.change ? OWNER_LABEL[q.owner] : defaultBy}
               initial={{
-                option: t?.counselAnswer ?? null,
-                ...(t?.counselNote ? { note: t.counselNote } : {}),
-                ...(t?.answeredBy ? { by: t.answeredBy } : {}),
-                ...(t?.answeredAt ? { at: t.answeredAt } : {}),
+                option: rec.option,
+                ...(rec.note ? { note: rec.note } : {}),
+                ...(rec.by ? { by: rec.by } : {}),
+                ...(rec.at ? { at: rec.at } : {}),
+                ...(rec.intent ? { intent: rec.intent } : {}),
+                ...(rec.scope ? { scope: rec.scope } : {}),
               }}
+              {...(q.change ? { variance: { candidate, owner: OWNER_LABEL[q.owner] } } : {})}
               onCancel={() => onMode('view')}
               onSave={async (a) => {
                 onMode('view');
-                await recordAnswer(r.f.id, a);
+                await recordAnswer(r.f.id, a, q.change ? q.owner : undefined);
               }}
             />
-          ) : t?.counselAnswer ? (
+          ) : rec.option ? (
             <>
               <RecordedAnswerView
-                option={t.counselAnswer}
-                reading={reading(t.counselAnswer)}
-                note={t.counselNote}
-                by={t.answeredBy}
-                at={t.answeredAt}
+                option={rec.option}
+                reading={reading(rec.option)}
+                note={rec.note}
+                by={rec.by}
+                at={rec.at}
+                intent={rec.intent}
+                scope={rec.scope}
               />
               <div className="acts">
                 <button

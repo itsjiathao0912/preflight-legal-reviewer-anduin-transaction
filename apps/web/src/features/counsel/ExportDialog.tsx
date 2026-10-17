@@ -1,10 +1,10 @@
-import type { CounselSheet } from '@aduin/core';
+import { parseQuestionKey, type CounselSheet } from '@aduin/core';
 import * as RxDialog from '@radix-ui/react-dialog';
 import { useEffect, useState } from 'react';
 import { Icon } from '../../components/ui/icon';
 import type { Row } from '../review/model';
 import { ExportError } from './export-flow';
-import { LETTERS } from './exportDocx';
+import { LETTERS, SHEET_OWNER_LABEL } from './exportDocx';
 
 /**
  * Export preview (app.html counsel export dialog): the unanswered New/Accepted questions that go to
@@ -43,8 +43,17 @@ export function ExportDialog({
     return () => app.removeAttribute('inert');
   }, [open]);
   const items = sheet.questions;
-  const acc = items.filter((q) => rowsById.get(q.findingKey)?.status === 'accepted').length;
+  // Variance P04: a question key `<findingId>@<owner>` resolves its row by the plain finding id
+  const rowOf = (key: string) => rowsById.get(parseQuestionKey(key).findingId);
+  const answerOf = (key: string) => {
+    const { owner } = parseQuestionKey(key);
+    const t = rowOf(key)?.triage;
+    return owner ? (t?.ownerAnswers?.[owner] ?? null) : (t?.counselAnswer ?? null);
+  };
+  const acc = items.filter((q) => rowOf(q.findingKey)?.status === 'accepted').length;
   const firm = sheet.meta.firm ?? 'not tagged';
+  const owner = sheet.meta.owner ? SHEET_OWNER_LABEL[sheet.meta.owner] : null;
+  const to = owner ?? 'counsel';
   return (
     <RxDialog.Root open={open} onOpenChange={(o) => !busy && onOpenChange(o)}>
       <RxDialog.Portal>
@@ -54,13 +63,15 @@ export function ExportDialog({
               <div className="dh">
                 <div>
                   <RxDialog.Title asChild>
-                    <h2>Export preview</h2>
+                    <h2>{owner ? `Export for ${owner}` : 'Export preview'}</h2>
                   </RxDialog.Title>
                   <RxDialog.Description asChild>
                     <p className="mut" data-testid="export-summary">
                       {items.length
-                        ? `${items.length} unanswered question${items.length > 1 ? 's' : ''} go to counsel: ${items.length - acc} New, ${acc} Accepted. Law firm: ${firm}.`
-                        : 'Nothing to send: every question has an answer.'}
+                        ? `${items.length} unanswered question${items.length > 1 ? 's' : ''} go to ${to}: ${items.length - acc} New, ${acc} Accepted. Law firm: ${firm}.`
+                        : owner
+                          ? `Nothing to send: every question for ${owner} has an answer.`
+                          : 'Nothing to send: every question has an answer.'}
                     </p>
                   </RxDialog.Description>
                 </div>
@@ -92,7 +103,6 @@ export function ExportDialog({
                 <h3>{sheet.meta.title}</h3>
                 {items.length ? (
                   items.map((q) => {
-                    const r = rowsById.get(q.findingKey);
                     const quote = q.quote.length > 110 ? `${q.quote.slice(0, 108)}…` : q.quote;
                     return (
                       <div
@@ -113,7 +123,7 @@ export function ExportDialog({
                           ))}
                         </ol>
                         <div className="ra">
-                          {r?.triage?.counselAnswer === 'unclear'
+                          {answerOf(q.findingKey) === 'unclear'
                             ? 'Earlier answer: unclear · follow-up needed'
                             : 'Answer: ______   Note: ______   By / date: ______'}
                         </div>

@@ -433,6 +433,7 @@ Phase 3 status: ✅ VERIFIED (EVL green; report `intake-mvp_PHASE-3-web-surfaces
 Phase 4 status: ✅ VERIFIED (EVL green; deployed 3d2c7301-a4a5-487c-bd7d-2f2c0800be6f; report `intake-mvp_PHASE-4-closeout-deploy_REPORT_17-10-26.md`)
 Phase 4 EVL: green (core 3084, web 298, preview e2e 217+1 skip, stack-memory 11, worker 526, scripts 162; live F1-F4)
 Program report: `process/features/fund-package-intake/active/intake-mvp_17-10-26/intake-mvp_REPORT_17-10-26.md`
+Post-closeout fix 18-10-26: 8db9245 (package-step problem messages for disabled Run checks; not merged, not deployed); see `## Post-Closeout Fixes` in the program report.
 Next phase: none (follow-ups in `process/features/fund-package-intake/backlog/`; the variance program consumes the baseline role)
 Current loop step: UPDATE-PROCESS (complete)
 Validate-contract status: written and PASS for all 4 phases

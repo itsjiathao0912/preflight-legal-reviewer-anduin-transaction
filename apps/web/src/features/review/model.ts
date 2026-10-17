@@ -1,4 +1,12 @@
-import type { ActiveDecision, CounselOption, MemoryLabel, ReasonCode } from '@aduin/core';
+import type {
+  ActiveDecision,
+  AnswerScope,
+  CounselOption,
+  MemoryLabel,
+  Owner,
+  ReasonCode,
+  VarianceGatePolicy,
+} from '@aduin/core';
 import type { FindingView } from '../../engine/types';
 import type { MemoryResult } from '../../memory/fingerprintFindings';
 import type { Filters } from '../../state/filters';
@@ -20,6 +28,26 @@ export interface Triage {
   decisionId?: string | null;
   /** Phase 08: memory decision written by the recorded counsel answer (revoked on undo). */
   answerId?: string | null;
+  /**
+   * Variance P04 (change findings): per-owner answers. A key PRESENT = that owner was asked (written
+   * at the Ask click); `null` = asked, no answer yet. Authoritative for the gate; `counselAnswer` is
+   * never written for a change finding.
+   */
+  ownerAnswers?: Partial<Record<Owner, CounselOption | null>>;
+  /** Variance P04 (H7): each owner's `pending:` or real answer decision id (revoked per owner). */
+  ownerAnswerIds?: Partial<Record<Owner, string | null>>;
+  /** Variance P04: who / when / note / intent / scope recorded with each owner's answer. */
+  ownerAnswerInfo?: Partial<Record<Owner, OwnerAnswerInfo>>;
+  /** Variance P04: `override` when the analyst changed the suggested owner before asking. */
+  ownerSource?: 'suggested' | 'override';
+}
+
+export interface OwnerAnswerInfo {
+  by: string;
+  at: number;
+  note?: string;
+  intent?: string;
+  scope?: AnswerScope;
 }
 
 export interface Row {
@@ -70,7 +98,11 @@ export function placement(rows: readonly Row[]): { main: Row[]; previous: Row[] 
 }
 
 export function passes(r: Row, s: Filters): boolean {
-  if (s.sev !== 'all' && r.sev !== s.sev) return false;
+  // Variance P02: the All / Errors / Changes segment; severity chips select error rows only
+  const change = r.f.kind === 'change';
+  if (s.kind === 'errors' && change) return false;
+  if (s.kind === 'changes' && !change) return false;
+  if (s.sev !== 'all' && (change || r.sev !== s.sev)) return false;
   if (s.cls !== 'all' && r.f.issue_class !== s.cls) return false;
   if (s.det !== 'all' && r.detector !== s.det) return false;
   if (s.status === 'active') return r.status !== 'dismissed';
@@ -94,10 +126,10 @@ export function visibleRows(main: readonly Row[], s: Filters): Row[] {
   );
 }
 
-/** Severity chip counts: active (not dismissed) main-list findings. */
+/** Severity chip counts: active (not dismissed) main-list error rows (change rows never count). */
 export function chipCounts(main: readonly Row[]): Record<SevKey, number> {
   const c: Record<SevKey, number> = { block: 0, fix: 0, note: 0 };
-  for (const r of main) if (r.status !== 'dismissed') c[r.sev]++;
+  for (const r of main) if (r.status !== 'dismissed' && r.f.kind !== 'change') c[r.sev]++;
   return c;
 }
 
@@ -110,10 +142,19 @@ export function counselCount(rows: readonly Row[]): number {
   return rows.filter((r) => r.status === 'counsel').length;
 }
 
-export function computeGate(rows: readonly Row[]): GateResult {
+/**
+ * Gate over review rows. With the variance `policy` (only when a baseline resolved and the pass is
+ * ready) every change row maps to `gates: true`; AI rows never gate. Without it: the exact legacy gate.
+ */
+export function computeGate(rows: readonly Row[], policy?: VarianceGatePolicy): GateResult {
   const states: Record<
     string,
-    { status: TriageStatus; reasonCode?: string | null; counselAnswer?: CounselOption | null }
+    {
+      status: TriageStatus;
+      reasonCode?: string | null;
+      counselAnswer?: CounselOption | null;
+      ownerAnswers?: Partial<Record<Owner, CounselOption | null>>;
+    }
   > = {};
   const labels: Record<string, MemoryLabel> = {};
   for (const r of rows) {
@@ -121,13 +162,20 @@ export function computeGate(rows: readonly Row[]): GateResult {
       status: r.status,
       reasonCode: r.triage?.reasonCode ?? null,
       counselAnswer: r.triage?.counselAnswer ?? null,
+      ...(r.triage?.ownerAnswers ? { ownerAnswers: r.triage.ownerAnswers } : {}),
     };
     labels[r.f.id] = r.label;
   }
   return gateInterim(
-    rows.map((r) => ({ id: r.f.id, severity: r.f.severity, detector_kind: r.f.detector_kind })),
+    rows.map((r) => ({
+      id: r.f.id,
+      severity: r.f.severity,
+      detector_kind: r.f.detector_kind,
+      ...(policy && r.f.kind === 'change' ? { gates: true } : {}),
+    })),
     states,
     labels,
+    ...(policy ? [policy] : []),
   );
 }
 

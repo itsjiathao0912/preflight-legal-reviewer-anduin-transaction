@@ -1,8 +1,10 @@
 import {
   fingerprintFor,
   limits,
+  mask,
   resolveLabel,
   scopeMismatch,
+  sensitiveSpans,
   type ActiveDecision,
   type MemoryLabel,
 } from '@aduin/core';
@@ -28,6 +30,20 @@ export interface MemoryResult {
   unavailable: boolean;
   /** Render-first placeholder: labels are New until the memory lookup settles (no network yet). */
   pending?: boolean;
+}
+
+/** Worker `NO_FUND`: the run's fund name when the document has no fund. */
+export const NO_FUND_SCOPE = '(no fund)';
+
+/**
+ * Variance M2 (H3): the fund scope exactly as the Worker persists it on the run
+ * (`maskFree(body.fund_name ?? NO_FUND)`, where `outboxDocFor` sends `fund.slice(0, 200)` only when
+ * the document has a fund), so the client label matches the Worker label for fund-scoped decisions.
+ */
+export function fundScopeName(fund: string | null | undefined): string {
+  if (!fund) return NO_FUND_SCOPE;
+  const f = fund.slice(0, 200);
+  return mask(f, sensitiveSpans(f));
 }
 
 export async function fingerprintFindings(

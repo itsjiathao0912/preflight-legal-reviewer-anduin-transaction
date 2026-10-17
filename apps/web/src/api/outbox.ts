@@ -1,4 +1,4 @@
-import type { ActiveDecision, FindingWire } from '@aduin/core';
+import { parseQuestionKey, type ActiveDecision, type FindingWire } from '@aduin/core';
 import type { AppDb, OutboxRow } from '../storage/db';
 import { newClientOpId, type RunCacheControl } from './realMemoryApi';
 import {
@@ -136,6 +136,8 @@ export function scrubTerminal(op: OutboxOp): OutboxOp {
     // Variance: intent and the assertion label are free text too (kind kept for the record)
     out.answer = assertion ? { ...rest, assertion: { kind: assertion.kind, label: '' } } : rest;
   }
+  // Variance: the interpretations carry old/new document text
+  if (out.question) out.question = { ...out.question, interpretations: [] };
   if (out.doc) out.doc = { ...out.doc, doc_name: '' };
   return out;
 }
@@ -239,7 +241,8 @@ export class Outbox {
       client_op_id: input.client_op_id,
       kind: 'answer',
       doc,
-      finding_keys: question ? [question.finding_ref] : [],
+      // Variance P04 (H2(b)): a question key `<findingId>@<owner>` persists the plain finding
+      finding_keys: question ? [parseQuestionKey(question.finding_ref).findingId] : [],
       answer: input,
       ...(question ? { question } : {}),
     });

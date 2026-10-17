@@ -100,6 +100,6 @@ export async function buildRequestDocx(
   if (!items.length) {
     children.push(new Paragraph({ children: [new TextRun('No missing documents.')] }));
   }
-  const doc = new Document({ creator: 'Sub-doc QA', title, sections: [{ children }] });
+  const doc = new Document({ creator: 'Preflight', title, sections: [{ children }] });
   return Packer.toBlob(doc);
 }

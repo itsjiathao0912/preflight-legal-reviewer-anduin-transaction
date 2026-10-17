@@ -6,9 +6,18 @@ import {
   type CounselSheetMeta,
   type GateState,
   type MemoryLabel,
+  type Owner,
   type SheetFinding,
 } from '@aduin/core';
 import type { Row } from '../review/model';
+import {
+  askedOwners,
+  isChangeRow,
+  isClear,
+  isErrorQuestion,
+  OWNER_ORDER,
+  type QuestionItem,
+} from '../variance/owner-groups';
 
 /**
  * Counsel questions view model (app.html `#counsel`, Phase 08).
@@ -20,16 +29,27 @@ import type { Row } from '../review/model';
 export const isClearAnswer = (o: CounselOption | null | undefined): boolean =>
   o === 'A' || o === 'B' || o === 'C';
 
+/**
+ * Variance P04 (H5): a change finding is a question once at least one owner was asked (asked
+ * markers in `ownerAnswers`); error findings keep the Phase 08 rule.
+ */
 export function isQuestion(r: Row): boolean {
-  return r.status === 'counsel' || (r.status === 'accepted' && r.f.severity === 'critical');
+  return isChangeRow(r) ? askedOwners(r.triage).length > 0 : isErrorQuestion(r);
 }
 
 export function questionRows(rows: readonly Row[]): Row[] {
   return rows.filter(isQuestion).sort((a, b) => a.f.order - b.f.order);
 }
 
-/** A question still needs counsel (no clear A/B/C answer in this document). */
+/**
+ * A question still needs an answer (no clear A/B/C answer in this document). A change finding needs
+ * one while ANY asked owner has no clear answer.
+ */
 export function needsAnswer(r: Row): boolean {
+  if (isChangeRow(r)) {
+    const owners = askedOwners(r.triage);
+    if (owners.length) return owners.some((o) => !isClear(r.triage?.ownerAnswers?.[o]));
+  }
   return !isClearAnswer(r.triage?.counselAnswer);
 }
 
@@ -40,6 +60,14 @@ export function questionState(r: Row): QuestionState {
   if (isClearAnswer(a)) return 'answered';
   if (a === 'unclear') return 'unclear';
   return r.status === 'accepted' ? 'accepted' : 'new';
+}
+
+/** State of one question (per owner for change findings). */
+export function itemState(q: QuestionItem): QuestionState {
+  if (!q.change) return questionState(q.row);
+  if (isClearAnswer(q.answer)) return 'answered';
+  if (q.answer === 'unclear') return 'unclear';
+  return 'new';
 }
 
 export interface PriorItems {
@@ -72,6 +100,8 @@ export function gateInputs(rows: readonly Row[]): {
       status: r.status,
       reasonCode: r.triage?.reasonCode ?? null,
       counselAnswer: r.triage?.counselAnswer ?? null,
+      // Variance P04 (B4): per-owner answers; a finding resolves only when every asked owner answered
+      ...(r.triage?.ownerAnswers ? { ownerAnswers: r.triage.ownerAnswers } : {}),
     };
     labels[r.f.id] = r.label;
   }
@@ -79,6 +109,7 @@ export function gateInputs(rows: readonly Row[]): {
 }
 
 export function sheetFinding(r: Row): SheetFinding {
+  const owners = isChangeRow(r) ? askedOwners(r.triage) : [];
   return {
     id: r.f.id,
     severity: r.f.severity,
@@ -86,14 +117,44 @@ export function sheetFinding(r: Row): SheetFinding {
     issue_class: r.f.issue_class,
     location: r.f.loc,
     quote: r.f.quote,
+    ...(owners.length ? { owners } : {}),
   };
 }
 
-/** Core sheet for the export: unanswered New/Accepted questions only, masked, clamped. */
-export function buildSheet(meta: CounselSheetMeta, rows: readonly Row[]): CounselSheet {
+/** Change questions use the deterministic V1 template options (old vs new text) from the engine. */
+function changeDrafts(rows: readonly Row[]): Record<string, readonly string[]> {
+  const out: Record<string, readonly string[]> = {};
+  for (const r of rows)
+    if (isChangeRow(r) && r.f.detail.interpretations.length)
+      out[r.f.id] = r.f.detail.interpretations;
+  return out;
+}
+
+/**
+ * Core sheet for the export: unanswered New/Accepted questions only, masked, clamped. With `owner`
+ * (per-owner export, C1): only that owner's questions, keyed `<findingId>@<owner>` for change
+ * findings (error findings belong to Counsel). Without it: error questions, then each owner's change
+ * questions, renumbered (an error-only document gives exactly the Phase 08 sheet).
+ */
+export function buildSheet(
+  meta: CounselSheetMeta,
+  rows: readonly Row[],
+  owner?: Owner,
+): CounselSheet {
   const qs = questionRows(rows);
   const { states, labels } = gateInputs(qs);
-  return buildCounselSheet(meta, qs.map(sheetFinding), states, labels);
+  const findings = qs.map(sheetFinding);
+  const drafts = changeDrafts(qs);
+  if (owner) return buildCounselSheet(meta, findings, states, labels, { owner, drafts });
+  const errors = findings.filter((f) => !f.owners);
+  const base = buildCounselSheet(meta, errors, states, labels);
+  const changed = findings.filter((f) => f.owners);
+  if (!changed.length) return base;
+  const more = OWNER_ORDER.flatMap(
+    (o) => buildCounselSheet(meta, changed, states, labels, { owner: o, drafts }).questions,
+  );
+  const questions = [...base.questions, ...more].map((q, i) => ({ ...q, number: i + 1 }));
+  return { meta: base.meta, questions };
 }
 
 export interface CounselDrafts {
@@ -110,13 +171,27 @@ export const EMPTY_DRAFTS: CounselDrafts = { edits: {}, ai: {}, aiModel: null, u
 
 export type WordingSource = 'edit' | 'ai' | 'template';
 
+/**
+ * Base wording of a question. Change questions always use the deterministic template (C1: no AI
+ * draft path for them, so 0 live AI calls are made for change questions).
+ */
 export function baseWording(r: Row, d: CounselDrafts): { text: string; source: WordingSource } {
-  const ai = d.useAi ? d.ai[r.f.id] : undefined;
+  const ai = d.useAi && !isChangeRow(r) ? d.ai[r.f.id] : undefined;
   if (ai) return { text: ai, source: 'ai' };
   return { text: templateQuestionText(r.f.issue_class, r.f.loc), source: 'template' };
 }
 
-export function wordingFor(r: Row, d: CounselDrafts): { text: string; source: WordingSource } {
-  const e = d.edits[r.f.id];
+/** Wording of one question; `key` = the question key (per-owner edits for change findings). */
+export function wordingFor(
+  r: Row,
+  d: CounselDrafts,
+  key: string = r.f.id,
+): { text: string; source: WordingSource } {
+  const e = d.edits[key];
   return e ? { text: e, source: 'edit' } : baseWording(r, d);
+}
+
+/** Questions that may get an AI draft: error questions only (change questions never, C1/E3). */
+export function aiDraftRows(qs: readonly Row[]): Row[] {
+  return qs.filter((r) => !isChangeRow(r));
 }

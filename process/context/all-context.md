@@ -1,6 +1,6 @@
 # aduin-transaction - All Context
 
-Last updated: 2026-10-18 (ai-review-stream-dedup UPDATE PROCESS; live 8a82ead2)
+Last updated: 2026-10-18 (ai-review-stream-dedup UPDATE PROCESS, live 8a82ead2; earlier: Intake post-closeout fix 8db9245, Variance Phase 01 UPDATE PROCESS)
 
 This file is the root context entrypoint for the repo.
 
@@ -201,7 +201,7 @@ aduin-transaction/
   package.json, pnpm-workspace.yaml, pnpm-lock.yaml -- root scripts, workspaces (packages/*, apps/*, scripts), pnpm@11.13.1
   tsconfig.base.json, eslint.config.js, THIRD_PARTY_NOTICES.md
   packages/core/            -- @aduin/core: parser/graph/detector engine + `src/package/` Fund Package Intake module (types, detect, facts, references, resolve, terms, coverage, policy, request, baseline, analyze, config caps) + `src/llm/` LLM task framework + Phase 06 adapters (format-detect, pdf-text, docx via subpath `@aduin/core/docx`, ocr, page-noise, sup-segments) (src/index.ts seam; test/{unit,golden,property,seeded,recorded,security})
-  apps/web/                 -- @aduin/web: React 19 + Vite 8 + Tailwind 4 SPA. src/{styles,shell,features,components,state,engine,storage,api,memory}; engine runs in a Comlink Web Worker; e2e/ = Playwright specs (217 pass + 1 opt-in skip in preview, plus stack-memory 11) + fixtures; `src/features/package` (PackageView contract, Package lens) and `state/package.ts`; test/ + co-located tests = Vitest gates (298 tests) + support/mockupCss.ts; public/samples and firms.json are generated (gitignored). See process/context/ui/all-ui.md
+  apps/web/                 -- @aduin/web: React 19 + Vite 8 + Tailwind 4 SPA. src/{styles,shell,features,components,state,engine,storage,api,memory}; engine runs in a Comlink Web Worker; e2e/ = Playwright specs (217 pass + 1 opt-in skip in preview, plus stack-memory 11) + fixtures; `src/features/package` (PackageView contract, Package lens) and `state/package.ts`; test/ + co-located tests = Vitest gates (338 after Variance Phase 02, plus 3 from intake fix 8db9245) + support/mockupCss.ts; public/samples and firms.json are generated (gitignored). See process/context/ui/all-ui.md
   apps/worker/              -- @aduin/worker: Cloudflare Worker, wrangler.jsonc. src/{config,proxy,limits,upstream,identity,routes/proxy}: POST /api/ai, POST /api/ocr, GET /api/quota (NDJSON hold-open proxy to OpenRouter, quotas, spend cap, Turnstile, breaker); routes/memory, memory/, platform/, migrations/0001-0005 and seed/ are the Phase 04b D1 memory API. See process/context/worker/all-worker.md
   scripts/                  -- @aduin/scripts: guards (guard:cf, secrets:scan), build-samples.ts, slice-check.ts (M1 check), spike runners, and Phase 10 live/ops scripts (conformance:free-plan, probe:live-session, probe:live-ai, shots:live, deploy:preflight; allow-listed, ledgered; Intake adds `package:fixtures`, `package:facts-extract` and `smoke:live-package`)
   fixtures/                 -- fixture dirs (fingerprint vectors and memory seeds land in Phases 01/02)
@@ -212,7 +212,7 @@ aduin-transaction/
   process/
     context/                -- this context system (all-context.md, product-domain.md, engine/, planning/, tests/, ui/, worker/)
     general-plans/          -- active/ completed/ backlog/ task folders (subdoc-qa-mvp_17-10-26 = the MVP phase program)
-    features/               -- feature-scoped storage: fund-package-intake (active/intake-mvp_17-10-26 task folder, backlog/ 12 stubs), variance-management
+    features/               -- feature-scoped storage: fund-package-intake (active/intake-mvp_17-10-26 task folder, backlog/ 13 stubs), variance-management
     development-protocols/  -- RIPER-5 methodology docs (kit-managed)
 ```
 
@@ -255,13 +255,13 @@ Secrets live outside the repo (see `CLAUDE.md` credentials table). Env var names
 
 Resolved: persistence is D1 (real `aduin-transaction-db`, live); Turnstile is live; the demo needs no account (read-only sandbox plus a sandbox copy per session).
 
-- **Variance program (feature `variance-management`, in progress):** Phase 01 core engine VERIFIED (17-10-26; `packages/core/src/variance/`, see `process/context/engine/all-engine.md`); Phases 02-05 pending; core suite now 3158 (+3 skip).
-- **Program status:** all phases are DONE (00-07, 08, 08b, 09, 10); Milestone 1 closed and live. No further phase is planned. Fund Package Intake (4 phases, `process/features/fund-package-intake/`) is also COMPLETE and live; its folder stays in `active/` until the operator residuals run. Test counts after Intake: core 3084 (+3 skip), web unit 298, preview e2e 217 (+1 skip), stack-memory 11, worker 526, scripts 162.
-- **Variance Management program (`process/features/variance-management/`, in progress, 18-10-26):** Phases 01 (core engine) and 03 (memory backend: migration `0006_variance.sql`, local only, `schema_version` 6) are VERIFIED; Phase 02 is executing, then 04 and 05. Nothing is deployed or pushed yet; the live D1 stays at migration 0005 until Phase 05. Details: `process/context/worker/all-worker.md`, `process/context/tests/all-tests.md`.
+- **Variance program (feature `variance-management`, in progress):** Phase 01 core engine VERIFIED (17-10-26; `packages/core/src/variance/`, see `process/context/engine/all-engine.md`); Phases 02 and 03 VERIFIED (see next bullet); Phases 04-05 pending; core suite now 3158 (+3 skip).
+- **Program status:** all phases are DONE (00-07, 08, 08b, 09, 10); Milestone 1 closed and live. No further phase is planned. Fund Package Intake (4 phases, `process/features/fund-package-intake/`) is also COMPLETE and live; its folder stays in `active/` until the operator residuals run. Test counts after Intake: core 3084 (+3 skip), web unit 298 (+3 from intake fix 8db9245), preview e2e 217 (+1 skip), stack-memory 11, worker 526, scripts 162.
+- **Variance Management program (`process/features/variance-management/`, in progress, 18-10-26):** Phases 01 (core engine), 02 (web Findings: segment, change rows, baseline control, cosmetic groups, pending pill; web unit 338, preview e2e 228 + 1 skip; `process/context/ui/all-ui.md`) and 03 (memory backend: migration `0006_variance.sql`, local only, `schema_version` 6) are VERIFIED; Phase 04 inner PVL is in progress, then 05. Nothing is deployed or pushed yet; the live D1 stays at migration 0005 until Phase 05. Details: `process/context/worker/all-worker.md`, `process/context/tests/all-tests.md`.
 - **Operator run (residual R2, backlog `process/general-plans/backlog/phase10-*_NOTE_17-10-26.md`):** with a human in a real browser, run the AC51 `rules_hash8` echo, the live AI/OCR sweep (max 3 AI per UTC day), AI timing at `max_tokens` 10000, and the D4 `rows_written` burst. Also capture demo screenshots 13-memory and 14-audit and record a manual keyboard pass. Residual R4: Turnstile iframe CSP with a human-solved challenge is unevidenced. Residual R-CSP-STYLE: `style-src 'unsafe-inline'` for Radix. Worker CPU p99 16 ms is above the 10 ms Free limit (observation).
 - **Open questions:** does Docxodus WASM run on Cloudflare Workers (not needed for the shipped DOCX path)? Which free OpenRouter vision model is good enough for live OCR (unproven, R2)? OpenRouter credits are not topped up; the paid fallback is unavailable.
 - **Deferred:** the missing-target cross-reference detector (feasibility INCONCLUSIVE, `process/general-plans/backlog/missing-target-xref_17-10-26/`).
-- **Open backlog:** Intake stubs in `process/features/fund-package-intake/backlog/` (12: doc-type LLM suggest, Annex/Question forms, package gate block e2e, smoke Turnstile console filter, code-splitting, dialog focus return, a11y serious items, manual keyboard pass, reference families and used-term recall, `too_many` refusal code, no-LLM live proof, operator live sweep), plus AC6 edit text/severity (B-EDIT), UI notes U2-U4, core follow-ups (F4, F6-F8, N6-N8, live OCR bbox row-level, concurrent e2e port flake), Phase 08 review notes N1-N4, review m7 (fresh challenge per AI call), diff-only version drift questions (`process/general-plans/backlog/`).
+- **Open backlog:** Intake stubs in `process/features/fund-package-intake/backlog/` (13: doc-type LLM suggest, Annex/Question forms, package gate block e2e, smoke Turnstile console filter, code-splitting, dialog focus return, a11y serious items, manual keyboard pass, reference families and used-term recall, `too_many` refusal code, no-LLM live proof, operator live sweep, NG3 two-To-digitize role detection), plus AC6 edit text/severity (B-EDIT), UI notes U2-U4, core follow-ups (F4, F6-F8, N6-N8, live OCR bbox row-level, concurrent e2e port flake), Phase 08 review notes N1-N4, review m7 (fresh challenge per AI call), diff-only version drift questions (`process/general-plans/backlog/`).
 
 ## Scan Metadata
 

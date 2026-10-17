@@ -102,3 +102,16 @@ Package Blocked path not e2e-reachable; smoke console rule trips on third-party 
 9. SPEC achievement: table above.
 
 Drift score: HIGH (4 signals: >=10 files touched, backlog NOTEs written, feature-folder structure change, validate-contract deviations C6). Strongly recommend UPDATE PROCESS -- harness/protocol files touched. (Harness files untouched; band wording is the machine-matched string.)
+
+## Post-Closeout Fixes
+
+### 18-10-26: Run checks silently disabled (commit 8db9245, quick-fix lane, no plan file)
+
+- **Found by:** live testing, uploading the NG3 package (`samples/packages/01-northgate-infrastructure-iii/docs`, 6 files).
+- **Symptom:** "Run checks" stayed disabled with no explanation. `01-NG3-Subscription-Agreement.docx` and `04-NG2-Subscription-Agreement-2024.docx` both got role To digitize, so `packageRunReadiness` reported `multiple_to_digitize`, but `PackageConfirmTable` only rendered the `noSubAgreement` and `versionMissing` messages.
+- **Fix:** `apps/web/src/features/open-document/PackageConfirmTable.tsx` now renders one `pkg-held` line (`data-testid="package-problem"`, `data-code`) per problem in the package notice: `multiple_to_digitize` ("N files are set to To digitize. Keep one and set the others to Reference or Baseline, or remove them."), `no_to_digitize` (hidden when there is no sub agreement), `low_confidence_unconfirmed` ("Confirm or fix {masked name} before running checks.").
+- **Tests:** +3 web unit tests in `package-confirm-table.test.tsx` (file 7/7); extended e2e `apps/web/e2e/intake-low-confidence-gate.spec.ts` (preview, 1 passed); web typecheck passed. Full suites not re-run.
+- **State:** merged to `main` (3ec092e) and deployed as a hotfix, see Deploy record below.
+- **Deploy record (18-10-26):** hotfix deploy to https://aduin-transaction-web.giathaowork.workers.dev, new live version `b04f1a8c-41f5-4c20-92dc-196d6e7d252a` (previous `3d2c7301-a4a5-487c-bd7d-2f2c0800be6f` is the first rollback target). Source: branch `hotfix/intake-readiness-msg` = a4d7a34 (the commit 3d2c7301 was built from) + cherry-pick of 8db9245 as c7fcb17. Main HEAD was deliberately not deployed: it holds undeployed Variance Phase 01-03 code needing migration 0006 (live D1 stays at 0005). Worker code identical to 994ea54. Gates on the hotfix tree: guard:cf OK, secrets:scan OK, web typecheck, web unit 301/301, preview e2e intake-low-confidence-gate 1 passed, plain build with site key, deploy:preflight OK.
+- **Live smoke (18-10-26):** `/api/health` 200 no-store `{ok:true}`. NG3 smoke in headless Chromium (6 docx): Run checks disabled with 4 problem lines (3 "Confirm or fix ..." plus "2 files are set to To digitize..."); after setting 04-NG2 to Reference and confirming rows, no problem lines, Run checks enabled, checks ran ("Checks done", 7 findings). 0 AI/OCR model calls. The change is also on main, so the next main deploy (Variance Phase 05) includes it.
+- **Open observation (not fixed):** role auto-detection marks two subscription agreements as To digitize in NG3 (the NG2 2024 one is arguably a baseline). `packages/core/src/package` untouched. Backlog: `process/features/fund-package-intake/backlog/intake-ng3-two-to-digitize-detection_NOTE_18-10-26.md`.

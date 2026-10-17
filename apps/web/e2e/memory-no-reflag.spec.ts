@@ -30,6 +30,10 @@ test.describe('memory-no-reflag', () => {
     await expect(item).toHaveAttribute('data-memory-label', 'previously_dismissed');
     await expect(item).toContainText('Previously dismissed · Linh Tran · Demo Fund I');
     await expect(item).toContainText("Reason: Law firm's standard wording");
-    await expect(rowsLoc(page)).toHaveCount(EXPECT.funds['fund-II'].findings - 1);
+    // Variance P02 (derived repair): Fund I is now Fund II's same-firm baseline, so change rows join
+    // the list; the expectation counts error rows only
+    await expect(rowsLoc(page).and(page.locator(':not([data-kind="change"])'))).toHaveCount(
+      EXPECT.funds['fund-II'].findings - 1,
+    );
   });
 });

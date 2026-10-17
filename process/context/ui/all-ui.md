@@ -3,7 +3,7 @@ name: context:all-ui
 description: UI/UX design direction, design skills, references, tokens and approved mockups for the sub-doc QA web app
 keywords: memory screen, firm memory, ui, ux, design, mockup, frontend, layout, look and feel, design tokens, taste skill, minimalist, accessibility, wcag, review workspace, counsel sheet, app.html, sidebar, shell, data-testid, route, hash, radix, tailwind, playwright, component, findings screen
 related: [context:tests]
-date: 17-10-26
+date: 18-10-26
 metadata:
   node_type: group-entrypoint
   type: context
@@ -176,6 +176,18 @@ Source of truth: the Phase 2 and 3 reports in `process/features/fund-package-int
 - **Questions:** "For the GP" group (`GpRequestGroup`) with one item per distinct missing document plus its quote, and one request DOCX per export click (`exportRequestDocx.ts`). Absent without a package.
 - **Data contract:** `usePackage` store, frozen `PackageView` (`features/package/contract.ts`); Dexie v2; reload restores the package (`state/last-doc.ts`, `App.tsx`). Render-first holds: findings never wait for package work.
 - **Known gaps:** Escape on the Upload modal returns focus to `<body>` (stub `intake-dialog-focus-return`); a11y serious (non-critical) color-contrast x1 (Findings) and label-content-name-mismatch x4 (Package lens); manual keyboard and screen-reader pass not run; main bundle +270 kB (837 kB).
+
+## Variance surfaces in Findings (Variance Phase 02, no new screens; `apps/web/src/features/variance`, `styles/variance.css`)
+
+Source of truth: `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-02-web-findings_REPORT_17-10-26.md`. Version changes fold into the existing Findings screen; registry, sidebar and tokens unchanged.
+
+- **Segment and filter:** `All / Errors N / Changes N` beside the kept `CoverageLine`; chips and `Errors N` count errors only. Filters gain `kind` and `showCosmetic` (old persisted filters still load).
+- **Change rows:** type chip, read-only owner chip, status icons, old text above new with `del` strike-through and `ins` bold underline, impact lines ("from the logic graph, deterministic"), provenance `version (hash8)`, masked by `maskQuote`. Rows carry `data-kind="change"` and `data-change-type`. "Mark as expected..." (Dismiss modal, reason required) and "Ask owner" (Needs counsel) write local triage only (existing `triage:{docId}` key).
+- **Cosmetic changes:** hidden by default; "Show cosmetic changes (N)" sits under the list (`CosmeticGroups`, groups capped at 5 plus a muted overflow line), not in the Filter popover.
+- **Baseline control:** header `BaselineControl` (`vs <name>`, firm documents only; aria-label must contain the visible text) and `BaselineModal` (same-firm candidates whose text is in the browser, suggested item pre-checked). Baseline source order: package role first, firm pointer `variance:baseline:{firmId}` second; samples never become a pointer baseline; no demo control.
+- **Muted lines:** exact no-baseline copy ("No earlier document from this firm. Reviewing for errors only."), scan baseline and scanned-current lines, expired line, two-baselines ignored line. Null-firm documents show no segment and no line.
+- **Pending pill:** "Checking changes" (`data-variance-pending`) on the gate pill while the pass runs; never Ready while pending; render-first holds (findings never wait; failure or the 20 s `VARIANCE_PENDING_TIMEOUT_MS` ends pending). Change rows gate only when a baseline resolved and the pass is ready (`computeGate(rows, policy)`).
+- **Known gaps:** human keyboard and screen-reader pass not run (backlog `variance-web-manual-keyboard-pass_NOTE_17-10-26.md`); live Turnstile render-first path unproven.
 
 ## UI Test Conventions
 

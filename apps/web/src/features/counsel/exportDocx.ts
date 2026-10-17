@@ -14,13 +14,23 @@ const META_MAX = 200;
 
 export const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'] as const;
 
-export function docxFilename(meta: CounselSheet['meta']): string {
-  const base = (meta.fund || meta.title || 'document')
+/** Variance P04 (C1): owner names used in the per-owner DOCX title, body and filename. */
+export const SHEET_OWNER_LABEL: Readonly<
+  Record<NonNullable<CounselSheet['meta']['owner']>, string>
+> = Object.freeze({ counsel: 'Counsel', gp: 'GP', fund_admin: 'Fund admin' });
+
+const slug = (s: string) =>
+  s
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 60);
-  return `counsel-questions-${base || 'document'}.docx`;
+
+/** `counsel-questions-<fund>.docx`; per owner `<owner>-questions-<fund>.docx`. */
+export function docxFilename(meta: CounselSheet['meta']): string {
+  const base = slug(meta.fund || meta.title || 'document');
+  const who = meta.owner ? slug(SHEET_OWNER_LABEL[meta.owner]) : 'counsel';
+  return `${who}-questions-${base || 'document'}.docx`;
 }
 
 /** Build the DOCX. `wording(findingKey)` is the question text (edited, AI or template draft). */
@@ -48,7 +58,7 @@ export async function buildCounselDocx(
     new Paragraph({
       children: [
         new TextRun(
-          `${sheet.questions.length} question${sheet.questions.length === 1 ? '' : 's'} for counsel · prepared ${generatedAt.toISOString().slice(0, 10)}`,
+          `${sheet.questions.length} question${sheet.questions.length === 1 ? '' : 's'} for ${m.owner ? SHEET_OWNER_LABEL[m.owner] : 'counsel'} · prepared ${generatedAt.toISOString().slice(0, 10)}`,
         ),
       ],
     }),

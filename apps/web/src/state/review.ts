@@ -1,9 +1,14 @@
 import { create } from 'zustand';
 import {
+  fingerprintFor,
+  questionKey,
   templateInterpretations,
+  type AnswerAssertion,
+  type AnswerScope,
   type CrossDocDefinition,
   type CounselOption,
   type FindingWire,
+  type Owner,
   type ReasonCode,
 } from '@aduin/core';
 import { memoryApi } from '../api/client';
@@ -37,14 +42,19 @@ import type {
   StageId,
   StageReport,
 } from '../engine/types';
+import { buildRows, placement, visibleRows, type Triage } from '../features/review/model';
 import {
-  buildRows,
-  computeGate,
-  placement,
-  visibleRows,
-  type Triage,
-} from '../features/review/model';
-import { fingerprintFindings, type MemoryResult } from '../memory/fingerprintFindings';
+  dismissGateText,
+  gateLineText,
+  mergeFindings,
+  reviewGate,
+  varianceSlice,
+} from '../features/variance/select';
+import {
+  fingerprintFindings,
+  fundScopeName,
+  type MemoryResult,
+} from '../memory/fingerprintFindings';
 import { appDb } from '../storage/db';
 import { useFilters } from './filters';
 import { saveLastDoc } from './last-doc';
@@ -134,7 +144,12 @@ interface ReviewState {
   select: (id: string | null) => void;
   toggleReveal: () => void;
   accept: (id: string) => Promise<void>;
-  needsCounsel: (id: string) => Promise<void>;
+  /**
+   * Needs counsel / Ask owner. For a change finding `ask` names the owners asked (effective owners:
+   * suggested or the analyst override) and writes their asked markers (`ownerAnswers[o] = null`) at
+   * the click (H5); toggling off removes them. An empty owner list (local "You") asks nobody.
+   */
+  needsCounsel: (id: string, ask?: OwnerAsk) => Promise<void>;
   dismiss: (id: string, reason: ReasonCode, note: string) => Promise<string | null>;
   restore: (id: string) => Promise<void>;
   reopen: (id: string) => Promise<void>;
@@ -147,7 +162,7 @@ interface ReviewState {
    * document. Writes counsel_answer + a superseding `answered` decision through the outbox (the
    * question is created at send time when it was not exported yet); undoable.
    */
-  recordAnswer: (id: string, answer: RecordedAnswer) => Promise<void>;
+  recordAnswer: (id: string, answer: RecordedAnswer, owner?: Owner) => Promise<void>;
   /**
    * Phase 08b (memory page): re-read memory for the open document after a write made elsewhere.
    * When `revokedDecisionId` is given (Reopen), any triage entry of this document whose decisionId
@@ -179,6 +194,18 @@ export interface RecordedAnswer {
   by: string;
   /** Answer date, epoch ms. */
   at: number;
+  /** Variance P04: analyst intent (human text only; sent only when non-blank, max 500). */
+  intent?: string;
+  /** Variance P04: `fund` (this fund only) or `firm_template` (needs a non-blank intent). */
+  scope?: AnswerScope;
+  /** Variance P04: regression assertion (firm_template only), from the worker-decoded meta. */
+  assertion?: AnswerAssertion;
+}
+
+/** Variance P04: owners asked by one Ask click and where the owner came from. */
+export interface OwnerAsk {
+  owners: Owner[];
+  source: 'suggested' | 'override';
 }
 
 let toastSeq = 0;
@@ -387,12 +414,32 @@ function rememberWires(docHash: string, wires: FindingWire[]): void {
 export const useReview = create<ReviewState>((set, get) => {
   const findingById = (id: string): FindingView | undefined =>
     get().result?.findings.find((f) => f.id === id);
+  /**
+   * Variance P04 (H1): any row of the open document by id: error findings, then change rows and
+   * regression findings (the variance slice; never in `memory.byId`).
+   */
+  const rowFinding = (id: string): FindingView | undefined =>
+    findingById(id) ?? varianceSlice().findings.find((f) => f.id === id);
+  /** Fingerprint of a row: the memory one when known, else computed locally (firm documents). */
+  const rowFingerprint = (id: string): string | null => {
+    const known = get().memory?.byId[id]?.fingerprint;
+    if (known) return known;
+    const f = rowFinding(id);
+    const firm = get().doc?.firmId ?? null;
+    return f && firm ? fingerprintFor(f, firm) : null;
+  };
   const api = (): MemoryApi | null => memoryApi();
 
   const refreshMemory = async () => {
     const { result, doc } = get();
     if (!result || !doc) return;
-    const memory = await fingerprintFindings(result.findings, doc.firmId, api());
+    // Variance M2 (H3): the fund scope exactly as the Worker persists it on the run
+    const memory = await fingerprintFindings(
+      result.findings,
+      doc.firmId,
+      api(),
+      fundScopeName(doc.fund),
+    );
     // a newer document (or a newer finding set) owns the labels now
     if (get().result !== result || get().doc !== doc) return;
     set({ memory });
@@ -410,12 +457,11 @@ export const useReview = create<ReviewState>((set, get) => {
 
   /** Wire findings for keys of the open document (fingerprinted ones only). */
   const wiresFor = (keys: readonly string[]): FindingWire[] => {
-    const { result, memory } = get();
-    const want = new Set(keys);
     const out: FindingWire[] = [];
-    for (const f of result?.findings ?? []) {
-      const fp = want.has(f.id) ? memory?.byId[f.id]?.fingerprint : null;
-      if (fp) out.push(toFindingWire(f, fp));
+    for (const k of new Set(keys)) {
+      const f = rowFinding(k);
+      const fp = f ? rowFingerprint(k) : null;
+      if (f && fp) out.push(toFindingWire(f, fp));
     }
     return out;
   };
@@ -488,11 +534,20 @@ export const useReview = create<ReviewState>((set, get) => {
     await flushOutbox();
   };
 
-  /** Queue a counsel answer; returns the optimistic `pending:<op>` id or null when not persisted. */
-  const persistAnswer = async (id: string, a: RecordedAnswer): Promise<string | null> => {
-    const { doc, memory } = get();
-    const f = findingById(id);
-    const fp = memory?.byId[id]?.fingerprint ?? null;
+  /**
+   * Queue a counsel answer; returns the optimistic `pending:<op>` id or null when not persisted.
+   * Variance P04: with `owner` (change finding) the question key is `<findingId>@<owner>` (core
+   * `questionKey`), the question carries `owner` / `owner_source`, and intent / scope / assertion
+   * ride the answer (intent only when non-blank, never `''`).
+   */
+  const persistAnswer = async (
+    id: string,
+    a: RecordedAnswer,
+    owner?: Owner,
+  ): Promise<string | null> => {
+    const { doc } = get();
+    const f = rowFinding(id);
+    const fp = rowFingerprint(id);
     const box = outbox();
     // no firm: the Worker refuses questions and answers (`firm_required`); triage stays local
     if (!doc || !f || !doc.firmId || !fp || !box || writesDisabled() || memoryDown()) return null;
@@ -502,8 +557,15 @@ export const useReview = create<ReviewState>((set, get) => {
       await ensureSessionWithin();
       if (writesDisabled() || memoryDown()) return null;
       rememberWires(doc.id, wiresFor([id]));
-      const qid = (await readQuestionIds(doc.id))[id];
+      const key = owner ? questionKey(f.id, owner) : f.id;
+      const qid = (await readQuestionIds(doc.id))[key];
       const note = a.note?.trim();
+      const intent = a.intent?.trim().slice(0, 500);
+      const source = get().triage[id]?.ownerSource ?? 'suggested';
+      const interpretations =
+        owner && f.detail.interpretations.length
+          ? f.detail.interpretations.slice(0, 6).map((t) => t.slice(0, 500))
+          : templateInterpretations(f.issue_class);
       const pid = await box.enqueueAnswer(
         await outboxDocFor(doc),
         {
@@ -518,13 +580,17 @@ export const useReview = create<ReviewState>((set, get) => {
           ...(doc.fund ? { fund_name: doc.fund } : {}),
           quote_snippet: f.quote_snippet,
           decided_by_name: useSession.getState().analystName,
+          ...(intent ? { intent } : {}),
+          ...(a.scope ? { scope: a.scope } : {}),
+          ...(a.assertion && a.scope === 'firm_template' ? { assertion: a.assertion } : {}),
         },
         qid
           ? undefined
           : {
-              finding_ref: f.id,
+              finding_ref: key,
               fingerprint: fp,
-              interpretations: templateInterpretations(f.issue_class),
+              interpretations,
+              ...(owner ? { owner, owner_source: source } : {}),
             },
       );
       void flushOutbox();
@@ -534,11 +600,23 @@ export const useReview = create<ReviewState>((set, get) => {
     }
   };
 
-  const gateLine = (): string => {
-    const n = computeGate(buildRows(get().result?.findings ?? [], get().memory, get().triage))
-      .reasons.length;
-    return n ? `${n} item${n > 1 ? 's' : ''} left on the gate.` : 'The gate is now Ready.';
+  /** Variance P02 (C2b): the same merged rows and gate as the view (pill, popover). */
+  const reviewRowsNow = () => {
+    const v = varianceSlice();
+    return {
+      rows: buildRows(
+        mergeFindings(get().result?.findings ?? [], v.findings),
+        get().memory,
+        get().triage,
+      ),
+      policy: v.policy,
+    };
   };
+  const gateNow = () => {
+    const { rows, policy } = reviewRowsNow();
+    return reviewGate(rows, get().result, policy);
+  };
+  const gateLine = (): string => gateLineText(gateNow());
 
   onSyncEvent((e) => {
     // 409: another decision is active for this finding; show the current one
@@ -723,10 +801,30 @@ export const useReview = create<ReviewState>((set, get) => {
       );
     },
 
-    needsCounsel: async (id) => {
+    needsCounsel: async (id, ask) => {
       const prev = get().triage[id] ?? null;
       const on = prev?.status !== 'counsel';
-      await writeTriage(id, { ...(prev ?? {}), status: on ? 'counsel' : 'open' });
+      const next: Triage = { ...(prev ?? {}), status: on ? 'counsel' : 'open' };
+      if (ask) {
+        // H5: asked markers at the click (key present, null = not answered); "You" asks nobody
+        if (on && ask.owners.length) {
+          const oa = { ...(prev?.ownerAnswers ?? {}) };
+          for (const o of ask.owners) if (!(o in oa)) oa[o] = null;
+          next.ownerAnswers = oa;
+          next.ownerSource = ask.source;
+        } else if (!on) {
+          // toggled off: unanswered markers go; recorded answers stay (append-only memory)
+          const oa: Partial<Record<Owner, CounselOption | null>> = {};
+          for (const [o, v] of Object.entries(prev?.ownerAnswers ?? {}))
+            if (v !== null && v !== undefined) oa[o as Owner] = v;
+          if (Object.keys(oa).length) next.ownerAnswers = oa;
+          else {
+            delete next.ownerAnswers;
+            delete next.ownerSource;
+          }
+        }
+      }
+      await writeTriage(id, next);
       get().showToast(
         on ? 'Added to the counsel questions draft.' : 'Removed from the counsel questions draft.',
         () => void restoreSnapshot(id, prev, null),
@@ -736,10 +834,9 @@ export const useReview = create<ReviewState>((set, get) => {
     dismiss: async (id, reason, note) => {
       const prev = get().triage[id] ?? null;
       const wasRe = get().memory?.byId[id]?.label === 'dismissed_reconfirm';
-      const before = visibleRows(
-        placement(buildRows(get().result?.findings ?? [], get().memory, get().triage)).main,
-        useFilters.getState(),
-      ).map((r) => r.f.id);
+      const before = visibleRows(placement(reviewRowsNow().rows).main, useFilters.getState()).map(
+        (r) => r.f.id,
+      );
       const idx = before.indexOf(id);
       const created = await decide(id, 'dismissed', reason, note);
       await writeTriage(id, {
@@ -748,17 +845,13 @@ export const useReview = create<ReviewState>((set, get) => {
         ...(note ? { note } : {}),
         decisionId: created,
       });
-      const after = visibleRows(
-        placement(buildRows(get().result?.findings ?? [], get().memory, get().triage)).main,
-        useFilters.getState(),
-      ).map((r) => r.f.id);
+      const after = visibleRows(placement(reviewRowsNow().rows).main, useFilters.getState()).map(
+        (r) => r.f.id,
+      );
       const next = after.length ? after[Math.min(Math.max(idx, 0), after.length - 1)]! : null;
       set({ selectedId: next ?? id, selectSeq: get().selectSeq + 1 });
-      const left = computeGate(buildRows(get().result?.findings ?? [], get().memory, get().triage))
-        .reasons.length;
       get().showToast(
-        (wasRe ? 'Re-confirmed. ' : 'Dismissed. ') +
-          (left ? `${left} blocking reason${left > 1 ? 's' : ''} left.` : 'The gate is now Ready.'),
+        (wasRe ? 'Re-confirmed. ' : 'Dismissed. ') + dismissGateText(gateNow()),
         () => void restoreSnapshot(id, prev, created),
       );
       return next;
@@ -789,9 +882,49 @@ export const useReview = create<ReviewState>((set, get) => {
       await writeTriage(id, { ...prev, counselAnswer: option });
     },
 
-    recordAnswer: async (id, a) => {
+    recordAnswer: async (id, a, owner) => {
       const prev = get().triage[id] ?? null;
       const base: Triage = prev ?? { status: 'open' };
+      if (owner) {
+        // Variance P04 (B4, D3, H7): one owner's answer; counselAnswer is never written for a
+        // change finding (ownerAnswers is authoritative); only this owner's decision is revoked
+        const prevId = prev?.ownerAnswerIds?.[owner];
+        if (prevId) await revoke(prevId, 'Answer changed by analyst');
+        const note = a.note?.trim();
+        const intent = a.intent?.trim().slice(0, 500);
+        const info = {
+          by: a.by.trim().slice(0, 120),
+          at: a.at,
+          ...(note ? { note: note.slice(0, 1000) } : {}),
+          ...(intent ? { intent } : {}),
+          ...(a.scope ? { scope: a.scope } : {}),
+        };
+        const next: Triage = {
+          ...base,
+          ownerAnswers: { ...(base.ownerAnswers ?? {}), [owner]: a.option },
+          ownerAnswerInfo: { ...(base.ownerAnswerInfo ?? {}), [owner]: info },
+          ownerAnswerIds: { ...(base.ownerAnswerIds ?? {}), [owner]: null },
+        };
+        await writeTriage(id, next);
+        const created = await persistAnswer(id, a, owner);
+        if (created)
+          await writeTriage(id, {
+            ...(get().triage[id] ?? next),
+            ownerAnswerIds: {
+              ...((get().triage[id] ?? next).ownerAnswerIds ?? {}),
+              [owner]: created,
+            },
+          });
+        get().showToast(
+          (a.option === 'unclear' ? 'Recorded as unclear. ' : 'Answer recorded. ') + gateLine(),
+          () =>
+            void (async () => {
+              await revoke(created, 'Answer undone by analyst');
+              await writeTriage(id, prev);
+            })(),
+        );
+        return;
+      }
       // a changed answer supersedes the earlier one in memory (revoke it first)
       if (prev?.answerId) await revoke(prev.answerId, 'Answer changed by analyst');
       const note = a.note?.trim();
@@ -818,9 +951,10 @@ export const useReview = create<ReviewState>((set, get) => {
     },
 
     refreshMemory: async (revokedDecisionId, match) => {
-      const { doc, triage, memory } = get();
+      const { doc, triage } = get();
       if (doc && revokedDecisionId) {
-        const fpOf = (k: string) => memory?.byId[k]?.fingerprint ?? null;
+        // change / regression rows have no memory fingerprint; compute it like persistAnswer does
+        const fpOf = (k: string) => rowFingerprint(k);
         const pendingFp = (id: string | null | undefined, k: string) =>
           !!match && !!id && id.startsWith('pending:') && fpOf(k) === match.fingerprint;
         const next = { ...triage };
@@ -836,6 +970,40 @@ export const useReview = create<ReviewState>((set, get) => {
             !match || match.decision !== 'answered'
               ? t.decisionId === revokedDecisionId || pendingFp(t.decisionId, k)
               : false;
+          // H7: an owner's answer decision revoked -> that owner is asked again (null), gate blocked.
+          // Optimistic `pending:<op>` ids resolve through the outbox to the exact decision (one
+          // owner only); the fingerprint fallback applies only when no id resolves exactly.
+          const ownerEntries = (
+            Object.entries(t.ownerAnswerIds ?? {}) as [Owner, string | null][]
+          ).filter(() => !match || match.decision === 'answered');
+          const resolved = await Promise.all(
+            ownerEntries.map(async ([o, v]) => {
+              if (!v) return [o, v, null] as const;
+              if (!v.startsWith('pending:')) return [o, v, v] as const;
+              try {
+                return [o, v, (await outbox()?.resolveId(v)) ?? null] as const;
+              } catch {
+                return [o, v, null] as const;
+              }
+            }),
+          );
+          const exact = resolved.filter(([, , r]) => r === revokedDecisionId).map(([o]) => o);
+          const ownerHits = exact.length
+            ? exact
+            : resolved.filter(([, v, r]) => r === null && pendingFp(v, k)).map(([o]) => o);
+          if (ownerHits.length) {
+            const oa = { ...(t.ownerAnswers ?? {}) };
+            const ids = { ...(t.ownerAnswerIds ?? {}) };
+            const info = { ...(t.ownerAnswerInfo ?? {}) };
+            for (const o of ownerHits) {
+              oa[o] = null;
+              delete ids[o];
+              delete info[o];
+            }
+            next[k] = { ...t, ownerAnswers: oa, ownerAnswerIds: ids, ownerAnswerInfo: info };
+            changed = true;
+            continue;
+          }
           if (!answered && !decided) continue;
           // keep unrelated fields (an active counsel answer survives a reopened dismissal)
           let e: Triage = { ...t };

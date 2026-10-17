@@ -1,4 +1,4 @@
-import type { CounselSheet } from '@aduin/core';
+import { fingerprintFor, parseQuestionKey, type CounselSheet } from '@aduin/core';
 import { memoryApi } from '../../api/client';
 import type { MemoryApi } from '../../api/memoryApi';
 import { newClientOpId } from '../../api/realMemoryApi';
@@ -118,16 +118,19 @@ async function recordInMemory(api: MemoryApi, input: ExportInput): Promise<numbe
   if (doc.firmId && sheet.questions.length) {
     const have = await readQuestionIds(doc.id);
     const byId = new Map(input.findings.map((f) => [f.id, f]));
+    const rowById = new Map(input.rows.map((r) => [r.f.id, r]));
+    // Variance P04 (H2(c)): a question key `<findingId>@<owner>` resolves its finding by the plain
+    // id; change rows are not in memory.byId, so their fingerprint is computed locally (H1)
     const need = sheet.questions.flatMap((q) => {
-      const f = byId.get(q.findingKey);
-      const fp = input.memory?.byId[q.findingKey]?.fingerprint ?? null;
-      return !have[q.findingKey] && f && fp ? [{ q, f, fp }] : [];
+      const { findingId, owner } = parseQuestionKey(q.findingKey);
+      const f = byId.get(findingId);
+      const fp =
+        input.memory?.byId[findingId]?.fingerprint ?? (f ? fingerprintFor(f, doc.firmId) : null);
+      return !have[q.findingKey] && f && fp ? [{ q, f, fp, owner }] : [];
     });
     if (need.length) {
-      await api.storeFindings(
-        run_id,
-        need.map((n) => toFindingWire(n.f, n.fp)),
-      );
+      const wires = new Map(need.map((n) => [n.f.id, toFindingWire(n.f, n.fp)]));
+      await api.storeFindings(run_id, [...wires.values()]);
       const created = await api.createQuestions(
         run_id,
         need.map((n) => ({
@@ -135,6 +138,12 @@ async function recordInMemory(api: MemoryApi, input: ExportInput): Promise<numbe
           finding_ref: n.q.findingKey,
           fingerprint: n.fp,
           interpretations: n.q.interpretations,
+          ...(n.owner
+            ? {
+                owner: n.owner,
+                owner_source: rowById.get(n.f.id)?.triage?.ownerSource ?? 'suggested',
+              }
+            : {}),
         })),
       );
       await saveQuestionIds(
