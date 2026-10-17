@@ -19,6 +19,8 @@ import {
   diffDocuments,
   htmlToLines,
   ISSUE_CLASS_LABELS,
+  loadVarianceRules,
+  runVariance as coreRunVariance,
   ocrToLines,
   pdfToLines,
   runDeterministic,
@@ -47,6 +49,8 @@ import type {
   EngineSettings,
   FindingLocator,
   FindingView,
+  RunVarianceInput,
+  RunVarianceResponse,
   SectionView,
   StageId,
   StageReport,
@@ -440,6 +444,97 @@ function sideAnalyzeInput(side: DiffSideInput | undefined): AnalyzeInput | null 
   return name === undefined ? { kind, bytes: side.bytes } : { kind, bytes: side.bytes, name };
 }
 
+/** Variance (C1b): E2E-only delay / failure seam; a no-op outside the e2e build. */
+async function varianceSeam(settings: EngineSettings): Promise<boolean> {
+  if (IS_E2E) {
+    const v = settings.e2eVariance;
+    const ms = typeof v?.delayMs === 'number' ? Math.max(0, Math.min(v.delayMs, 120_000)) : 0;
+    if (ms) await new Promise((r) => setTimeout(r, ms));
+    return v?.fail === true;
+  }
+  return false;
+}
+
+function plainLabel(x: unknown, fallback: string): string {
+  return typeof x === 'string' && x.trim() ? x.trim().slice(0, 120) : fallback;
+}
+
+function plainFirm(x: unknown): string | null {
+  return typeof x === 'string' && x ? x.slice(0, 120) : null;
+}
+
+// Variance Phase 02 (C1): the variance pass; plain JSON out; never throws across Comlink.
+async function runVarianceImpl(
+  input: RunVarianceInput,
+  settings: EngineSettings,
+): Promise<RunVarianceResponse> {
+  try {
+    if (await varianceSeam(settings ?? {})) return { ok: false, side: 'pass', code: 'injected' };
+    const base = sideAnalyzeInput(input?.baseline);
+    if (!base) return { ok: false, side: 'baseline', code: 'invalid_request' };
+    const a = await prepare(base, {});
+    if (!a.ok) return { ok: false, side: 'baseline', code: a.code };
+    // current: the analyzed graph retained for the open document, else the fallback input
+    let g: DocGraph;
+    let blocks: BlockView[];
+    let idx: Map<string, number>;
+    let numberingNote: ((issueClass: string) => string | undefined) | undefined;
+    const kept =
+      typeof input?.current?.docHash === 'string' ? touch(input.current.docHash) : undefined;
+    if (kept) {
+      g = kept.g;
+      blocks = kept.blocks;
+      idx = kept.idx;
+      numberingNote = kept.numberingNote;
+    } else {
+      const ci = sideAnalyzeInput(input?.current?.input);
+      if (!ci) return { ok: false, side: 'current', code: 'not_retained' };
+      const b = await prepare(ci, {});
+      if (!b.ok) return { ok: false, side: 'current', code: b.code };
+      g = b.graph;
+      const v = viewOf(g);
+      blocks = v.blocks;
+      idx = new Map(v.blocks.map((x, i) => [x.id, i] as const));
+    }
+    const rules = loadVarianceRules();
+    const out = coreRunVariance({
+      baseline: {
+        structure: a.structure,
+        graph: a.graph,
+        findings: a.findings,
+        firmId: plainFirm(input.baselineSide?.firmId),
+        label: plainLabel(input.baselineSide?.label, 'Baseline'),
+      },
+      current: {
+        structure: g.structure,
+        graph: g,
+        findings: runDeterministic(g),
+        firmId: plainFirm(input.currentSide?.firmId),
+        label: plainLabel(input.currentSide?.label, 'Current'),
+      },
+      rules,
+    });
+    const findings: FindingView[] = out.findings.map((f) => {
+      const view = toView(f, blocks, idx, g, numberingNote);
+      const title = out.meta[f.id]?.title;
+      return { ...view, ...(title ? { title } : {}), kind: 'change' as const };
+    });
+    return {
+      ok: true,
+      findings,
+      meta: out.meta,
+      cosmeticGroups: out.cosmeticGroups,
+      summary: out.summary,
+      ...(out.notice ? { notice: out.notice } : {}),
+      gatePolicy: { ...rules.config.gate_policy },
+      rulesVersion: rules.version,
+      rulesHash8: rules.hash8,
+    };
+  } catch (e) {
+    return { ok: false, side: 'pass', code: codeOf(e) };
+  }
+}
+
 export const api: EngineApi = {
   async analyze(input, settings, onStage) {
     const stages: StageReport[] = [];
@@ -671,6 +766,8 @@ export const api: EngineApi = {
       return { ok: false, code: codeOf(e) };
     }
   },
+
+  runVariance: runVarianceImpl,
 };
 
 Comlink.expose(api);

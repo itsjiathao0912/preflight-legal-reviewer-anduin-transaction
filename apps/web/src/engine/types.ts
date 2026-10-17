@@ -12,6 +12,9 @@ import type {
   PrimaryFacts,
   Region,
   StructureView,
+  VarianceMeta,
+  VarianceSummary,
+  CosmeticGroup,
 } from '@aduin/core';
 
 export type { DiffMode, DiffResult, DiffStage } from '@aduin/core';
@@ -73,6 +76,11 @@ export interface FindingView extends Finding {
    * (cross-references, conditionals, flow) of a DOCX whose list numbering was reconstructed.
    */
   numberingNote?: string;
+  /**
+   * Variance Phase 02 (D2, additive, derived): `change` for a variance change row (version drift vs a
+   * same-firm baseline); absent or `error` for every other finding. Chips and `Errors N` count errors only.
+   */
+  kind?: 'error' | 'change';
 }
 
 /** Where a finding sits: section path (outermost first) and 1-based paragraph within the section. */
@@ -93,6 +101,11 @@ export interface EngineSettings {
   packageDefs?: CrossDocDefinition[];
   /** Intake Phase 2 (additive): also return `EngineResult.packageFacts` (primary facts). */
   packageFacts?: boolean;
+  /**
+   * Variance Phase 02 (C1b), E2E-only: delay (ms) or fail the variance pass. Read in the
+   * `runVariance` path only, inside `IS_E2E` blocks; absent in production builds.
+   */
+  e2eVariance?: { delayMs?: number; fail?: boolean };
 }
 
 export interface EngineResult {
@@ -214,6 +227,43 @@ export type DiffDocumentsResponse =
   | { result: DiffResult; ms: number }
   | { error: { side: 'a' | 'b'; stage: DiffStage; code: string } };
 
+/** Variance Phase 02 (C1): one side of the variance pass (text formats only; scans are excluded). */
+export interface VarianceSideRef {
+  firmId: string | null;
+  /** Display label (for example "Fund II"). */
+  label: string;
+}
+
+export interface RunVarianceInput {
+  /** Baseline document bytes (HTML, PDF text layer or DOCX). */
+  baseline: Exclude<AnalyzeInput, { kind: 'ocr' }>;
+  baselineSide: VarianceSideRef;
+  /** Current document: the already analyzed graph (by docHash); `input` is the fallback. */
+  current: { docHash: string; input?: Exclude<AnalyzeInput, { kind: 'ocr' }> };
+  currentSide: VarianceSideRef;
+}
+
+/** Plain JSON variance result (structured-clone safe); the rules fields are loaded in the worker. */
+export interface VarianceView {
+  findings: FindingView[];
+  meta: Record<string, VarianceMeta>;
+  cosmeticGroups: CosmeticGroup[];
+  summary: VarianceSummary;
+  notice?: 'cross_firm';
+  gatePolicy: {
+    untriaged_change_blocks: boolean;
+    asked_unanswered_blocks: boolean;
+    regression_blocks: boolean;
+  };
+  rulesVersion: string;
+  rulesHash8: string;
+}
+
+/** Code-only failure (never message or document text). */
+export type RunVarianceResponse =
+  | ({ ok: true } & VarianceView)
+  | { ok: false; side: 'baseline' | 'current' | 'pass'; code: string };
+
 export interface EngineApi {
   analyze(
     input: AnalyzeInput | Uint8Array,
@@ -244,4 +294,10 @@ export interface EngineApi {
    * buildPackageFacts). Never throws across Comlink.
    */
   readPackageDoc(input: AnalyzeInput, opts: { name: string }): Promise<ReadPackageDocResponse>;
+  /**
+   * Variance Phase 02 (C1): the variance pass of the current document against one same-firm
+   * baseline (core runVariance). Reuses the prepare helper; never touches session, Turnstile or
+   * memory; never throws across Comlink.
+   */
+  runVariance(input: RunVarianceInput, settings: EngineSettings): Promise<RunVarianceResponse>;
 }
