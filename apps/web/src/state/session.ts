@@ -12,9 +12,15 @@ import { KEYS, safeGet, safeSet } from './storage';
 export const DEFAULT_ANALYST_NAME = 'Linh Tran';
 export const ANALYST_NAME_MAX = 80;
 
-/** Trimmed analyst name, or null when it is not 1-80 characters. */
+/**
+ * Trimmed analyst name, or null when it is not 1-80 characters. Control, format (incl. bidi
+ * overrides), unassigned and private-use characters (`\p{C}`) are stripped first (review fix F6).
+ * Note: renaming only changes the local badge and the next bootstrap; a live sandbox session keeps
+ * the server-side analyst it was created with.
+ */
 export function cleanAnalystName(name: string): string | null {
-  const n = typeof name === 'string' ? name.trim().replace(/\s+/g, ' ') : '';
+  const n =
+    typeof name === 'string' ? name.replace(/\p{C}/gu, ' ').trim().replace(/\s+/g, ' ') : '';
   return n.length >= 1 && n.length <= ANALYST_NAME_MAX ? n : null;
 }
 

@@ -18,7 +18,7 @@ Project rule: only MIT / BSD / Apache-2.0 / ISC code (fonts: OFL). Keep upstream
 | pdfjs-dist                                      | 6.4.299                   | Apache-2.0        | @aduin/web, @aduin/scripts (dev)           |
 | htmlparser2                                     | 12.0.0                    | MIT               | @aduin/core, @aduin/scripts                |
 | unpdf                                           | 1.9.0                     | MIT               | @aduin/core                                |
-| mammoth                                         | 1.13.0                    | BSD-2-Clause      | @aduin/core                                |
+| mammoth                                         | 1.13.0                    | BSD-2-Clause      | @aduin/core, @aduin/web (dev)              |
 | jpeg-js                                         | 0.4.4                     | BSD-3-Clause      | @aduin/scripts (dev, scan-set downscale)   |
 | diff (jsdiff)                                   | 9.0.0                     | BSD-3-Clause      | @aduin/core                                |
 | zod                                             | 4.6.7                     | MIT               | @aduin/core, @aduin/worker, @aduin/scripts |

@@ -72,14 +72,28 @@ export class AppDb extends Dexie {
 
 export const RETENTION_MS = limits.browserUploadRetentionHours * 60 * 60 * 1000;
 
-/** Delete uploads, parsed models and drafts at or past the retention age. Never touches decisions. */
+/** Outbox states purged at the retention age: terminal rows and parked (never-sent) rows (F4). */
+const PURGEABLE_OUTBOX = new Set(['synced', 'rejected', 'parked']);
+
+/**
+ * Delete uploads, parsed models, drafts and finished/parked outbox rows at or past the retention
+ * age. Never touches decisions or still-live outbox rows (queued / sending / retry / deferred).
+ */
 export async function purgeExpired(db: AppDb, now: number = Date.now()): Promise<number> {
   const cutoff = now - RETENTION_MS;
   let n = 0;
-  await db.transaction('rw', db.documents, db.parsedModels, db.drafts, async () => {
+  await db.transaction('rw', [db.documents, db.parsedModels, db.drafts, db.outbox], async () => {
     n += await db.documents.where('createdAt').belowOrEqual(cutoff).delete();
     n += await db.parsedModels.where('createdAt').belowOrEqual(cutoff).delete();
     n += await db.drafts.where('createdAt').belowOrEqual(cutoff).delete();
+    n += await db.outbox
+      .where('createdAt')
+      .belowOrEqual(cutoff)
+      .filter((r) => {
+        const st = (r.op as { state?: unknown } | null)?.state;
+        return typeof st === 'string' && PURGEABLE_OUTBOX.has(st);
+      })
+      .delete();
   });
   return n;
 }

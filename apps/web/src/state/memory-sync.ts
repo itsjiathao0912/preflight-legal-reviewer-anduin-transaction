@@ -1,6 +1,7 @@
 import type { FindingWire } from '@aduin/core';
 import { create } from 'zustand';
 import { isRealMemoryApi, memoryApi } from '../api/client';
+import { MemoryApiError } from '../api/memoryApi';
 import { Outbox, type OutboxDoc, type OutboxEvent } from '../api/outbox';
 import { sha256Hex } from '../engine/ocr-queue';
 import type { FindingView } from '../engine/types';
@@ -26,11 +27,18 @@ export interface SyncState {
   unsynced: number;
   /** At least one op waits for the next UTC day (daily write budget). */
   deferred: boolean;
+  /** At least one op hit the retry cap while memory was unavailable (resumes on reload/online). */
+  parked: boolean;
   /** Last terminal refusal shown to the analyst (cleared on the next success). */
   lastError: string | null;
 }
 
-export const useSync = create<SyncState>(() => ({ unsynced: 0, deferred: false, lastError: null }));
+export const useSync = create<SyncState>(() => ({
+  unsynced: 0,
+  deferred: false,
+  parked: false,
+  lastError: null,
+}));
 
 let box: Outbox | null = null;
 let findingsProvider: (doc: OutboxDoc, keys: string[]) => FindingWire[] = () => [];
@@ -53,6 +61,8 @@ export function writesDisabled(): boolean {
   return useSession.getState().readOnly;
 }
 
+const WORKSPACE_CHANGED =
+  'A queued decision belonged to an earlier memory session. It stays in this browser only.';
 const REFUSED: Record<string, string> = {
   fingerprint_mismatch: 'Memory refused a decision: the quote no longer matches.',
   read_only: 'This demo workspace is read-only. Decisions stay in this browser.',
@@ -69,11 +79,17 @@ export function outbox(): Outbox | null {
     db,
     api: () => memoryApi(),
     readOnly: writesDisabled,
+    workspace: currentWorkspace,
     findingsFor: (doc, keys) => findingsProvider(doc, keys),
   });
   box.onEvent((e) => {
     if (e.type === 'rejected')
-      useSync.setState({ lastError: REFUSED[e.error.code] ?? REFUSED['invalid_request']! });
+      useSync.setState({
+        lastError:
+          e.error.reason === 'workspace_changed'
+            ? WORKSPACE_CHANGED
+            : (REFUSED[e.error.code] ?? REFUSED['invalid_request']!),
+      });
     if (e.type === 'synced') useSync.setState({ lastError: null });
     for (const l of eventListeners) {
       try {
@@ -97,6 +113,7 @@ export async function refreshUnsynced(): Promise<void> {
     useSync.setState({
       unsynced: open.length,
       deferred: open.some((o) => o.state === 'deferred'),
+      parked: open.some((o) => o.state === 'parked'),
     });
   } catch {
     /* storage unavailable: keep the last count */
@@ -184,6 +201,32 @@ export function loadAnalystName(): Promise<string> {
 const booted = new WeakMap<object, Promise<void>>();
 
 /**
+ * True when the last session bootstrap failed with `unavailable` (e.g. 503: no D1 on the demo).
+ * Memory writes are then skipped (triage stays local) instead of piling up in the outbox (F5).
+ * Cleared by the next successful bootstrap.
+ */
+let bootUnavailable = false;
+export function memoryDown(): boolean {
+  return bootUnavailable;
+}
+
+/** Test seam: clear the bootstrap-unavailable flag. */
+export function resetMemorySyncForTest(): void {
+  bootUnavailable = false;
+}
+
+/**
+ * Workspace of the current real session (bootstraps first); null for the Dexie stub or when the
+ * session cannot be established. Used to stamp and check outbox ops (F2).
+ */
+export async function currentWorkspace(): Promise<string | null> {
+  const a = memoryApi();
+  if (!isRealMemoryApi(a)) return null;
+  await ensureSession();
+  return a.currentSession()?.workspace_id ?? null;
+}
+
+/**
  * Bootstrap the memory session once per client (real Worker client only; the stub needs none).
  * Always awaited before the first lookup. Failures are silent: the client bootstraps itself again
  * on its first call and a lookup failure shows "Memory unavailable".
@@ -198,9 +241,11 @@ export function ensureSession(): Promise<void> {
       a.onSession((s) => useSession.getState().setReadOnly(s.read_only === true));
       try {
         const s = await a.bootstrap(name);
+        bootUnavailable = false;
         useSession.getState().setReadOnly(s.read_only === true);
-      } catch {
-        /* the client retries on its first call */
+      } catch (e) {
+        /* the client retries on its first call; a 503 keeps writes local (F5) */
+        bootUnavailable = e instanceof MemoryApiError && e.code === 'unavailable';
       }
     })();
     booted.set(a, p);
@@ -226,6 +271,7 @@ export async function changeAnalystName(name: string): Promise<boolean> {
   if (isRealMemoryApi(a)) {
     try {
       const s = await a.bootstrap(n);
+      bootUnavailable = false;
       useSession.getState().setReadOnly(s.read_only === true);
     } catch {
       /* the next call bootstraps again */

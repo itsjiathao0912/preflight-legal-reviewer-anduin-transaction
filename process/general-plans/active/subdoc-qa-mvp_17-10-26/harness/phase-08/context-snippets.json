@@ -1,0 +1,55 @@
+{
+  "task": "subdoc-qa-mvp phase 08 counsel sheet, gate and real memory (S1-S3) + security review fix cycle (F1-F8, F11) + S3.3 no-LLM corpus",
+  "snippets": [
+    {
+      "file": "apps/web/src/features/counsel/export-flow.ts",
+      "lines": "exportCounselSheet, recordInMemory",
+      "description": "F1: DOCX built first (only its failure throws ExportError); ensureRun/storeFindings/createQuestions/exportRun best-effort in recordInMemory; failure -> recorded=false, memoryNote 'Saved locally; not recorded in memory.', file still downloaded"
+    },
+    {
+      "file": "apps/web/src/api/outbox.ts",
+      "lines": "add, sendOne (workspace check), save -> scrubTerminal, fail (MAX_UNAVAILABLE_ATTEMPTS -> parked), unpark/recover/start('online')",
+      "description": "F2 workspace stamp + workspace_changed rejection; F4 terminal scrub of quote_text/note/counsel_note/doc_name; F5 retry cap + parked state"
+    },
+    {
+      "file": "apps/web/src/state/memory-sync.ts",
+      "lines": "currentWorkspace, ensureSession (bootUnavailable), memoryDown, refreshUnsynced(parked)",
+      "description": "F2 workspace source; F5 503 bootstrap keeps triage local"
+    },
+    {
+      "file": "apps/web/src/state/review.ts",
+      "lines": "decide, persistAnswer guards",
+      "description": "F5: skip enqueue when memoryDown()"
+    },
+    {
+      "file": "apps/web/src/api/realMemoryApi.ts",
+      "lines": "adoptWorkspace",
+      "description": "F3: questions:{docId} ids cleared on workspace change alongside run: cache"
+    },
+    {
+      "file": "apps/web/src/storage/db.ts",
+      "lines": "purgeExpired",
+      "description": "F4: synced/rejected/parked outbox rows purged at 24 h retention; live rows kept"
+    },
+    {
+      "file": "apps/web/src/state/session.ts",
+      "lines": "cleanAnalystName",
+      "description": "F6: \\p{C} (control, format/bidi, private-use) stripped; renames do not change the server-side analyst of a live sandbox (documented)"
+    },
+    {
+      "file": "apps/web/src/features/ai/ai-lane.ts",
+      "lines": "rulesHashMissing, aiRunFresh",
+      "description": "F7: null expected hash8 on a writable firm session -> downgrade('rules_unavailable') before any /api/ai call"
+    },
+    {
+      "file": "apps/web/src/features/counsel/exportDocx.ts",
+      "lines": "buildCounselDocx",
+      "description": "F8: location maskAndClamp(300); title/firm/fund/version masked and clamped (200)"
+    },
+    {
+      "file": "THIRD_PARTY_NOTICES.md",
+      "lines": "mammoth row",
+      "description": "F11: @aduin/web (dev) added"
+    }
+  ]
+}

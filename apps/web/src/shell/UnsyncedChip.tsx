@@ -5,10 +5,13 @@ import { useSync } from '../state/memory-sync';
 export function UnsyncedChip() {
   const n = useSync((s) => s.unsynced);
   const deferred = useSync((s) => s.deferred);
+  const parked = useSync((s) => s.parked);
   if (!n) return null;
   const text = deferred
     ? `${n} unsynced · memory limit reached, retries tomorrow`
-    : `${n} unsynced`;
+    : parked
+      ? `${n} unsynced · memory unavailable, retries on reload`
+      : `${n} unsynced`;
   return (
     <span className="syncchip" role="status" data-testid="unsynced-chip" title={text}>
       <Icon name="clock" />

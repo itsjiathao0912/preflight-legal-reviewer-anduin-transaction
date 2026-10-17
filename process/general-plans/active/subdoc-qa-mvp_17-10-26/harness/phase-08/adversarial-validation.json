@@ -1,0 +1,76 @@
+{
+  "task": "subdoc-qa-mvp phase 08 counsel sheet, gate and real memory (S1-S3) + security review fix cycle (F1-F8, F11) + S3.3 no-LLM corpus",
+  "method": "STRIDE pass by the execute agent over the review findings; each scenario tied to a named automated test",
+  "scenarios": [
+    {
+      "stride": "D",
+      "scenario": "Memory backend down (503 / no D1 on the live demo) blocks the counsel-sheet deliverable",
+      "ruled_out": true,
+      "rationale": "DOCX is built before any memory call; every memory step is best-effort; only a DOCX build failure throws",
+      "test": "export-flow (F1) x4; e2e counsel-export F1 case"
+    },
+    {
+      "stride": "E",
+      "scenario": "Queued writes replayed into a different workspace after a session/workspace change (cross-workspace write)",
+      "ruled_out": true,
+      "rationale": "ops carry workspace_id from enqueue; mismatch -> rejected workspace_changed before any request; unknown workspace -> retry without sending",
+      "test": "outbox F2 x2"
+    },
+    {
+      "stride": "T",
+      "scenario": "Stale question ids from an old workspace reused to answer a foreign question",
+      "ruled_out": true,
+      "rationale": "questions:{docId} cleared on workspace adoption",
+      "test": "realMemoryApi F3"
+    },
+    {
+      "stride": "I",
+      "scenario": "Quote text, analyst notes and counsel notes linger in IndexedDB after sync",
+      "ruled_out": true,
+      "rationale": "terminal ops scrubbed on save; terminal/parked rows purged at 24 h",
+      "test": "outbox F4 scrub; outbox F4 purge"
+    },
+    {
+      "stride": "D",
+      "scenario": "Unbounded retry storm / ever-growing outbox while memory is unavailable",
+      "ruled_out": true,
+      "rationale": "6-attempt cap then parked until reload/online; 503 bootstrap skips enqueue entirely",
+      "test": "outbox F5; review-sync F5"
+    },
+    {
+      "stride": "S",
+      "scenario": "Bidi/control characters in the analyst name spoof the audit trail (decided_by_name)",
+      "ruled_out": true,
+      "rationale": "\\p{C} stripped before length check and bootstrap",
+      "test": "review-sync F6"
+    },
+    {
+      "stride": "T",
+      "scenario": "AI result computed for different firm rules accepted because the expected hash could not be computed",
+      "ruled_out": true,
+      "rationale": "null hash on a writable firm session downgrades before the call",
+      "test": "rules hash guard (F7)"
+    },
+    {
+      "stride": "I",
+      "scenario": "Sensitive numbers leak through DOCX location or sheet meta (title/firm/fund/version)",
+      "ruled_out": true,
+      "rationale": "all printed fields pass maskAndClamp",
+      "test": "counsel-export-contents F8"
+    },
+    {
+      "stride": "E",
+      "scenario": "Read-only demo session writes into shared memory",
+      "ruled_out": true,
+      "rationale": "read_only from the session response disables writes up front; Worker refuses with 403 read_only",
+      "test": "review-sync 'should skip the outbox for a read-only session'; worker read_only test; preview e2e response rewrite"
+    },
+    {
+      "stride": "R",
+      "scenario": "Rename after session start attributes later decisions to a different server-side analyst",
+      "ruled_out": false,
+      "rationale": "accepted residual: a live sandbox keeps its server-side analyst; documented in code, UI/README note later",
+      "test": "none (documented residual)"
+    }
+  ]
+}

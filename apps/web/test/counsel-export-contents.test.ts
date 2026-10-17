@@ -104,4 +104,23 @@ describe('counsel-export-contents', () => {
       'counsel-questions-document.docx',
     );
   });
+
+  it('F8: masks and clamps the location and the title / firm / fund / version fields', async () => {
+    const longLoc = `Section 9 account ${ACCOUNT} ` + 'x'.repeat(600);
+    const sheet = buildCounselSheet(
+      {
+        title: `Counsel query sheet · routing ${ACCOUNT}`,
+        firm: `Firm ${ACCOUNT}`,
+        fund: `Fund ${ACCOUNT}`,
+        version: `v ${ACCOUNT}`,
+      },
+      [{ ...f('f1', 'Plain clause.'), location: longLoc }],
+      { f1: { status: 'counsel' } },
+      {},
+    );
+    const out = await text(await buildCounselDocx(sheet, () => 'Which section?'));
+    expect(out).not.toContain(ACCOUNT);
+    expect(out).not.toContain('x'.repeat(400));
+    expect(out).toContain('Section 9 account');
+  });
 });

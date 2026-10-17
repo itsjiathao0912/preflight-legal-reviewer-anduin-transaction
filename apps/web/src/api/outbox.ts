@@ -31,6 +31,11 @@ import {
  * - `decide` returns an optimistic `pending:<client_op_id>` id, mapped to the real id on drain.
  *   Revoking a pending decision cancels it when not yet sent, or queues after it while sending.
  * - A read-only session never enqueues (writes are disabled up front).
+ * - Review fixes: every op is stamped with the session `workspace_id` at enqueue; an op whose
+ *   workspace differs from the current session at drain is rejected (`workspace_changed`) so it is
+ *   never written into another workspace (F2). Terminal ops drop `quote_text`, `note`,
+ *   `counsel_note` and `doc_name` (F4). `unavailable` / `unauthorized` retries are capped at
+ *   `MAX_UNAVAILABLE_ATTEMPTS`; the op is then `parked` until the next page load or `online` (F5).
  */
 export type OutboxKind = 'decide' | 'answer' | 'revoke';
 
@@ -60,6 +65,8 @@ export interface OutboxOp {
   error?: OutboxError;
   /** True once a run_required / run_not_found retry was used. */
   runRetried?: boolean;
+  /** Session workspace at enqueue (null = no real session, e.g. the Dexie stub: not checked). */
+  workspace_id?: string | null;
 }
 
 export type OutboxEvent =
@@ -67,13 +74,16 @@ export type OutboxEvent =
   | { type: 'conflict'; op: OutboxOp; current: ActiveDecision | null }
   | { type: 'rejected'; op: OutboxOp; error: OutboxError }
   | { type: 'deferred'; op: OutboxOp; until: number }
-  | { type: 'retry'; op: OutboxOp; at: number };
+  | { type: 'retry'; op: OutboxOp; at: number }
+  | { type: 'parked'; op: OutboxOp };
 
 export interface OutboxDeps {
   db: AppDb;
   api: () => MemoryApi | null;
   /** From the session response; read-only sessions skip the outbox. */
   readOnly?: () => boolean;
+  /** Current session workspace id (null when unknown / stub). Awaited at enqueue and at drain. */
+  workspace?: () => string | null | Promise<string | null>;
   /** Wire findings for these keys (persisted before a decision/question); default: none. */
   findingsFor?: (doc: OutboxDoc, keys: string[]) => FindingWire[] | Promise<FindingWire[]>;
   now?: () => number;
@@ -98,8 +108,36 @@ export function backoffMs(attempts: number): number {
   return Math.min(BACKOFF_MAX_MS, BACKOFF_BASE_MS * 2 ** Math.max(0, attempts - 1));
 }
 
+/** `unavailable` / `unauthorized` attempts before an op is parked (F5). */
+export const MAX_UNAVAILABLE_ATTEMPTS = 6;
+
 const TERMINAL: ReadonlySet<OutboxState> = new Set(['synced', 'rejected']);
-const UNSYNCED: ReadonlySet<OutboxState> = new Set(['queued', 'sending', 'retry', 'deferred']);
+const UNSYNCED: ReadonlySet<OutboxState> = new Set([
+  'queued',
+  'sending',
+  'retry',
+  'deferred',
+  'parked',
+]);
+
+export function isTerminalState(s: OutboxState): boolean {
+  return TERMINAL.has(s);
+}
+
+/** Terminal ops keep only what the pending-id map and revoke need: free text is dropped (F4). */
+export function scrubTerminal(op: OutboxOp): OutboxOp {
+  const out: OutboxOp = { ...op };
+  if (out.decide) {
+    const { quote_text: _q, note: _n, ...rest } = out.decide;
+    out.decide = { ...rest, quote_text: '' };
+  }
+  if (out.answer) {
+    const { quote_text: _q, counsel_note: _n, ...rest } = out.answer;
+    out.answer = rest;
+  }
+  if (out.doc) out.doc = { ...out.doc, doc_name: '' };
+  return out;
+}
 
 interface Row extends OutboxRow {
   seq: number;
@@ -117,6 +155,7 @@ export class Outbox {
   private readonly db: AppDb;
   private readonly api: () => MemoryApi | null;
   private readonly readOnly: () => boolean;
+  private readonly workspace: NonNullable<OutboxDeps['workspace']>;
   private readonly findingsFor: NonNullable<OutboxDeps['findingsFor']>;
   private readonly now: () => number;
   private readonly opId: () => string;
@@ -128,6 +167,7 @@ export class Outbox {
     this.db = deps.db;
     this.api = deps.api;
     this.readOnly = deps.readOnly ?? (() => false);
+    this.workspace = deps.workspace ?? (() => null);
     this.findingsFor = deps.findingsFor ?? (() => []);
     this.now = deps.now ?? Date.now;
     this.opId = deps.newOpId ?? newClientOpId;
@@ -153,8 +193,15 @@ export class Outbox {
   // ---------------------------------------------------------------- enqueue
 
   private async add(op: Omit<OutboxOp, 'state' | 'attempts' | 'nextAttemptAt'>): Promise<void> {
+    const workspace_id = await this.workspace();
     const now = this.now();
-    const full: OutboxOp = { ...op, state: 'queued', attempts: 0, nextAttemptAt: now };
+    const full: OutboxOp = {
+      ...op,
+      state: 'queued',
+      attempts: 0,
+      nextAttemptAt: now,
+      workspace_id,
+    };
     await this.db.outbox.add({ createdAt: now, op: full });
   }
 
@@ -267,7 +314,10 @@ export class Outbox {
 
   // ---------------------------------------------------------------- drain
 
-  /** Drain on `online` and window `focus`; resets rows stuck in `sending` (crash recovery). */
+  /**
+   * Drain on `online` and window `focus`; resets rows stuck in `sending` (crash recovery) and
+   * resumes parked rows (page load). `online` resumes parked rows too.
+   */
   start(
     target: Pick<Window, 'addEventListener' | 'removeEventListener'> | null = globalThis.window ??
       null,
@@ -277,10 +327,13 @@ export class Outbox {
     const kick = () => {
       void this.drain();
     };
-    target.addEventListener('online', kick);
+    const online = () => {
+      void this.unpark().then(() => this.drain());
+    };
+    target.addEventListener('online', online);
     target.addEventListener('focus', kick);
     return () => {
-      target.removeEventListener('online', kick);
+      target.removeEventListener('online', online);
       target.removeEventListener('focus', kick);
     };
   }
@@ -288,6 +341,16 @@ export class Outbox {
   async recover(): Promise<void> {
     for (const r of await this.rows()) {
       if (r.op.state === 'sending') await this.save(r, { ...r.op, state: 'queued' });
+    }
+    await this.unpark();
+  }
+
+  /** Parked rows go back to `queued` with a fresh attempt budget. */
+  async unpark(): Promise<void> {
+    const now = this.now();
+    for (const r of await this.rows()) {
+      if (r.op.state === 'parked')
+        await this.save(r, { ...r.op, state: 'queued', attempts: 0, nextAttemptAt: now });
     }
   }
 
@@ -317,6 +380,7 @@ export class Outbox {
         if (r.createdAt < now - KEEP_TERMINAL_MS) await this.db.outbox.delete(r.seq);
         continue;
       }
+      if (r.op.state === 'parked') return; // order preserved: nothing after it is sent
       if (r.op.nextAttemptAt > this.now()) return;
       const fresh = (await this.db.outbox.get(r.seq)) as Row | undefined;
       if (!fresh || TERMINAL.has(fresh.op.state)) continue; // cancelled meanwhile
@@ -326,8 +390,9 @@ export class Outbox {
   }
 
   private async save(r: Row, op: OutboxOp): Promise<void> {
-    r.op = op;
-    await this.db.outbox.update(r.seq, { op });
+    const next = TERMINAL.has(op.state) ? scrubTerminal(op) : op;
+    r.op = next;
+    await this.db.outbox.update(r.seq, { op: next });
   }
 
   /** Returns false when the queue must stop (op not sent successfully and not terminal). */
@@ -335,6 +400,26 @@ export class Outbox {
     const api = this.api();
     const op: OutboxOp = { ...r.op, state: 'sending', attempts: r.op.attempts + 1 };
     if (!api) return this.fail(r, op, new MemoryApiError('unavailable', 'memory API unavailable'));
+    if (typeof r.op.workspace_id === 'string') {
+      let current: string | null;
+      try {
+        current = await this.workspace();
+      } catch {
+        current = null;
+      }
+      if (current === null) {
+        return this.fail(r, op, new MemoryApiError('unavailable', 'no memory session'));
+      }
+      if (current !== r.op.workspace_id) {
+        return this.fail(
+          r,
+          op,
+          new MemoryApiError('invalid_request', 'op belongs to another workspace', {
+            reason: 'workspace_changed',
+          }),
+        );
+      }
+    }
     await this.save(r, op);
     try {
       const decision = await this.perform(api, r, op);
@@ -441,6 +526,12 @@ export class Outbox {
       return false;
     }
     if (err.code === 'unavailable' || err.code === 'unauthorized') {
+      if (Math.max(op.attempts, 1) >= MAX_UNAVAILABLE_ATTEMPTS) {
+        const parked: OutboxOp = { ...op, state: 'parked', error: err };
+        await this.save(r, parked);
+        this.emit({ type: 'parked', op: parked });
+        return false;
+      }
       const next: OutboxOp = {
         ...op,
         state: 'retry',

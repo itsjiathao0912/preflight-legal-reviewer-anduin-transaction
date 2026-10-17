@@ -14,8 +14,8 @@ import {
 
 // AC21 + D-1: the DOCX lists only UNANSWERED New/Accepted questions with citation (masked quote)
 // and interpretations; recorded answers stay in the app. Parsed back with mammoth. AC45 (zero
-// repeated questions across funds) is in memory-prior-answer. A failed export leaves the sheet
-// editable and nothing is marked exported.
+// repeated questions across funds) is in memory-prior-answer. Review fix F1: a memory failure
+// never blocks the deliverable; the DOCX still downloads with a quiet "not recorded" note.
 const q = (key: string) =>
   findingByQuote(
     'fund-II',
@@ -98,7 +98,7 @@ test.describe('counsel-export', () => {
     expect(text).not.toContain(RAW_NUMBER);
   });
 
-  test('a failed export shows the message, downloads nothing and leaves the sheet editable', async ({
+  test('a memory failure (503) on export still downloads the DOCX with a quiet note (F1)', async ({
     page,
   }) => {
     await gotoApp(page);
@@ -113,20 +113,19 @@ test.describe('counsel-export', () => {
       };
       const api = w.__aduinE2E.memory();
       w.__origExport = api['exportRun'];
-      api['exportRun'] = () => Promise.reject(new Error('boom'));
+      api['exportRun'] = () =>
+        Promise.reject(Object.assign(new Error('HTTP 503'), { code: 'unavailable', status: 503 }));
     });
-    let downloads = 0;
-    page.on('download', () => downloads++);
     await page.getByTestId('counsel-export').click();
-    await page.getByTestId('export-download').click();
-    await expect(page.getByTestId('export-error')).toContainText(
-      'Nothing was marked as exported; try again.',
-    );
-    await expect(page.getByTestId('export-dialog')).toBeVisible();
-    await expect(page.getByTestId('export-download')).toBeEnabled();
-    await page.getByTestId('export-close').click();
-    expect(downloads).toBe(0);
-    await expect(page.getByTestId('metrics-panel')).toHaveCount(0);
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByTestId('export-download').click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('counsel-questions-demo-fund-ii.docx');
+    await expect(
+      page.getByText('Query sheet exported: 1 question. Saved locally; not recorded in memory.'),
+    ).toBeVisible();
+    await expect(page.getByTestId('export-error')).toHaveCount(0);
     // still editable: answer the question after the failure
     await answerQuestion(page, n1.id, 'A');
     await expect(counselRow(page, n1.id)).toHaveAttribute('data-state', 'answered');

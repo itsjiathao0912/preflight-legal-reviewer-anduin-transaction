@@ -4,6 +4,7 @@ import type { ActiveDecision, FindingWire } from '@aduin/core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MemoryApiError, nextUtcDay, type MemoryApi } from '../src/api/memoryApi';
 import {
+  MAX_UNAVAILABLE_ATTEMPTS,
   Outbox,
   backoffMs,
   isPendingId,
@@ -400,5 +401,103 @@ describe('outbox', () => {
     ]);
     const ids = fake.calls.map((c) => c.body['client_op_id']).filter(Boolean);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  // ------------------------------------------------------------ review fixes F2 / F4 / F5
+
+  it('F2: stamps the workspace at enqueue and rejects ops after a workspace change', async () => {
+    const f = flaky();
+    let ws = 'ws_A';
+    const { box, events } = outbox(f.api, { workspace: () => ws });
+    await box.enqueueDecide(DOC, decideInput());
+    expect((await box.list())[0]!.workspace_id).toBe('ws_A');
+    ws = 'ws_B';
+    await box.drain();
+    const [row] = await box.list();
+    expect(row!.state).toBe('rejected');
+    expect(row!.error?.reason).toBe('workspace_changed');
+    expect(f.names()).toEqual([]); // nothing reached the other workspace
+    expect(events.map((e) => e.type)).toEqual(['rejected']);
+    // a later op in the new workspace still syncs
+    await box.enqueueDecide(DOC, { ...decideInput(), finding_ref: 'f2' }, ['f2']);
+    await box.drain();
+    expect((await box.list())[1]!.state).toBe('synced');
+  });
+
+  it('F2: an unknown current workspace keeps a stamped op retrying, never sends it', async () => {
+    const f = flaky();
+    let ws: string | null = 'ws_A';
+    const { box } = outbox(f.api, { workspace: () => ws });
+    await box.enqueueDecide(DOC, decideInput());
+    ws = null;
+    await box.drain();
+    expect((await box.list())[0]!.state).toBe('retry');
+    expect(f.names()).toEqual([]);
+  });
+
+  it('F4: synced and rejected ops drop quote_text, notes and doc_name', async () => {
+    const f = flaky();
+    f.script['decide'] = [decision('d_1'), new MemoryApiError('fingerprint_mismatch', 'nope')];
+    const { box } = outbox(f.api);
+    await box.enqueueDecide(DOC, { ...decideInput(), note: 'private note' });
+    await box.enqueueDecide(DOC, { ...decideInput(), finding_ref: 'f2', note: 'n2' }, ['f2']);
+    await box.enqueueAnswer(DOC, {
+      client_op_id: op(),
+      law_firm_id: DOC.law_firm_id!,
+      question_id: 'q_1',
+      quote_text: 'answer quote',
+      fingerprint: FP,
+      issue_class: 'broken_cross_reference',
+      counsel_option: 'A',
+      counsel_note: 'counsel secret',
+    } as never);
+    await box.drain();
+    const rows = await box.list();
+    expect(rows.map((r) => r.state)).toEqual(['synced', 'rejected', 'synced']);
+    const raw = JSON.stringify(await db.outbox.toArray());
+    for (const secret of ['the quote', 'private note', 'answer quote', 'counsel secret', 'Sub doc'])
+      expect(raw).not.toContain(secret);
+    expect(rows[0]!.result?.id).toBe('d_1'); // the pending-id map still works
+  });
+
+  it('F4: purgeExpired removes terminal and parked outbox rows after 24 h, keeps live ones', async () => {
+    const { purgeExpired, RETENTION_MS } = await import('../src/storage/db');
+    const old = NOW - RETENTION_MS - 1;
+    for (const state of ['synced', 'rejected', 'parked', 'queued', 'retry', 'deferred'])
+      await db.outbox.add({ createdAt: old, op: { state } });
+    await db.outbox.add({ createdAt: NOW, op: { state: 'synced' } });
+    await purgeExpired(db, NOW);
+    const left = (await db.outbox.toArray()).map((r) => (r.op as { state: string }).state);
+    expect(left.sort()).toEqual(['deferred', 'queued', 'retry', 'synced']);
+  });
+
+  it('F5: unavailable retries are capped, then the op parks until online / reload', async () => {
+    const f = flaky();
+    f.script['decide'] = Array.from(
+      { length: MAX_UNAVAILABLE_ATTEMPTS },
+      () => new MemoryApiError('unavailable', 'HTTP 503'),
+    );
+    const { box, events } = outbox(f.api);
+    await box.enqueueDecide(DOC, decideInput());
+    for (let i = 0; i < MAX_UNAVAILABLE_ATTEMPTS; i++) {
+      await box.drain();
+      clock += 10 * 60_000;
+    }
+    expect((await box.list())[0]!.state).toBe('parked');
+    expect(events.at(-1)!.type).toBe('parked');
+    expect(await box.unsyncedCount()).toBe(1);
+    const sent = f.names().filter((x) => x === 'decide').length;
+    expect(sent).toBe(MAX_UNAVAILABLE_ATTEMPTS);
+    clock += 60 * 60_000;
+    await box.drain(); // parked: never sent again in this page life
+    expect(f.names().filter((x) => x === 'decide')).toHaveLength(sent);
+    const handlers: Record<string, () => void> = {};
+    box.start({
+      addEventListener: (t: string, fn: () => void) => (handlers[t] = fn),
+      removeEventListener: () => undefined,
+    } as unknown as Window);
+    await box.recover(); // page load resumes parked rows
+    await box.drain();
+    expect((await box.list())[0]!.state).toBe('synced');
   });
 });

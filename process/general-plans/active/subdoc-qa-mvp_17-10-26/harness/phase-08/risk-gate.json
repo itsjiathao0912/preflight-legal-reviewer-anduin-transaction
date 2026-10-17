@@ -1,0 +1,18 @@
+{
+  "task": "subdoc-qa-mvp phase 08 counsel sheet, gate and real memory (S1-S3) + security review fix cycle (F1-F8, F11) + S3.3 no-LLM corpus",
+  "planPath": "process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-08-counsel-gate-memory_PLAN_17-10-26.md",
+  "riskLevel": "high",
+  "riskClasses": [
+    "permission, secret, or trust-boundary logic",
+    "public API or external contract changes",
+    "schema/data migration or destructive data mutation"
+  ],
+  "riskDetail": [
+    "trust boundary: browser -> Worker memory API (session cookie, workspace isolation, read-only demo workspace); outbox replays queued writes across page loads and sessions",
+    "contract: web client of the frozen memory API (decide / answer / revoke / runs / questions / export); OutboxState gains an additive 'parked' value (web-only type, no wire change)",
+    "data mutation: append-only decisions, counsel answers and export audit rows in D1; local Dexie outbox rows hold quote text and notes until terminal"
+  ],
+  "mustStopBeforeFinalize": true,
+  "humanApprovalRequired": false,
+  "why": "Phase 08 writes analyst decisions and counsel answers into shared firm memory through a queued outbox and exports a DOCX that leaves the browser. A mis-scoped replay could write into another workspace; a memory outage (the live demo has no D1 yet) must never block the deliverable; free text must not linger locally. No deploy, no paid call, no commit in this execute pass."
+}

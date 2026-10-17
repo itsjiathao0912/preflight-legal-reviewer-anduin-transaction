@@ -42,6 +42,7 @@ import { useFilters } from './filters';
 import {
   ensureSession,
   flushOutbox,
+  memoryDown,
   onSyncEvent,
   outbox,
   outboxDocFor,
@@ -389,10 +390,10 @@ export const useReview = create<ReviewState>((set, get) => {
     const f = findingById(id);
     const fp = memory?.byId[id]?.fingerprint ?? null;
     const box = outbox();
-    if (!doc || !f || !doc.firmId || !fp || !box || writesDisabled()) return null;
+    if (!doc || !f || !doc.firmId || !fp || !box || writesDisabled() || memoryDown()) return null;
     try {
       await ensureSession();
-      if (writesDisabled()) return null;
+      if (writesDisabled() || memoryDown()) return null;
       rememberWires(doc.id, wiresFor([id]));
       const d = await box.enqueueDecide(await outboxDocFor(doc), {
         client_op_id: opId(),
@@ -437,10 +438,10 @@ export const useReview = create<ReviewState>((set, get) => {
     const fp = memory?.byId[id]?.fingerprint ?? null;
     const box = outbox();
     // no firm: the Worker refuses questions and answers (`firm_required`); triage stays local
-    if (!doc || !f || !doc.firmId || !fp || !box || writesDisabled()) return null;
+    if (!doc || !f || !doc.firmId || !fp || !box || writesDisabled() || memoryDown()) return null;
     try {
       await ensureSession();
-      if (writesDisabled()) return null;
+      if (writesDisabled() || memoryDown()) return null;
       rememberWires(doc.id, wiresFor([id]));
       const qid = (await readQuestionIds(doc.id))[id];
       const note = a.note?.trim();

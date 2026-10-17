@@ -65,6 +65,8 @@ export const DEFAULT_ANALYST_NAME = 'Linh Tran';
 const PATTERN_KEY_RE = /^[a-z0-9:#>-]{1,80}$/;
 const RUN_PREFIX = 'run:';
 const WORKSPACE_KEY = 'run:#workspace';
+/** `features/counsel/question-ids.ts` key prefix (finding -> question id per document). */
+const QUESTIONS_PREFIX = 'questions:';
 
 export function newClientOpId(): string {
   return `op_${crypto.randomUUID().replace(/-/g, '')}`;
@@ -240,6 +242,8 @@ export class RealMemoryApi implements MemoryApi, RunCacheControl {
     if (this.db) {
       try {
         await this.db.uiState.where('key').startsWith(RUN_PREFIX).delete();
+        // counsel question ids belong to the old workspace too (review fix F3)
+        await this.db.uiState.where('key').startsWith(QUESTIONS_PREFIX).delete();
       } catch {
         /* storage unavailable: memory cache already cleared */
       }

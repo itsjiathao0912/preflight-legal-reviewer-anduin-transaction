@@ -356,7 +356,11 @@ export function CounselScreen() {
             setMetricsSeq((n) => n + 1);
             showToast(
               `Query sheet exported: ${out.questionCount} question${out.questionCount === 1 ? '' : 's'}.` +
-                (out.recorded ? '' : ' The export is not recorded in memory.'),
+                (out.memoryNote
+                  ? ` ${out.memoryNote}`
+                  : out.recorded
+                    ? ''
+                    : ' The export is not recorded in memory.'),
             );
           }}
         />

@@ -8,6 +8,9 @@ import { maskAndClamp, type CounselSheet } from '@aduin/core';
  */
 export const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const WORDING_MAX = 500;
+/** Location and sheet meta fields are masked and clamped too (review fix F8). */
+const LOCATION_MAX = 300;
+const META_MAX = 200;
 
 export const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'] as const;
 
@@ -27,7 +30,13 @@ export async function buildCounselDocx(
   generatedAt: Date = new Date(),
 ): Promise<Blob> {
   const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import('docx');
-  const meta = sheet.meta;
+  const m = sheet.meta;
+  const meta = {
+    title: maskAndClamp(m.title || 'Counsel query sheet', META_MAX),
+    firm: m.firm ? maskAndClamp(m.firm, META_MAX) : '',
+    fund: m.fund ? maskAndClamp(m.fund, META_MAX) : '',
+    version: m.version ? maskAndClamp(m.version, META_MAX) : '',
+  };
   const facts = [
     meta.firm ? `Law firm: ${meta.firm}` : 'Law firm: not tagged',
     meta.fund ? `Fund: ${meta.fund}` : null,
@@ -53,7 +62,10 @@ export async function buildCounselDocx(
       }),
       new Paragraph({
         children: [
-          new TextRun({ text: `${q.location || 'Clause'} · "${q.quote}"`, italics: true }),
+          new TextRun({
+            text: `${maskAndClamp(q.location || 'Clause', LOCATION_MAX)} · "${q.quote}"`,
+            italics: true,
+          }),
         ],
       }),
       ...q.interpretations.map(

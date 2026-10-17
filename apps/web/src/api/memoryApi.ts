@@ -301,5 +301,10 @@ export interface MemoryApi {
   health(): Promise<MemoryHealth>;
 }
 
-/** Outbox op lifecycle (Phase 08 `outbox.ts`): queued -> sending -> synced | retry | deferred | rejected. */
-export type OutboxState = 'queued' | 'sending' | 'synced' | 'retry' | 'deferred' | 'rejected';
+/**
+ * Outbox op lifecycle (Phase 08 `outbox.ts`): queued -> sending -> synced | retry | deferred |
+ * rejected; `parked` (review fix F5, additive) = retry cap reached while memory was unavailable,
+ * resumed on the next page load or `online` event.
+ */
+export type OutboxState =
+  'queued' | 'sending' | 'synced' | 'retry' | 'deferred' | 'rejected' | 'parked';

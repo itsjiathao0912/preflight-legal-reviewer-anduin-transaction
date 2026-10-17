@@ -1,0 +1,101 @@
+{
+  "task": "subdoc-qa-mvp phase 08 counsel sheet, gate and real memory (S1-S3) + security review fix cycle (F1-F8, F11) + S3.3 no-LLM corpus",
+  "reviewer": "automated vc-code-reviewer security-reviewer (sonnet), independent of the implementing execute-agent",
+  "decision": "approved-with-concerns",
+  "reviewDecision": "APPROVE_WITH_FIXES",
+  "date": "2026-10-17",
+  "timestamp": "2026-10-17",
+  "blockingFindings": [],
+  "pendingFixes": [],
+  "resolvedFindings": [
+    {
+      "id": "F1",
+      "severity": "High",
+      "fix": "DOCX built first; memory recording best-effort; download always happens; quiet note 'Saved locally; not recorded in memory.'; ExportError only on DOCX failure",
+      "tests": [
+        "export-flow (F1): should still download the DOCX when memory answers 503 on ensureRun",
+        "export-flow (F1): should still download when createQuestions or exportRun fail with 503",
+        "export-flow (F1): should skip every memory call and note it when the session bootstrap was unavailable",
+        "export-flow (F1): should throw ExportError and download nothing only when the DOCX build fails",
+        "e2e counsel-export: a memory failure (503) on export still downloads the DOCX with a quiet note (F1)"
+      ]
+    },
+    {
+      "id": "F2",
+      "severity": "Medium",
+      "fix": "workspace_id stamped at enqueue; rejected with reason workspace_changed at drain when it differs; unknown workspace -> retry, never sent",
+      "tests": [
+        "outbox F2: stamps the workspace at enqueue and rejects ops after a workspace change",
+        "outbox F2: an unknown current workspace keeps a stamped op retrying, never sends it"
+      ]
+    },
+    {
+      "id": "F3",
+      "severity": "Medium",
+      "fix": "adoptWorkspace clears questions:{docId} with the run cache",
+      "tests": [
+        "realMemoryApi F3: a workspace change clears counsel question ids (questions:{docId}) too"
+      ]
+    },
+    {
+      "id": "F4",
+      "severity": "Medium",
+      "fix": "terminal ops scrubbed (quote_text, note, counsel_note, doc_name); purgeExpired removes synced/rejected/parked rows after 24 h",
+      "tests": [
+        "outbox F4: synced and rejected ops drop quote_text, notes and doc_name",
+        "outbox F4: purgeExpired removes terminal and parked outbox rows after 24 h, keeps live ones"
+      ]
+    },
+    {
+      "id": "F5",
+      "severity": "Medium",
+      "fix": "unavailable/unauthorized capped at 6 attempts -> additive 'parked' state (chip: memory unavailable, retries on reload), resumed on page load / online; 503 bootstrap -> decide/persistAnswer keep triage local",
+      "tests": [
+        "outbox F5: unavailable retries are capped, then the op parks until online / reload",
+        "review-sync F5: a 503 session bootstrap keeps triage local and enqueues nothing"
+      ]
+    },
+    {
+      "id": "F6",
+      "severity": "Low",
+      "fix": "cleanAnalystName strips \\p{C}; rename limitation documented in session.ts",
+      "tests": [
+        "review-sync F6: analyst names lose control and bidi characters"
+      ]
+    },
+    {
+      "id": "F7",
+      "severity": "Low",
+      "fix": "rulesHashMissing -> downgrade('rules_unavailable') before /api/ai",
+      "tests": [
+        "rules hash guard (review fix F7): downgrades when the expected hash is missing for a writable firm session"
+      ]
+    },
+    {
+      "id": "F8",
+      "severity": "Low",
+      "fix": "location maskAndClamp(300); meta fields masked/clamped",
+      "tests": [
+        "counsel-export-contents F8: masks and clamps the location and the title / firm / fund / version fields"
+      ]
+    },
+    {
+      "id": "F11",
+      "severity": "Info",
+      "fix": "THIRD_PARTY_NOTICES mammoth row lists @aduin/web (dev)",
+      "tests": [
+        "pnpm lint (prettier) on THIRD_PARTY_NOTICES.md"
+      ]
+    }
+  ],
+  "nonBlockingFindings": [
+    "F9 (non-blocking, per review): left as reviewed; no code change in this cycle.",
+    "F10 (non-blocking, per review): left as reviewed; no code change in this cycle.",
+    "Residual: read-only demo behavior is checked via response rewrite in the preview e2e plus the Worker 403 read_only test, not against a live read-only workspace.",
+    "Residual: AuditList is mounted in Phase 08b, so the audit-trail UI is not exercised here.",
+    "Residual: renaming the analyst does not change the server-side analyst of an existing live sandbox session (documented in cleanAnalystName)."
+  ],
+  "mustStopBeforeFinalize": false,
+  "autoStopCleared": true,
+  "notes": "F1 pending independent re-confirmation by the EVL vc-tester run and a re-review; all other findings resolved with named tests in this cycle."
+}

@@ -143,8 +143,8 @@ Sections run in the order S0 -> S1 -> S2 -> S3 -> review -> EVL. Per-section tes
 ### S3 - E2E specs (after S2; may split across two agents by spec file)
 - [x] S3.1 Preview project (extended stub): `counsel-sheet`, `counsel-answer`, `counsel-export` (parse exported DOCX: zero repeated questions for AC45), `counsel-gate`, `metrics`, `memory-no-reflag`, `memory-prior-answer` (also asserts the interim AC59/AC60 fund II reduction from `fixtures/memory/fund-expectations.json` `summary`), `memory-edit-is-new` (Section 4 -> 5), `memory-blocking-never-hidden`, `memory-no-cross-firm` (preview twin).
 - [x] S3.2 `stack-memory` project (real Worker, seeded local D1): `stack-memory-sandbox-isolation` (two browser contexts), `-demo-workspace` (seeded effects, not polluted), `-audit-trail-append-only`, `-memory-no-cross-firm` (firm Y), `-roundtrip` (decide -> reload -> lookup -> label).
-- [ ] S3.3 `no-llm-corpus` (e2e, preview) and `pnpm --filter @aduin/core test:corpus`; interim AC59/AC60 numbers (from `memory-prior-answer`) copied into the report (final in Phase 10).
-- [ ] S3.4 Write backlog stub `process/general-plans/backlog/phase08-version-drift-questions_NOTE_17-10-26.md` (version-drift counsel questions from Compare diff-only rows: out of scope here; Needs counsel from Compare stays as Phase 07 built it).
+- [x] S3.3 `no-llm-corpus` (e2e, preview) and `pnpm --filter @aduin/core test:corpus`; interim AC59/AC60 numbers (from `memory-prior-answer`) copied into the report (final in Phase 10).
+- [x] S3.4 Write backlog stub `process/general-plans/backlog/phase08-version-drift-questions_NOTE_17-10-26.md` (version-drift counsel questions from Compare diff-only rows: out of scope here; Needs counsel from Compare stays as Phase 07 built it).
 
 ### Review and closeout
 - [ ] R1 Sonnet security and code review (STRIDE on session/identity, memory writes, export; secrets; masking; cross-firm); fix cycle if needed.

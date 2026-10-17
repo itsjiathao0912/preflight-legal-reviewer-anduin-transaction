@@ -1,0 +1,108 @@
+{
+  "task": "subdoc-qa-mvp phase 08 counsel sheet, gate and real memory (S1-S3) + security review fix cycle (F1-F8, F11) + S3.3 no-LLM corpus",
+  "commands": [
+    {
+      "command": "pnpm --filter @aduin/web exec vitest run test/export-flow.test.ts",
+      "result": "PASS",
+      "notes": "6 tests (F1 503 on ensureRun / storeFindings / createQuestions / exportRun still downloads; memoryDown; DOCX failure only throws)"
+    },
+    {
+      "command": "pnpm --filter @aduin/web exec vitest run test/outbox.test.ts",
+      "result": "PASS",
+      "notes": "22 tests incl. F2 x2, F4 scrub, F4 purge, F5 park/resume"
+    },
+    {
+      "command": "pnpm --filter @aduin/web exec vitest run test/realMemoryApi.test.ts",
+      "result": "PASS",
+      "notes": "29 tests incl. F3"
+    },
+    {
+      "command": "pnpm --filter @aduin/web exec vitest run test/review-sync.test.ts",
+      "result": "PASS",
+      "notes": "11 tests incl. F5 503 bootstrap, F6 names"
+    },
+    {
+      "command": "pnpm --filter @aduin/web exec vitest run test/counsel-export-contents.test.ts test/gate-reexport.test.ts",
+      "result": "PASS",
+      "notes": "9 tests incl. F8, F7"
+    },
+    {
+      "command": "pnpm --filter @aduin/web exec vitest run test/api-contract.test.ts",
+      "result": "PASS",
+      "notes": "32 tests"
+    },
+    {
+      "command": "pnpm --filter @aduin/web exec vitest run test/import-graph.test.ts",
+      "result": "PASS",
+      "notes": "4 tests"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test",
+      "result": "PASS",
+      "notes": "26 files, 189 tests"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test:e2e (whole preview project, single invocation)",
+      "result": "PASS",
+      "notes": "138 passed, 1 skipped (opt-in design-probe); includes counsel-export F1 503 case and no-llm-corpus"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test:e2e:stack-memory (run after preview, not concurrently)",
+      "result": "PASS",
+      "notes": "9 passed"
+    },
+    {
+      "command": "pnpm --filter @aduin/core test:corpus",
+      "result": "PASS",
+      "notes": "13 tests"
+    },
+    {
+      "command": "pnpm --filter @aduin/core test",
+      "result": "PASS",
+      "notes": "76 files, 2914 tests"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test",
+      "result": "PASS",
+      "notes": "65 files, 525 tests"
+    },
+    {
+      "command": "pnpm slice:check",
+      "result": "PASS",
+      "notes": "slice:check: PASS (full)"
+    },
+    {
+      "command": "pnpm typecheck",
+      "result": "PASS",
+      "notes": "core, web, worker, scripts"
+    },
+    {
+      "command": "pnpm lint",
+      "result": "PASS",
+      "notes": "eslint + prettier clean"
+    },
+    {
+      "command": "pnpm guard:cf",
+      "result": "PASS",
+      "notes": "OK"
+    },
+    {
+      "command": "pnpm secrets:scan",
+      "result": "PASS",
+      "notes": "OK"
+    }
+  ],
+  "manualChecks": [
+    {
+      "check": "Red-before-green for F1: old export-flow threw before downloadBlob on any memory failure; the new unit and e2e cases wait for the download and would fail on the old code",
+      "result": "PASS",
+      "notes": "e2e counsel-export case waits for page.waitForEvent('download')"
+    },
+    {
+      "check": "No live calls, no deploy, no commit",
+      "result": "PASS",
+      "notes": "free models only policy; nothing sent to OpenRouter; stack-memory runs against local wrangler"
+    }
+  ],
+  "result": "PASS"
+}

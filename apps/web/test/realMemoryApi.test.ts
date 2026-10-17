@@ -402,6 +402,21 @@ describe('realMemoryApi run lifecycle', () => {
     expect(fake.calls.filter((c) => c.path === '/api/runs')).toHaveLength(2);
   });
 
+  it('F3: a workspace change clears counsel question ids (questions:{docId}) too', async () => {
+    let ws = 'ws_one';
+    const fake = createFakeMemoryFetch({ workspaceId: () => ws });
+    const api = new RealMemoryApi({ fetch: fake.fetch, url: (p) => p, db });
+    await api.bootstrap('Linh Tran');
+    await db.uiState.put({ key: `questions:${HASH}`, value: { f1: 'q_old' }, updatedAt: NOW });
+    await db.uiState.put({ key: 'session:analystName', value: 'Linh Tran', updatedAt: NOW });
+    await api.bootstrap('Linh Tran'); // same workspace: kept
+    expect(await db.uiState.get(`questions:${HASH}`)).toBeDefined();
+    ws = 'ws_two';
+    await api.bootstrap('Linh Tran');
+    expect(await db.uiState.get(`questions:${HASH}`)).toBeUndefined();
+    expect(await db.uiState.get('session:analystName')).toBeDefined();
+  });
+
   it('invalidateRun drops the cached run so the next ensureRun asks the Worker', async () => {
     const { api, fake } = make();
     await api.ensureRun(runInput());

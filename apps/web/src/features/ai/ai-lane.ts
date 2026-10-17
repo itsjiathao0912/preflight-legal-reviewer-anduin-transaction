@@ -285,6 +285,10 @@ export async function aiRunFresh(): Promise<void> {
   if (rules === null) return downgrade('rules_unavailable');
   const before = await hash8Of(rules);
   if (my !== seq) return;
+  // F7: without the expected hash the L5 echo check cannot run; never call with unchecked rules
+  if (rulesHashMissing(before, useSession.getState().readOnly, c.doc.firmId)) {
+    return downgrade('rules_unavailable');
+  }
   const ac = new AbortController();
   controller = ac;
   const t = await requestAi({
@@ -324,6 +328,20 @@ export async function aiRunFresh(): Promise<void> {
   applyVerified(v, provenance);
   sink(c.doc.id, v.findings);
   if (t.cache === 'miss') void useSession.getState().refreshQuota();
+}
+
+/**
+ * Review fix F7: true when the expected rules hash could not be computed for a writable session on
+ * a firm document. The L5 echo check would silently pass (`expected === null`), so the lane is
+ * downgraded to `rules_unavailable` instead. Read-only sessions and no-firm documents never get
+ * rules injected server-side, so they are exempt.
+ */
+export function rulesHashMissing(
+  expected: string | null,
+  readOnly: boolean,
+  firmId: string | null | undefined,
+): boolean {
+  return expected === null && !readOnly && typeof firmId === 'string' && firmId.length > 0;
 }
 
 /**

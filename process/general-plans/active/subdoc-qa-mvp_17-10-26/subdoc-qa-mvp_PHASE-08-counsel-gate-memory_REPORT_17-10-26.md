@@ -380,3 +380,29 @@ Red evidence: tests were written against existing S2 code (Mode B, e2e). Real fa
 2. **Audit trail viewer:** `AuditList` is not mounted in any route yet (08b consumes it), so the audit spec reads GET /api/audit with the page's cookie.
 3. **S3.3 (`no-llm-corpus` e2e + core corpus) and S3.4 not done in this stage:** outside this task's spec list. S3.4's backlog stub already exists (`process/general-plans/backlog/phase08-version-drift-questions_NOTE_17-10-26.md`); S3.3 remains open for the orchestrator.
 4. `fixtures/stack-memory.ts` (S1 file) was extended with helpers; within the e2e blast radius.
+
+## Review fix cycle (security review APPROVE_WITH_FIXES; 2026-10-17, HEAD 890d647 + working tree, no commit)
+
+Answer first: all review findings F1-F8 and F11 are fixed with regression tests, S3.3 and S3.4 are done, and every gate is green. F1 (blocking) still needs the independent EVL re-run and re-review.
+
+| Finding | Fix | Proving test(s) |
+|---|---|---|
+| F1 (High) | `export-flow.ts`: the DOCX is built first; memory recording (`ensureRun` / `storeFindings` / `createQuestions` / `exportRun`) is best-effort in `recordInMemory`. On failure `recorded=false`, the file still downloads, toast adds "Saved locally; not recorded in memory." `ExportError` only when the DOCX build fails. | `test/export-flow.test.ts` (6); e2e `counsel-export` "a memory failure (503) on export still downloads the DOCX with a quiet note (F1)" (replaces the old "downloads nothing" case) |
+| F2 | Outbox ops stamped with `workspace_id` at enqueue (`currentWorkspace()`); at drain a different workspace means `rejected` with reason `workspace_changed`; an unknown workspace means retry, never sent. | `outbox` F2 x2 |
+| F3 | `RealMemoryApi.adoptWorkspace` also clears `questions:*` uiState rows. | `realMemoryApi` F3 |
+| F4 | Terminal ops scrubbed on save (`quote_text`, `note`, `counsel_note`, `doc_name`); `purgeExpired` removes synced / rejected / parked outbox rows at 24 h. | `outbox` F4 scrub, F4 purge |
+| F5 | `unavailable` / `unauthorized` capped at 6 attempts, then the additive `parked` state (chip: "memory unavailable, retries on reload"), resumed on page load (`recover`) or `online`. A 503 session bootstrap sets `memoryDown()`; `decide` / `persistAnswer` then keep triage local. | `outbox` F5; `review-sync` F5 |
+| F6 | `cleanAnalystName` strips `\p{C}`; the "rename does not change the server-side analyst of a live sandbox" limit is documented in `session.ts` (UI / README note later). | `review-sync` F6 |
+| F7 | `rulesHashMissing()`: null expected hash8 on a writable firm session downgrades to `rules_unavailable` before `/api/ai`. | `gate-reexport` "rules hash guard (review fix F7)" |
+| F8 | `exportDocx`: `maskAndClamp(location, 300)`; title / firm / fund / version masked and clamped (200). | `counsel-export-contents` F8 |
+| F11 | THIRD_PARTY_NOTICES mammoth row lists `@aduin/web (dev)`. | lint |
+
+S3.3: new `apps/web/e2e/no-llm-corpus.spec.ts` (12 HTML samples with AI off: checks done, document, gate and counsel view render; zero page errors, zero `/api/ai|ocr` and OpenRouter calls) plus `pnpm --filter @aduin/core test:corpus` (13 tests). S3.4: backlog stub already present. Interim AC59/AC60 numbers are above (S3 section).
+
+Gates (all PASS): web unit 26 files / 189 tests; api-contract 32; import-graph 4; whole preview e2e 138 passed + 1 skipped; stack-memory 9 passed (run after preview); core test:corpus 13; core 2914; worker 525; `pnpm slice:check` PASS (full); typecheck; lint; guard:cf; secrets:scan.
+
+Evidence pack: `harness/phase-08/` (5 files), validator 0 failures, 0 warnings.
+
+Deviations (within blast radius): `OutboxState` gained the additive `parked` value (as the brief allowed); the old e2e expectation "a failed export downloads nothing" was flipped deliberately to the F1 behavior; F3 used the "clear in adoptWorkspace" option.
+
+Non-blocking left as reviewed: F9, F10. Residuals: read-only demo proven via response rewrite + Worker 403 test; AuditList mounts in 08b; analyst rename vs live sandbox (documented).

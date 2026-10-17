@@ -1,11 +1,12 @@
 import type { CounselSheet } from '@aduin/core';
 import { memoryApi } from '../../api/client';
-import { MemoryApiError } from '../../api/memoryApi';
+import type { MemoryApi } from '../../api/memoryApi';
 import { newClientOpId } from '../../api/realMemoryApi';
 import { downloadBlob } from '../../lib/download';
 import {
   ensureSession,
   flushOutbox,
+  memoryDown,
   outboxDocFor,
   toFindingWire,
   writesDisabled,
@@ -20,12 +21,15 @@ import { readQuestionIds, saveQuestionIds } from './question-ids';
 import { gateInputs } from './sheet-model';
 
 /**
- * Export order (Phase 08): queued writes drain first, then `ensureRun` (lazy; a no-firm document
- * runs with `law_firm_id: null`), the findings on the sheet are persisted (already stored ids are
- * skipped by the client), Needs-counsel questions are created in ONE batch (firm documents only),
- * the DOCX is built, `POST /api/runs/:id/export` records the export, and only then the file is
- * downloaded. Any failure throws before the download: nothing is shown as exported and the sheet
- * stays editable. Read-only sessions and the no-storage case skip every memory write.
+ * Export order (Phase 08, review fix F1): the DOCX is built FIRST, so a broken or absent memory
+ * backend never blocks the analyst's deliverable. Then, best-effort: queued writes drain,
+ * `ensureRun` (lazy; a no-firm document runs with `law_firm_id: null`), the findings on the sheet
+ * are persisted (already stored ids are skipped), Needs-counsel questions are created in ONE batch
+ * (firm documents only) and `POST /api/runs/:id/export` records the export. Any memory failure is
+ * swallowed: `recorded` stays false, the file is still downloaded and the toast carries the quiet
+ * note "Saved locally; not recorded in memory". Only a DOCX build failure throws `ExportError`
+ * (nothing downloaded, the sheet stays editable). Read-only sessions and the no-storage case skip
+ * every memory write.
  */
 export interface ExportInput {
   doc: DocMeta;
@@ -42,88 +46,106 @@ export interface ExportOutcome {
   questionCount: number;
   /** True when the export was recorded in memory (run + audit row). */
   recorded: boolean;
+  /** Set when memory was writable but recording failed: the file was still downloaded. */
+  memoryNote: string | null;
   metrics: MetricsRow | null;
 }
 
-export class ExportError extends Error {}
+export const NOT_RECORDED_NOTE = 'Saved locally; not recorded in memory.';
 
-function failMessage(e: unknown): string {
-  if (e instanceof MemoryApiError) {
-    if (e.code === 'rate_limited' || e.code === 'quota_exhausted')
-      return 'Memory is busy right now, so the export was not recorded. Try again later.';
-    if (e.code === 'unavailable')
-      return 'Memory is unavailable, so the export was not recorded. Try again.';
-  }
-  return 'The query sheet could not be exported. Nothing was marked as exported; try again.';
-}
+export class ExportError extends Error {}
 
 export async function exportCounselSheet(input: ExportInput): Promise<ExportOutcome> {
   const { doc, sheet } = input;
   const now = input.now ?? Date.now;
-  const api = memoryApi();
-  await ensureSession();
-  const writable = api !== null && !writesDisabled();
-  let recorded = false;
-  let serverAt: number | undefined;
   let blob: Blob;
   try {
-    if (writable) {
-      await flushOutbox();
-      const key = await outboxDocFor(doc);
-      const { run_id } = await api.ensureRun({ ...key, client_op_id: newClientOpId() });
-      if (doc.firmId && sheet.questions.length) {
-        const have = await readQuestionIds(doc.id);
-        const byId = new Map(input.findings.map((f) => [f.id, f]));
-        const need = sheet.questions.flatMap((q) => {
-          const f = byId.get(q.findingKey);
-          const fp = input.memory?.byId[q.findingKey]?.fingerprint ?? null;
-          return !have[q.findingKey] && f && fp ? [{ q, f, fp }] : [];
-        });
-        if (need.length) {
-          await api.storeFindings(
-            run_id,
-            need.map((n) => toFindingWire(n.f, n.fp)),
-          );
-          const created = await api.createQuestions(
-            run_id,
-            need.map((n) => ({
-              client_op_id: newClientOpId(),
-              finding_ref: n.q.findingKey,
-              fingerprint: n.fp,
-              interpretations: n.q.interpretations,
-            })),
-          );
-          await saveQuestionIds(
-            doc.id,
-            Object.fromEntries(created.map((c) => [c.finding_ref, c.question_id])),
-          );
-        }
-      }
-      blob = await buildCounselDocx(sheet, input.wording);
-      const res = await api.exportRun(run_id, {
-        question_count: sheet.questions.length,
-        client_op_id: newClientOpId(),
-      });
+    blob = await buildCounselDocx(sheet, input.wording);
+  } catch {
+    throw new ExportError(
+      'The query sheet could not be exported. Nothing was marked as exported; try again.',
+    );
+  }
+  let api: ReturnType<typeof memoryApi> = null;
+  let writable: boolean;
+  try {
+    api = memoryApi();
+    await ensureSession();
+    writable = api !== null && !writesDisabled();
+  } catch {
+    writable = false;
+  }
+  let recorded = false;
+  let memoryNote: string | null = null;
+  let serverAt: number | undefined;
+  if (writable && api && memoryDown()) {
+    memoryNote = NOT_RECORDED_NOTE;
+  } else if (writable && api) {
+    try {
+      serverAt = await recordInMemory(api, input);
       recorded = true;
-      serverAt = res.sheet_exported_at;
-    } else {
-      blob = await buildCounselDocx(sheet, input.wording);
+    } catch {
+      memoryNote = NOT_RECORDED_NOTE;
     }
-  } catch (e) {
-    throw new ExportError(failMessage(e));
   }
   const filename = docxFilename(sheet.meta);
   downloadBlob(filename, blob, DOCX_MIME);
   const { states } = gateInputs(input.rows);
-  const metrics = await recordExport(
-    doc.id,
-    {
-      findings: input.findings.map((f) => ({ id: f.id, detector_kind: f.detector_kind })),
-      states,
-      sheetQuestionCount: sheet.questions.length,
-      exportedAt: now(),
-    },
-    serverAt,
-  );
-  return { filename, questionCount: sheet.questions.length, recorded, metrics };
+  let metrics: MetricsRow | null;
+  try {
+    metrics = await recordExport(
+      doc.id,
+      {
+        findings: input.findings.map((f) => ({ id: f.id, detector_kind: f.detector_kind })),
+        states,
+        sheetQuestionCount: sheet.questions.length,
+        exportedAt: now(),
+      },
+      serverAt,
+    );
+  } catch {
+    metrics = null;
+  }
+  return { filename, questionCount: sheet.questions.length, recorded, memoryNote, metrics };
+}
+
+/** Best-effort memory recording; returns the server export time. Throws on any memory failure. */
+async function recordInMemory(api: MemoryApi, input: ExportInput): Promise<number> {
+  const { doc, sheet } = input;
+  await flushOutbox();
+  const key = await outboxDocFor(doc);
+  const { run_id } = await api.ensureRun({ ...key, client_op_id: newClientOpId() });
+  if (doc.firmId && sheet.questions.length) {
+    const have = await readQuestionIds(doc.id);
+    const byId = new Map(input.findings.map((f) => [f.id, f]));
+    const need = sheet.questions.flatMap((q) => {
+      const f = byId.get(q.findingKey);
+      const fp = input.memory?.byId[q.findingKey]?.fingerprint ?? null;
+      return !have[q.findingKey] && f && fp ? [{ q, f, fp }] : [];
+    });
+    if (need.length) {
+      await api.storeFindings(
+        run_id,
+        need.map((n) => toFindingWire(n.f, n.fp)),
+      );
+      const created = await api.createQuestions(
+        run_id,
+        need.map((n) => ({
+          client_op_id: newClientOpId(),
+          finding_ref: n.q.findingKey,
+          fingerprint: n.fp,
+          interpretations: n.q.interpretations,
+        })),
+      );
+      await saveQuestionIds(
+        doc.id,
+        Object.fromEntries(created.map((c) => [c.finding_ref, c.question_id])),
+      );
+    }
+  }
+  const res = await api.exportRun(run_id, {
+    question_count: sheet.questions.length,
+    client_op_id: newClientOpId(),
+  });
+  return res.sheet_exported_at;
 }

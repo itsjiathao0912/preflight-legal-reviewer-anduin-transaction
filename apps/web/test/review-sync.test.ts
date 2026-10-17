@@ -9,14 +9,17 @@ import { buildRows, computeGate } from '../src/features/review/model';
 import { appDb } from '../src/storage/db';
 
 // The review store reads the memory client through api/client: serve the Dexie stub here.
-const holder = vi.hoisted(() => ({ api: null as MemoryApi | null }));
+const holder = vi.hoisted(() => ({ api: null as MemoryApi | null, real: false }));
 vi.mock('../src/api/client', () => ({
   memoryApi: () => holder.api,
-  isRealMemoryApi: () => false,
+  isRealMemoryApi: () => holder.real,
 }));
 
 const { useReview } = await import('../src/state/review');
-const { flushOutbox, outbox, toFindingWire } = await import('../src/state/memory-sync');
+const { flushOutbox, memoryDown, outbox, resetMemorySyncForTest, toFindingWire } =
+  await import('../src/state/memory-sync');
+const { cleanAnalystName } = await import('../src/state/session');
+const { MemoryApiError } = await import('../src/api/memoryApi');
 const { useSession } = await import('../src/state/session');
 
 const FIRM = 'partners-group';
@@ -78,6 +81,8 @@ beforeEach(async () => {
   await Promise.all([db.outbox.clear(), db.decisions.clear(), db.uiState.clear()]);
   stub = new StubMemoryApi(db);
   holder.api = stub;
+  holder.real = false;
+  resetMemorySyncForTest();
   useSession.setState({ readOnly: false, analystName: 'Linh Tran' });
 });
 afterEach(async () => {
@@ -133,6 +138,35 @@ describe('review-sync', () => {
       counselAnswer: 'A',
     });
     expect(await outbox()!.list()).toEqual([]);
+  });
+
+  it('F5: a 503 session bootstrap keeps triage local and enqueues nothing', async () => {
+    const down = {
+      onSession: () => () => undefined,
+      bootstrap: () => Promise.reject(new MemoryApiError('unavailable', 'HTTP 503')),
+      currentSession: () => null,
+    };
+    holder.api = down as unknown as MemoryApi;
+    holder.real = true;
+    load(FIRM, [finding('f1')]);
+    await useReview.getState().accept('f1');
+    expect(memoryDown()).toBe(true);
+    expect(useReview.getState().triage['f1']).toMatchObject({
+      status: 'accepted',
+      decisionId: null,
+    });
+    await useReview.getState().recordAnswer('f1', { option: 'A', by: 'Counsel', at: 1 });
+    expect(useReview.getState().triage['f1']?.counselAnswer).toBe('A');
+    expect(await outbox()!.list()).toEqual([]);
+    holder.api = stub;
+    holder.real = false;
+  });
+
+  it('F6: analyst names lose control and bidi characters', () => {
+    expect(cleanAnalystName('Linh\u202E Tran')).toBe('Linh Tran');
+    expect(cleanAnalystName('\u200FDuc\u0000Pham\u2066')).toBe('Duc Pham');
+    expect(cleanAnalystName('\u202E\u200B')).toBeNull();
+    expect(cleanAnalystName('Nguyễn Văn A')).toBe('Nguyễn Văn A');
   });
 
   it('should skip the outbox for a read-only session', async () => {
