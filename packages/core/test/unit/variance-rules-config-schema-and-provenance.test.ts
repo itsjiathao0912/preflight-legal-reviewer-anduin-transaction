@@ -49,7 +49,7 @@ function failsAt(raw: unknown, path: string) {
 describe('variance-rules-config-schema-and-provenance', () => {
   it('should validate the versioned rules config, fail fast on invalid config and record the hash in provenance', () => {
     const r = loadVarianceRules();
-    expect(r.version).toBe('2026.10.1');
+    expect(r.version).toBe('2026.10.2');
     expect(r.hash8).toMatch(/^[0-9a-f]{8}$/);
     expect(r.config.rules.map((x) => x.id).sort()).toEqual([...RULE_IDS].sort());
     expect(Object.isFrozen(r)).toBe(true);
@@ -62,7 +62,7 @@ describe('variance-rules-config-schema-and-provenance', () => {
     failsAt({ ...clone(), extra_key: 1 }, '');
     const dup = clone();
     dup.rules.push({ ...dup.rules[0] });
-    failsAt(dup, 'rules.19');
+    failsAt(dup, 'rules.20');
     const missing = clone();
     missing.rules = missing.rules.filter((x: { id: string }) => x.id !== 'VAR-COS-FORMAT');
     failsAt(missing, 'rules');

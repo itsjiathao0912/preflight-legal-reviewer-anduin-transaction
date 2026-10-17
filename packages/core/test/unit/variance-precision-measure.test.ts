@@ -10,8 +10,9 @@ import { demoPair, expectedSeeded, sampleVSide, seededPair } from '../helpers/va
  * from the engine). A row counts as "cosmetic shown as logic" when every change in it belongs to a
  * cosmetic category the rules define (rename, name, renumber, cover date, format, move) but was
  * classified logic. Rows whose only change is an EDGAR page-label artifact ("B-1".."D-2" footers
- * dropped in the 2026 filing) fit NO defined cosmetic category, so the rules show them as logic by
- * design (unknown = logic); they are measured and reported separately, not hidden.
+ * dropped in the 2026 filing) are cosmetic too: since rules 2026.10.2 `VAR-COS-PAGE-LABEL` hides
+ * them. The STRICT figure counts any such row still shown as logic as cosmetic shown as logic
+ * (EVL fix cycle 1); the in-category figure (without page labels) is printed alongside.
  */
 const COSMETIC_SHOWN_AS_LOGIC_05_06: Readonly<Record<string, string>> = {
   'signature:1': 'only "Confidential Private Placement Memorandum" -> "Prospectus" (rename family)',
@@ -45,18 +46,24 @@ describe('variance-precision-measure', () => {
     const key = (m: (typeof rows)[number]) => m.unit_key_b ?? m.unit_key_a ?? '';
     const false56 = logic56.filter((m) => key(m) in COSMETIC_SHOWN_AS_LOGIC_05_06).length;
     const artifacts56 = logic56.filter((m) => key(m) in PAGE_LABEL_ARTIFACT_ROWS_05_06).length;
-    // every labelled row really is a shown logic row (the table cannot go stale silently)
+    // every labelled cosmetic row really is a shown logic row (the table cannot go stale silently)
     expect(false56).toBe(Object.keys(COSMETIC_SHOWN_AS_LOGIC_05_06).length);
-    expect(artifacts56).toBe(Object.keys(PAGE_LABEL_ARTIFACT_ROWS_05_06).length);
+    // the page-label rows are now hidden by VAR-COS-PAGE-LABEL (not shown at all)
+    expect(artifacts56).toBe(0);
+    const shownKeys = new Set(rows.map(key));
+    for (const k of Object.keys(PAGE_LABEL_ARTIFACT_ROWS_05_06))
+      expect(shownKeys.has(k), k).toBe(false);
+    const pageLabelHunks = r56.rawChanges.filter((h) => h.ruleId === 'VAR-COS-PAGE-LABEL');
+    expect(pageLabelHunks.length).toBeGreaterThanOrEqual(6);
     logicRows += logic56.length;
-    falseLogic += false56;
-    const ratio = falseLogic / logicRows;
-    const withArtifacts = (falseLogic + artifacts56) / logicRows;
+    const inCategory = falseLogic + false56;
+    const strict = inCategory + artifacts56;
+    const strict56 = (false56 + artifacts56) / logic56.length;
     console.log(
-      `variance precision: ${falseLogic}/${logicRows} logic rows are cosmetic shown as logic (${(ratio * 100).toFixed(1)}%); #5/#6 alone ${false56}/${logic56.length}; page-label artifact rows (no cosmetic rule, logic by design) ${artifacts56} -> ${(withArtifacts * 100).toFixed(1)}% if counted`,
+      `variance precision: STRICT ${strict}/${logicRows} logic rows are cosmetic shown as logic (${((strict / logicRows) * 100).toFixed(1)}%), #5/#6 alone ${false56 + artifacts56}/${logic56.length} (${(strict56 * 100).toFixed(1)}%); in-category (page labels excluded) ${inCategory}/${logicRows} (${((inCategory / logicRows) * 100).toFixed(1)}%); page-label hunks hidden ${pageLabelHunks.length}`,
     );
-    expect(logic56.length).toBe(20);
-    expect(ratio).toBeLessThanOrEqual(0.1);
-    expect(false56 / logic56.length).toBeLessThanOrEqual(0.1);
+    expect(logic56.length).toBe(15);
+    expect(strict / logicRows).toBeLessThanOrEqual(0.1);
+    expect(strict56).toBeLessThanOrEqual(0.1);
   });
 });

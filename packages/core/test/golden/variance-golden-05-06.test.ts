@@ -45,7 +45,7 @@ describe('variance-golden-05-06', () => {
   });
 
   it('pins the measured #5 -> #6 counts and the other renames as cosmetic', () => {
-    expect(r.summary).toEqual({ raw: 163, shown: 20, cosmetic: 65, new: 0, changed_logic: 20 });
+    expect(r.summary).toEqual({ raw: 163, shown: 15, cosmetic: 78, new: 0, changed_logic: 15 });
     expect(r.cosmeticGroups.map((x) => [x.key, x.count])).toEqual([
       ['VAR-COS-DATE', 5],
       ['VAR-COS-RENAME:Member -> Shareholder', 4],
@@ -54,6 +54,8 @@ describe('variance-golden-05-06', () => {
       ['VAR-COS-RENAME:Units -> Shares', 28],
       ['VAR-COS-RENAME:placement agent -> distributor', 4],
       ['VAR-COS-FORMAT', 15],
+      // EVL fix cycle 1: 13 EDGAR page labels alone on their own line (rules 2026.10.2)
+      ['VAR-COS-PAGE-LABEL', 13],
     ]);
     // the one "Units" change that is not a plain rename adds Class S: logic
     const classS = r.rawChanges.find((h) => h.newText === 'Shares and Class S Shares')!;

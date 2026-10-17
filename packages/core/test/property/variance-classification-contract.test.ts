@@ -225,6 +225,61 @@ describe('variance-classification-contract', () => {
     });
   });
 
+  describe('VAR-COS-PAGE-LABEL named cases and recall traps (EVL fix cycle 1)', () => {
+    const body = (ps: string[]) => doc(COVER, [['1', 'Subscription', ps]]);
+    const keep = ['The Investor completes this form.', 'Owners are listed here.'];
+    it('a page label alone on its own line, dropped or re-lettered = cosmetic', () => {
+      const dropped = runVariance(pairOf(body([keep[0]!, 'B-1', keep[1]!]), body(keep)));
+      const h = one(dropped, () => true);
+      expect([h.class, h.ruleId, h.groupKey]).toEqual([
+        'changed_cosmetic',
+        'VAR-COS-PAGE-LABEL',
+        'VAR-COS-PAGE-LABEL',
+      ]);
+      expect(dropped.summary.shown).toBe(0);
+      const relettered = runVariance(
+        pairOf(body([keep[0]!, 'B-1', keep[1]!]), body([keep[0]!, 'D-1', keep[1]!])),
+      );
+      expect(relettered.rawChanges.map((x) => x.ruleId)).toEqual(['VAR-COS-PAGE-LABEL']);
+    });
+    it('trap: an operative cross-reference "see Annex B-1" -> "see Annex B-2" = logic', () => {
+      const r = runVariance(
+        pairOf(
+          body(['Complete the form; see Annex B-1 for the wire details.']),
+          body(['Complete the form; see Annex B-2 for the wire details.']),
+        ),
+      );
+      const h = one(r, () => true);
+      expect([h.class, h.ruleId]).toEqual(['changed_logic', 'VAR-LOGIC-GUARD-DIGIT']);
+    });
+    it('trap: "Section 4-2" inside a sentence and a label inside a sentence = logic', () => {
+      const sec = runVariance(
+        pairOf(
+          body(['The terms in Section 4-2 apply to transfers.']),
+          body(['The terms in Section 4-3 apply to transfers.']),
+        ),
+      );
+      expect(sec.rawChanges.map((x) => [x.class, x.ruleId])).toEqual([
+        ['changed_logic', 'VAR-LOGIC-GUARD-DIGIT'],
+      ]);
+      const inSentence = runVariance(
+        pairOf(
+          body(['The schedule attached as B-1 lists the fees.']),
+          body(['The schedule attached as lists the fees.']),
+        ),
+      );
+      expect(inSentence.rawChanges.map((x) => [x.class, x.ruleId])).toEqual([
+        ['changed_logic', 'VAR-LOGIC-GUARD-DIGIT'],
+      ]);
+    });
+    it('trap: a page label replaced by an amount on its own line = logic', () => {
+      const amount = runVariance(
+        pairOf(body([keep[0]!, 'B-1', keep[1]!]), body([keep[0]!, '$100', keep[1]!])),
+      );
+      expect(amount.rawChanges.every((x) => x.class === 'changed_logic')).toBe(true);
+    });
+  });
+
   describe('G3 cluster-class named cases', () => {
     const longA =
       'The administrator may also request a certified copy of the formation documents of the Investor.';
