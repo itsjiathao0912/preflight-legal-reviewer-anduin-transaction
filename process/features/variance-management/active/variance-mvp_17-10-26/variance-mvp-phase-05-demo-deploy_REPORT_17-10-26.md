@@ -163,3 +163,13 @@ Follow-up stubs created: `process/features/variance-management/backlog/variance-
 - F6/F6b: `wrangler rollback 8a82ead2-07ed-4b06-ad60-226d3f4734c8` -> live `8a82ead2`; `/api/health` ok; `/api/memory/health` **ok:false, schema 6, expected 5**. The plan's premise "old Worker keeps working with nullable columns" holds for reads only: `d7b7756:apps/worker/src/memory/health.ts:7` pins `EXPECTED_SCHEMA_VERSION = '5'` and `memory/ctx.ts:115` refuses writes when it does not match. Tabs that loaded the `d9aaddd9` bundle during its live window may still send new fields.
 - Not done (outside authorized actions): roll forward, D1 restore. Spend: 0 AI calls.
 - Options for the orchestrator/user: (a) roll forward with `wrangler rollback d9aaddd9-a62f-4850-8ff2-89889c8ef652` (that version passed every check except the probe, whose failure is a probe bug), then fix the probe and run it next UTC day; (b) user restores D1 from the bookmark (removes 0006; memory writes return on `8a82ead2`).
+
+## Roll forward (18-10-26)
+
+**TL;DR:** Orchestrator chose option (a). `d9aaddd9-a62f-4850-8ff2-89889c8ef652` is live again; memory health ok (schema 6 = expected 6). Write outage lasted about 3.5 minutes. Probe fixed in `179c315`; live probe deferred to the next UTC day (ledger 4/5).
+
+- 20:32:06 UTC: `wrangler deployments list` confirmed live `8a82ead2`; `wrangler rollback d9aaddd9-a62f-4850-8ff2-89889c8ef652` -> deployed 20:32:11 UTC (message "variance P05 roll forward: schema 6 build"). workers.dev only; no routes or domains touched.
+- Checks on `d9aaddd9`: `/api/health` `{ok:true}`; `/api/memory/health` ok:true, schema 6, expected 6, seed_mode 0; `/` HTTP 200 with CSP, nosniff, referrer policy; `guard:cf` OK; stack smoke passed first try (1/1, 8.0 s).
+- Outage window (memory writes 503): 20:28:35 -> 20:32:11 UTC, about 3.5 minutes. Reads worked throughout. D1 not restored.
+- Probe fix: `179c315` `fix: live variance probe waits for the Open dialog to close` (`scripts/src/live/probe-variance.ts`: wait for `open-document-dialog` hidden after `open-submit`). Offline `test probe-variance` 6/6, eslint and tsc clean. Not pushed.
+- Deferred: `probe:live-variance` on the next UTC day. Spend: 0 AI calls.

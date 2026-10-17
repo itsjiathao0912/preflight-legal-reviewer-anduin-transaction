@@ -140,6 +140,31 @@
       "command": "wrangler rollback 8a82ead2-07ed-4b06-ad60-226d3f4734c8",
       "result": "PASS",
       "notes": "per the leg-2 rule on a failed post-deploy check; live = 8a82ead2; /api/health ok; /api/memory/health ok:false (old Worker expects schema 5): memory WRITES refused on live until roll-forward or D1 restore"
+    },
+    {
+      "command": "wrangler rollback d9aaddd9-a62f-4850-8ff2-89889c8ef652 (roll forward, 18-10-26 20:32 UTC)",
+      "result": "PASS",
+      "notes": "live was 8a82ead2; now d9aaddd9 at 100%; write outage ~3.5 min (20:28:35-20:32:11 UTC)"
+    },
+    {
+      "command": "curl /api/health; /api/memory/health; -I /; pnpm guard:cf",
+      "result": "PASS",
+      "notes": "ok; ok:true schema 6 expected 6; 200 + CSP/nosniff/referrer; guard OK"
+    },
+    {
+      "command": "SLICE_BASE_URL=... playwright test --project=stack",
+      "result": "PASS",
+      "notes": "1/1 first try"
+    },
+    {
+      "command": "pnpm --filter @aduin/scripts test probe-variance (after fix 179c315)",
+      "result": "PASS",
+      "notes": "6/6 offline; eslint + tsc clean"
+    },
+    {
+      "command": "pnpm --filter @aduin/scripts probe:live-variance",
+      "result": "SKIP",
+      "notes": "deferred to next UTC day (session ledger 4/5)"
     }
   ],
   "manualChecks": [
