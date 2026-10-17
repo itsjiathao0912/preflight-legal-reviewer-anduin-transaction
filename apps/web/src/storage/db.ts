@@ -1,5 +1,13 @@
 import Dexie, { type Table } from 'dexie';
-import { limits, type ActiveDecision } from '@aduin/core';
+import {
+  limits,
+  type ActiveDecision,
+  type PackageConfidence,
+  type PackageDocFormat,
+  type PackageDocRole,
+  type PackageDocType,
+  type SuggestionSource,
+} from '@aduin/core';
 
 /**
  * Browser storage (Dexie / IndexedDB).
@@ -15,6 +23,37 @@ export interface StoredDocument {
   fund: string;
   version: string;
   createdAt: number;
+  /** Intake Phase 2 (additive): the package this upload belongs to. */
+  packageId?: string;
+}
+/** Intake Phase 2: one member of a stored package (corrections included). */
+export interface StoredPackageDoc {
+  id: string;
+  name: string;
+  type: PackageDocType;
+  role: PackageDocRole;
+  confidence: PackageConfidence;
+  reason: string;
+  confirmed: boolean;
+  suggestionSource: SuggestionSource;
+  needsOcr: boolean;
+  format: PackageDocFormat;
+  /** `documents` row id holding the bytes (uploads). */
+  storedDocId?: string;
+  /** Bundled demo member reference instead of bytes (`sample:NN`, `scan:NN` or a public path). */
+  sampleRef?: string;
+}
+/** Intake Phase 2: a fund package (purged with uploads at 24 h). */
+export interface StoredPackage {
+  id: string;
+  firmId: string | null;
+  firmName: string;
+  fund: string;
+  version: string;
+  createdAt: number;
+  primaryDocId: string;
+  docs: StoredPackageDoc[];
+  confirmedTargets: Record<string, string>;
 }
 export interface ParsedModel {
   docHash: string;
@@ -55,6 +94,7 @@ export class AppDb extends Dexie {
   outbox!: Table<OutboxRow, number>;
   allowance!: Table<AllowanceRow, string>;
   decisions!: Table<DecisionRow, string>;
+  packages!: Table<StoredPackage, string>;
 
   constructor(name = 'aduin-web') {
     super(name);
@@ -67,6 +107,11 @@ export class AppDb extends Dexie {
       allowance: '&day',
       decisions: '&id, fingerprint, law_firm_id, status, seq',
     });
+    // Intake Phase 2 (additive): packages table and a packageId index on documents.
+    this.version(2).stores({
+      packages: '&id, firmId, createdAt',
+      documents: '&id, createdAt, packageId',
+    });
   }
 }
 
@@ -76,13 +121,15 @@ export const RETENTION_MS = limits.browserUploadRetentionHours * 60 * 60 * 1000;
 const PURGEABLE_OUTBOX = new Set(['synced', 'rejected', 'parked']);
 
 /**
- * Delete uploads, parsed models, drafts and finished/parked outbox rows at or past the retention
+ * Delete packages, uploads, parsed models, drafts and finished/parked outbox rows at or past the retention
  * age. Never touches decisions or still-live outbox rows (queued / sending / retry / deferred).
  */
 export async function purgeExpired(db: AppDb, now: number = Date.now()): Promise<number> {
   const cutoff = now - RETENTION_MS;
   let n = 0;
-  await db.transaction('rw', [db.documents, db.parsedModels, db.drafts, db.outbox], async () => {
+  const tables = [db.documents, db.parsedModels, db.drafts, db.outbox, db.packages];
+  await db.transaction('rw', tables, async () => {
+    n += await db.packages.where('createdAt').belowOrEqual(cutoff).delete();
     n += await db.documents.where('createdAt').belowOrEqual(cutoff).delete();
     n += await db.parsedModels.where('createdAt').belowOrEqual(cutoff).delete();
     n += await db.drafts.where('createdAt').belowOrEqual(cutoff).delete();

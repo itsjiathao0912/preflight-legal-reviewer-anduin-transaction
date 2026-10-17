@@ -40,6 +40,23 @@ const ALLOWED = new Set([
   'INTERPRETATION_MAX_CHARS',
   'computeMetrics',
   'sensitiveSpans',
+  // Intake Phase 2: pure package module (parser-backed names stay worker-only)
+  'analyzePackage',
+  'packageRunReadiness',
+  'packageGateReasons',
+  'coverageLineText',
+  'buildDocumentRequests',
+  'eligibleBaselines',
+  'detectDocument',
+  'resolveRoles',
+  'mergeSuggestion',
+  'checkPackageLimits',
+  'definitionSources',
+  'DEFAULT_PACKAGE_POLICY',
+  'PACKAGE_LIMITS',
+  'PACKAGE_DOC_TYPES',
+  'PACKAGE_DOC_ROLES',
+  'PackageAnalysisSchema',
 ]);
 
 function files(dir: string): string[] {

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import {
   templateInterpretations,
+  type CrossDocDefinition,
   type CounselOption,
   type FindingWire,
   type ReasonCode,
@@ -66,6 +67,16 @@ export interface DocMeta {
   sampleId?: string;
   /** Sample file or upload id, used to reopen from the document switcher. */
   ref: string;
+  /** Intake Phase 2 (additive): the fund package this document is the primary of. */
+  packageId?: string;
+}
+
+/** Intake Phase 2: package context of one openDocument call. */
+export interface OpenPackageOption {
+  id: string;
+  defs: CrossDocDefinition[];
+  /** Package-initiated re-open (setRole / setType / confirmTarget / restore): no fresh AI run. */
+  reopen?: boolean;
 }
 
 export interface Toast {
@@ -99,8 +110,20 @@ interface ReviewState {
   openDocument: (
     bytes: Uint8Array,
     meta: Omit<DocMeta, 'id'>,
-    opts?: { fileName?: string; scan?: ScanSetInput },
+    opts?: {
+      fileName?: string;
+      scan?: ScanSetInput;
+      /** Intake Phase 2: package definitions + primary facts for this call only. */
+      package?: OpenPackageOption;
+      /** Intake Phase 2: return primary facts (single-file detection after render). */
+      packageFacts?: boolean;
+    },
   ) => Promise<void>;
+  /**
+   * Intake Phase 2 (E14): attach a package id to the open document after findings render (a
+   * one-document package). No-op when another document is open. `doc.id` never changes.
+   */
+  attachPackage: (docId: string, packageId: string) => void;
   select: (id: string | null) => void;
   toggleReveal: () => void;
   accept: (id: string) => Promise<void>;
@@ -570,7 +593,12 @@ export const useReview = create<ReviewState>((set, get) => {
         result = await analyzeDocument(
           bytes,
           opts?.fileName,
-          { ...(meta.sampleId ? { sampleId: meta.sampleId } : {}), ...e2eSettings() },
+          {
+            ...(meta.sampleId ? { sampleId: meta.sampleId } : {}),
+            ...(opts?.package?.defs.length ? { packageDefs: opts.package.defs } : {}),
+            ...(opts?.package || opts?.packageFacts ? { packageFacts: true } : {}),
+            ...e2eSettings(),
+          },
           (s) => {
             if (seq === loadSeq) set({ stages: { ...get().stages, [s.id]: s } });
           },
@@ -592,7 +620,11 @@ export const useReview = create<ReviewState>((set, get) => {
       }
       if (seq !== loadSeq) return;
       result = { ...result, findings: e2eTransform(result.findings, result.blocks) };
-      const doc: DocMeta = { ...meta, id: result.docHash || `doc_${seq}` };
+      const doc: DocMeta = {
+        ...meta,
+        id: result.docHash || `doc_${seq}`,
+        ...(opts?.package ? { packageId: opts.package.id } : {}),
+      };
       const stages: Partial<Record<StageId, StageReport>> = {};
       for (const s of result.stages) stages[s.id] = s;
       void recordOpen(doc.id, t0);
@@ -611,7 +643,8 @@ export const useReview = create<ReviewState>((set, get) => {
       set({ phase: 'ready', doc, recent, result, stages, memory, triage, selectedId: first });
       // restore-on-reload: remember what is open (uploads stay in IndexedDB for 24 h)
       void saveLastDoc(meta);
-      const live = () => seq === loadSeq && get().doc === doc;
+      // by id: attachPackage (intake) replaces the doc object without superseding the load
+      const live = () => seq === loadSeq && get().doc?.id === doc.id;
       const engineResult = result;
       // Phase 05 AI lane: static precomputed lookup + verify (never /api/ai for samples here)
       void (async () => {
@@ -624,7 +657,8 @@ export const useReview = create<ReviewState>((set, get) => {
         if (!live()) return;
         if (ai.findings.length) await get().setAiFindings(doc.id, ai.findings);
         // uploads only: a fresh AI review starts once the deterministic list is on screen
-        if (ai.fresh && live()) void aiRunFresh();
+        // intake S4: a package-initiated re-open never starts a fresh AI run (one per package run)
+        if (ai.fresh && live() && !opts?.package?.reopen) void aiRunFresh();
       })().catch(() => undefined);
       // memory: bootstrap (firm documents only: no firm, no memory call), then queued writes land
       // before memory is read back; a failure shows "Memory unavailable" (Retry)
@@ -644,6 +678,16 @@ export const useReview = create<ReviewState>((set, get) => {
           })
           .catch(() => undefined);
       }
+    },
+
+    attachPackage: (docId, packageId) => {
+      const doc = get().doc;
+      if (!doc || doc.id !== docId || get().phase !== 'ready') return;
+      const next: DocMeta = { ...doc, packageId };
+      set({
+        doc: next,
+        recent: get().recent.map((r) => (r.id === docId ? { ...r, packageId } : r)),
+      });
     },
 
     select: (id) => set({ selectedId: id, selectSeq: get().selectSeq + 1 }),

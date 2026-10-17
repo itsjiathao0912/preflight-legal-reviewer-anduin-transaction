@@ -6,6 +6,7 @@ import type {
   EngineApi,
   EngineResult,
   EngineSettings,
+  ReadPackageDocResponse,
   StageReport,
   VerifyAiContext,
   VerifyAiResponse,
@@ -71,4 +72,16 @@ export async function diffInWorker(input: DiffDocumentsInput): Promise<DiffDocum
   const out = await engine().diffDocuments(input);
   if ('result' in out) console.info(`diff-ms ${out.ms}`);
   return out;
+}
+
+/** Intake Phase 2: light read of one package member in the engine worker (code-only failure). */
+export async function readPackageDocInWorker(
+  input: AnalyzeInput,
+  opts: { name: string },
+): Promise<ReadPackageDocResponse> {
+  try {
+    return await engine().readPackageDoc(input, opts);
+  } catch {
+    return { ok: false, code: 'unknown' };
+  }
 }

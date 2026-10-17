@@ -7,7 +7,10 @@
 import '../zod-jitless'; // first: disables zod's Function() probe in the worker scope (CSP)
 import * as Comlink from 'comlink';
 import {
+  applyPackageDefinitions,
   buildAiCandidatesWithSites,
+  buildPackageFacts,
+  extractPrimaryFacts,
   buildOutlineDraft,
   buildDocGraph,
   buildStructureView,
@@ -27,7 +30,9 @@ import {
   type DocGraph,
   type Finding,
   type Line,
+  type PackageDocFormat,
   type SideInput,
+  type SuppressedTerm,
 } from '@aduin/core';
 import { IS_E2E } from '../e2e-flag';
 import type {
@@ -533,7 +538,21 @@ export const api: EngineApi = {
     report({ id: 'checks', state: 'running', sub: 'Running rule checks' });
     try {
       if (shouldFail(settings, 'checks')) throw new Error('injected');
-      const findings = runDeterministic(g);
+      let findings = runDeterministic(g);
+      // Intake Phase 2: package definitions remove offering-noun findings BEFORE any view is built
+      let suppressed: SuppressedTerm[] = [];
+      if (settings.packageDefs?.length) {
+        const applied = applyPackageDefinitions(findings, settings.packageDefs);
+        findings = applied.findings;
+        suppressed = applied.suppressed;
+      }
+      if (settings.packageFacts) {
+        try {
+          result.packageFacts = extractPrimaryFacts(g, lines.docHash, suppressed);
+        } catch (e) {
+          console.warn('[engine] package_facts_failed', e instanceof Error ? e.name : 'unknown');
+        }
+      }
       result.findings = findings.map((f) => toView(f, v.blocks, idx, g, numberingNote));
       // Phase 05: graph-selected AI candidates (optional on the wire; the AI lane is skipped without them)
       try {
@@ -629,6 +648,28 @@ export const api: EngineApi = {
     const out = diffDocuments({ a, b, mode });
     if ('error' in out) return { error: out.error };
     return { result: out.result, ms: Math.round(performance.now() - t0) };
+  },
+
+  // Intake Phase 2: light read (read + structure only); code-only failures, never throws.
+  async readPackageDoc(input, opts) {
+    try {
+      const name = typeof opts?.name === 'string' && opts.name ? opts.name.slice(0, 255) : 'file';
+      const inp = normalizeInput(input);
+      const read = await readInput(inp, () => {});
+      const format: PackageDocFormat = read.source;
+      const scanOnly = read.lines.length === 0 && read.source !== 'html';
+      const facts = buildPackageFacts({
+        contentHash: read.docHash,
+        name,
+        format,
+        bytes: read.bytes,
+        lines: read.lines,
+        ...(scanOnly ? { needsOcr: true } : {}),
+      });
+      return { ok: true, facts };
+    } catch (e) {
+      return { ok: false, code: codeOf(e) };
+    }
   },
 };
 

@@ -1,12 +1,15 @@
 import type {
   AiCandidate,
   BlockKind,
+  CrossDocDefinition,
   DiffMode,
   DiffResult,
   DiffStage,
   Finding,
   OcrResult,
   OutlineDraft,
+  PackageFacts,
+  PrimaryFacts,
   Region,
   StructureView,
 } from '@aduin/core';
@@ -83,6 +86,13 @@ export interface EngineSettings {
   sampleId?: string;
   /** E2E-only: force a stage failure (ignored unless built in e2e mode). */
   e2eFailStage?: StageId;
+  /**
+   * Intake Phase 2 (additive): definitions from the package's reference documents (LPA / PPM).
+   * Offering-noun `undefined-term` findings the package defines are removed in the checks stage.
+   */
+  packageDefs?: CrossDocDefinition[];
+  /** Intake Phase 2 (additive): also return `EngineResult.packageFacts` (primary facts). */
+  packageFacts?: boolean;
 }
 
 export interface EngineResult {
@@ -111,7 +121,13 @@ export interface EngineResult {
   reconstructedNumbering?: boolean;
   /** Phase 06 (additive): one short plain-language notice about the read (DOCX loss, OCR gaps). */
   notice?: string;
+  /** Intake Phase 2 (additive): primary facts; present only when `settings.packageFacts` was true. */
+  packageFacts?: PrimaryFacts;
 }
+
+/** Intake Phase 2: light read of one package member. Code-only failure, never message or text. */
+export type ReadPackageDocResponse =
+  { ok: true; facts: PackageFacts } | { ok: false; code: string };
 
 /** Phase 06: document source kinds. */
 export type DocSource = 'html' | 'pdf' | 'docx' | 'ocr';
@@ -223,4 +239,9 @@ export interface EngineApi {
    * analyze (format dispatch, parse, graph, deterministic checks). Never throws for a bad input.
    */
   diffDocuments(input: DiffDocumentsInput): Promise<DiffDocumentsResponse>;
+  /**
+   * Intake Phase 2: light read of one package member (read + structure only, core
+   * buildPackageFacts). Never throws across Comlink.
+   */
+  readPackageDoc(input: AnalyzeInput, opts: { name: string }): Promise<ReadPackageDocResponse>;
 }

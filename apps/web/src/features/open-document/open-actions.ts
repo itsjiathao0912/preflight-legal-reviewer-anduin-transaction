@@ -1,5 +1,6 @@
 import { apiEnabled } from '../../api/base';
 import { appDb, spendAllowance } from '../../storage/db';
+import { usePackage } from '../../state/package';
 import { useReview, type DocMeta } from '../../state/review';
 import { useSession } from '../../state/session';
 import { useShell } from '../../state/shell';
@@ -13,6 +14,7 @@ function firmName(firms: FirmEntry[], id: string | null): string {
 /** Open a bundled sample (cached: never counts against the fresh-AI allowance). */
 export async function openSample(s: SampleEntry, firms: FirmEntry[]): Promise<void> {
   if (s.disabled) return;
+  usePackage.getState().clear(); // intake: a sample open never shows package UI
   if (s.kind === 'scan') {
     // Phase 06f: multi-page scan set; pages come from the manifest page list (precomputed OCR first)
     const pages = scanPagesOf(s);
@@ -67,6 +69,7 @@ export async function openUpload(
   file: { name: string; bytes: Uint8Array },
   tag: { firmId: string | null; firmName: string; fund: string; version: string },
 ): Promise<void> {
+  usePackage.getState().clear(); // intake: classic single-file path
   const id = `up_${crypto.randomUUID().replace(/-/g, '').slice(0, 20)}`;
   const db = appDb();
   if (db) {
@@ -89,8 +92,19 @@ export async function openUpload(
     .openDocument(
       file.bytes,
       { name: file.name, ...tag, source: 'upload', ref: id },
-      { fileName: file.name },
+      { fileName: file.name, packageFacts: true },
     );
+  // intake S3: a high-confidence subscription agreement becomes a one-document package AFTER
+  // findings render (coverage appears after findings, never before)
+  const r = useReview.getState();
+  if (r.phase === 'ready' && r.result && r.doc?.ref === id)
+    usePackage.getState().registerSingle({
+      name: file.name,
+      bytes: file.bytes,
+      storedDocId: id,
+      tag,
+      result: r.result,
+    });
   // Stub allowance only without an API (preview build); with an API the real quota is refetched
   // after the fresh AI call.
   if (useSession.getState().aiOn && db && !apiEnabled()) {
@@ -105,6 +119,12 @@ export async function openUpload(
 
 /** Reopen a document from the switcher (samples re-fetch; uploads read back from IndexedDB). */
 export async function reopenRecent(d: DocMeta): Promise<void> {
+  // intake: a package primary restores its package; anything else clears package UI
+  if (d.packageId && (await usePackage.getState().restore(d.packageId))) {
+    useShell.getState().setRoute('findings');
+    return;
+  }
+  usePackage.getState().clear();
   let bytes: Uint8Array | null = null;
   if (d.source === 'sample' && d.ref.startsWith('scan:')) {
     const entry = (await loadManifest()).find((s) => `scan:${s.id}` === d.ref);
@@ -121,7 +141,7 @@ export async function reopenRecent(d: DocMeta): Promise<void> {
     useReview.getState().showToast('This document is no longer stored in this browser.');
     return;
   }
-  const { id: _id, ...meta } = d;
+  const { id: _id, packageId: _pkg, ...meta } = d;
   useShell.getState().setRoute('findings');
   await useReview
     .getState()
