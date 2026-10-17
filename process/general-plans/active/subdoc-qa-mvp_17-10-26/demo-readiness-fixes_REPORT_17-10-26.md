@@ -129,3 +129,30 @@ pnpm exec wrangler d1 execute aduin-transaction-db --remote --command "SELECT la
 - Design session: `README.md` fails `prettier --check`.
 
 TL;DR: swapped instruction refs on #3/#5 are now critical (#1 stays high, with the reason recorded); the gate pill is neutral with no document; the deployed seed is the Partners Group spec with a fingerprint guard; fit scores are gone from finding text; the Compare copy matches the code. The live reseed steps are above and were not run.
+
+## Live reseed + redeploy (17-10-26, done)
+
+**Result: the live demo D1 now holds the Partners Group seed, and HEAD (incl. 0a67dc4) is deployed. All smoke checks passed.**
+
+- **Pre-checks:** every DELETE in the purge script is scoped to `ws_demo` (6 of 6). The 6 recreated triggers match migrations 0002/0005 after whitespace normalisation. A local sqlite dry run (migrations + old test-seed + fake sandbox, `-bail`, foreign keys on) gave partners-group 7, sr01 proposed, seed_mode 0, 40 triggers, sandbox row intact, and a later ws_demo DELETE was refused with `decision_append_only`.
+- **Backup:** `/private/tmp/claude-501/-Users-itsjiathao--Skylab-itsjiathao-aduin-transaction/08d15510-3fa2-4a03-add1-62cb1b9c2eeb/scratchpad/d1-backup-before-reseed.sql` (43,702 bytes, session scratchpad, not in the repo).
+- **Time-travel bookmark (rollback):** `00000012-00000000-00005107-de7c068d1119cc2380fc35859211b3c5`.
+
+| Check | Before | After |
+|---|---|---|
+| ws_demo decisions by firm | firm-x 6, firm-y 1, partners-group 1 | partners-group 7 |
+| ws_demo firm_rule | sr01 active, sr02 proposed, sr03 active | sr01 proposed |
+| workspaces | 1 demo, 0 sandbox | 1 demo, 0 sandbox |
+| triggers | 40 | 40 |
+| seed_mode | 0 | 0 |
+
+- **Delete guard:** no real DELETE was run on live data. Instead, the SQL of all 6 delete guards was read back from the live `sqlite_master` and matches the migration text.
+- **Deploy:** guard:cf OK, secrets:scan OK, plain web bundle with the Turnstile site key, deploy:preflight OK (13 of 13 PASS). Ran `wrangler deploy` with the plain config: workers.dev only, no routes, existing cron `17 3 * * *`. **Version `47d98295-c583-4dc0-9f96-f9e161c8cf35`.** Rollback target: `23612b12-51c7-4d75-a324-f4f2f6392ba8`.
+- **Smoke** (headless, /api/ai, /api/ocr and /api/session aborted; the spec made 0 such calls; 0 page errors):
+  - no document open: gate reads "No document"
+  - sample #5: first findings in about 1.1 s, 7 rows, gate "Blocked · 2" (no memory without a session)
+  - no finding row contains "(fit"
+  - Compare 5 vs 6: the new disabled-button copy appears (1 element) and the old "Available after counsel sheet" copy is gone
+  - `/` carries a CSP; `GET /api/health` returns `cache-control: no-store` (a HEAD request returns 404)
+  - `/api/memory/health`: schema_version 5, seed_mode 0, seed_version 1
+  - stack project against the live URL: 1 passed
