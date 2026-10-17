@@ -269,8 +269,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* the open row's expanded block already names the section on its severity line */
 .fv2-rowb[aria-expanded='true'] > .fv2-loc {
-  line-height: 21px;
+  display: none;
 }
 .fv2-title {
   font-size: 14px;

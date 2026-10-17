@@ -496,6 +496,10 @@ test.describe('findings-v2', () => {
       const panel = (await page.getByTestId('findings-column').boundingBox())!;
       expect(l.x + l.width).toBeLessThanOrEqual(panel.x + panel.width + 1);
       expect(r.x + r.width).toBeLessThanOrEqual(panel.x + panel.width + 1);
+      // the open row hides its section label (the expanded block repeats it); collapsed rows keep it
+      const open = page.locator('[data-testid="finding-row"][aria-expanded="true"]').first();
+      if ((await open.count()) > 0) await expect(open.getByTestId('finding-loc')).toBeHidden();
+      await expect(loc).toBeVisible();
       // 3: Previously handled (0) is hidden and is not a band above the bar
       await expect(page.getByTestId('previously-handled-count')).toHaveText('0');
       await expect(page.getByTestId('previously-handled-toggle')).toBeHidden();
