@@ -21,6 +21,27 @@ import { htmlToLines, MAX_FRAME_DEPTH, type HtmlAdapterResult } from './html';
 
 export const RECONSTRUCTED_NUMBERING_LABEL = 'based on reconstructed numbering';
 
+/**
+ * Issue classes whose evidence depends on section/list numbers. On a DOCX with reconstructed
+ * numbering these findings carry RECONSTRUCTED_NUMBERING_LABEL on the finding view (additive
+ * view field in the web engine worker; the frozen Finding contract is unchanged).
+ */
+export const NUMBERING_DEPENDENT_CLASSES: readonly string[] = [
+  'broken_cross_reference',
+  'broken_conditional',
+  'unreachable_or_circular_flow',
+];
+
+/** The label to show on a finding from a DOCX with reconstructed numbering, if any. */
+export function numberingLabelFor(
+  issueClass: string,
+  reconstructedNumbering: boolean,
+): string | undefined {
+  return reconstructedNumbering && NUMBERING_DEPENDENT_CLASSES.includes(issueClass)
+    ? RECONSTRUCTED_NUMBERING_LABEL
+    : undefined;
+}
+
 /** Zip guard caps (a real sub-doc DOCX is a few MB uncompressed and < 200 entries). */
 export const DOCX_LIMITS = {
   maxBytes: limits.maxUploadBytes,
@@ -233,23 +254,57 @@ function escAttr(s: string): string {
   return esc(s).replace(/"/g, '&quot;');
 }
 
+/** Top-level list items up to this many characters (label excluded) may be headings. */
+export const HEADING_ITEM_MAX_CHARS = 80;
+/** A heading-like item has no terminal sentence punctuation. */
+export const TERMINAL_PUNCT_RE = /[.;:!?,]\s{0,8}$/;
+
+/**
+ * Short top-level numbered item ("1. Definitions") with no terminal sentence punctuation: Word
+ * often numbers section titles with the list engine instead of a Heading style. mammoth drops
+ * the bold run formatting of the list paragraph, so the structurer would see a plain list item.
+ */
+export function isHeadingLikeItem(text: string): boolean {
+  const t = text.replace(/\s{1,4000}/g, ' ').trim();
+  return t.length > 0 && t.length <= HEADING_ITEM_MAX_CHARS && !TERMINAL_PUNCT_RE.test(t);
+}
+
 /**
  * Numbering pre-pass: re-serialize mammoth HTML, prefixing each `<li>` of an `<ol>` with its
  * reconstructed label. List nesting beyond MAX_FRAME_DEPTH gets no label (bounded state).
+ * Heading-like top-level `<ol>` items (isHeadingLikeItem on the item's own text, before any
+ * nested list) are wrapped in `<strong>` so the HTML adapter gives them a bold cue and the
+ * structurer opens a section for them (06d xref fix; numbering still labelled "reconstructed").
  */
 export function reconstructNumbering(html: string): {
   html: string;
   labelled: number;
   items: number;
+  headings: number;
 } {
   const out: string[] = [];
   /** One entry per open list: counter for ol, null for ul. */
   const lists: Array<number | null> = [];
   let labelled = 0;
   let items = 0;
+  let headings = 0;
+  /** Open top-level ol item being considered as a heading: output index + its own text. */
+  let pending: { at: number; text: string; blocked: boolean } | null = null;
+  const finalize = () => {
+    if (!pending) return;
+    if (!pending.blocked && isHeadingLikeItem(pending.text)) {
+      out[pending.at] = `<strong>${out[pending.at]!}`;
+      out.push('</strong>');
+      headings++;
+    }
+    pending = null;
+  };
   const parser = new Parser(
     {
       onopentag(name, attrs) {
+        if (pending && (name === 'ol' || name === 'ul' || name === 'li')) finalize();
+        else if (pending && name !== 'strong' && name !== 'b' && name !== 'em' && name !== 'i')
+          pending.blocked = true;
         const a = Object.entries(attrs)
           .map(([k, v]) => ` ${k}="${escAttr(v)}"`)
           .join('');
@@ -265,14 +320,20 @@ export function reconstructNumbering(html: string): {
             const counters = lists.filter((c): c is number => c !== null);
             out.push(`${esc(numberLabel(counters))} `);
             labelled++;
+            if (lists.length === 1) pending = { at: out.length - 1, text: '', blocked: false };
           }
         }
       },
       ontext(text) {
+        if (pending) {
+          if (pending.text.length <= HEADING_ITEM_MAX_CHARS * 4) pending.text += text;
+          else pending.blocked = true;
+        }
         out.push(esc(text));
       },
       onclosetag(name) {
         if (VOID.has(name)) return;
+        if (pending && (name === 'li' || name === 'ol' || name === 'ul')) finalize();
         out.push(`</${name}>`);
         if (name === 'ol' || name === 'ul') lists.pop();
       },
@@ -281,7 +342,8 @@ export function reconstructNumbering(html: string): {
   );
   parser.write(html);
   parser.end();
-  return { html: out.join(''), labelled, items };
+  finalize();
+  return { html: out.join(''), labelled, items, headings };
 }
 
 function toBytes(input: Uint8Array | ArrayBuffer): Uint8Array {

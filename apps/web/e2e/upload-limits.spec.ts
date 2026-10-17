@@ -1,6 +1,16 @@
+import { readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { limits } from '@aduin/core';
 import { gotoApp, openDialog } from './fixtures/app';
+
+const FIXTURES = resolve(import.meta.dirname, '..', '..', '..', 'fixtures');
+const fixture = (...p: string[]) => readFileSync(join(FIXTURES, ...p));
+
+async function readStage(page: Page) {
+  await page.getByTestId('stage-status-button').click();
+  return page.locator('[data-testid="stage-item"][data-stage="read"]');
+}
 
 async function upload(page: Page, name: string, buffer: Buffer, mimeType = 'text/html') {
   await page.getByTestId('upload-input').setInputFiles({ name, mimeType, buffer });
@@ -42,12 +52,9 @@ test.describe('upload-limits', () => {
     await expect(page.getByTestId('upload-error')).toContainText('not supported');
     await upload(page, 'empty.html', Buffer.alloc(0));
     await expect(page.getByTestId('upload-error')).toContainText('empty');
-    await upload(page, 'scan.pdf', Buffer.from('%PDF-1.4'), 'application/pdf');
-    await expect(page.getByTestId('upload-error')).toContainText('supported in a later build');
-    await upload(page, 'form.docx', Buffer.from('PK'), 'application/octet-stream');
-    await expect(page.getByTestId('upload-error')).toContainText('supported in a later build');
-    await upload(page, 'page.png', Buffer.from([0x89, 0x50]), 'image/png');
-    await expect(page.getByTestId('upload-error')).toContainText('supported in a later build');
+    await upload(page, 'empty.pdf', Buffer.alloc(0), 'application/pdf');
+    await expect(page.getByTestId('upload-error')).toContainText('empty');
+    await expect(page.getByTestId('upload-error')).not.toContainText('later build');
     await expect(page.getByTestId('open-document-dialog')).toBeVisible();
     await expect(page.getByTestId('ai-allowance')).toContainText(
       `${limits.visitorAiDocsPerDay} of ${limits.visitorAiDocsPerDay}`,
@@ -64,5 +71,55 @@ test.describe('upload-limits', () => {
       timeout: 60_000,
     });
     await expect(page.getByTestId('doc-pane')).toContainText('Limit test paragraph');
+  });
+
+  // Phase 06 (flipped from "supported in a later build"): PDF, Word and image files are accepted
+  // and routed to the engine; the content is checked against the extension there.
+  test('pdf, docx and png uploads route to the engine instead of a later-build message', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await gotoApp(page);
+    await openDialog(page);
+    await upload(page, 'text.pdf', fixture('pdf', 'text.pdf'), 'application/pdf');
+    await expect(page.getByTestId('open-document-dialog')).toBeHidden();
+    await expect(page.getByTestId('stage-status-button')).toContainText('Checks done', {
+      timeout: 60_000,
+    });
+    await openDialog(page);
+    await upload(
+      page,
+      'form.docx',
+      fixture('docx', 'legal-numbering.docx'),
+      'application/octet-stream',
+    );
+    await expect(page.getByTestId('open-document-dialog')).toBeHidden();
+    await expect(page.getByTestId('doc-pane')).toContainText('Definitions and Interpretation', {
+      timeout: 60_000,
+    });
+    await openDialog(page);
+    // a ".png" whose content is a PDF is refused by the content check (never OCR'd)
+    await upload(page, 'page.png', Buffer.from('%PDF-1.4 not an image'), 'image/png');
+    await expect(page.getByTestId('open-document-dialog')).toBeHidden();
+    await expect(page.getByTestId('stage-status-button')).toContainText('Reading failed', {
+      timeout: 30_000,
+    });
+    await expect(await readStage(page)).toContainText('does not match');
+  });
+
+  test('should refuse a 31-page scan before any OCR call', async ({ page }) => {
+    test.setTimeout(90_000);
+    const ocr: string[] = [];
+    page.on('request', (r) => {
+      if (r.url().includes('/api/ocr')) ocr.push(r.url());
+    });
+    await gotoApp(page);
+    await openDialog(page);
+    await upload(page, 'pages-31.pdf', fixture('pdf', 'pages-31.pdf'), 'application/pdf');
+    await expect(page.getByTestId('stage-status-button')).toContainText('Reading failed', {
+      timeout: 60_000,
+    });
+    await expect(await readStage(page)).toContainText(`the limit is ${limits.maxScanPages} pages`);
+    expect(ocr).toEqual([]);
   });
 });

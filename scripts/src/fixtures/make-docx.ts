@@ -1,7 +1,8 @@
 /**
  * DOCX fixtures (Phase 06, D6): writes fixtures/docx/
  *  - legal-numbering.docx  synthetic sub-doc with Word list numbering 1. / 1.1 / (a) / (i) and
- *                          cross-references ("see Section 2(b)"); built with `docx` (MIT)
+ *                          cross-references ("see Section 2(b)", and a seeded wrong self-reference
+ *                          "this Section 2" inside Section 1 for the DOCX xref finding); built with `docx` (MIT)
  *  - corrupt.docx          a truncated zip (one local file header, no central directory)
  *  - empty.docx            0 bytes
  * Run: `pnpm --filter @aduin/scripts exec tsx src/fixtures/make-docx.ts` (also invoked by fixtures:check
@@ -48,6 +49,7 @@ export async function legalNumberingDocx(): Promise<Buffer> {
           item('Definitions and Interpretation', 0),
           item('Capitalized terms have the meanings given in the Partnership Agreement.', 1),
           item('References to Sections are to Sections of this Agreement.', 1),
+          item('The undertakings in this Section 2 bind each Subscriber.', 1),
           item('Subscription', 0),
           item('The Subscriber subscribes for the Commitment set out in Section 4.', 1),
           item('The Subscriber represents that it is:', 1),

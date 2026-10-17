@@ -209,3 +209,100 @@ Follow-up stubs created: none (the gaps are tracked as 06d notes above).
 - web `ingest-all-formats` e2e (render paths) is 06d/06e.
 
 CONTEXT_PARTIAL: none. Follow-up stubs created: none.
+
+## 06d (OCR adapter, core exports, DOCX xref fix, engine dispatch, render + OCR queue, uploads) — 2026-10-17
+
+**TL;DR:** all five 06d items are done and every requested gate is green. Scans and images now go through a browser render → JPEG → `/api/ocr` queue. The engine worker reads HTML, PDF, DOCX and OCR pages. The DOCX fixture now gives a cross-reference finding labelled "based on reconstructed numbering". DOCX stays off the core barrel: mammoth would add ~690 KB to the Worker bundle, so DOCX ships through the `@aduin/core/docx` subpath instead. No dependency, manifest-dependency or lockfile changes. No live calls. Nothing committed.
+
+### Bundle probes
+| Probe | Result |
+|---|---|
+| Worker bundle (`wrangler deploy --dry-run`, `index.js`) | baseline 990,460 B. With a `pdfToLines` re-export: 990,460 B (tree-shaken). With a `docxToLines` re-export: **1,680,581 B (+690 KB, mammoth is CJS)**. Final (pdf/ocr/format-detect/page-noise in the barrel, docx on a subpath): **990,696 B (+236 B)**, and the bundle contains no unpdf or mammoth code. |
+| Vite web bundle (production mode, run through Vite's API from a scratch script) | It resolves `unpdf` through `@aduin/core` (no `apps/web` dep needed) and mammoth's browser entry (no `@napi-rs/canvas` attempt). Chunks: pdfjs-dist main ~430 KB (one copy per bundle: engine worker and main-thread render), pdf.worker ~1.2 MB, mammoth `docx` chunk 317 KB (lazy), engine.worker 274 KB, unpdf's bundled pdf.js `pdfjs-*.js` 1.6 MB **emitted but never fetched** (proven in e2e). |
+| `definePDFJSModule(() => import('pdfjs-dist'))` in the browser worker | works in Chromium. pdf.js runs its in-thread "fake worker" (the `pdf.worker.min.mjs` module is placed on `globalThis.pdfjsWorker`), so there is still exactly 1 Worker. |
+
+### What was done
+| File | Change |
+|---|---|
+| `packages/core/src/adapters/ocr.ts` (new) | `ocrToLines(OcrResult \| pages)`: one Line per OCR line, `page = index + 1`, region = bbox clamped to the unit square, `cue_source: 'ocr'`. It strips `OCR_MARKER_RE` `[ \t]{0,8}\^\{(\d{1,3})\}` into zero-width sup segments via `setSupSegments`. ☐/☒ are kept. Empty lines are skipped. Caps: ≤ 400 lines per page, ≤ 4000 chars per line. `stripPageNoise` drops the "1/8" footer and keeps it in `pages[].dropped`. Each page gets `conf` / `lowConfidence` / `truncated`. |
+| `packages/core/src/ocr/confidence.ts` (new) | `pageConfidence = min(selfReported ?? 0.7, structuralScore)`. The structural score penalises: no non-empty lines, alphabetic ratio < 0.5, a repeated-token run ≥ 5 or ≥ 8, < 50 % distinct lines, > 50 % empty lines. `isLowConfidence` uses `limits.ocrLowConfidence` (0.6). |
+| `packages/core/src/index.ts` | Append-only: pdf, pdf-text, ocr, confidence, format-detect, page-noise and sup-segments exports. DOCX is not exported (comment explains why). |
+| `packages/core/package.json` | `exports["./docx"] = ./src/adapters/docx.ts` (subpath; no dependency change). |
+| `packages/core/src/adapters/docx.ts` | `reconstructNumbering` wraps heading-like top-level `<ol>` items (≤ 80 chars, no terminal `.;:!?,`, judged on the item's own text before any nested list) in `<strong>`. It now also returns `headings`. New `isHeadingLikeItem`, `NUMBERING_DEPENDENT_CLASSES` (broken_cross_reference, broken_conditional, unreachable_or_circular_flow) and `numberingLabelFor(class, reconstructed)`, which returns `RECONSTRUCTED_NUMBERING_LABEL`. |
+| `scripts/src/fixtures/make-docx.ts` + `fixtures/docx/legal-numbering.docx` | Added item 1.3, "The undertakings in this Section 2 bind each Subscriber." (see Deviations), and regenerated. |
+| `packages/core/test/unit/{ocr-adapter,docx-xref}.test.ts` (new) | 9 + 2 tests. These include "should mark a page below 0.6 confidence as low confidence" and "the legal-numbering fixture yields sections and at least one cross-reference finding" (each labelled). |
+| `packages/core/test/golden/golden-09-ocr-footnote2.test.ts` | The test-local helper is replaced by the real `adapters/ocr.ts`. Still 13/13. |
+| `packages/core/test/security/redos.test.ts` | Adds the OCR adapter regexes plus 2 hostile `^{` inputs. |
+| `packages/core/test/unit/docx-numbering.test.ts` | Expected HTML updated on purpose (the `<strong>` heading wrap), plus `headings === 3`. |
+| `apps/web/src/engine/types.ts` | `AnalyzeInput` (`html` / `docx` / `pdf` + `ocrPages?` / `ocr` with `sourceHash`, `pageCount`, `pages`), `OcrPageInput`, `OcrPageView`, `OcrPageState`, `DocSource`. Additive optional fields: `BlockView.page/region/conf`, `FindingView.numberingNote`, `EngineResult.source/pageCount/scanPages/ocr/reconstructedNumbering/notice`. `analyze(input: AnalyzeInput \| Uint8Array)`: bare bytes are still HTML. |
+| `apps/web/src/engine/engine.worker.ts` | Read-stage dispatch: `detectFormat` when a name is given (a mismatch is refused). HTML uses `htmlToLines`. DOCX lazily imports `@aduin/core/docx` and attaches `numberingNote`. PDF uses `pdfToLines` with the injected pdfjs-dist and per-page progress, merging the scan pages' OCR lines in page order. OCR checks `sourceHash` is 64 hex, then runs `ocrToLines`. With no text (all pages failed or unavailable), structure and checks are `skipped` with a "Text not extracted for N of M pages" notice and no crash. `buildDocGraph` gets the source arg. A `CoreError` message becomes the read-stage message plus `notice`. Realm-safe `isBytes`. The three core imports stay. |
+| `apps/web/src/engine/client.ts` | Takes `AnalyzeInput \| Uint8Array`. A `WeakMap` remembers bytes → input (`rememberInput`), so the Phase 05 AI lane's re-analysis after LRU eviction keeps the right adapter (`ai-lane.ts` unchanged). |
+| `apps/web/src/engine/render-pages.ts` (new) | `renderPdfPages` (pdfjs-dist with its own worker, long side 1600 px, JPEG 0.8, one page at a time, `task.destroy()`). `renderImage` (JPEG/PNG magic check, size from the PNG IHDR / JPEG SOFn header before decode, 60 MP cap, `createImageBitmap` → canvas → JPEG 0.8, so EXIF is stripped; bitmap closed). `RENDER_PARAMS = 'w1600q80'`. |
+| `apps/web/src/engine/ocr-queue.ts` (new) | `runOcrQueue`: concurrency 3, per-page progress, resume (`previous` + cache). Lookup order: precomputed `index.json` → Dexie cache → `/api/ocr`, through the Phase 05 `postNdjson` + `clientHeaders` (`x-aduin-doc`, optional Turnstile). Cache key = `sha256(ocr\|sourceHash\|pageIndex\|w1600q80\|model\|ocr2\|s1)` via WebCrypto. `buildOcrBody` refuses anything that is not JPEG/PNG (`NotAnImageError`) or is over `limits.ocrBodyBytes`. No API base → `unavailable` "OCR unavailable in this build", with nothing rendered or posted. The visitor cap comes from `/api/quota` `ocr_pages`; when it runs out → "OCR page limit reached for today". Quota or budget error frames → `unavailable`. Responses are shape-checked and bounded (`sanitizeLines`). |
+| `apps/web/src/engine/pdfjs-worker.d.ts` (new) | Type declaration for `pdfjs-dist/build/pdf.worker.min.mjs`. |
+| `apps/web/src/state/review.ts` | `openDocument(bytes, meta, opts?: {fileName})` → `analyzeDocument`. With no file name, the old HTML bytes path is used. PDF runs analyze → render the scan pages → OCR queue → re-analyze with `ocrPages`. Images run sha256 → queue → `{kind:'ocr'}`. A non-image `.png`/`.jpg` goes to the worker's format check (a clear refusal). The read-stage sub shows "Reading scanned pages · n of m". `rememberInput` is set. |
+| `apps/web/src/features/open-document/{validate-upload,open-actions}.ts` | `checkUpload` accepts pdf/docx/jpg/jpeg/png (`kind: 'pdf' \| 'docx' \| 'image'`). The "supported in a later build" copy and the `'later'` kind are gone. The upload and reopen paths pass `fileName`. |
+| `apps/web/test/{ocr-never-sends-pdf,engine-dispatch}.test.ts` (new) | 7 + 6 tests. |
+| `apps/web/e2e/upload-limits.spec.ts` | The three "later build" assertions are flipped on purpose: text.pdf → Checks done; DOCX → doc pane text; a `.png` holding PDF bytes → "Reading failed" with "does not match". The empty PDF is refused in the dialog. New: "should refuse a 31-page scan before any OCR call" (0 `/api/ocr` requests). |
+| `apps/web/e2e/engine-worker-split.spec.ts` | New test: a text PDF parses in the single engine worker. The `pdf-*` chunk is fetched; unpdf's `pdfjs-*` chunk is not. |
+| `apps/web/e2e/ocr-render-path.spec.ts` (new) | scanned.pdf and a JPEG upload are rendered → one `/api/ocr` POST (route-intercepted, recorded authored OCR) with `image/jpeg` and `/9j/` (never `JVBER`), `x-aduin-client: 1`, < 700 KB, 0 openrouter.ai requests. The doc pane shows the OCR lines without `^{`. |
+
+### Gates (06d)
+| Gate | Result |
+|---|---|
+| core `golden-09-ocr-footnote2` | 13/13 (real adapter) |
+| core `ingest-all-formats` | 2 files / 10 |
+| core `docx` | 4 files / 17 (`docx-numbering` updated on purpose; `docx-xref` new) |
+| core `security` | 7 files / 34 |
+| core `test:golden` | 6 / 57 (unchanged) |
+| core `contracts` | 1 / 34 (snapshot unchanged) |
+| core full | 61 files / 422 (was 59 / 411; +2 files / +11 tests) |
+| core `ocr-adapter`, `redos` | 9/9, 5/5 |
+| web `import-graph` | 4/4 (no test edit; main thread imports only `limits` from core) |
+| web `engine-ai-api` | 6/6 |
+| web `ocr-never-sends-pdf` | 7/7 |
+| web `no-e2e-hook-in-d`, `source-guard`, `smoke` | 2/2, 4/4, 2/2 |
+| web unit, whole suite | 14 files / 60 |
+| web e2e `upload-limits` | 5/5 |
+| web e2e `engine-worker-split` | 2/2 |
+| web e2e `app-shell`, `finding-highlight`, `structure-view`, `sample-zero-calls` | 8, 4, 4, 4 passed |
+| web e2e `ocr-render-path` | 2/2 |
+| web e2e, whole suite (`pnpm --filter @aduin/web test:e2e`) | 87 passed, 1 skipped (the opt-in design-probe) |
+| worker full suite | 64 files / 520 (unchanged; bundle +236 B) |
+| `pnpm --filter @aduin/scripts fixtures:check` | OK (56 files); scripts test 8 / 49 |
+| `pnpm typecheck`, `pnpm lint` (eslint + prettier) | clean |
+| `pnpm guard:cf`, `pnpm secrets:scan` | OK |
+
+### Deviations (all inside the Phase 06 blast radius; no frozen contract change)
+1. **DOCX is exposed through the `@aduin/core/docx` subpath, not the barrel.** The measurement above shows a barrel re-export would add 690 KB to the Worker. This adds one `exports` entry to `packages/core/package.json` and changes no dependency. `RECONSTRUCTED_NUMBERING_LABEL` and `numberingLabelFor` live there too.
+2. **DOCX fixture content changed.** `legal-numbering.docx` gained item 1.3, "...this Section 2..." inside Section 1. Why: with sections recognised, the fixture still produced **no** cross-reference finding. The engine has no "missing section target" detector: `Section 9` and `Section 5` are parsed as references, but only `ref-this-section`, `ref-label-coherence` and `broken-conditional` emit xref-class findings, and the fixture's only conditional points to an existing section. A seeded wrong self-reference gives the required `broken_cross_reference`. Adding a new detector would change HTML findings, which is out of scope. Follow-up suggestion (not created; orchestrator's call): a `ref-missing-target` detector in a later phase.
+3. **The heading cue uses `<strong>` (bold), not `<h2>`**, as the orchestrator allowed. The rule also treats `,` as terminal punctuation, so list fragments like "an accredited investor, ..." are never headings.
+4. **The OCR cache uses the existing Dexie `parsedModels` table** (`docHash: 'ocr:{key}'`) instead of a new store. Why: this needs no Dexie schema version bump (`storage/db.ts` is outside the blast radius), and the entries are purged after 24 h like uploads, which is correct for upload-derived text.
+5. **`analyze()` keeps the bare-bytes HTML form**, as allowed by E4. HTML uploads now pass `{kind:'html', name}`, so they also get the format check. Samples keep the bytes form.
+6. **Image uploads skip the core polyglot check** (the image bytes never enter the engine worker). Mitigation: a main-thread JPEG/PNG magic check, header-size cap, and canvas re-encode (a hidden payload cannot survive re-encoding). A non-image under an image extension is sent to the worker's format check and refused.
+7. **Red-first order:** `ocr-never-sends-pdf` (web) and `engine-dispatch` were written right after the implementation, not as red stubs first. The OCR adapter's golden swap was verified green against the existing golden. The worker-side `ocr-never-sends-pdf` from 06a already existed.
+8. **Extra e2e file `ocr-render-path.spec.ts`** (not in the gate list): the only browser proof that `render-pages` and `ocr-queue` work in Chromium before 06e builds on them.
+
+### What was skipped or deferred
+- 06e: the scan viewer UI (page image beside text, confidence badge, region highlight, unavailable-mode screen). `EngineResult.ocr`, `BlockView.page/region/conf` and `notice` are ready for it, but the current UI does not show the notice or OCR page states yet. A doc with no text after OCR shows an empty pane, and the stage button has no "Checks done" label in that case.
+- 06f: sample #9 assets and manifest, `openSample` multi-page, precompute, more recorded pages, THIRD_PARTY_NOTICES, core/e2e `ocr-unavailable` gate files, `ocr-position-confidence`, `scan-set-smoke`.
+
+### Test Infra Gaps Found
+- `page.on('request')` does see engine-worker chunk fetches in Playwright Chromium (used as a non-vacuous check in `engine-worker-split`).
+- jsdom `TextEncoder` returns a cross-realm `Uint8Array`, so `instanceof Uint8Array` fails. The worker and client now use realm-safe checks.
+
+### Forward Preview
+#### Test Infra Found
+- `api` from `engine.worker.ts` can be driven directly in vitest (jsdom) for DOCX and OCR inputs (`engine-dispatch.test.ts`). PDF needs the browser (pdf.js fake worker); use e2e.
+- e2e `/api/ocr` interception pattern: `ocr-render-path.spec.ts` (`interceptOcr`, `enableLane`, `interceptQuota`, `blockOpenRouter`).
+#### Blast Radius Changes
+- Added: `packages/core/package.json` (`exports` subpath), `apps/web/src/engine/pdfjs-worker.d.ts`, `apps/web/e2e/ocr-render-path.spec.ts`, `apps/web/test/engine-dispatch.test.ts`, `scripts/src/fixtures/make-docx.ts` + `fixtures/docx/legal-numbering.docx` content.
+#### Commands to Stay Green
+- `pnpm --filter @aduin/core test golden-09-ocr-footnote2`; `... test ocr-adapter`; `... test docx`; `pnpm --filter @aduin/web test ocr-never-sends-pdf`; `... test engine-dispatch`; `pnpm --filter @aduin/web test:e2e upload-limits`; `... engine-worker-split`; `... ocr-render-path`; plus the 06a-06c list.
+#### Dependency Changes
+- None (no `pnpm install`; no web dep added; unpdf stays core-only).
+#### Notes for 06e/06f
+- Viewer data: `result.ocr.pages[{index,state,conf,lowConfidence,reason}]`, `result.scanPages`, `result.notice`, `block.page/region/conf`, `finding.region/page`, `finding.numberingNote`. The rendered JPEGs are not kept yet: `render-pages` returns Blobs, and 06e must keep them (object URLs, revoked on close) for the page image view. The OCR queue `onProgress` currently only drives the read-stage sub.
+- Precompute file format the queue reads: `index.json {sampleId:[{page,file,key}]}` (key = 64 hex, file `[A-Za-z0-9._-]`), and each file is `{result: OcrResult}` or a bare `OcrResult`. For sample #9 jobs, pass the per-page original-bytes `sourceHash` on each `OcrJob` (`job.sourceHash`).
+
+CONTEXT_PARTIAL: none. Follow-up stubs created: none (the deviation 2 detector idea is left to the orchestrator).

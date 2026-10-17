@@ -1,4 +1,11 @@
-import type { AiCandidate, BlockKind, Finding, StructureView } from '@aduin/core';
+import type {
+  AiCandidate,
+  BlockKind,
+  Finding,
+  OcrResult,
+  Region,
+  StructureView,
+} from '@aduin/core';
 
 /** Wire types between the engine worker and the main thread (structured-clone safe). */
 export type StageId = 'read' | 'structure' | 'checks' | 'ai' | 'done';
@@ -18,6 +25,12 @@ export interface BlockView {
   text: string;
   /** Top-level section label (section_path[0]) or null before the first section. */
   section: string | null;
+  /** Phase 06 (additive): 1-based page of the block's first line (PDF / OCR sources). */
+  page?: number;
+  /** Phase 06 (additive): normalized 0..1 region of the block's first line on its page. */
+  region?: Region;
+  /** Phase 06 (additive): OCR page confidence of the block's page (OCR sources only). */
+  conf?: number;
 }
 
 export interface SectionView {
@@ -46,6 +59,11 @@ export interface FindingView extends Finding {
   order: number;
   /** U1 locator chip (Phase 05, additive): full section path plus paragraph number in that section. */
   locator?: FindingLocator;
+  /**
+   * Phase 06 (additive): "based on reconstructed numbering" on numbering-dependent findings
+   * (cross-references, conditionals, flow) of a DOCX whose list numbering was reconstructed.
+   */
+  numberingNote?: string;
 }
 
 /** Where a finding sits: section path (outermost first) and 1-based paragraph within the section. */
@@ -73,7 +91,56 @@ export interface EngineResult {
   structure?: StructureView;
   /** Phase 05 (additive, optional): graph-selected AI candidates (core llm/candidates.ts, worker only). */
   aiCandidates?: AiCandidate[];
+  /** Phase 06 (additive): which adapter read the document (absent = html, the Phase 03 default). */
+  source?: DocSource;
+  /** Phase 06 (additive): page count for PDF / OCR sources. */
+  pageCount?: number;
+  /** Phase 06 (additive): 0-based PDF pages without a usable text layer (rendered and OCR'd). */
+  scanPages?: number[];
+  /** Phase 06 (additive): per-page OCR state for scanned pages. */
+  ocr?: { pages: OcrPageView[] };
+  /** Phase 06 (additive): DOCX list numbering was reconstructed (labelled in the views). */
+  reconstructedNumbering?: boolean;
+  /** Phase 06 (additive): one short plain-language notice about the read (DOCX loss, OCR gaps). */
+  notice?: string;
 }
+
+/** Phase 06: document source kinds. */
+export type DocSource = 'html' | 'pdf' | 'docx' | 'ocr';
+
+/** Phase 06: OCR state of one page. */
+export type OcrPageState = 'queued' | 'running' | 'done' | 'failed' | 'unavailable';
+
+export interface OcrPageView {
+  /** 0-based page index. */
+  index: number;
+  state: OcrPageState;
+  /** Page confidence (done pages only). */
+  conf?: number;
+  /** True when conf is below limits.ocrLowConfidence. */
+  lowConfidence?: boolean;
+  /** Short plain reason for failed / unavailable pages. */
+  reason?: string;
+}
+
+/** Phase 06: one OCR page handed to the engine worker (lines only for done pages). */
+export interface OcrPageInput {
+  index: number;
+  state: OcrPageState;
+  lines?: OcrResult['pages'][number]['lines'];
+  reason?: string;
+}
+
+/**
+ * Phase 06 (D3): discriminated analyze input. A bare Uint8Array is still accepted as HTML (the
+ * Phase 03 form) so existing callers are unchanged. `name` enables format detection (extension +
+ * magic bytes) in the worker; a mismatch is refused.
+ */
+export type AnalyzeInput =
+  | { kind: 'html'; bytes: Uint8Array; name?: string }
+  | { kind: 'docx'; bytes: Uint8Array; name?: string }
+  | { kind: 'pdf'; bytes: Uint8Array; name?: string; ocrPages?: OcrPageInput[] }
+  | { kind: 'ocr'; sourceHash: string; pageCount: number; pages: OcrPageInput[]; bytes?: number };
 
 /** Context for verifying one AI result (where it came from). */
 export interface VerifyAiContext {
@@ -102,7 +169,7 @@ export type VerifyAiResponse =
 
 export interface EngineApi {
   analyze(
-    bytes: Uint8Array,
+    input: AnalyzeInput | Uint8Array,
     settings: EngineSettings,
     onStage: (s: StageReport) => void,
   ): Promise<EngineResult>;

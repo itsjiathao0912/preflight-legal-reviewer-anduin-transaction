@@ -19,8 +19,10 @@ describe('docx numbering reconstruction', () => {
       '<ol><li>A<ol><li>B</li><li>C &amp; D</li></ol></li><li>E</li></ol><ul><li>x</li></ul><ol><li>F</li></ol>',
     );
     expect(r.html).toBe(
-      '<ol><li>1. A<ol><li>1.1 B</li><li>1.2 C &amp; D</li></ol></li><li>2. E</li></ol><ul><li>x</li></ul><ol><li>1. F</li></ol>',
+      // 06d: short top-level items without terminal punctuation are heading-like (<strong>)
+      '<ol><li><strong>1. A</strong><ol><li>1.1 B</li><li>1.2 C &amp; D</li></ol></li><li><strong>2. E</strong></li></ol><ul><li>x</li></ul><ol><li><strong>1. F</strong></li></ol>',
     );
+    expect(r.headings).toBe(3);
     expect(r.labelled).toBe(5);
     expect(r.items).toBe(6);
   });

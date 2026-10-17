@@ -1,10 +1,13 @@
 import { limits } from '@aduin/core';
 
-/** Upload validation (AC37): runs before any AI call. Page-count rows activate in P06. */
+/**
+ * Upload validation (AC37): runs before any AI/OCR call. Phase 06: PDF, Word and JPEG/PNG are
+ * accepted; the engine worker then checks the content against the extension (magic bytes) and the
+ * 30-page limit before any page is read or sent to OCR.
+ */
+export type UploadKind = 'html' | 'pdf' | 'docx' | 'image';
 export type UploadCheck =
-  | { ok: true; kind: 'html' }
-  | { ok: false; kind: 'later'; message: string }
-  | { ok: false; kind: 'error'; message: string };
+  { ok: true; kind: UploadKind } | { ok: false; kind: 'error'; message: string };
 
 export const ACCEPT = limits.uploadExtensions.join(',');
 
@@ -33,9 +36,7 @@ export function checkUpload(name: string, size: number): UploadCheck {
     return { ok: false, kind: 'error', message: `This file is over the ${mb} MB limit.` };
   }
   if (ext === '.htm' || ext === '.html') return { ok: true, kind: 'html' };
-  return {
-    ok: false,
-    kind: 'later',
-    message: 'PDF, Word and image files are supported in a later build.',
-  };
+  if (ext === '.pdf') return { ok: true, kind: 'pdf' };
+  if (ext === '.docx') return { ok: true, kind: 'docx' };
+  return { ok: true, kind: 'image' };
 }

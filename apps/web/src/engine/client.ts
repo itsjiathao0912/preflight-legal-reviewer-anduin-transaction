@@ -1,5 +1,6 @@
 import * as Comlink from 'comlink';
 import type {
+  AnalyzeInput,
   EngineApi,
   EngineResult,
   EngineSettings,
@@ -22,12 +23,27 @@ function engine(): Comlink.Remote<EngineApi> {
   return remote;
 }
 
+/**
+ * Phase 06: the last analyze input per byte buffer. The AI lane re-analyzes with the same bytes
+ * object when a graph was evicted (LRU 2); remembering the input keeps PDF / DOCX / OCR documents
+ * on their own adapter instead of being re-read as HTML.
+ */
+const inputOf = new WeakMap<Uint8Array, AnalyzeInput>();
+
+/** Analyze a document: a discriminated input (Phase 06) or bare bytes (HTML, the Phase 03 form). */
 export async function analyzeInWorker(
-  bytes: Uint8Array,
+  input: AnalyzeInput | Uint8Array,
   settings: EngineSettings,
   onStage: (s: StageReport) => void,
 ): Promise<EngineResult> {
-  return engine().analyze(bytes, settings, Comlink.proxy(onStage));
+  let send: AnalyzeInput | Uint8Array = input;
+  if (ArrayBuffer.isView(input)) send = inputOf.get(input) ?? input;
+  return engine().analyze(send, settings, Comlink.proxy(onStage));
+}
+
+/** Remember which analyze input a byte buffer stands for (re-analysis after LRU eviction). */
+export function rememberInput(bytes: Uint8Array, input: AnalyzeInput): void {
+  inputOf.set(bytes, input);
 }
 
 /** Phase 05: verify an AI result against a retained document (plain strings in, FindingViews out). */

@@ -29,7 +29,10 @@ export async function openSample(s: SampleEntry, firms: FirmEntry[]): Promise<vo
   });
 }
 
-/** Open an uploaded HTML file: stored for 24 h, counts one fresh-AI document when AI is on. */
+/**
+ * Open an uploaded file (HTML, PDF, DOCX, JPEG/PNG; Phase 06): stored for 24 h, counts one fresh-AI
+ * document when AI is on. The file name selects the adapter; the worker re-checks the content.
+ */
 export async function openUpload(
   file: { name: string; bytes: Uint8Array },
   tag: { firmId: string | null; firmName: string; fund: string; version: string },
@@ -53,7 +56,11 @@ export async function openUpload(
   useShell.getState().setRoute('findings');
   await useReview
     .getState()
-    .openDocument(file.bytes, { name: file.name, ...tag, source: 'upload', ref: id });
+    .openDocument(
+      file.bytes,
+      { name: file.name, ...tag, source: 'upload', ref: id },
+      { fileName: file.name },
+    );
   // Stub allowance only without an API (preview build); with an API the real quota is refetched
   // after the fresh AI call.
   if (useSession.getState().aiOn && db && !apiEnabled()) {
@@ -82,5 +89,7 @@ export async function reopenRecent(d: DocMeta): Promise<void> {
   }
   const { id: _id, ...meta } = d;
   useShell.getState().setRoute('findings');
-  await useReview.getState().openDocument(bytes, meta);
+  await useReview
+    .getState()
+    .openDocument(bytes, meta, d.source === 'upload' ? { fileName: d.name } : undefined);
 }

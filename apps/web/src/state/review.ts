@@ -3,9 +3,19 @@ import type { ReasonCode } from '@aduin/core';
 import { memoryApi } from '../api/client';
 import type { MemoryApi } from '../api/memoryApi';
 import { e2eSettings, e2eTransform } from '../e2e-hook';
-import { analyzeInWorker } from '../engine/client';
+import { analyzeInWorker, rememberInput } from '../engine/client';
+import { runOcrQueue, sha256Hex, type OcrJob } from '../engine/ocr-queue';
+import { imageKindOf, renderImage, renderPdfPages } from '../engine/render-pages';
 import { aiBeginOpen, aiOnOpen, aiRunFresh, setAiSink } from '../features/ai/ai-lane';
-import type { EngineResult, FindingView, StageId, StageReport } from '../engine/types';
+import type {
+  AnalyzeInput,
+  EngineResult,
+  EngineSettings,
+  FindingView,
+  OcrPageInput,
+  StageId,
+  StageReport,
+} from '../engine/types';
 import {
   buildRows,
   computeGate,
@@ -55,7 +65,15 @@ interface ReviewState {
   revealed: boolean;
   toast: Toast | null;
   error: string | null;
-  openDocument: (bytes: Uint8Array, meta: Omit<DocMeta, 'id'>) => Promise<void>;
+  /**
+   * Phase 06: `opts.fileName` selects the adapter by extension (pdf / docx / jpg / jpeg / png);
+   * without it the bytes are HTML (Phase 03 behaviour).
+   */
+  openDocument: (
+    bytes: Uint8Array,
+    meta: Omit<DocMeta, 'id'>,
+    opts?: { fileName?: string },
+  ) => Promise<void>;
   select: (id: string | null) => void;
   toggleReveal: () => void;
   accept: (id: string) => Promise<void>;
@@ -73,6 +91,77 @@ interface ReviewState {
 
 let toastSeq = 0;
 let loadSeq = 0;
+
+type InputKind = 'html' | 'pdf' | 'docx' | 'image';
+
+/** Adapter by file extension (the worker re-checks extension + magic bytes). */
+export function inputKindOf(fileName: string | undefined): InputKind {
+  const m = fileName?.toLowerCase().match(/\.([a-z0-9]{1,10})$/);
+  const ext = m?.[1];
+  if (ext === 'pdf') return 'pdf';
+  if (ext === 'docx') return 'docx';
+  if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') return 'image';
+  return 'html';
+}
+
+function ocrProgressSub(pages: readonly OcrPageInput[]): string {
+  const done = pages.filter((p) => p.state !== 'queued' && p.state !== 'running').length;
+  return `Reading scanned pages · ${done} of ${pages.length}`;
+}
+
+/**
+ * Phase 06 read dispatch: HTML / DOCX go straight to the engine worker; scanned images and the
+ * scan pages of a PDF are rendered here (main thread), OCR'd through the queue, and the OCR lines
+ * are analyzed in the worker. Only page images ever go to /api/ocr, never the PDF.
+ */
+async function analyzeDocument(
+  bytes: Uint8Array,
+  fileName: string | undefined,
+  settings: EngineSettings,
+  onStage: (s: StageReport) => void,
+): Promise<EngineResult> {
+  const kind = inputKindOf(fileName);
+  const name = fileName ?? '';
+  const onOcr = (pages: OcrPageInput[]) =>
+    onStage({ id: 'read', state: 'running', sub: ocrProgressSub(pages) });
+  let input: AnalyzeInput;
+  if (kind === 'html' && fileName === undefined) {
+    return analyzeInWorker(bytes, settings, onStage);
+  } else if (kind === 'html' || kind === 'docx') {
+    input = { kind, bytes, name };
+  } else if (kind === 'image' && !imageKindOf(bytes)) {
+    // not a JPEG/PNG: the worker's format check refuses it with a clear message (never OCR'd)
+    input = { kind: 'html', bytes, name };
+  } else if (kind === 'image') {
+    const sourceHash = await sha256Hex(bytes);
+    const pages = await runOcrQueue({
+      sourceHash,
+      jobs: [{ index: 0, render: () => renderImage(bytes, 0) }],
+      onProgress: onOcr,
+    });
+    input = { kind: 'ocr', sourceHash, pageCount: 1, pages, bytes: bytes.byteLength };
+  } else {
+    input = { kind: 'pdf', bytes, name };
+    const first = await analyzeInWorker(input, settings, onStage);
+    const scan = first.scanPages ?? [];
+    if (first.failedStage !== null || scan.length === 0) {
+      rememberInput(bytes, input);
+      return first;
+    }
+    const jobs: OcrJob[] = scan.map((index) => ({
+      index,
+      render: async () => {
+        const [p] = await renderPdfPages(bytes, [index]);
+        if (!p) throw new Error('The page could not be rendered.');
+        return p;
+      },
+    }));
+    const ocrPages = await runOcrQueue({ sourceHash: first.docHash, jobs, onProgress: onOcr });
+    input = { kind: 'pdf', bytes, name, ocrPages };
+  }
+  rememberInput(bytes, input);
+  return analyzeInWorker(input, settings, onStage);
+}
 
 function triageKey(docId: string) {
   return `triage:${docId}`;
@@ -203,7 +292,7 @@ export const useReview = create<ReviewState>((set, get) => {
     toast: null,
     error: null,
 
-    openDocument: async (bytes, meta) => {
+    openDocument: async (bytes, meta, opts) => {
       const seq = ++loadSeq;
       aiBeginOpen();
       set({
@@ -218,8 +307,9 @@ export const useReview = create<ReviewState>((set, get) => {
       });
       let result: EngineResult;
       try {
-        result = await analyzeInWorker(
+        result = await analyzeDocument(
           bytes,
+          opts?.fileName,
           { ...(meta.sampleId ? { sampleId: meta.sampleId } : {}), ...e2eSettings() },
           (s) => {
             if (seq === loadSeq) set({ stages: { ...get().stages, [s.id]: s } });

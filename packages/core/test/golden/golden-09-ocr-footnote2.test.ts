@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { setSupSegments, supSegmentsOf, type SupSegment } from '../../src/adapters/sup-segments';
+import { ocrToLines as ocrAdapter } from '../../src/adapters/ocr';
+import { setSupSegments, supSegmentsOf } from '../../src/adapters/sup-segments';
 import { supSegmentsOf as htmlSupSegmentsOf } from '../../src/adapters/html';
 import { OcrResultSchema, type OcrResult } from '../../src/contracts/ocr';
 import { buildDocGraph, runDeterministic } from '../../src/engine';
@@ -15,36 +16,12 @@ import type { Line } from '../../src/model/types';
  * OCR-provenance investor groups with the PATH-04 peer rule (distinct peer types), deduped
  * against PATH-04. Firing detector: `footnote-requirement` (inconsistent_footnote_requirement).
  *
- * `ocrToLines` is a minimal test-local stand-in for the Phase 06d OCR adapter (`adapters/ocr.ts`):
- * one Line per OCR line (one visual row), `^{n}` stripped, zero-width sup segment at the label end
- * on the cleaned text, page = index + 1, region = bbox. 06d swaps this for the real adapter.
+ * Lines come from the real Phase 06d OCR adapter (`adapters/ocr.ts`): one Line per OCR line (one
+ * visual row), `^{n}` stripped, zero-width sup segment at the label end on the cleaned text,
+ * page = index + 1, region = bbox, page noise (the "1/8" footer) dropped.
  */
-const MARKER = /[ \t]{0,8}\^\{(\d{1,3})\}/g;
-
 function ocrToLines(r: OcrResult): Line[] {
-  const out: Line[] = [];
-  for (const p of r.pages) {
-    for (const l of p.lines) {
-      let text = '';
-      let last = 0;
-      const sups: SupSegment[] = [];
-      for (const m of l.text.matchAll(MARKER)) {
-        text += l.text.slice(last, m.index);
-        sups.push({ start: text.length, end: text.length, text: m[1]! });
-        last = m.index + m[0].length;
-      }
-      text += l.text.slice(last);
-      const line: Line = {
-        text,
-        cue: { bold: false, caps: false, indent: 0, position: 'unknown', cue_source: 'ocr' },
-        page: p.index + 1,
-      };
-      if (l.bbox) line.region = l.bbox;
-      setSupSegments(line, sups);
-      out.push(line);
-    }
-  }
-  return out;
+  return ocrAdapter(r).lines;
 }
 
 function load(name: string): OcrResult {

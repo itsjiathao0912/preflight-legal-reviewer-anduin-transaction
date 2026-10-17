@@ -74,3 +74,51 @@ export {
 
 // --- Phase 05: LLM task framework (tasks registry, rules injection, verify chain, candidates) ---
 export * from './llm/index';
+
+// --- Phase 06 (06d): PDF / OCR / format detection / page noise adapters ---
+// DOCX is NOT re-exported here: mammoth is CommonJS and cannot be tree-shaken, so a barrel
+// re-export adds ~690 KB to the apps/worker bundle (wrangler dry-run, 06d). Import DOCX from the
+// `@aduin/core/docx` subpath instead. pdf.ts loads unpdf lazily and tree-shakes out of the worker.
+export {
+  pdfToLines,
+  PDF_MESSAGES,
+  type PdfAdapterOptions,
+  type PdfAdapterResult,
+} from './adapters/pdf';
+export {
+  pdfPagesToLines,
+  MIN_TEXT_CHARS,
+  type PdfTextItem,
+  type PdfTextPage,
+  type PdfPageLines,
+  type PdfLinesResult,
+} from './adapters/pdf-text';
+export {
+  ocrToLines,
+  stripMarkers,
+  normalizeRegion,
+  OCR_MAX_LINES_PER_PAGE,
+  type OcrPage,
+  type OcrPageLines,
+  type OcrLinesResult,
+} from './adapters/ocr';
+export {
+  pageConfidence,
+  structuralScore,
+  isLowConfidence,
+  DEFAULT_SELF_REPORTED,
+} from './ocr/confidence';
+export {
+  detectFormat,
+  sniffMagic,
+  type DocFormat,
+  type FormatDetection,
+} from './adapters/format-detect';
+export {
+  stripPageNoise,
+  isPageNumberLine,
+  type DroppedLine,
+  type NoiseRule,
+  type PageNoiseResult,
+} from './adapters/page-noise';
+export { setSupSegments, supSegmentsOf, type SupSegment } from './adapters/sup-segments';

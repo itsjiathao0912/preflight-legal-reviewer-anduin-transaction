@@ -20,6 +20,7 @@ import { htmlSamples, readSample } from '../helpers/samples';
 import * as pageNoise from '../../src/adapters/page-noise';
 import * as pdfText from '../../src/adapters/pdf-text';
 import * as formatDetect from '../../src/adapters/format-detect';
+import * as ocrAdapter from '../../src/adapters/ocr';
 
 /** redos-budget: every heading/reference/statutory/detector regex on the largest sample and on 1 MB adversarial single lines. */
 const MB = 1024 * 1024;
@@ -52,6 +53,8 @@ const ADVERSARIAL: Record<string, string> = {
   slashes: fill('1 / '),
   dashDigits: fill('- 1 - '),
   tabsSpaces: fill(' \t '),
+  ocrMarkers: fill(' \t^{1'),
+  ocrMarkersClosed: fill('\t ^{12}'),
 };
 
 const HEADING_RES: RegExp[] = [
@@ -89,7 +92,12 @@ const ALL: RegExp[] = [
 ];
 
 // Phase 06 (D7): page-noise, pdf-text and format-detect regexes.
-const PHASE06: RegExp[] = [...collect(pageNoise), ...collect(pdfText), ...collect(formatDetect)];
+const PHASE06: RegExp[] = [
+  ...collect(pageNoise),
+  ...collect(pdfText),
+  ...collect(formatDetect),
+  ...collect(ocrAdapter),
+];
 ALL.push(...PHASE06);
 
 function scan(re: RegExp, text: string): number {
