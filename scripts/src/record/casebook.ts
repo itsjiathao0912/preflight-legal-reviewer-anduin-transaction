@@ -3,7 +3,8 @@
  * candidate selection, firm rules, response mode). Authored responses live in
  * `author-recordings.ts`; live runs (`record-ai.ts`) replace a case's file at the same path.
  */
-import type { AiResponseMode, AiTaskId } from '@aduin/core';
+import { readFileSync } from 'node:fs';
+import type { AiCandidate, AiResponseMode, AiTaskId } from '@aduin/core';
 import { pairCandidates, sampleCandidates, type RecordedRequest } from './ai-request';
 
 export interface RecordingCase {
@@ -19,6 +20,17 @@ export interface RecordingCase {
   live?: boolean;
   /** Phase 07 drift-narrative: candidates come from the version diff of this [base, compare] pair. */
   pair?: readonly [string, string];
+  /**
+   * Literal candidates sent as-is (no engine selection, `pick` ignored). counsel-draft candidates
+   * come from the app's confirmed findings (`draftCandidates`), not `buildAiCandidates`, so an
+   * engine candidate change must not move their request or hash.
+   */
+  fixedCandidates?: readonly AiCandidate[];
+}
+
+function fixed(name: string): AiCandidate[] {
+  const url = new URL(`./fixed-candidates/${name}.json`, import.meta.url);
+  return JSON.parse(readFileSync(url, 'utf8')) as AiCandidate[];
 }
 
 /** Active firm rule used by the rules-in-context case (synthetic; the demo seed rule is only proposed). */
@@ -48,7 +60,8 @@ export const CASES: readonly RecordingCase[] = [
     id: 'counsel-draft-03',
     task: 'counsel-draft',
     sample: '03',
-    pick: ['c_fcfcb4a816686edb', 'c_54cd421d8bdba4af'],
+    pick: 'all',
+    fixedCandidates: fixed('counsel-draft-03'),
     rule_texts: [],
     live: true,
   },
@@ -56,14 +69,14 @@ export const CASES: readonly RecordingCase[] = [
     id: 'firm-rules-in-context-03',
     task: 'clause-judgment',
     sample: '03',
-    pick: ['c_53ded8db41297f0a'],
+    pick: ['c_11be0ae0434514ea'],
     rule_texts: [IN_CONTEXT_RULE],
   },
   {
     id: 'hostile-hallucinated-quote',
     task: 'clause-judgment',
     sample: '01',
-    pick: ['c_a3a1fd5641d412c0'],
+    pick: ['c_a603f23420e703bd'],
     rule_texts: [],
   },
   {
@@ -92,6 +105,16 @@ export const CASES: readonly RecordingCase[] = [
     task: 'clause-judgment',
     sample: '01',
     pick: ['c_624f0f476f804afb'],
+    rule_texts: [],
+  },
+  // ai-review-stream-dedup: an AI answer that repeats a rule-flagged sentence through a candidate id
+  // the engine no longer sends (legacy c_a3a1...); the app must never show it as an AI row
+  {
+    id: 'ai-duplicate-of-rule',
+    task: 'clause-judgment',
+    sample: '01',
+    // two picks: a one-pick c_b30f... request is hostile-severity-critical's (same inputHash)
+    pick: ['c_439057b9bc027023', 'c_b30f291dff2535b6'],
     rule_texts: [],
   },
   // Phase 07 (07c): drift narrative over the #5 -> #6 version diff (public SEC samples)
@@ -125,11 +148,13 @@ export function caseRequest(
   c: RecordingCase,
   mode: AiResponseMode = 'json_schema',
 ): RecordedRequest {
-  const candidates = c.pair
-    ? pairCandidates(c.pair[0], c.pair[1])
-    : sampleCandidates(c.sample).candidates;
+  const candidates = c.fixedCandidates
+    ? [...c.fixedCandidates]
+    : c.pair
+      ? pairCandidates(c.pair[0], c.pair[1])
+      : sampleCandidates(c.sample).candidates;
   let picked = candidates;
-  if (c.pick !== 'all') {
+  if (c.pick !== 'all' && !c.fixedCandidates) {
     picked = c.pick.map((id) => {
       const hit = candidates.find((x) => x.id === id);
       if (!hit) throw new Error(`case ${c.id}: candidate ${id} not produced by the engine`);

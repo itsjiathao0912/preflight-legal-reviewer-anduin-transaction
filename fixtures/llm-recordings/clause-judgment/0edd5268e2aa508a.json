@@ -1,0 +1,47 @@
+{
+  "case": "firm-rules-in-context-03",
+  "taskId": "clause-judgment",
+  "promptVersion": "clause-judgment@1",
+  "inputHash": "0edd5268e2aa508a0f8c1ad87ee060c73ace3596b83eea70f37ebb95aff136a5",
+  "model": "nvidia/nemotron-3-super-120b-a12b:free",
+  "messagesDigest": "0edd5268e2aa508a0f8c1ad87ee060c73ace3596b83eea70f37ebb95aff136a5",
+  "request": {
+    "task": "clause-judgment",
+    "sample": "03",
+    "candidates": [
+      {
+        "id": "c_11be0ae0434514ea",
+        "quote": "Thank you for your interest in Partners Group Private Equity (Master Fund), LLC (the “Fund”).",
+        "section_path": [
+          "SUBSCRIPTION AGREEMENT INSTRUCTIONS"
+        ],
+        "issue_class_hint": "defined_term_issue"
+      }
+    ],
+    "rule_texts": [
+      "Placeholders for the investor name on the wire \"FFC\" line are firm standard wording."
+    ],
+    "mode": "json_schema"
+  },
+  "response": {
+    "raw": "{\"findings\":[{\"issue_class\":\"ambiguity\",\"severity\":\"low\",\"confidence\":0.55,\"explanation\":\"The firm rules were read as context; the finding is still reported so the analyst can confirm the wording.\",\"interpretations\":[],\"candidate_id\":\"c_11be0ae0434514ea\",\"quote\":\"Thank you for your interest in Partners Group Private Equity\"}]}",
+    "parsed": {
+      "findings": [
+        {
+          "issue_class": "ambiguity",
+          "severity": "low",
+          "confidence": 0.55,
+          "explanation": "The firm rules were read as context; the finding is still reported so the analyst can confirm the wording.",
+          "interpretations": [],
+          "candidate_id": "c_11be0ae0434514ea",
+          "quote": "Thank you for your interest in Partners Group Private Equity"
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "authored",
+    "served_model": "nvidia/nemotron-3-super-120b-a12b:free",
+    "recordedAt": "2026-10-17T00:00:00.000Z"
+  }
+}

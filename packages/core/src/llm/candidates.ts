@@ -6,12 +6,14 @@ import type { DocGraph } from '../graph/graph';
 import { mask, sensitiveSpans } from '../memory/mask';
 import { snapToSentence } from '../memory/snap';
 import { sha256Hex } from '../model/hash';
+import { rangesOverlap } from './dedupe';
 
 /**
  * Graph-selected AI candidates (pure function of the DocGraph plus the deterministic findings).
- * Neighborhoods, in priority order: (1) sentences of deterministic findings, (2) conditional
- * sentences, (3) defined-term definitions, (4) exclusive option-group cue lines. Deduplicated by
- * sentence, masked (no raw account digits leave the browser), capped at `max` (limits.aiCandidates),
+ * Neighborhoods, in priority order: (1) conditional sentences, (2) defined-term definitions,
+ * (3) exclusive option-group cue lines. Sentences that overlap a deterministic (`rule`) finding's
+ * anchor are excluded: the rule engine already reports them, so asking the model about them only
+ * produces duplicates. Deduplicated by sentence, masked (no raw account digits leave the browser), capped at `max` (limits.aiCandidates),
  * returned in document order with stable ids.
  */
 interface Pick {
@@ -51,19 +53,17 @@ export function buildAiCandidatesWithSites(
   const cap = Math.max(0, Math.min(max, limits.aiCandidates));
   if (cap === 0) return { candidates: [], sites: [] };
   const blockIndexById = new Map(s.blocks.map((b, i) => [b.id, i] as const));
-  const picks: Pick[] = [];
+  const ruleSpans = new Map<number, [number, number][]>();
   for (const f of findings) {
     if (f.detector_kind !== 'rule') continue;
     const bi = blockIndexById.get(f.anchor.blockId);
     if (bi === undefined) continue;
-    picks.push({
-      blockIndex: bi,
-      start: f.anchor.offsetStart,
-      end: f.anchor.offsetEnd,
-      hint: f.issue_class,
-      priority: 0,
-    });
+    const span: [number, number] = [f.anchor.offsetStart, f.anchor.offsetEnd];
+    const list = ruleSpans.get(bi);
+    if (list) list.push(span);
+    else ruleSpans.set(bi, [span]);
   }
+  const picks: Pick[] = [];
   for (const c of s.conditionals)
     picks.push({
       blockIndex: c.blockIndex,
@@ -95,6 +95,10 @@ export function buildAiCandidatesWithSites(
     const text = block.lines.map((l) => l.text).join(' ');
     if (text.trim().length === 0) continue;
     const snap = snapToSentence(text, Math.min(p.start, text.length), Math.min(p.end, text.length));
+    if (
+      ruleSpans.get(p.blockIndex)?.some(([rs, re]) => rangesOverlap(snap.start, snap.end, rs, re))
+    )
+      continue;
     const quote = mask(snap.quote, sensitiveSpans(snap.quote)).slice(0, limits.quoteMaxChars);
     if (quote.trim().length === 0) continue;
     const key = `${block.id}:${snap.start}`;

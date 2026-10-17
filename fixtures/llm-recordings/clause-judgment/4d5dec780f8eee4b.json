@@ -1,0 +1,58 @@
+{
+  "case": "ai-duplicate-of-rule",
+  "taskId": "clause-judgment",
+  "promptVersion": "clause-judgment@1",
+  "inputHash": "4d5dec780f8eee4b6c0313750729bb108675f59f1b370e91779dabd660210359",
+  "model": "nvidia/nemotron-3-super-120b-a12b:free",
+  "messagesDigest": "4d5dec780f8eee4b6c0313750729bb108675f59f1b370e91779dabd660210359",
+  "request": {
+    "task": "clause-judgment",
+    "sample": "01",
+    "candidates": [
+      {
+        "id": "c_439057b9bc027023",
+        "quote": "This Account Application is utilized for the offering of shares of beneficial interest (the “Shares”) of Franklin Lexington Private Markets Fund (the “Fund”).",
+        "section_path": [],
+        "issue_class_hint": "defined_term_issue"
+      },
+      {
+        "id": "c_b30f291dff2535b6",
+        "quote": "Prior to a Closing Date, and to the receipt and acceptance of this Account Application, your funds will be held in an escrow account at the Fund’s transfer agent, in accordance with Rule 15c2-4 under the Securities Exchange Act of 1934, as amended (the “Exchange Act”).",
+        "section_path": [],
+        "issue_class_hint": "defined_term_issue"
+      }
+    ],
+    "rule_texts": [],
+    "mode": "json_schema"
+  },
+  "response": {
+    "raw": "{\"findings\":[{\"issue_class\":\"ambiguity\",\"severity\":\"low\",\"confidence\":0.5,\"explanation\":\"It is unclear when the escrow ends.\",\"interpretations\":[],\"candidate_id\":\"c_b30f291dff2535b6\",\"quote\":\"Prior to a Closing Date, and to the receipt and acceptance of\"},{\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.8,\"explanation\":\"Repeats the deterministic cross-reference finding on this sentence.\",\"interpretations\":[],\"candidate_id\":\"c_a3a1fd5641d412c0\",\"quote\":\"paragraphs 1 through 4 of this Section 11\"}]}",
+    "parsed": {
+      "findings": [
+        {
+          "issue_class": "ambiguity",
+          "severity": "low",
+          "confidence": 0.5,
+          "explanation": "It is unclear when the escrow ends.",
+          "interpretations": [],
+          "candidate_id": "c_b30f291dff2535b6",
+          "quote": "Prior to a Closing Date, and to the receipt and acceptance of"
+        },
+        {
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.8,
+          "explanation": "Repeats the deterministic cross-reference finding on this sentence.",
+          "interpretations": [],
+          "candidate_id": "c_a3a1fd5641d412c0",
+          "quote": "paragraphs 1 through 4 of this Section 11"
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "authored",
+    "served_model": "nvidia/nemotron-3-super-120b-a12b:free",
+    "recordedAt": "2026-10-17T00:00:00.000Z"
+  }
+}

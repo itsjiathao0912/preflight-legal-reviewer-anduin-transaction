@@ -11,6 +11,7 @@ import { snapToSentence } from '../memory/snap';
 import { makeAnchor } from '../model/anchors';
 import { runDeterministic } from '../engine';
 import { buildAiCandidatesWithSites, type AiCandidateSite } from './candidates';
+import { dropRuleDuplicates } from './dedupe';
 import { AI_SUGGESTION_LABEL, type AiSource } from './provenance';
 
 /**
@@ -180,7 +181,13 @@ export interface RejectedAiFinding {
 }
 
 export type VerifyAiOutcome =
-  | { ok: true; findings: Finding[]; rejected: RejectedAiFinding[] }
+  | {
+      ok: true;
+      findings: Finding[];
+      rejected: RejectedAiFinding[];
+      /** Verified findings dropped as duplicates of a rule finding; present only with `ruleFindings`. */
+      suppressed?: number;
+    }
   | { ok: false; reason: 'schema' };
 
 export interface VerifyAiContext {
@@ -192,6 +199,12 @@ export interface VerifyAiContext {
    * deterministically from the graph (`candidateSitesFor`). An unknown candidate_id matches nothing.
    */
   sites?: readonly AiCandidateSite[];
+  /**
+   * Deterministic findings shown for this document. When given, a verified AI finding whose
+   * anchor overlaps a `rule` finding anchor in the same block is dropped (`dropRuleDuplicates`)
+   * and counted in `suppressed`. Omitted: output unchanged.
+   */
+  ruleFindings?: readonly Pick<Finding, 'anchor' | 'detector_kind'>[];
 }
 
 function snippet(q: string): string {
@@ -302,6 +315,10 @@ export function verifyAiResult(
     }
     seen.add(id);
     findings.push(ok.data);
+  }
+  if (ctx.ruleFindings) {
+    const { kept, dropped } = dropRuleDuplicates(findings, ctx.ruleFindings);
+    return { ok: true, findings: kept, rejected, suppressed: dropped.length };
   }
   return { ok: true, findings, rejected };
 }

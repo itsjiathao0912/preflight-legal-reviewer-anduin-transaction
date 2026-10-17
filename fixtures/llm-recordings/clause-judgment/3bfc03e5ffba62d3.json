@@ -2,9 +2,9 @@
   "case": "sample-01",
   "taskId": "clause-judgment",
   "promptVersion": "clause-judgment@1",
-  "inputHash": "37dbea6ce6ecfe4bee44b540ecfead75817fc50e6b32a5905e6eefad47409dc3",
+  "inputHash": "3bfc03e5ffba62d30fe1f4b2f547daebbd9605d42c158010f7f7852942c11442",
   "model": "nvidia/nemotron-3-super-120b-a12b:free",
-  "messagesDigest": "37dbea6ce6ecfe4bee44b540ecfead75817fc50e6b32a5905e6eefad47409dc3",
+  "messagesDigest": "3bfc03e5ffba62d30fe1f4b2f547daebbd9605d42c158010f7f7852942c11442",
   "request": {
     "task": "clause-judgment",
     "sample": "01",
@@ -32,18 +32,6 @@
         "quote": "Prior to a Closing Date, and to the receipt and acceptance of this Account Application, your funds will be held in an escrow account at the Fund’s transfer agent, in accordance with Rule 15c2-4 under the Securities Exchange Act of 1934, as amended (the “Exchange Act”).",
         "section_path": [],
         "issue_class_hint": "defined_term_issue"
-      },
-      {
-        "id": "c_cfc36abe07ac9c19",
-        "quote": "ABA routing: #0695",
-        "section_path": [],
-        "issue_class_hint": "sensitive_data"
-      },
-      {
-        "id": "c_c9fcc048467d841c",
-        "quote": "DDA: #4951",
-        "section_path": [],
-        "issue_class_hint": "sensitive_data"
       },
       {
         "id": "c_624f0f476f804afb",
@@ -146,22 +134,6 @@
         "issue_class_hint": "option_gap_overlap"
       },
       {
-        "id": "c_a3a1fd5641d412c0",
-        "quote": "5. The investor is an entity which would be defined as an investment company under Section 3(a) of the 1940 Act, but solely for the exception from that definition provided by Section 3(c)(1) thereof (e.g., certain limited partnership and limited liability companies organized to make investments); provided that each equity owner of such entity meets at least one of the tests in paragraphs 1 through 4 of this Section 11 (looking through each equity owner that relies on Section 3(c)(1) of the 1940 Act, is a registered investment company or is a business development company).",
-        "section_path": [
-          "12. Qualified Client Status (must be completed)"
-        ],
-        "issue_class_hint": "broken_cross_reference"
-      },
-      {
-        "id": "c_bbfb16d50ab9577f",
-        "quote": "6. The investor is an investment company registered, or required to be registered, under the 1940 Act or is a business development company as defined in Section 202(a)(22) of the Advisers Act; provided that each equity owner of such entity meets at least one of the tests in paragraphs 1 through 4 of this Section 11 (looking through each equity owner that relies on Section 3(c)(1) of the 1940 Act, is a registered investment company or is a business development company).",
-        "section_path": [
-          "12. Qualified Client Status (must be completed)"
-        ],
-        "issue_class_hint": "broken_cross_reference"
-      },
-      {
         "id": "c_e81aada41c210c76",
         "quote": "☐ 1.",
         "section_path": [
@@ -171,10 +143,16 @@
       }
     ],
     "rule_texts": [],
-    "mode": "json_schema"
+    "mode": "json_schema",
+    "derived_from": {
+      "inputHash16": "37dbea6ce6ecfe4b",
+      "source": "live",
+      "kept": 1,
+      "dropped": 2
+    }
   },
   "response": {
-    "raw": "{\"findings\": [{\"candidate_id\": \"c_624f0f476f804afb\", \"issue_class\": \"meaningful_typo\", \"severity\": \"medium\", \"confidence\": 0.95, \"quote\": \"Title I of ERISA of Section 4975 of the Code\", \"explanation\": \"The phrase incorrectly merges Title I of ERISA with Section 4975 of the Internal Revenue Code, creating confusion about which legal provision is being referenced.\", \"interpretations\": [\"The drafter intended to refer to Title I of ERISA.\", \"The drafter intended to refer to Section 4975 of the Code.\", \"The phrase as written denotes a nonsensical combined provision that does not exist.\"]}, {\"candidate_id\": \"c_a3a1fd5641d412c0\", \"issue_class\": \"broken_cross_reference\", \"severity\": \"high\", \"confidence\": 0.98, \"quote\": \"paragraphs 1 through 4 of this Section 11\", \"explanation\": \"The provision appears in Section 12 but references Section 11, indicating a misnumbered or missing cross‑reference.\", \"interpretations\": [\"The reference should point to Section 12 (the current section).\", \"Section 11 exists elsewhere but the referenced paragraphs are not present.\", \"The drafter made a typographical error in the section number.\"]}, {\"candidate_id\": \"c_bbfb16d50ab9577f\", \"issue_class\": \"broken_cross_reference\", \"severity\": \"high\", \"confidence\": 0.98, \"quote\": \"paragraphs 1 through 4 of this Section 11\", \"explanation\": \"The provision appears in Section 12 but references Section 11, indicating a misnumbered or missing cross‑reference.\", \"interpretations\": [\"The reference should point to Section 12 (the current section).\", \"Section 11 exists elsewhere but the referenced paragraphs are not present.\", \"The drafter made a typographical error in the section number.\"]}]}",
+    "raw": "{\"findings\":[{\"candidate_id\":\"c_624f0f476f804afb\",\"issue_class\":\"meaningful_typo\",\"severity\":\"medium\",\"confidence\":0.95,\"quote\":\"Title I of ERISA of Section 4975 of the Code\",\"explanation\":\"The phrase incorrectly merges Title I of ERISA with Section 4975 of the Internal Revenue Code, creating confusion about which legal provision is being referenced.\",\"interpretations\":[\"The drafter intended to refer to Title I of ERISA.\",\"The drafter intended to refer to Section 4975 of the Code.\",\"The phrase as written denotes a nonsensical combined provision that does not exist.\"]}]}",
     "parsed": {
       "findings": [
         {
@@ -189,45 +167,13 @@
             "The drafter intended to refer to Section 4975 of the Code.",
             "The phrase as written denotes a nonsensical combined provision that does not exist."
           ]
-        },
-        {
-          "candidate_id": "c_a3a1fd5641d412c0",
-          "issue_class": "broken_cross_reference",
-          "severity": "high",
-          "confidence": 0.98,
-          "quote": "paragraphs 1 through 4 of this Section 11",
-          "explanation": "The provision appears in Section 12 but references Section 11, indicating a misnumbered or missing cross‑reference.",
-          "interpretations": [
-            "The reference should point to Section 12 (the current section).",
-            "Section 11 exists elsewhere but the referenced paragraphs are not present.",
-            "The drafter made a typographical error in the section number."
-          ]
-        },
-        {
-          "candidate_id": "c_bbfb16d50ab9577f",
-          "issue_class": "broken_cross_reference",
-          "severity": "high",
-          "confidence": 0.98,
-          "quote": "paragraphs 1 through 4 of this Section 11",
-          "explanation": "The provision appears in Section 12 but references Section 11, indicating a misnumbered or missing cross‑reference.",
-          "interpretations": [
-            "The reference should point to Section 12 (the current section).",
-            "Section 11 exists elsewhere but the referenced paragraphs are not present.",
-            "The drafter made a typographical error in the section number."
-          ]
         }
       ]
     }
   },
   "meta": {
-    "source": "live",
+    "source": "authored",
     "served_model": "nvidia/nemotron-3-super-120b-a12b:free",
-    "tokens": {
-      "in": 2229,
-      "out": 3674
-    },
-    "recordedAt": "2026-10-17T00:19:00.650Z",
-    "cost_usd": 0,
-    "response_mode": "json_schema"
+    "recordedAt": "2026-10-17T00:19:00.650Z"
   }
 }

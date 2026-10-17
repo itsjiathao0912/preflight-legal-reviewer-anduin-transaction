@@ -28,11 +28,11 @@ test.describe('sample-zero-calls', () => {
 
     await openSample(page, '01');
     await expectStage(page, /^Checks done · AI review from cache/);
-    // 3 since review M1 (each AI quote anchors in its own cited candidate; was 2)
-    await expect(aiRows(page)).toHaveCount(3);
+    // 1 since ai-review-stream-dedup (derived sample-01 recording: rule sentences are not candidates)
+    await expect(aiRows(page)).toHaveCount(1);
     await openSample(page, '03');
     await expectStage(page, /^Checks done · AI review from cache/);
-    await expect(aiRows(page)).toHaveCount(2);
+    await expect(aiRows(page)).toHaveCount(1);
 
     expect(ai, 'no /api/ai call on open').toEqual([]);
     expect(outbound, 'no browser request to openrouter.ai').toEqual([]);

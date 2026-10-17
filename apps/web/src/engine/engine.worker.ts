@@ -146,6 +146,7 @@ interface Retained {
   idx: Map<string, number>;
   /** candidate sites of the sent candidates (review M1: verify scopes quotes to them) */
   aiSites?: AiCandidateSite[];
+  ruleFindings?: Finding[];
   /** Phase 06: DOCX numbering label for numbering-dependent findings (AI findings too). */
   numberingNote?: (issueClass: string) => string | undefined;
 }
@@ -560,6 +561,7 @@ export const api: EngineApi = {
         result.aiCandidates = ai.candidates;
         const kept = touch(lines.docHash);
         if (kept) kept.aiSites = ai.sites;
+        if (kept) kept.ruleFindings = findings;
       } catch (e) {
         console.warn('[engine] ai_candidates_failed', e instanceof Error ? e.name : 'unknown');
       }
@@ -608,6 +610,7 @@ export const api: EngineApi = {
         model,
         provenance,
         ...(r.aiSites ? { sites: r.aiSites } : {}),
+        ...(r.ruleFindings ? { ruleFindings: r.ruleFindings } : {}),
       });
     } catch {
       return { ok: false, error: 'schema' };

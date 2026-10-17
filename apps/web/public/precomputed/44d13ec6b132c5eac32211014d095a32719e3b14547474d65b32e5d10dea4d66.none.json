@@ -7,10 +7,10 @@
   "task": "clause-judgment",
   "promptVersion": "clause-judgment@1",
   "schemaVersion": "clause-judgment.s1",
-  "inputHash": "37dbea6ce6ecfe4bee44b540ecfead75817fc50e6b32a5905e6eefad47409dc3",
+  "inputHash": "3bfc03e5ffba62d30fe1f4b2f547daebbd9605d42c158010f7f7852942c11442",
   "model": "nvidia/nemotron-3-super-120b-a12b:free",
   "served_model": "nvidia/nemotron-3-super-120b-a12b:free",
-  "source": "live",
+  "source": "authored",
   "result": {
     "v": 1,
     "findings": [
@@ -25,32 +25,6 @@
           "The drafter intended to refer to Title I of ERISA.",
           "The drafter intended to refer to Section 4975 of the Code.",
           "The phrase as written denotes a nonsensical combined provision that does not exist."
-        ]
-      },
-      {
-        "candidate_id": "c_a3a1fd5641d412c0",
-        "issue_class": "broken_cross_reference",
-        "severity": "high",
-        "confidence": 0.98,
-        "quote": "paragraphs 1 through 4 of this Section 11",
-        "explanation": "The provision appears in Section 12 but references Section 11, indicating a misnumbered or missing cross‑reference.",
-        "interpretations": [
-          "The reference should point to Section 12 (the current section).",
-          "Section 11 exists elsewhere but the referenced paragraphs are not present.",
-          "The drafter made a typographical error in the section number."
-        ]
-      },
-      {
-        "candidate_id": "c_bbfb16d50ab9577f",
-        "issue_class": "broken_cross_reference",
-        "severity": "high",
-        "confidence": 0.98,
-        "quote": "paragraphs 1 through 4 of this Section 11",
-        "explanation": "The provision appears in Section 12 but references Section 11, indicating a misnumbered or missing cross‑reference.",
-        "interpretations": [
-          "The reference should point to Section 12 (the current section).",
-          "Section 11 exists elsewhere but the referenced paragraphs are not present.",
-          "The drafter made a typographical error in the section number."
         ]
       }
     ]

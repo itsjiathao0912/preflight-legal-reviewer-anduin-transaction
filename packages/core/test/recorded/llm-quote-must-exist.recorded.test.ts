@@ -70,15 +70,19 @@ describe('llm-quote-must-exist (recorded, AC28)', () => {
     if (!out.ok) throw new Error('schema');
     expect(out.findings).toEqual([]);
     expect(out.rejected).toEqual([
-      { candidate_id: 'c_a3a1fd5641d412c0', reason: 'quote_not_found' },
+      { candidate_id: 'c_a603f23420e703bd', reason: 'quote_not_found' },
     ]);
   });
 
   it('keeps the firm-rules-in-context finding only because its quote exists', async () => {
-    const { out } = await replay('firm-rules-in-context-03');
+    const { v, out, g } = await replay('firm-rules-in-context-03');
     if (!out.ok) throw new Error('schema');
     expect(out.findings).toHaveLength(1);
-    expect(out.findings[0]!.quote).toContain('[insert investor name]');
+    // the snapped document sentence holds the model's quote (re-pointed off the rule-flagged
+    // placeholder sentence, which is no longer an AI candidate)
+    expect(out.findings[0]!.quote).toContain(v.result.findings[0]!.quote);
+    const bi = g.structure.blocks.findIndex((b) => b.id === out.findings[0]!.anchor.blockId);
+    expect(blockText(g, bi)).toContain(out.findings[0]!.quote);
   });
 
   it('throws RecordingMissError on a miss and never touches the network', async () => {
