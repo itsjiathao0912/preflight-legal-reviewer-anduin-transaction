@@ -15,7 +15,7 @@ REMAINING PHASES:
   [ ] EVL (vc-tester sonnet) + review (vc-code-reviewer sonnet)
   [ ] UPDATE PROCESS - sonnet; deploy workers.dev; message design session
 CLARIFICATIONS LOCKED:
-  1. Feature folder process/features/findings-v2/active/findings-v2_18-10-26/.
+  1. Feature folder process/features/findings-v2/completed/findings-v2_18-10-26/.
   2. Until Variance P05 closes: touch NONE of the Variance files (FindingsScreen, DocPane, model.ts, state/{review,package,last-doc}, base.css, GateButton, counsel/*, gate/GateReasons, compare, ai-lane, registry, variance/*, App.tsx, e2e-hook, engine/*, storage/db.ts, shared e2e specs). No Playwright, no builds, no deploys before then.
   3. Keep Variance's landed UI (owner chips, questions-by-owner, gate states) in the v2 list.
   4. No new screens or sidebar items; render-first preserved.

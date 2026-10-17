@@ -11,7 +11,7 @@ metadata:
 
 # Findings v2 step 3 - Flag this passage and Suggest wording (backlog stub)
 
-**Status:** BACKLOG. Needs its own SPEC then PLAN. Starts only after Findings v2 Phase B ships (`process/features/findings-v2/active/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md`). Step 1 builds nothing for it (decision D-8).
+**Status:** BACKLOG. Needs its own SPEC then PLAN. Starts only after Findings v2 Phase B ships (`process/features/findings-v2/completed/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md`). Step 1 builds nothing for it (decision D-8).
 
 ## What the design asks for (NOTES D13)
 

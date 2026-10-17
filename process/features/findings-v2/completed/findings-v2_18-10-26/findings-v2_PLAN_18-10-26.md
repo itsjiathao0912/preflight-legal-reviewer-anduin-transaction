@@ -13,13 +13,13 @@ metadata:
 
 **Date**: 18-10-26
 **Complexity**: COMPLEX
-**Status**: Phase A VERIFIED; Phase B PLAN-SUPPLEMENTED (needs inner PVL); Phase C DROPPED (P-16)
+**Status**: COMPLETE with known gaps (Phase A VERIFIED; Phase B VERIFIED and LIVE 7db9e602; Phase C DROPPED, P-16)
 **Feature:** findings-v2 (`process/features/findings-v2/`)
 **Decision record:** `findings-v2_DECISION_18-10-26.md` (D-1..D-10, locked; cited, not redefined)
 **Research:** `findings-v2_RESEARCH_18-10-26.md` (file:line evidence)
 **Design source (read-only):** `design/mockups/findings-v2.html`, `design/mockups/findings-v2_NOTES.md` (D1-D15)
 **Context routers read:** `process/context/all-context.md`, `process/context/ui/all-ui.md`, `process/context/tests/all-tests.md`, `process/context/planning/all-planning.md`, `process/context/worker/all-worker.md` (deploy recipe only).
-**Next Step:** Inner PVL (vc-validate-agent) for Phase B, then EXECUTE Phase B.
+**Next Step:** None. Program closed 18-10-26; follow-ups in `process/features/findings-v2/backlog/`.
 
 ---
 
@@ -288,7 +288,7 @@ Prefix `fv2-` only, plus the root `.fv2`, `.fv2-work` and the attribute selector
 **Phase status:** ⏳ PLANNED
 **Depends on:** nothing (Variance P04 code is committed; P05 does not touch `apps/web/src`).
 **Risk class:** low (additive, unmounted, no data or contract change).
-**Report destination:** `process/features/findings-v2/active/findings-v2_18-10-26/findings-v2-phase-a_REPORT_18-10-26.md`
+**Report destination:** `process/features/findings-v2/completed/findings-v2_18-10-26/findings-v2-phase-a_REPORT_18-10-26.md`
 **Execute strategy (D-9):** A1 logic modules and tests (1 opus agent), then A2 two parallel opus agents with disjoint directories: UI in `v2/` (components, glue hooks, KindSegment) and `zoom/` plus `styles/findings-v2.css`. Model: opus for these code-writing agents only; research, validate and review run on sonnet. The A2 agents coordinate only through the fixed CSS class contract above, so no cross-talk is required and parallel subagents are valid. Serialize test runs (one vitest process at a time).
 
 ### Files (all CREATE; nothing is edited)
@@ -399,7 +399,7 @@ Agent-Probe and Known-Gap in Phase A: none run (no browser). The visual calm-pal
 ## Phase B - Integration (UNBLOCKED; Variance closed dcb387d, live d9aaddd9)
 
 - Status: PLAN-SUPPLEMENTED 18-10-26 (Step 0 done; inner PVL next). Risk: medium-high.
-- Report: `process/features/findings-v2/active/findings-v2_18-10-26/findings-v2-phase-b_REPORT_18-10-26.md`.
+- Report: `process/features/findings-v2/completed/findings-v2_18-10-26/findings-v2-phase-b_REPORT_18-10-26.md`.
 - Strategy: one opus agent per step, sequential. EVL, review and UPDATE PROCESS run on sonnet.
 - Step 0 evidence: `findings-v2-phase-b-step0_RESEARCH_18-10-26.md`.
 
@@ -428,7 +428,7 @@ Agent-Probe and Known-Gap in Phase A: none run (no browser). The visual calm-pal
 | `apps/web/test/support/mockupCss.ts` | EDIT | add a `findingsV2Css` slicer reading `design/mockups/findings-v2.html`: 50 at 1280 and above, 55 below, clamp 40/65, handle 8px. |
 | `apps/web/e2e/fixtures/app.ts` | EDIT | in `gotoApp()`, before `page.goto('/')`, `page.addInitScript` seeding `localStorage['ui:v1:doczoom']={"mode":"manual","pct":100}`. The 3 specs calling `page.goto` directly and the 10 stack specs keep the fit default (re-check the 3 direct specs for geometry assumptions). |
 | `apps/web/e2e/fixtures/findings-actions.ts` | CREATE | helpers `openFirstFinding`, `askCounsel`, `closeAsRealIssue`, `closeWithReason`, `moveBack`. |
-| `apps/web/e2e/design-probe.spec.ts` | EDIT | zoom variants via the `ui:v1:doczoom` seed (75, 100, 150) at widths 1440 and 1024, plus a capture of `design/mockups/findings-v2.html` for side-by-side; output into `process/features/findings-v2/active/findings-v2_18-10-26/design-probe/`. Agent-Probe, non-blocking. |
+| `apps/web/e2e/design-probe.spec.ts` | EDIT | zoom variants via the `ui:v1:doczoom` seed (75, 100, 150) at widths 1440 and 1024, plus a capture of `design/mockups/findings-v2.html` for side-by-side; output into `process/features/findings-v2/completed/findings-v2_18-10-26/design-probe/`. Agent-Probe, non-blocking. |
 | `apps/web/e2e/findings-v2.spec.ts` | CREATE | bar, outcome toast and Undo, groups and progress, resize (drag, keys, persistence), zoom (fit, manual, keys, persistence), shortcuts, done state, focus after dismiss and Esc return (P-15), nav unchanged. |
 | `apps/web/src/features/review/v2/findings-v2-store-parity.test.tsx` | CREATE | simulated outcome equals the real post-action recompute (pattern `test/review-sync.test.ts`). |
 | `FindingRow.tsx`, `DismissModal.tsx` | DELETE | after the full gate is green and no importer remains. `variance/ChangeRow.tsx` deleted only if nothing imports it, else left. |
@@ -469,8 +469,8 @@ Agent-Probe and Known-Gap in Phase A: none run (no browser). The visual calm-pal
 - [x] B5 (06b02ac) `findings-v2.spec` and store parity. Commit `test: findings v2 e2e and store parity`.
 - [x] B6 (a98ca9c) Dead code removal. Commit `refactor: remove superseded finding row and dismiss modal`.
 - [x] B7 Gates (table below; all green 18-10-26, design-probe spec d521bd5; results in the Phase B report).
-- [ ] B8 EVL (vc-tester), code review, UPDATE PROCESS (archive the plan folder since Phase C is dropped).
-- [ ] B-deploy, after EVL and review only:
+- [x] B8 EVL (vc-tester, re-run at 4c39a5a), code review (fixes 4c39a5a), UPDATE PROCESS (plan folder archived to completed/).
+- [x] B-deploy (LIVE 7db9e602-a688-4559-ae2d-d69892c873be from main 4c39a5a, 18-10-26), after EVL and review only:
   1. Free port 4317. Run `pnpm guard:cf` then `pnpm secrets:scan`.
   2. Make the plain web bundle with `VITE_TURNSTILE_SITE_KEY` inline via a scratch shell script stored OUTSIDE the repo (session scratchpad, written with the Write tool; command text must avoid the blocked words). The public site key is read from the currently live bundle (it is public, embedded in served JS) inside that script and used inline; never print, log, export or commit it. Run it immediately before deploy, because any stack Playwright run overwrites the output. The production-bundle hook test (token name contains a blocked word) runs only inside the full unit suite.
   3. `pnpm --filter @aduin/scripts deploy:preflight` (13 checks), with the same inline site key in its own env.
@@ -512,10 +512,10 @@ All commits: `git add <paths>` then `git commit -m "<msg>" -- <paths>` (use bash
 - [x] 1 RESEARCH (Step 0 re-sync)
 - [x] 2 INNOVATE (n/a, mechanical decisions P-11..P-16 by the orchestrator)
 - [x] 3 PLAN-SUPPLEMENT
-- [ ] 4 PVL (inner; the Phase A contract is outer-pvl and older than the refresh note, so re-run from V1)
-- [ ] 5 EXECUTE
-- [ ] 6 EVL
-- [ ] 7 UPDATE PROCESS
+- [x] 4 PVL (inner; the Phase A contract is outer-pvl and older than the refresh note, so re-run from V1)
+- [x] 5 EXECUTE
+- [x] 6 EVL
+- [x] 7 UPDATE PROCESS - archived; context updated; committed
 
 ---
 
@@ -848,7 +848,7 @@ Execute-agent instructions (binding for Phase B; the plan supplement folds the p
 - E-B12 Report (`findings-v2-phase-b_REPORT_18-10-26.md`): each command with exit code and tests-run count, every spec edited and why, the final test counts (web unit, preview e2e, stack-memory), design questions (P-7 Closed group versus filter, P-10 Real issue on change rows, E-B7 shadow decision, E-B13 CSS edits), the live version before and after, and the residual Known-Gap items.
 - E-B13 (new, cycle 2) `styles/findings-v2.css` is a Phase A file owned by this plan; Phase B may make minimal additive or corrective edits to it ONLY to satisfy a mockup rule or a failing repaired spec, each logged in the report, `findings-v2-css-guard` kept green, nothing in `base.css` or `tokens.css`. Known first case: `.fv2-modal textarea` sets `font-size: 14px` (line 383) but the mockup (`findings-v2.html` line 314, `.modal textarea`) is 16px and `layout-vs-mockup.spec.ts:178` asserts `16px` on `dismiss-note`; fix the CSS to 16px, never the assertion. Any axe contrast failure on the v2 panel in `a11y-smoke` or `a11y-keyboard` is fixed the same way (colour token swap inside findings-v2.css), not by weakening the audit.
 - E-B14 (new, cycle 2) The `gotoApp()` zoom seed must be seed-if-absent (`if (localStorage.getItem('ui:v1:doczoom') === null) localStorage.setItem(...)` inside the init script) and `gotoApp` takes an optional `{ zoom }` parameter (`'fit'` skips seeding; a number seeds `{"mode":"manual","pct":N}`), because (a) an unconditional seed overwrites the user's zoom on every `page.reload()` and breaks the zoom-persistence cases in `findings-v2.spec`, (b) the fit-default cases in `findings-v2.spec` need no seed, and (c) the design-probe zoom variants (75, 100, 150) need their own seed to win. Existing callers keep the default (manual 100).
-- E-B15 (new, cycle 2) `e2e/app-shell.spec.ts:60` asserts `Object.keys(localStorage)` equals exactly `['ui:v1:sidebar']`; the E-B14 seed adds `ui:v1:doczoom`. Repair the assertion to ignore the test-seeded key (filter it out, keep the rest exact) and keep the test title meaning ("the only persisted shell state"). `design-probe.spec.ts` captures `findings-v2.html` with the panel open and writes to `process/features/findings-v2/active/findings-v2_18-10-26/design-probe/`.
+- E-B15 (new, cycle 2) `e2e/app-shell.spec.ts:60` asserts `Object.keys(localStorage)` equals exactly `['ui:v1:sidebar']`; the E-B14 seed adds `ui:v1:doczoom`. Repair the assertion to ignore the test-seeded key (filter it out, keep the rest exact) and keep the test title meaning ("the only persisted shell state"). `design-probe.spec.ts` captures `findings-v2.html` with the panel open and writes to `process/features/findings-v2/completed/findings-v2_18-10-26/design-probe/`.
 - E-B16 (new, cycle 2) The panel percent is chosen once at mount from `window.innerWidth` (`use-panel-width.ts`, `defaultPct`) and does not re-derive when the viewport is resized afterwards (the mockup behaves the same). `layout-vs-mockup` test 2 currently resizes the viewport in one page (1440, 1200, 1199, 1024): set each viewport BEFORE `gotoApp` (new page or `reload` after `setViewportSize`) so the expected 50 or 55 applies, and do not change `use-panel-width.ts`.
 - E-B17 (new, cycle 2) `locator-chip.spec.ts:17` reads `finding-body .sub2`, which v2 does not render: read the severity line instead (first `.fv2-sec-h` inside `finding-body`, text `Severity · <loc>`) for the section number, and open `finding-details` before asserting the `finding-locator` chip (P-18).
 - E-B18 (new, cycle 2) Dismissed-row access: the repaired `triage-actions` dismiss case selects the Dismissed status filter before opening the row, then asserts `Reason: Does not affect the form` in `finding-body` and uses `action-restore` (Move back to review); the bar is outside `finding-body`, so scoped clicks such as `finding-body.getByTestId('action-dismiss')` (variance-gate-two-states:30, variance-demo-gate-walk:92) become `page.getByTestId('action-dismiss')`.
@@ -878,7 +878,7 @@ Gate: PASS (0 FAILs, 0 CONCERNs after Phase B supplement cycle 1; cycle 2 re-val
 
 ```
 SESSION GOAL: Findings v2 (D1-D15) - Phase B integration (Phase A VERIFIED, Phase C dropped), then deploy to workers.dev
-Charter + umbrella plan: N/A - single plan: process/features/findings-v2/active/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md
+Charter + umbrella plan: N/A - single plan: process/features/findings-v2/completed/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md
 Autonomy: autopilot standing consent (feedback_autonomous_phase_execution.md): auto-proceed on reversible gates, EXECUTE=opus else sonnet, PVL/EVL loops cap 10, BLOCKED -> backlog and continue. Subagent delegation stays mandatory (no inline execution).
 Hard stop conditions / safety constraints:
 - Never git stash/checkout/reset/restore, never git add -A or ., no push; local commits on main with pathspec commit
@@ -895,7 +895,7 @@ Execute start: B0.5 (20 tokens: 16 findings-v2-* plus source-guard, import-graph
 
 ```
 SESSION GOAL: Findings v2 (D1-D15) - Phase A new-file slice, then Phase B/C after Variance P05 closes
-Charter + umbrella plan: N/A - single plan: process/features/findings-v2/active/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md
+Charter + umbrella plan: N/A - single plan: process/features/findings-v2/completed/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md
 Autonomy: autopilot standing consent (feedback_autonomous_phase_execution.md): auto-proceed on reversible gates, EXECUTE=opus else sonnet, PVL/EVL loops cap 10, BLOCKED -> backlog and continue. Subagent delegation stays mandatory (no inline execution).
 Hard stop conditions / safety constraints:
 - Phase A touches ONLY new files under apps/web/src/features/review/v2/, features/review/zoom/, styles/findings-v2.css (plus co-located tests); no locked Variance file, no Playwright, no build, no deploy
@@ -904,7 +904,7 @@ Hard stop conditions / safety constraints:
 - No new @aduin/core value import outside the import-graph ALLOWED list; no hex colors in features; no raw HTML
 - Deploy only to aduin-transaction-web.giathaowork.workers.dev after EVL and review; never touch zone itsjiathao.com; no live LLM calls
 - Cascade BLOCKED (two phases) stops the run
-Next phase: EXECUTE Phase A: process/features/findings-v2/active/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md (validate-contract is PASS after PVL cycle 3)
+Next phase: EXECUTE Phase A: process/features/findings-v2/completed/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md (validate-contract is PASS after PVL cycle 3)
 Validate contract: inline in the plan (## Validate Contract), Gate PASS, re-validated cycle 3 (E1-E29 binding; E28 wins over the contract text on data-kind)
 Execute start: A1 pure logic (1 opus agent), then A2-UI + A2-ZOOM (2 opus agents, parallel, own tokens only; create A2-UI.0 files first), then one serial verify+commit. Gates, one token per call, no "--": pnpm --filter @aduin/web test findings-v2-reasons-map | -groups | -action-plan | -outcome | -dedupe | -width-math | -shortcut-guard | -zoom-math | -css-guard | -actions-flow | -shortcuts-hook | -panel-ui | -change-expanded | -panel-resizer | -use-doc-zoom | -zoom-controls; regression source-guard, import-graph, tokens-match-mockup, severity-label; then pnpm --filter @aduin/web typecheck and the full web suite (baseline 55 files / 375 tests) | e2e: none in Phase A | probe: Phase B design-probe | high-risk pack: no
 ```
@@ -947,22 +947,24 @@ Evidence: `findings-v2-phase-b-step0_RESEARCH_18-10-26.md`. Edits drafted by vc-
 
 ## Current Execution State
 
-- Last updated: 18-10-26 (Phase B inner PVL cycle 2: PASS)
-- Current phase: B (Phase C dropped, P-16)
-- Current loop step: Phase B Step 4 inner PVL PASS (cycle 2, 0 FAIL, 0 CONCERN); next Step 5 EXECUTE
-- Phase A status: VERIFIED (9e866f2, 7a0d172, 597c9cf; web 71 files / 515 tests at Phase A close; 518 at 0c6312e)
-- Phase B status: PLAN-SUPPLEMENTED, validated (inner PVL PASS after 1 supplement cycle), ready for EXECUTE
+- Last updated: 18-10-26 (program closeout, UPDATE PROCESS)
+- Current phase: none; program COMPLETE with known gaps
+- Current loop step: 7 UPDATE PROCESS done; folder archived to `process/features/findings-v2/completed/findings-v2_18-10-26/`
+- Phase A status: VERIFIED (9e866f2, 7a0d172, 597c9cf)
+- Phase B status: VERIFIED and LIVE (9427237, cc08373, c20ebc9, c411972, 06b02ac, a98ca9c, d521bd5, 2517fc3, 4c39a5a); EVL re-run at 4c39a5a all green; web unit 544 (73 files), preview e2e 253 + 1 opt-in skip, stack-memory 12
 - Phase C status: DROPPED (P-16); backlog NOTE written
-- Validate-contract status: Phase B contract PASS 18-10-26 (inner-pvl: phase-B, re-validated cycle 2, section `## Validate Contract - Phase B (inner-pvl)`); Phase A contract PASS 18-10-26 (outer-pvl) kept as history
-- Next action: orchestrator appends results.tsv row (cycle 2, phase B, PASS, 0 FAIL, 0 CONCERN, HALTED_SUCCESS), emits the /goal block, then spawns vc-execute-agent (opus) for B1 with E-B1..E-B19 from the Phase B contract
+- Live: Worker `aduin-transaction-web` version `7db9e602-a688-4559-ae2d-d69892c873be` (assets only). Rollback chain 7db9e602 -> d9aaddd9 -> (8a82ead2 write-incompatible with schema 6) -> b04f1a8c -> 3d2c7301
+- Validate-contract status: Phase B contract PASS (inner-pvl: phase-B); Phase A contract PASS (outer-pvl)
+- Closeout report: `findings-v2_REPORT_18-10-26.md` (this folder)
+- Next action: none. Optional operator work: manual keyboard and screen-reader pass; backlog `findings-v2-review-followups_NOTE_18-10-26.md`
 
 ## Resume and Execution Handoff
 
-- Selected plan file (the only execute anchor): `process/features/findings-v2/active/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md`. Supporting artifacts: `findings-v2_DECISION_18-10-26.md`, `findings-v2_RESEARCH_18-10-26.md`, `findings-v2_AUTOPILOT_GOAL_18-10-26.md`.
+- Selected plan file (the only execute anchor): `process/features/findings-v2/completed/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md`. Supporting artifacts: `findings-v2_DECISION_18-10-26.md`, `findings-v2_RESEARCH_18-10-26.md`, `findings-v2_AUTOPILOT_GOAL_18-10-26.md`.
 - EXECUTE receives Phase B only after inner PVL is PASS. Phase C is dropped (P-16).
 - Phase B: one opus agent per step B1..B6 sequentially; Playwright serial on port 4317; free the port before each call; pathspec commits only; no push; never stash, checkout, reset or restore. Deploy rollback target is only d9aaddd9 (schema 6); coordinate with hotfix session local_c18ddd8c-870b-46c6-be57-5413ebf73067 before deploy.
 - Context to pass: `process/context/all-context.md` plus `find process/context/ -type f`; `process/development-protocols/{orchestration,plan-lifecycle,implementation-standards}.md` (explicit read; not discoverable through the context router).
-- Validators to run by hand at closeout: `node .claude/skills/vc-generate-plan/scripts/validate-plan-artifact.mjs process/features/findings-v2/active/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md`; `node .claude/skills/vc-audit-vc/scripts/validate-agent-parity.mjs --strict` only if agent surfaces change (they do not in this plan); `vc-audit-context` after the `all-ui.md` and `all-tests.md` updates.
+- Validators to run by hand at closeout: `node .claude/skills/vc-generate-plan/scripts/validate-plan-artifact.mjs process/features/findings-v2/completed/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md`; `node .claude/skills/vc-audit-vc/scripts/validate-agent-parity.mjs --strict` only if agent surfaces change (they do not in this plan); `vc-audit-context` after the `all-ui.md` and `all-tests.md` updates.
 - After compaction: read this plan, the Current Execution State, then the Phase A report; re-run `git status --short` and the Phase A tokens to see what exists.
 - Step 3 (Flag this passage, Suggest wording) is out of scope: `process/features/findings-v2/backlog/findings-v2-step3-flag-passage_NOTE_18-10-26.md`; it needs its own SPEC and PLAN after Phase B ships.
 - Deploy hand-off: Hard Rule 5; message the design session after deploy; Variance is closed (no message needed before editing its specs).

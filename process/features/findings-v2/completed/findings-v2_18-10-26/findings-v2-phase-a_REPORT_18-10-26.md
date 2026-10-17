@@ -3,7 +3,7 @@ phase: findings-v2-phase-a
 date: 2026-10-18
 status: COMPLETE
 feature: findings-v2
-plan: process/features/findings-v2/active/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md
+plan: process/features/findings-v2/completed/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md
 ---
 
 # Findings v2 - Phase A report (early new-file slice)

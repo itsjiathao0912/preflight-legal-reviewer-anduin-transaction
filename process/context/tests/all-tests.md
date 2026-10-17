@@ -10,7 +10,7 @@ metadata:
 
 # aduin-transaction - All Tests
 
-Last updated: 2026-10-18 (Variance P05 closeout, final counts at merged main 0c6312e; earlier: ai-review-stream-dedup EXECUTE, HEAD 685574d; earlier: Phase 10 UPDATE PROCESS, f0d924b)
+Last updated: 2026-10-18 (Findings v2 closeout, counts at 4c39a5a; earlier: Variance P05 closeout, final counts at merged main 0c6312e; earlier: ai-review-stream-dedup EXECUTE, HEAD 685574d; earlier: Phase 10 UPDATE PROCESS, f0d924b)
 
 Attach this file first when the task involves testing, verification, or test debugging.
 
@@ -338,6 +338,17 @@ Whole suites after Variance Phase 02, independent EVL (no deploy, 0 model calls)
 - **Regression block (23 tokens, keep green):** counsel-gate, gate-pill, diff-pairs, memory-no-reflag, turnstile-no-block, a11y-keyboard, layout-vs-mockup, no-llm-corpus, sample-zero-calls, filter-sort, app-shell, placeholder-routes, mobile-shell, restore-and-no-text, nine `intake-*` tokens (run `intake-demo-packages` alone); unit `package-store` 21, `package-view` 8, `package-gate-ui` 7, `gate-pill` 4, `restore-last-doc` 10.
 - **Fixtures and pitfalls:** `apps/web/e2e/fixtures/variance.ts` (`uploadOne`, `varianceSettled`, `changeRows`, `errorRows`, `ageUploads`, `NGI_2024/NGI_2026`). Use the NGI 2024/2026 pair for cosmetic and diff e2e (Hartwell gives 1 change, 0 cosmetic hunks). Specs that upload two same-firm documents now get change rows: count error rows with `:not([data-kind="change"])`. Samples never become a firm-pointer baseline.
 - **Known gaps:** agent-probe keyboard walk and `DESIGN_PROBE=1` not run; human keyboard pass and live Turnstile render-first are backlog residuals.
+
+## Findings v2 gate tokens (HEAD 4c39a5a, 18-10-26)
+
+Whole suites, serial EVL: web unit 73 files / 544, full preview e2e 253 passed plus 1 opt-in skip, `stack-memory` 12, typecheck clean, `grep -rn "action-accept" apps/web/e2e apps/web/test apps/web/src` empty. One token per call, no `--`; free port 4317 before each e2e call. Live Worker 7db9e602; UI facts in `process/context/ui/all-ui.md` (Findings v2).
+
+- **Web unit tokens (16 `findings-v2-*` plus store parity):** `findings-v2-action-plan`, `-actions-flow`, `-change-expanded`, `-dedupe` (unmounted module), `-groups`, `-outcome`, `-panel-resizer`, `-panel-ui`, `-reasons-map`, `-shortcut-guard`, `-shortcuts-hook`, `-width-math`, `-zoom-math`, `-use-doc-zoom`, `-zoom-controls`, `-css-guard` (checks row-state selectors per element class), and `findings-v2-store-parity` (the outcome text equals the real store recompute). Keep green with `source-guard`, `import-graph`, `tokens-match-mockup`, `severity-label`, `no-e2e-hook-in-d`.
+- **E2E:** `findings-v2` spec (11), `layout-vs-mockup` (5; panel and handle widths now derive from `findingsV2Css` / `findingsV2Widths` and the shadow allow-list `findingsV2ShadowSelectors` in `test/support/mockupCss.ts`, 1 px tolerance), `triage-actions`, `app-shell`, `finding-highlight`, `perf-budget`, `filter-sort`.
+- **Fixtures:** `apps/web/e2e/fixtures/findings-actions.ts` (`openFirstFinding`, `askCounsel`, `closeAsRealIssue`, `closeWithReason`, `moveBack`, `acceptRow`; choose rows by `data-severity`, not position). The panel selects the next row after an action: wait for the row's `data-status` and re-open the row before the next click.
+- **`gotoApp(page, { zoom })` seed (`e2e/fixtures/app.ts`):** writes `ui:v1:doczoom` = manual 100 by default so geometry is stable; pass `{ zoom: 'fit' }` to opt out. The seed is written only when the key is absent. `app-shell` asserts persisted keys while ignoring that seeded key.
+- **Design probe (opt-in `DESIGN_PROBE=1`, from `apps/web`: `pnpm exec playwright test --project=preview design-probe`):** now captures the app at zoom 75/100/150 for widths 1440 and 1024 plus `design/mockups/findings-v2.html` into `process/features/findings-v2/completed/findings-v2_18-10-26/design-probe/` (the PNGs from 18-10-26 are committed there; note `design-probe.spec.ts` still hard-codes the old `active/` path and would recreate it if run: fix the path before re-running, see the findings-v2 backlog note). It is non-blocking and skipped by default. The earlier caveat that it writes into another program's tracked folder is superseded for this feature.
+- **Known gaps:** intake package lens a11y `label-content-name-mismatch` x4 (pre-existing); manual keyboard and screen-reader pass; two one-off parallel flakes (`intake-demo-packages`, `memory-ui-decisions`) passed in isolation and on re-run.
 
 ## Variance Phase 05 gate tokens and final counts (merged main 0c6312e, 18-10-26)
 

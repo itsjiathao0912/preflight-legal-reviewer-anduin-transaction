@@ -1,9 +1,9 @@
 ---
 phase: findings-v2-phase-b
 date: 2026-10-18
-status: IN_PROGRESS
+status: COMPLETE
 feature: findings-v2
-plan: process/features/findings-v2/active/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md
+plan: process/features/findings-v2/completed/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md
 ---
 
 # Findings v2 Phase B report
@@ -132,7 +132,7 @@ No other spec in the list needed edits (dismiss-requires-reason, a11y-smoke, tri
 
 ### Design-probe artifacts (Agent-Probe; untracked, about 170-270 KB each, not committed)
 
-`process/features/findings-v2/active/findings-v2_18-10-26/design-probe/`: `mockup-findings-v2-1440.png`, `mockup-findings-v2-1024.png`, `app-1440-zoom75.png`, `app-1440-zoom100.png`, `app-1440-zoom150.png`, `app-1024-zoom75.png`, `app-1024-zoom100.png`, `app-1024-zoom150.png`.
+`process/features/findings-v2/completed/findings-v2_18-10-26/design-probe/`: `mockup-findings-v2-1440.png`, `mockup-findings-v2-1024.png`, `app-1440-zoom75.png`, `app-1440-zoom100.png`, `app-1440-zoom150.png`, `app-1024-zoom75.png`, `app-1024-zoom100.png`, `app-1024-zoom150.png`.
 
 Judgment (non-blocking, for review):
 - Panel width, sticky bar (two equal buttons at the bottom), progress header, chips and group heading match the mockup at both widths; zoom 150 scrolls inside the document area with no page overflow.
@@ -170,3 +170,35 @@ Compared design-probe PNGs with `mockup-findings-v2-1440.png`; fixed 5 defects (
 Gates: tsc 0; web vitest 73 files / 531 tests; `test:e2e findings-v2` 10/10; layout-vs-mockup 5/5; design probe refreshed; full preview e2e 252 passed + 1 skip (first full run had 2 parallel flakes in intake-demo-packages and memory-ui-decisions, both green in isolation and in the second full run).
 
 Residuals: at 100% on 1440 the 700px page is wider than the reading area, so no grey margin shows (mockup default is Fit width 90%); at 150% the doc auto-scrolls horizontally to the mark, hiding the page left edge; counts keep the " · " separators (pinned by e2e) where the mockup uses spacing only; mockup's "Section 3" right-aligned location on the row title is not in the app.
+
+## Code review fixes (18-10-26, commit 4c39a5a)
+
+| Item | Outcome | Note |
+|---|---|---|
+| R1 | fixed | Bar and C/X act on the row from the visible v2 list (`flat`); filtered-out or Previously handled selection = "nothing open". Unit (2) + e2e |
+| R2 | fixed | Row-state selectors retargeted to `.fv2-rowb[data-...]`; css-guard checks attributes per element class |
+| R14 | fixed | `[data-action='move-back']`; `.fv2-group[data-count='0'] .fv2-group-h` |
+| R3 | fixed | Dismiss selects `nextToReview` like the other actions; unit + store-parity |
+| R5 | fixed | Note field hidden when "Real issue" is chosen |
+| R6 | fixed | Recenter only after a user zoom action, not area-driven fit recomputes; unit (2) |
+| R8 | fixed | Bar buttons `aria-disabled` while busy and ignore clicks; focus moves to the selected row after bar/C/X; e2e |
+| R9/R10 | fixed | Store errors caught -> toast "Could not save. Try again."; actions resolve boolean; modal closes only on a real save |
+| R12 | fixed | Selection moves only if the analyst did not pick another row during the call (selectSeq) |
+| R13 | fixed | Toast text/Undo reused only from the toast this action produced (id check) |
+| R17 | fixed | Shift added to the shortcut ignore list |
+| R18 | fixed | `aria-valuemax` >= 1 |
+| R4 | accepted | Dismissed hidden from Closed under default filter (P-7, design-approved) |
+| R7 | accepted | Cmd/Ctrl zoom keys per D15 |
+| R11, R15, R16, R19, R20, cleanup list | backlog | Unchanged per orchestrator |
+
+Gates: web vitest 73 files / 544 tests; typecheck clean; findings-v2 e2e 11/11; layout-vs-mockup 5/5; full preview e2e 253 passed + 1 skip.
+
+## B-deploy (18-10-26)
+
+- Commit deployed: `4c39a5a` (main). Static assets only; no migration, no route, no custom domain, workers.dev only.
+- New live version: `7db9e602-a688-4559-ae2d-d69892c873be` (100%, CF API deployments list, created 2026-10-17T22:25:28Z).
+- Previous version / only rollback target: `d9aaddd9-a62f-4850-8ff2-89889c8ef652` (re-checked live right before deploy). `8a82ead2` and older stay forbidden (schema 6).
+- Pre-deploy: `pnpm guard:cf` OK, `pnpm secrets:scan` OK, port 4317 freed. Site key read from the live bundle: exactly 1 distinct match (E-B19), passed inline from a scratch script, never printed. Plain web bundle made right before deploy.
+- `deploy:preflight`: 13/13 PASS (site key compiled in, no e2e hook marker, `_headers` with CSP, no routes/zone keys).
+- Live checks: `/api/health` 200 `{ok:true}` with `cache-control: no-store`; title and brand "Preflight"; sample #1 (Franklin Lexington) opened from the picker shows 18 findings in about 3 s with no Turnstile wait; `findings-column` and sticky `action-counsel` present; document zoom controls present (- / 90% / + / Fit width); 0 console errors; only API call was `GET /api/quota` (0 AI, 0 OCR, $0).
+- Rollback: not needed.
