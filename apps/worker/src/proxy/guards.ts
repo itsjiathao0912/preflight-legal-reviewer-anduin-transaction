@@ -1,7 +1,13 @@
 // Request guards (run before ANY claim, cache read, Turnstile or upstream call):
 // method, client header, Origin (CSRF), content-type, size caps (content-length AND streamed
 // read), JSON parse, field whitelist/shaping and image-part checks.
-import { AiRequestSchema, OcrRequestSchema, limits, type AiRequest } from '@aduin/core';
+import {
+  AiRequestSchema,
+  OcrRequestSchema,
+  limits,
+  type AiRequest,
+  type AiTaskId,
+} from '@aduin/core';
 import { ProxyError } from './errors';
 
 /** Client fields the server sets itself: a client sending any of them is rejected (400). */
@@ -100,6 +106,8 @@ function rejectForbidden(obj: Record<string, unknown>): void {
 }
 
 export interface ShapedAi {
+  /** registry task id (Phase 05; schema default `clause-judgment`) */
+  task: AiTaskId;
   law_firm_id: string | null;
   candidates: AiRequest['candidates'];
   /** server-side tier name; never a model id */
@@ -115,6 +123,7 @@ export function shapeAi(raw: Record<string, unknown>): ShapedAi {
   const r = AiRequestSchema.safeParse(raw);
   if (!r.success) throw new ProxyError('invalid_request', 'schema');
   return {
+    task: r.data.task,
     law_firm_id: r.data.law_firm_id,
     candidates: r.data.candidates.map((c) => ({
       id: c.id,

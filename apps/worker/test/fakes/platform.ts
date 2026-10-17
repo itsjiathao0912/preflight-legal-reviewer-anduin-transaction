@@ -1,6 +1,14 @@
 // In-memory Quota/Cache/Ledger/Rules ports (also used by Phase 05). Claim semantics match the
 // future SQL: a claim succeeds iff count + units <= cap. Counts every call and every write.
-import type { CachedResult, LedgerEntry, QuotaKey, QuotaPort, QuotaUsage } from '@aduin/core';
+import {
+  rulesHash,
+  type CachedResult,
+  type LedgerEntry,
+  type QuotaKey,
+  type QuotaPort,
+  type QuotaUsage,
+  type RulesPort,
+} from '@aduin/core';
 import type { ProxyPlatform, UsageKeys } from '../../src/proxy/ports';
 
 export interface FakePlatformOptions {
@@ -106,4 +114,26 @@ export class FakePlatform implements ProxyPlatform {
       return { texts: [] as string[], rules_hash: 'none' };
     },
   };
+
+  /** Phase 05: active rule texts per `${workspace}|${firm}` (only these are ever returned). */
+  readonly ruleStore = new Map<string, string[]>();
+  /** every workspace-bound rules read, in order */
+  readonly rulesCalls: { w: string; firm: string }[] = [];
+  /** rules reads throw while true (other ports unaffected) */
+  rulesDown = false;
+
+  setRules(w: string, firm: string, texts: string[]): void {
+    this.ruleStore.set(`${w}|${firm}`, texts);
+  }
+
+  /** G1: per-request workspace-bound RulesPort; each read is one counted port call (0 writes). */
+  rulesFor = (w: string): RulesPort => ({
+    activeRules: async (firm: string) => {
+      this.tick(false);
+      this.rulesCalls.push({ w, firm });
+      if (this.rulesDown) throw new Error('rules read failed');
+      const texts = [...(this.ruleStore.get(`${w}|${firm}`) ?? [])];
+      return { texts, rules_hash: rulesHash(texts) };
+    },
+  });
 }

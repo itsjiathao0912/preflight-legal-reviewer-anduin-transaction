@@ -1,7 +1,7 @@
 // Proxy configuration: env typing + defaults in code (Phase 04a).
 // Validation is strict and fails closed: an invalid value throws ConfigError and the
 // proxy routes degrade (no upstream call) instead of running with a weaker policy.
-import { limits, type KeyMap } from '@aduin/core';
+import { limits, type AiResponseMode, type KeyMap } from '@aduin/core';
 
 export class ConfigError extends Error {
   constructor(message: string) {
@@ -35,13 +35,18 @@ export interface ProxyConfig {
   turnstilePassTtlMs: number;
   turnstileSecret: string | undefined;
   turnstileSiteKey: string | undefined;
+  /** AI `response_format` mode (Phase 05 live probe R1: strict `json_schema` accepted). */
+  aiResponseMode: AiResponseMode;
   /** Short stable fingerprint of policy-relevant config (circuit-breaker reset on change). */
   fingerprint: string;
 }
 
 export const DEFAULT_BASE_URL = 'https://openrouter.ai/api/v1';
-export const DEFAULT_TEXT_MODELS = 'nvidia/nemotron-3.5-super-vl:free,liquid/lfm-2.5-2.6b:free';
+/** Phase 05 (G2): the single P2-proven text model; the vision model stays OCR-only (Phase 06). */
+export const DEFAULT_TEXT_MODELS = 'nvidia/nemotron-3-super-120b-a12b:free';
 export const DEFAULT_VISION_MODELS = 'nvidia/nemotron-3.5-super-vl:free';
+/** Phase 05 live probe R1 (Stage 1c): strict json_schema accepted by the free text model. */
+export const DEFAULT_AI_RESPONSE_MODE: AiResponseMode = 'json_schema';
 /** S1 verdict PASS (Phase 00): hold-open survives, so AI on uploads defaults on. */
 export const DEFAULT_UPLOADS_ENABLED = true;
 
@@ -95,6 +100,13 @@ function bool(env: EnvLike, name: string, def: boolean): boolean {
   if (v === 'true') return true;
   if (v === 'false') return false;
   throw new ConfigError(`${name} must be "true" or "false"`);
+}
+
+function responseMode(env: EnvLike): AiResponseMode {
+  const v = str(env, 'AI_RESPONSE_MODE');
+  if (v === undefined) return DEFAULT_AI_RESPONSE_MODE;
+  if (v === 'json_schema' || v === 'json_object') return v;
+  throw new ConfigError('AI_RESPONSE_MODE must be "json_schema" or "json_object"');
 }
 
 function baseUrl(env: EnvLike): string {
@@ -172,6 +184,7 @@ export function loadConfig(env: EnvLike): ProxyConfig {
     turnstilePassTtlMs: int(env, 'TURNSTILE_PASS_TTL_MS', 1_800_000, 1),
     turnstileSecret: str(env, 'TURNSTILE_SECRET'),
     turnstileSiteKey: str(env, 'TURNSTILE_SITE_KEY'),
+    aiResponseMode: responseMode(env),
   };
   if (cfg.spendCapMicroUsd > limits.spendCapUsd * 1_000_000)
     throw new ConfigError('SPEND_CAP_MICRO_USD must not exceed the $10 ceiling');

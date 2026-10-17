@@ -1,10 +1,10 @@
-import { cacheKey, parseFrameStream } from '@aduin/core';
+import { TASKS, cacheKey, inputHash, parseFrameStream, selectInjectedRules } from '@aduin/core';
 import { describe, expect, test } from 'vitest';
 import vectors from '../../../../fixtures/cache-key-vectors.json';
 import { okAi, okOcr } from '../fakes/openrouter-stub';
 import { aiBody, bodyText, frames, makeHarness, send } from '../fakes/harness';
 import { keys } from '../../src/limits/policy';
-import { aiMessages, digestHex } from '../../src/upstream/openrouter';
+import { aiMessages } from '../../src/upstream/openrouter';
 import { DEFAULT_TEXT_MODELS } from '../../src/config';
 
 describe('llm-ocr-cache-hit (AC27)', () => {
@@ -23,22 +23,27 @@ describe('llm-ocr-cache-hit (AC27)', () => {
     h.or.reply(okAi());
     const body = aiBody('Subject to this Section 11.', { ext: { input_hash: 'f'.repeat(64) } });
     await frames(await send(h, { body }));
-    const forwarded = JSON.stringify(h.or.calls[0]!.json['messages']);
+    const forwarded = h.or.calls[0]!.json['messages'] as {
+      role: 'system' | 'user';
+      content: string;
+    }[];
+    const task = TASKS['clause-judgment'];
     const expected = cacheKey({
       kind: 'ai',
-      input_hash: await digestHex(forwarded),
+      input_hash: inputHash(forwarded),
       model: DEFAULT_TEXT_MODELS.split(',')[0]!,
-      prompt_ver: 'p1',
-      schema_ver: 's1',
+      prompt_ver: task.promptVersion,
+      schema_ver: task.schemaVersion,
       rules_hash: 'none',
     });
     expect([...h.platform.cacheMap.keys()]).toEqual([expected]);
-    const shaped = aiMessages({
-      law_firm_id: null,
-      candidates: [{ id: 'c1', quote: 'Subject to this Section 11.', section_path: ['1'] }],
-      tier: 'default',
-    });
-    expect(shaped).toBe(forwarded);
+    const shaped = aiMessages(
+      task,
+      [{ id: 'c1', quote: 'Subject to this Section 11.', section_path: ['1'] }],
+      selectInjectedRules([]),
+      'json_schema',
+    );
+    expect(JSON.stringify(shaped)).toBe(JSON.stringify(forwarded));
   });
 
   test('should serve a cache hit without calling upstream', async () => {

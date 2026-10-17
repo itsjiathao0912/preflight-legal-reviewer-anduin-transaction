@@ -16,9 +16,17 @@ export function paidModelsFor(cfg: ProxyConfig): readonly string[] {
   return cfg.paidEnabled ? cfg.paidModels : [];
 }
 
-export const PROMPT_VER = { ai: 'p1', ocr: 'ocr1' } as const;
+/**
+ * OCR prompt/schema versions (cache key). AI uses the task registry instead (Phase 05):
+ * `prompt_ver` = `TASKS[task].promptVersion`, `schema_ver` = `TASKS[task].schemaVersion`.
+ */
+export const PROMPT_VER = { ocr: 'ocr1' } as const;
 export const SCHEMA_VER = 's1';
-export const MAX_TOKENS = { ai: 6000, ocr: 8000 } as const;
+/**
+ * Output token caps. AI raised 6000 -> 10000 in Phase 05: live sample #3 used 5783 output
+ * tokens; a truncated reply (finish_reason "length") is classified malformed.
+ */
+export const MAX_TOKENS = { ai: 10_000, ocr: 8000 } as const;
 
 const FREE_SUFFIX = ':free';
 const baseId = (id: string): string =>

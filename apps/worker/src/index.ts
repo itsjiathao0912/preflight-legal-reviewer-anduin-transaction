@@ -3,7 +3,12 @@ import { capFor } from './limits/policy';
 import { createLogger } from './proxy/log';
 import { configFor } from './proxy/pipeline';
 import { unavailablePlatform, type BreakerPort, type ProxyPlatform } from './proxy/ports';
-import { createD1Breaker, createD1Platform, withSessionCaps } from './platform/index';
+import {
+  createD1Breaker,
+  createD1Platform,
+  createRulesPort,
+  withSessionCaps,
+} from './platform/index';
 import { runPurge } from './memory/repo/purge';
 
 // Phase 04b (E9): the app is built lazily on the first request (env is only available then) and
@@ -17,7 +22,12 @@ export function buildApp(env: Env): App {
   try {
     if (env.DB) {
       const cfg = configFor(env);
-      platform = createD1Platform(env.DB, { capFor: withSessionCaps(capFor(cfg)) });
+      const db = env.DB;
+      platform = {
+        ...createD1Platform(db, { capFor: withSessionCaps(capFor(cfg)) }),
+        // G1: the app is cached per D1 binding, so the workspace-bound port is built per request
+        rulesFor: (workspaceId) => createRulesPort(db, workspaceId),
+      };
       breaker = createD1Breaker(env.DB);
     }
   } catch {

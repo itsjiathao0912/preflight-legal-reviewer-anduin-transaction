@@ -1,7 +1,11 @@
-// AI/OCR pipeline (Data Flow, plan Phase 04a):
+// AI/OCR pipeline (Data Flow, plan Phase 04a; Phase 05 adds the rules step):
 // 1a header-only guards -> 1b in-isolate pre-limit -> 1c body read/parse/validate -> 3 identity
-// -> 4 cache read (HIT: zero claims, zero writes, zero upstream) -> 5 Turnstile -> 6 claims ->
-// 7 OpenRouter (hold-open NDJSON) -> classify -> cache write -> ledger write -> terminal frame.
+// -> 3b AI only: firm rules resolve (only with a workspace claim `w` + law_firm_id, never for a
+// read-only `a==='ro'` cookie; read failure = memory_unavailable/rules_unavailable, pre-stream)
+// -> build messages from TASKS[task] -> inputHash -> cache key (task prompt/schema versions,
+// injected rules hash) -> 4 cache read (HIT: zero claims, zero writes, zero upstream) ->
+// 5 Turnstile -> 6 claims -> 7 OpenRouter (hold-open NDJSON) -> classify -> cache write ->
+// ledger write -> terminal frame.
 // Refunds: refusals before dispatch, pre-dispatch aborts and NON_CONSUMING_STATUS 4xx refund
 // everything. A client abort after dispatch keeps ALL claims. Provider-side failures after
 // dispatch (timeout, network, 5xx/429/402) refund the visitor-scoped claims (request/doc/seen/
@@ -9,7 +13,15 @@
 // have counted/billed the call (review F1). Malformed output and 200-with-error bodies keep ALL
 // claims: a visitor can induce them via prompt injection (review F11).
 // Pre-stream refusals are HTTP via errorStatus; post-open failures are terminal error frames.
-import { cacheKey, type ErrorCode, type Frame, type TurnstilePort } from '@aduin/core';
+import {
+  TASKS,
+  cacheKey,
+  inputHash as messagesHash,
+  selectInjectedRules,
+  type ErrorCode,
+  type Frame,
+  type TurnstilePort,
+} from '@aduin/core';
 import { ConfigError, loadConfig, type ProxyConfig } from '../config';
 import { secondsToReset, utcDay } from '../limits/clock';
 import { Claims, claimAi, claimOcr, keys, usageKeys, type Refusal } from '../limits/policy';
@@ -22,7 +34,7 @@ import {
   type Visitor,
 } from '../limits/visitor';
 import { createTurnstile, TURNSTILE_HEADER } from '../identity/turnstile';
-import { classify, type Classified } from '../upstream/classify';
+import { classify, type AiClassifyContext, type Classified } from '../upstream/classify';
 import {
   freeModelsFor,
   paidModelsFor,
@@ -33,10 +45,12 @@ import {
 } from '../upstream/models-config';
 import {
   aiMessages,
+  aiResponseFormat,
   buildBody,
   callOpenRouter,
   digestHex,
   ocrMessages,
+  ocrResponseFormat,
 } from '../upstream/openrouter';
 import { errorResponse, messageFor, ProxyError } from './errors';
 import {
@@ -48,6 +62,7 @@ import {
   readBodyCapped,
   shapeAi,
   shapeOcr,
+  type ShapedAi,
 } from './guards';
 import type { Logger } from './log';
 import { memoryBreaker, type BreakerPort, type ProxyPlatform } from './ports';
@@ -126,12 +141,40 @@ function refusalError(r: Refusal): ProxyError {
 
 const unavailable = () => new ProxyError('quota_exhausted', 'ai_unavailable');
 
-interface Prepared {
+/** Shaped request (body read and validated); AI messages are built after identity + rules. */
+type Prepared =
+  | { kind: 'ai'; ai: ShapedAi; units: 1; docHeader: string | undefined }
+  | { kind: 'ocr'; messagesJson: string; units: number };
+
+/** What is actually forwarded upstream, plus how to judge the reply. */
+interface Forward {
   kind: ProxyKind;
   messagesJson: string;
-  units: number;
-  /** per-document identity for the fresh-AI document count */
-  doc: (inputHash: string) => string;
+  responseFormatJson: string;
+  /** AI only: task + sent input for the single validation step in classify */
+  ai: AiClassifyContext | undefined;
+}
+
+/**
+ * Firm rules for the AI context (G1/G4). Resolved ONLY when the verified cookie carries a
+ * workspace `w`, the cookie is not read-only (`a === 'ro'`) and the request names a firm.
+ * Otherwise `law_firm_id` is ignored and no rules are injected (`rules_hash = 'none'`).
+ * A missing store or a failed read refuses (never run without the firm's rules).
+ */
+async function resolveRules(
+  ctx: ProxyContext,
+  visitor: Visitor | null,
+  lawFirmId: string | null,
+): Promise<readonly string[]> {
+  const w = visitor?.claims.w;
+  if (w === undefined || visitor?.claims.a === 'ro' || lawFirmId === null) return [];
+  if (!ctx.platform.rulesFor) throw new ProxyError('memory_unavailable', 'rules_unavailable');
+  try {
+    const r = await ctx.platform.rulesFor(w).activeRules(lawFirmId);
+    return r.texts;
+  } catch {
+    throw new ProxyError('memory_unavailable', 'rules_unavailable');
+  }
 }
 
 /** Header-only guards: no body read, no port call. */
@@ -147,12 +190,12 @@ async function prepare(kind: ProxyKind, request: Request): Promise<Prepared> {
   const raw = parseJsonObject(text);
   if (kind === 'ai') {
     const s = shapeAi(raw);
-    const docHeader = request.headers.get(DOC_HEADER);
-    const doc = docHeader !== null && /^[a-f0-9]{16,64}$/.test(docHeader) ? docHeader : undefined;
-    return { kind, messagesJson: aiMessages(s), units: 1, doc: (h) => doc ?? h };
+    const h = request.headers.get(DOC_HEADER);
+    const docHeader = h !== null && /^[a-f0-9]{16,64}$/.test(h) ? h : undefined;
+    return { kind, ai: s, units: 1, docHeader };
   }
   const s = shapeOcr(raw);
-  return { kind, messagesJson: ocrMessages(s), units: s.pages.length, doc: (h) => h };
+  return { kind, messagesJson: ocrMessages(s), units: s.pages.length };
 }
 
 export async function handleProxy(
@@ -190,16 +233,47 @@ export async function handleProxy(
     const log = ctx.logger(cfg);
     // 3. identity
     visitor = await resolveVisitor(request, cfg, nowMs);
-    // 4. cache read via the key derived from the payload actually forwarded
     const models = freeModelsFor(kind, cfg);
-    const inputHash = await digestHex(p.messagesJson);
+    // 3b. AI: firm rules -> messages from the task registry -> inputHash over those messages
+    let fwd: Forward;
+    let inputHash: string;
+    let promptVer: string;
+    let schemaVer: string;
+    let rulesHash = 'none';
+    if (p.kind === 'ai') {
+      const ruleTexts = await resolveRules(ctx, visitor, p.ai.law_firm_id);
+      const rules = selectInjectedRules(ruleTexts);
+      const task = TASKS[p.ai.task];
+      const messages = aiMessages(task, p.ai.candidates, rules, cfg.aiResponseMode);
+      inputHash = messagesHash(messages);
+      promptVer = task.promptVersion;
+      schemaVer = task.schemaVersion;
+      rulesHash = rules.hash;
+      fwd = {
+        kind,
+        messagesJson: JSON.stringify(messages),
+        responseFormatJson: aiResponseFormat(task, cfg.aiResponseMode),
+        ai: { task, input: { candidates: p.ai.candidates } },
+      };
+    } else {
+      inputHash = await digestHex(p.messagesJson);
+      promptVer = PROMPT_VER.ocr;
+      schemaVer = SCHEMA_VER;
+      fwd = {
+        kind,
+        messagesJson: p.messagesJson,
+        responseFormatJson: ocrResponseFormat(),
+        ai: undefined,
+      };
+    }
+    // 4. cache read via the key derived from the payload actually forwarded
     const key = cacheKey({
       kind,
       input_hash: inputHash,
       model: models[0]!,
-      prompt_ver: PROMPT_VER[kind],
-      schema_ver: SCHEMA_VER,
-      rules_hash: 'none',
+      prompt_ver: promptVer,
+      schema_ver: schemaVer,
+      rules_hash: rulesHash,
     });
     let hit = null;
     try {
@@ -242,7 +316,12 @@ export async function handleProxy(
     try {
       refusal =
         kind === 'ai'
-          ? await claimAi(claims, k, p.doc(inputHash), resetS)
+          ? await claimAi(
+              claims,
+              k,
+              (p.kind === 'ai' ? p.docHeader : undefined) ?? inputHash,
+              resetS,
+            )
           : await claimOcr(claims, k, p.units, resetS);
     } catch {
       await claims.refundAll();
@@ -255,16 +334,7 @@ export async function handleProxy(
     // 7. upstream, hold-open
     const activeCfg = cfg;
     const run = async (signal: AbortSignal): Promise<Frame> => {
-      const outcome = await callWithFallback(
-        kind,
-        p.messagesJson,
-        models,
-        activeCfg,
-        ctx,
-        claims,
-        k,
-        signal,
-      );
+      const outcome = await callWithFallback(fwd, models, activeCfg, ctx, claims, k, signal);
       if (!outcome.ok) {
         if (outcome.consumed && outcome.providerFault) {
           await claims.refundVisitorScoped();
@@ -343,9 +413,8 @@ export async function handleProxy(
 
 /** Abortable upstream call with the 120 s timeout. */
 async function once(
-  kind: ProxyKind,
+  fwd: Forward,
   models: readonly string[],
-  messagesJson: string,
   cfg: ProxyConfig,
   ctx: ProxyContext,
   signal: AbortSignal,
@@ -376,10 +445,10 @@ async function once(
     const res = await callOpenRouter(
       ctx.fetch,
       cfg,
-      buildBody(kind, models, messagesJson),
+      buildBody(fwd.kind, models, fwd.messagesJson, fwd.responseFormatJson),
       ac.signal,
     );
-    return await classify(kind, res);
+    return await classify(fwd.kind, res, fwd.ai);
   } catch {
     return {
       ok: false,
@@ -402,8 +471,7 @@ async function once(
  * retryable, and the estimated max cost can be reserved under the spend cap.
  */
 async function callWithFallback(
-  kind: ProxyKind,
-  messagesJson: string,
+  fwd: Forward,
   freeModels: readonly string[],
   cfg: ProxyConfig,
   ctx: ProxyContext,
@@ -411,7 +479,7 @@ async function callWithFallback(
   k: ReturnType<typeof keys>,
   signal: AbortSignal,
 ): Promise<Classified> {
-  const first = await once(kind, freeModels, messagesJson, cfg, ctx, signal);
+  const first = await once(fwd, freeModels, cfg, ctx, signal);
   if (first.ok || !first.retryable || signal.aborted) return first;
   const paid = paidModelsFor(cfg);
   if (paid.length === 0) return first;
@@ -433,7 +501,7 @@ async function callWithFallback(
       ...(first.providerFault ? { providerFault: true } : {}),
     };
   }
-  const second = await once(kind, paid, messagesJson, cfg, ctx, signal);
+  const second = await once(fwd, paid, cfg, ctx, signal);
   if (second.ok) return second;
   // the paid call did not consume: release just the spend reservation
   if (!second.consumed) await claims.refundFrom(mark);

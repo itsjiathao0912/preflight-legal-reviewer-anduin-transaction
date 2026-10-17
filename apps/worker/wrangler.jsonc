@@ -25,7 +25,8 @@
   "vars": {
     "PAID_FALLBACK_ENABLED": "false",
     "OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
-    "AI_TEXT_MODELS": "nvidia/nemotron-3.5-super-vl:free,liquid/lfm-2.5-2.6b:free",
+    "AI_TEXT_MODELS": "nvidia/nemotron-3-super-120b-a12b:free",
+    "AI_RESPONSE_MODE": "json_schema",
     "AI_VISION_MODELS": "nvidia/nemotron-3.5-super-vl:free",
     "AI_UPLOADS_ENABLED": "true",
   },

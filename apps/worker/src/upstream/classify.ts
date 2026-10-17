@@ -1,6 +1,17 @@
 // Classify the FINAL OpenRouter result (OpenRouter already tried models[]). Upstream error
 // bodies are never echoed: everything maps to an error code + short reason.
-import { AiResultSchema, OcrResultSchema, type AiResult, type OcrResult } from '@aduin/core';
+// Phase 05 (G2): AI is task-aware. The parsed model JSON (prose/fences tolerated by
+// `parseContent`) is validated ONCE by `task.validate`, which wraps it into the envelope (v:1,
+// usage, ext.dropped), drops individually invalid findings and runs `AiResultSchema` once.
+// A truncated AI reply (finish_reason "length") is malformed (claims kept, nothing cached).
+import {
+  OcrResultSchema,
+  type AiResult,
+  type LlmTask,
+  type LlmTaskInput,
+  type LlmUsage,
+  type OcrResult,
+} from '@aduin/core';
 import type { ProxyKind } from './models-config';
 
 const MAX_UPSTREAM_BYTES = 2 * 1024 * 1024;
@@ -65,7 +76,34 @@ async function readCapped(res: Response): Promise<string | undefined> {
   return text.length > MAX_UPSTREAM_BYTES ? undefined : text;
 }
 
-export async function classify(kind: ProxyKind, res: Response): Promise<Classified> {
+/** AI validation context: the task that built the messages and the input that was sent. */
+export interface AiClassifyContext {
+  task: LlmTask;
+  input: LlmTaskInput;
+}
+
+function tokenCount(v: unknown): number | undefined {
+  return typeof v === 'number' && Number.isInteger(v) && v >= 0 ? v : undefined;
+}
+
+/** Provider usage (OpenAI shape) -> envelope usage; absent counts are omitted. */
+function usageOf(u: unknown): LlmUsage | undefined {
+  if (typeof u !== 'object' || u === null) return undefined;
+  const r = u as Record<string, unknown>;
+  const tin = tokenCount(r['prompt_tokens']);
+  const tout = tokenCount(r['completion_tokens']);
+  if (tin === undefined && tout === undefined) return undefined;
+  return {
+    ...(tin !== undefined ? { tokens_in: tin } : {}),
+    ...(tout !== undefined ? { tokens_out: tout } : {}),
+  };
+}
+
+export async function classify(
+  kind: ProxyKind,
+  res: Response,
+  ai?: AiClassifyContext,
+): Promise<Classified> {
   if (res.status === 429) {
     await res.body?.cancel().catch(() => {});
     const ra = retryAfter(res);
@@ -120,7 +158,7 @@ export async function classify(kind: ProxyKind, res: Response): Promise<Classifi
   const j = json as {
     error?: unknown;
     model?: unknown;
-    choices?: { message?: { content?: unknown } }[];
+    choices?: { message?: { content?: unknown }; finish_reason?: unknown }[];
     usage?: { cost?: unknown };
   };
   if (j.error !== undefined)
@@ -131,15 +169,25 @@ export async function classify(kind: ProxyKind, res: Response): Promise<Classifi
       retryable: true,
       consumed: true,
     };
-  const content = j.choices?.[0]?.message?.content;
+  const choice = j.choices?.[0];
+  const content = choice?.message?.content;
   if (typeof content !== 'string') return malformed;
-  const parsed = parseContent(content);
-  const schema = kind === 'ai' ? AiResultSchema : OcrResultSchema;
-  const r = schema.safeParse(parsed);
-  if (!r.success) return malformed;
+  let data: AiResult | OcrResult;
+  if (kind === 'ai') {
+    // fail closed: the AI path always validates with its task
+    if (!ai) return malformed;
+    if (choice?.finish_reason === 'length') return malformed;
+    const v = ai.task.validate(parseContent(content), ai.input, usageOf(j.usage));
+    if (!v.ok) return malformed;
+    data = v.result;
+  } else {
+    const r = OcrResultSchema.safeParse(parseContent(content));
+    if (!r.success) return malformed;
+    data = r.data;
+  }
   const model =
     typeof j.model === 'string' && /^[A-Za-z0-9._/:-]{1,120}$/.test(j.model) ? j.model : 'unknown';
   const cost =
     typeof j.usage?.cost === 'number' && Number.isFinite(j.usage.cost) ? j.usage.cost : 0;
-  return { ok: true, kind, data: r.data, model, costUsd: Math.max(0, cost) };
+  return { ok: true, kind, data, model, costUsd: Math.max(0, cost) };
 }

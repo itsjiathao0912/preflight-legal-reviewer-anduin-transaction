@@ -15,7 +15,13 @@ export interface ProxyPlatform {
   quota(keys: UsageKeys): QuotaPort;
   cache: CachePort;
   ledger: LedgerPort;
+  /** Unbound seam (unused; the RulesPort is workspace-bound, see `rulesFor`). */
   rules?: RulesPort;
+  /**
+   * Phase 05 (G1): per-request factory for the workspace-bound RulesPort (active rules only).
+   * Undefined when no rules store is wired: a request that needs firm rules then refuses.
+   */
+  rulesFor?: (workspaceId: string) => RulesPort;
 }
 
 export class PortUnavailableError extends Error {

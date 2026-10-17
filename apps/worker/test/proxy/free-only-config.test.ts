@@ -1,3 +1,4 @@
+import { TASKS, responseFormat, schemaInstruction } from '@aduin/core';
 import { describe, expect, test } from 'vitest';
 import {
   ConfigError,
@@ -37,7 +38,7 @@ describe('free-only-config (AC26)', () => {
       expect(c.json['temperature']).toBe(0);
       expect((c.json['response_format'] as { type: string }).type).toBe('json_schema');
     }
-    expect(h.or.calls[0]!.json['max_tokens']).toBe(6000);
+    expect(h.or.calls[0]!.json['max_tokens']).toBe(10_000);
     expect(h.or.calls[1]!.json['max_tokens']).toBe(8000);
     const ocrContent = (
       h.or.calls[1]!.json['messages'] as {
@@ -55,6 +56,35 @@ describe('free-only-config (AC26)', () => {
     expect(c.visionModels.join(',')).toBe(DEFAULT_VISION_MODELS);
     expect(c.paidEnabled).toBe(false);
     expect(c.paidModels).toEqual([]);
+  });
+
+  test('Phase 05 defaults: the single free text model and strict json_schema mode', () => {
+    const c = loadConfig({});
+    expect(DEFAULT_TEXT_MODELS).toBe('nvidia/nemotron-3-super-120b-a12b:free');
+    expect(c.textModels).toEqual(['nvidia/nemotron-3-super-120b-a12b:free']);
+    expect(c.textModels.some((m) => m.startsWith('openrouter/'))).toBe(false);
+    expect(c.aiResponseMode).toBe('json_schema');
+    expect(loadConfig({ AI_RESPONSE_MODE: 'json_object' }).aiResponseMode).toBe('json_object');
+  });
+
+  test('AI response_format is the core task schema (strict), not the AiResult envelope', async () => {
+    const h = makeHarness();
+    h.or.reply(okAi());
+    await frames(await send(h));
+    expect(h.or.calls[0]!.json['response_format']).toEqual(
+      responseFormat(TASKS['clause-judgment'], 'json_schema'),
+    );
+  });
+
+  test('json_object mode: response_format json_object + schema instruction as last system message', async () => {
+    const h = makeHarness({ env: baseEnv({ AI_RESPONSE_MODE: 'json_object' }) });
+    h.or.reply(okAi());
+    const { terminal } = await frames(await send(h));
+    expect(terminal).toMatchObject({ t: 'result', cache: 'miss' });
+    const c = h.or.calls[0]!;
+    expect(c.json['response_format']).toEqual({ type: 'json_object' });
+    const msgs = c.json['messages'] as { role: string; content: string }[];
+    expect(msgs.at(-1)).toEqual(schemaInstruction(TASKS['clause-judgment']));
   });
 
   const bad: [string, Record<string, string>][] = [
@@ -77,6 +107,8 @@ describe('free-only-config (AC26)', () => {
       { COOKIE_SIGNING_KEYS: JSON.stringify({ a: 'short' }), COOKIE_SIGNING_KID: 'a' },
     ],
     ['uploads flag not exact', { AI_UPLOADS_ENABLED: 'yes' }],
+    ['response mode not exact', { AI_RESPONSE_MODE: 'JSON_SCHEMA' }],
+    ['unknown response mode', { AI_RESPONSE_MODE: 'text' }],
   ];
   for (const [name, env] of bad) {
     test(`config load throws: ${name}`, () => {

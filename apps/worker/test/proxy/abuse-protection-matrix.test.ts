@@ -1,4 +1,5 @@
 import { errorStatus, signCookie } from '@aduin/core';
+import { docIn } from '../llm/llm-helpers';
 import { describe, expect, test } from 'vitest';
 import { okAi } from '../fakes/openrouter-stub';
 import {
@@ -261,7 +262,9 @@ describe('abuse-protection-matrix (AC39)', () => {
     expect(c.json).not.toHaveProperty('tools');
     const user = (c.json['messages'] as { role: string; content: string }[])[1]!;
     expect(user.role).toBe('user');
-    expect(JSON.parse(user.content).candidates[0].quote).toBe(hostile);
+    // Phase 05: candidates travel as escaped JSON inside the untrusted document tag
+    expect(user.content).not.toContain('<script>');
+    expect(docIn(c)[0]!.text).toBe(hostile);
     expect(h.or.calls).toHaveLength(1); // no internal fetch of URLs in the payload
   });
 

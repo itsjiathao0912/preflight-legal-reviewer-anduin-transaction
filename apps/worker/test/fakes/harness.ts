@@ -209,7 +209,10 @@ export function req(o: ReqOpts = {}): Request {
 }
 
 /** Each send advances the clock 11 s so the 6/min AI pre-limit stays out of quota tests. */
-export function send(h: Harness, o: ReqOpts = {}): Promise<Response> {
+export function send(
+  h: Pick<Harness, 'app' | 'env' | 'clock' | 'ctx'>,
+  o: ReqOpts = {},
+): Promise<Response> {
   h.clock.now += 11_000;
   return h.app.fetch(req(o), h.env as never, h.ctx);
 }
@@ -230,7 +233,7 @@ export function cookieOf(res: Response): string | undefined {
 
 /** Send and return [response, cookie to reuse (new one if issued, else the given)]. */
 export async function sendKeep(
-  h: Harness,
+  h: Pick<Harness, 'app' | 'env' | 'clock' | 'ctx'>,
   o: ReqOpts = {},
 ): Promise<[Response, string | undefined]> {
   const res = await send(h, o);
