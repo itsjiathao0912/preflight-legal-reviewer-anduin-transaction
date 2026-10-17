@@ -12,7 +12,7 @@ metadata:
 
 # aduin-transaction - Worker Context
 
-Last updated: 2026-10-17 (Phase 05 UPDATE PROCESS; HEAD f0f476c plus the process commit)
+Last updated: 2026-10-17 (Phase 08 UPDATE PROCESS; HEAD eb53541 plus the process commit)
 
 Entrypoint for the `worker/` context group (one doc for now). Read this before touching `apps/worker`, `/api/*`, limits, or a deploy.
 
@@ -91,10 +91,15 @@ Set on the live Worker: `COOKIE_SIGNING_KEYS` (JSON map kid to key), `COOKIE_SIG
 - Recipe until Phase 10: (1) `pnpm --filter @aduin/web build` (a plain build, not `build:e2e`; `no-e2e-hook-in-dist` proves it); (2) the committed `wrangler.jsonc` binds D1 with a placeholder all-zero id that `wrangler deploy` cannot resolve, so generate a temporary config that is the committed file minus `d1_databases` and `$schema`, with `main` and `assets.directory` paths rebased, under the gitignored `apps/worker/.wrangler/`; assert it has no routes/custom_domain/zone keys and the name starts with `aduin-transaction-`; (3) `wrangler deploy -c <that file>`; (4) delete the temporary file. Phase 10 creates the real D1 and replaces the placeholder id, after which plain `wrangler deploy` works.
 - Verify: `SLICE_BASE_URL=https://aduin-transaction-web.giathaowork.workers.dev pnpm --filter @aduin/web exec playwright test --project=stack` (https `*.workers.dev` only).
 
+## AI Result Meta Echo and Memory Client Expectations (Phase 08, commit 8bdf1aa)
+
+- **L5 echo:** the AI result frame (cache hit and miss) carries `meta: {rules_hash8, rules_applied, rules_total}`. With no rules (no workspace, read-only cookie, no firm, or a firm with 0 active rules) the values are `'none'`, 0, 0. Only counts and the 8-char hash prefix are emitted, never rule text. OCR frames are unchanged. The web client compares the echo with the hash it expected; a mismatch drops cached rule texts and downgrades with `rules_changed` (Retry re-reads rules); a missing expected hash on a writable firm session downgrades with `rules_unavailable` before `/api/ai` (review F7). Test: `apps/worker/test/llm/rules-echo.test.ts`.
+- **Client expectations of the memory API** (real client `apps/web/src/api/realMemoryApi.ts` plus outbox): `POST /api/session` is called lazily, once, before the first memory call (not at startup, so a no-D1 local stack stays quiet); a 503 bootstrap makes the client keep triage local and enqueue nothing. Writes are idempotent (`INSERT OR IGNORE` on duplicate finding ids; the budget is still claimed). The server refuses cross-workspace operations; the client also stamps `workspace_id` on every queued op and rejects it at drain with `workspace_changed` if the workspace changed (F2). `unavailable` / `unauthorized` retry up to 6 attempts, then the op parks until reload or `online`. Terminal ops are scrubbed and purged after 24 h. Export never depends on memory: the DOCX downloads even if memory writes 503 (F1).
+
 ## Known Gaps
 
 - Real workerd CPU and hold-open timing at `max_tokens` 10000 and OpenRouter accounting of aborted/4xx requests are unproven (Phase 10 probe). The served-model string was observed in Phase 05: `nvidia/nemotron-3-super-120b-a12b:free`, `json_schema` accepted (3 of 8 live calls used, $0).
-- Phase 05 follow-ups in the backlog: the Worker should echo `meta.rules_hash8` / `rules_applied` (L5), and live-model quality (2 of 4 quotes unlocatable on sample #3; counsel drafts echo clause text) is a Phase 10 sweep.
+- Phase 05 follow-ups in the backlog: the L5 echo is DONE (Phase 08); live-model quality (2 of 4 quotes unlocatable on sample #3; counsel drafts echo clause text) is a Phase 10 sweep.
 - `x-aduin-doc` is client-attested (04a F4) and stays untrusted. 04a F5 (claim throws on storage errors) and F14 (breaker persisted) are done in 04b.
 - D1 daily-rows risk N11 (accepted until Turnstile is live) and N12 (AI refusals write 6-12 rows): see the Memory API section and `process/general-plans/backlog/core-followups_17-10-26/`.
 - `GET /api/health` lacks `cache-control: no-store`.

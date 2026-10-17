@@ -406,3 +406,59 @@ Evidence pack: `harness/phase-08/` (5 files), validator 0 failures, 0 warnings.
 Deviations (within blast radius): `OutboxState` gained the additive `parked` value (as the brief allowed); the old e2e expectation "a failed export downloads nothing" was flipped deliberately to the F1 behavior; F3 used the "clear in adoptWorkspace" option.
 
 Non-blocking left as reviewed: F9, F10. Residuals: read-only demo proven via response rewrite + Worker 403 test; AuditList mounts in 08b; analyst rename vs live sandbox (documented).
+
+## Closeout (UPDATE PROCESS, 2026-10-17)
+
+Answer first: Phase 08 is DONE and ready to archive with the umbrella (the umbrella stays active; 08b is next). Status: COMPLETE_WITH_GAPS (named residuals below, none blocking). Deploy of Phase 08 is pending (orchestrator).
+
+1. Selected plan: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-08-counsel-gate-memory_PLAN_17-10-26.md` (Phase Loop Progress 1-7 ticked).
+2. Classification: Ready for UPDATE PROCESS archival (the task folder holds the whole program, so the phase plan stays under the umbrella until the program closes).
+3. Finished: S0 interface freeze, worker L5 rules echo, core counsel engine (gate, sheet, template drafts, metrics), e2e infra (`stack-memory` project, dev-seed), real memory client + outbox, counsel UI (sheet, answers, gate popover, metrics panel, unsynced/parked chip, analyst name), DOCX export, review fixes F1-F8 and F11, no-LLM corpus.
+4. Verified (independent EVL at eb53541): core 2914, worker 525, web unit 189, preview e2e 138 + 1 opt-in skip, stack-memory 9, `slice:check`, `fixtures:check`, typecheck, lint, `guard:cf`, `secrets:scan`, `seed:check`, evidence validator 0 failures. Unverified: live AI draft quality; deployed behavior.
+4b. Validate-contract: present, PASS (inner-pvl: phase-08).
+5. Cleanup: context docs, registry, umbrella state, backlog updated in the closeout commit. Still needed: deploy (orchestrator), Phase 10 items.
+6. Next valid state: Phase 08b EXECUTE, then P6-1 missing-target xref detector, then Phase 10.
+7. Commit checkpoint: execution commits 1d45fa2 .. eb53541 already made; this process commit follows.
+8. Regression: preview e2e 138 and stack-memory 9 run serially (never concurrent); earlier-phase suites (core, worker) green.
+9. Review: APPROVE_WITH_FIXES, independent re-confirmation resolved F1-F8, F11; N1-N4 non-blocking (backlog).
+
+### SPEC Achievement
+
+| AC | Result | Proof |
+|---|---|---|
+| AC20 counsel sheet drafted, editable, no-AI template, excludes Already answered / Awaiting | met (template + recorded AI draft); live AI draft quality unmet as Known-Gap residual -> backlog P8-2 | `counsel-sheet` e2e, `counsel-draft`, core `sheet-contents` |
+| AC21 DOCX export, recording answer sets Answered and writes memory | met with user-approved deviation D-1 (DOCX lists only unanswered questions; recorded answers shown in the app) | `counsel-export-contents`, `counsel-answer`, `counsel-export` e2e |
+| AC22 gate strict, critical-only, AI never gates (L4), Accept stays Blocked, D-2 re-confirm | met | core `gate-state-matrix`, e2e `counsel-gate` |
+| AC25 no-LLM mode complete | met for the 12 HTML samples and the 13-test core corpus; scans-as-images re-run in Phase 10 | `no-llm-corpus` e2e, core `test:corpus` |
+| AC44 previously handled at fund II | met | `memory-no-reflag` |
+| AC45 answered at fund I not re-asked, not in sheet | met | `memory-prior-answer`, `counsel-export` (zero repeated questions) |
+| AC46 edited finding is New | met | `memory-edit-is-new` |
+| AC47 no cross-firm or workspace reach | met (preview twin + real-Worker stack-memory) | `memory-no-cross-firm`, `stack-memory-memory-no-cross-firm` |
+| AC48 blocking never hidden, re-confirm label | met | `memory-blocking-never-hidden`, `gate-with-reconfirm-state` |
+| AC56 private sandbox, analyst name chosen on entry | met; analyst rename does not change the server-side analyst of a live sandbox (documented residual) | stack-memory `sandbox-isolation`, review-sync F6 |
+| AC59/AC60 interim | met (interim): fund II 8 findings, 5 handled via fund I memory, 3 need action, 62.5% fewer; final runs in Phase 10 | `memory-prior-answer` |
+| AC64 per-document metrics | met | core `metrics`, e2e `metrics` |
+
+AC23 and AC24 (OCR) belong to Phase 06 and are not scored here.
+
+### Live usage
+
+None this phase ($0).
+
+### Known gaps
+
+- Live AI counsel-draft quality (Known-Gap; backlog P8-2).
+- Deployed `rows_written` re-measure (Phase 10).
+- Real D1 and Turnstile (Phase 10).
+- Diff-only Version drift counsel questions (backlog `phase08-version-drift-questions`).
+- Review notes N1-N4, F6 UI/README rename note (backlog `core-followups_REF`).
+- Residuals: read-only demo proven via response rewrite plus Worker 403 test; AuditList mounts in 08b.
+
+### Forward Preview
+
+- Test infra found: `stack-memory` Playwright project with `dev-seed.ts`; never run preview and stack-memory concurrently.
+- Blast radius changes: core `src/counsel/**` and web `api/`, `features/{counsel,gate,metrics,audit}` as planned; Worker `pipeline.ts` meta echo only.
+- Commands to stay green: `pnpm --filter @aduin/core test`, `pnpm --filter @aduin/worker test`, `pnpm --filter @aduin/web test`, `pnpm --filter @aduin/web test:e2e` then `test:e2e:stack-memory`, `pnpm slice:check`, typecheck, lint, `guard:cf`, `secrets:scan`.
+- Dependency changes: mammoth added to `@aduin/web` as a devDependency (export parse-back tests).
+
+Drift score: HIGH. Strongly recommend UPDATE PROCESS -- harness/protocol files touched. (Done in this closeout.)

@@ -10,7 +10,7 @@ metadata:
 
 # aduin-transaction - All Tests
 
-Last updated: 2026-10-17 (Phase 05 UPDATE PROCESS; HEAD f0f476c plus the process commit)
+Last updated: 2026-10-17 (Phase 08 UPDATE PROCESS; HEAD eb53541 plus the process commit)
 
 Attach this file first when the task involves testing, verification, or test debugging.
 
@@ -229,6 +229,24 @@ Whole suites, independent serial EVL: core 73 files / 501 tests (golden 67), wor
 - Perf evidence (not a gate): `diff-perf` Node 187 ms warm; browser diff 343 ms (budget 3 s).
 - After any diff-engine change run `record:author --check` (candidate quotes move the inputHash; re-author or re-record).
 - Known gaps: live drift-narrative quality (backlog `drift-narrative-live-quality`), Compare excludes OCR documents, outline R1 (investor-path ground truth), R2 (OCR confidence calibration), R3 (`downloadBlob` real-browser revoke).
+
+## Phase 08 gate tokens and the stack-memory project (counts at HEAD eb53541)
+
+Whole suites, independent serial EVL: core 76 files / 2914, worker 65 files / 525, web unit 26 files / 189, preview e2e 138 passed plus 1 opt-in skip, `stack-memory` 9 passed. One token per call, no `--`.
+
+| Package | Tokens |
+|---|---|
+| core | `gate-state-matrix`, `sheet-contents`, `metrics`, `contracts`; `pnpm --filter @aduin/core test:corpus` (13, no-LLM corpus) |
+| worker | `rules-echo`, `proxy-budget`, `cache-hit-zero-claims-with-rules` |
+| web unit | `realMemoryApi`, `outbox`, `review-sync`, `export-flow`, `counsel-export-contents` (node env, mammoth parse-back), `counsel-draft`, `gate-reexport`, `api-contract`, `import-graph` |
+| web e2e (preview) | `counsel-sheet`, `counsel-answer`, `counsel-export`, `counsel-gate` (never the token `gate`, it also matches `gate-pill`), `metrics`, `memory-no-reflag`, `memory-prior-answer`, `memory-edit-is-new`, `memory-blocking-never-hidden`, `memory-no-cross-firm`, `analyst-name`, `no-llm-corpus` |
+| web e2e (stack-memory) | `pnpm --filter @aduin/web test:e2e:stack-memory` then a token: `stack-memory-smoke`, `sandbox-isolation`, `demo-workspace`, `audit-trail-append-only`, `memory-no-cross-firm`, `roundtrip` |
+
+- **`stack-memory` Playwright project** (`stack-memory-*.spec.ts`, baseURL `http://127.0.0.1:8788`): its webServer runs `pnpm dev:stack:seeded` (builds the plain SPA, then `scripts/src/dev-seed.ts`: random per-run cookie keys held in memory, refuses to run if `apps/worker/.dev.vars` exists, recreates `apps/worker/.wrangler/e2e-stack-memory`, applies migrations 0001-0005 plus the demo seed locally, then `wrangler dev --local` on port 8788). `reuseExistingServer: false`. Specs get a unique `cf-connecting-ip` per context (`fixtures/stack-memory.ts`) so the per-IP session cap (5 per IP) does not bite.
+- **Never run the `preview` and `stack-memory` projects concurrently or in one invocation**: the stack project rebuilds the plain SPA over the preview output (e2e build order, E14) and both share the web build output. Run preview first, then stack-memory, serially.
+- Preview AI specs call `__aduinE2E.setApiBase('/')`; the e2e build keeps the Dexie stub for memory. The counsel AI draft e2e replays the committed `counsel-draft` recording. Downloads are caught with `waitForEvent('download')` and parsed with mammoth. Every spec asserts zero requests to openrouter.ai.
+- **Interim AC59/AC60** is asserted by `memory-prior-answer` from `fixtures/memory/fund-expectations.json`: fund II 8 findings, 5 handled, 3 need action, 62.5% fewer; final runs in Phase 10.
+- Residual: the read-only demo cookie is not minted for real (response rewrite in the spec plus the worker test `session-cookie-workerd`); live AI counsel-draft quality is a Known-Gap.
 
 ## Debugging Quick Reference
 

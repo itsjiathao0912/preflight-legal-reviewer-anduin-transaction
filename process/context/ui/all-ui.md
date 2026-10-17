@@ -12,7 +12,7 @@ metadata:
 
 # aduin-transaction - UI/UX Context
 
-Last updated: 2026-10-17 (Phase 05 UPDATE PROCESS; HEAD f0f476c plus the process commit)
+Last updated: 2026-10-17 (Phase 08 UPDATE PROCESS; HEAD eb53541 plus the process commit)
 
 Entrypoint for the `ui/` context group. `vc-ui-ux-designer` MUST read this before any design or frontend work.
 
@@ -133,6 +133,18 @@ Authoritative list: the `Published data-testid` bullet group in `subdoc-qa-mvp_P
 
 - **Files:** `finalizeOutline.ts` (validates with `OutlineSchema`, blocks an invalid outline), `ExportOutlineButton.tsx` (mounted in the `StructureScreen` header, only when a document is open, disabled when there is no structure), `OutlinePreview.tsx`. Shared `lib/download.ts`: `downloadBlob(filename: string, data: string | Blob, mime: string): void` (frozen signature; revokes the object URL in `setTimeout(0)`; Phase 08 reuses it unchanged).
 - **Testids:** the Export outline button and preview (preview exposes `data-count`) as asserted in `e2e/logic-outline-export.spec.ts`; the e2e hook field `forceInvalidOutline` exists only in `--mode e2e` builds.
+
+## Counsel View, Gate And Memory Sync (Phase 08, `apps/web/src/{features/{counsel,gate,metrics,audit},state/memory-sync.ts,api}`)
+
+- **Counsel view** (`features/counsel`, registry entry `counsel`): header "Counsel questions" with "N questions · N unanswered", All / Unanswered segment, AI draft, Export DOCX; one row per question (severity, Qn, wording, tag New / Accepted / Answered / Unclear), expanded body with masked quote and pin citation, A/B/C readings, provenance chip (Template draft / AI suggestion / Edited by you), wording editor (Ctrl/Cmd+Enter saves, Esc cancels), Record or Change answer form (A/B/C/unclear, note, answered by, date). Drafts persist in Dexie `drafts` as `counsel:{docId}`; question ids in uiState `questions:{docId}`. The counsel nav badge still counts Needs-counsel findings only.
+- **Gate popover** (`features/gate`): reasons link into Counsel or Findings (`data-target`); text "Dismissed in [fund], re-confirm" and "Awaiting counsel (asked in [fund])"; the sidebar GateButton shares the open state.
+- **Metrics panel** (`features/metrics`): shown after the first export only (`metrics:{docHash}`, t0 captured at the top of `openDocument`, first export only).
+- **Unsynced / parked chip** (`shell/UnsyncedChip.tsx`): hidden at 0, between the gate and the AI switch; parked ops read "memory unavailable, retries on reload".
+- **Analyst name:** inline dismissible edit in `AnalystBadge` (default Linh Tran, 1-80 chars, control and bidi characters stripped, persisted in uiState `session:analystName`). Renaming does not change the server-side analyst of a live sandbox session (documented in `session.ts`; a UI hint is in the backlog).
+- **Export:** `exportDocx.ts` lazy-loads `docx`; `export-flow.ts` builds the DOCX first and records to memory best-effort, so a memory failure still downloads with the quiet note "Saved locally; not recorded in memory." (review F1). Only a DOCX build failure raises `ExportError`. No firm tag: answers stay local, export still works. Read-only demo: writes disabled with a read-only note.
+- **Testids (new):** `counsel-view`, `counsel-meta`, `counsel-filter-all`, `counsel-filter-open`, `counsel-ai-draft`, `counsel-export`, `counsel-gate-line`, `counsel-gate-reasons`, `counsel-no-firm`, `counsel-read-only`, `counsel-empty`, `counsel-list`, `counsel-none`, `counsel-row` (`data-finding-id`, `data-state`), `counsel-row-toggle`, `counsel-question-text`, `counsel-quote`, `counsel-interp`, `counsel-provenance`, `counsel-edit*`; the full list is in the Phase 08 REPORT (S2 "New test ids").
+- **AuditList** (`features/audit/AuditList.tsx`) is presentational and not mounted yet; Phase 08b mounts it and must not redefine it or `MemoryApi`.
+- **Preview builds** (`--mode e2e`) keep the Dexie stub memory client even after `setApiBase('/')`; production and vitest use the real client when the API base is set.
 
 ## UI Test Conventions
 

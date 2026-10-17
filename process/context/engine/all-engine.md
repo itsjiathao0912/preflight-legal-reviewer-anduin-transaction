@@ -123,6 +123,15 @@ Report: `subdoc-qa-mvp_PHASE-09-logic-outline_REPORT_17-10-26.md`.
 - **Web side:** optional `EngineResult.outline` built in `engine.worker.ts` right after `result.structure`, in its own try/catch (absent when there is no structure). Export UI: `docs` in `process/context/ui/all-ui.md`.
 - **Residuals (backlog):** R1 investor-path ground truth, R2 OCR confidence calibration, R3 `downloadBlob` real-browser revoke.
 
+## Phase 08 additions (counsel, `counsel/`; commit 02c26bf)
+
+- **Files:** `counsel/{gate,sheet,template-draft,metrics}.ts`, re-exported append-only from `src/index.ts`. Tests: `test/unit/counsel/{gate-state-matrix,sheet-contents,metrics}.test.ts` (matrix is 2400 cells plus named stubs).
+- **`computeGate`** (also `gateReasonFor`, `isGating`, `findingLink`, `GATE_REASON_TEXT`): critical-only; `detector_kind === 'ai'` never gates (L4); a clear counsel answer A/B/C resolves, including a `dismissed_reconfirm` item (D-2); `unclear` stays `unclear`; Accept alone stays `unanswered` (AC22); Needs counsel is `awaiting_counsel`; a dismissal resolves only with a reason code; an open status falls back to the memory label; a high `dismissed_reconfirm` shows its label but does not gate. The web `gateInterim.ts` is now a thin re-export.
+- **Sheet** (`buildCounselSheet`, `includeOnSheet`): D-1, the sheet holds only unanswered New/Accepted questions; answered (A/B/C) or dismissed here are excluded; `unclear` returns as New; labels `already_answered`, `awaiting_counsel`, `previously_dismissed` are excluded; `dismissed_reconfirm` is included only if accepted or sent to counsel here. Quotes are masked (`mask(text, sensitiveSpans(text))`) and clamped to `limits.quoteMaxChars`; interpretations are edited/AI drafts else template, masked, at most 6 of at most 500 chars (valid against `CounselQuestionRequestSchema`). Numbering is 1-based in finding order.
+- **Template drafts** (`templateInterpretations`, `templateQuestionText`, `maskAndClamp`, `maskQuote`, `clampInterpretations`): no-AI fallback wording.
+- **Metrics** (`computeMetrics`, AC64): `defectsBeforeBuild` = non-AI findings not `dismissed` with `tool_false_alarm`; `questionsBatched` = sheet size; `timeToExportMs` = max(0, exportedAt - t0).
+- Gate result: core 76 files / 2914 tests at eb53541; `contracts/` unchanged (snapshot).
+
 ## Gate commands (no `--` under pnpm 11.13.1)
 
 `pnpm --filter @aduin/core test` | `test:golden` | `test:property` | `test:corpus` | `test:vectors` | `test security` | `test contracts`, plus `pnpm typecheck && pnpm lint && pnpm guard:cf && pnpm secrets:scan`. Phase 01 results: 217 / 44 / 29 / 13 / 38 / 16 / 34 tests green; after Phase 05 the whole core suite is 51 files / 355 tests; after Phase 07 and 09 it is 73 files / 501 tests (golden 67); `--passWithNoTests` removed so an unmatched token exits 1.

@@ -102,3 +102,19 @@ metadata:
 | F10 | CSP and security headers on the web app (Phase 10 precondition) | 10 |
 | F12 | Deploy the Worker (ocr2 prompt, image magic check, model-facing schema without `ext`) before the web bundle; the live Worker still runs ocr1 until then | 10 |
 | P6-4 | Re-seed the remote demo D1 during the Phase 10 deploy | 10 |
+
+## Phase 08 follow-ups (counsel, gate, memory review; APPROVE_WITH_FIXES, all fixed and re-confirmed at eb53541; 2026-10-17)
+
+F1-F8 and F11 are resolved. The items below are non-blocking.
+
+| # | Item | Owner phase |
+|---|---|---|
+| N1 | `memoryDown` is not cleared after a transient session-bootstrap failure until reload or analyst rename; clear it on the next successful call | 08b / later |
+| N2 | Outbox ops with a null workspace (via revoke) skip the F2 workspace check; the server refuses cross-workspace, so this is defense in depth only | later |
+| N3 | Stale comment: `KEEP_TERMINAL_MS` says 7 days, the actual purge is 24 h (F4) | later |
+| N4 | A parked decision older than 24 h is purged unsent, by design; surface this in the unsynced chip help text if users trip on it | 08b / 10 |
+| F6-UI | Renaming the analyst does not change the server-side analyst of a live sandbox session (documented in `session.ts`); add a one-line UI hint and a README note | 08b / 10 |
+| F9, F10 | Left as reviewed (non-blocking, no code change) | later |
+| P8-1 | Compare diff-only "Version drift" counsel questions: stub `process/general-plans/backlog/phase08-version-drift-questions_NOTE_17-10-26.md` (not built in Phase 08) | later |
+| P8-2 | Live AI counsel-draft quality is Known-Gap (recorded replay in CI); include in the Phase 10 live-model sweep | 10 |
+| P8-3 | Re-measure `rows_written` on the deployed Worker including the Phase 08 session bootstrap and outbox write volume; real D1 and Turnstile are live only in Phase 10 | 10 |

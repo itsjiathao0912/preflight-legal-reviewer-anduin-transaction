@@ -1,5 +1,5 @@
 {
-  "task": "subdoc-qa-mvp phase 08 counsel sheet, gate and real memory (S1-S3) + security review fix cycle (F1-F8, F11) + S3.3 no-LLM corpus",
+  "task": "subdoc-qa-mvp phase 08 counsel sheet, gate and real memory (S1-S3) + security review fix cycle (F1-F8, F11) + independent re-confirmation",
   "reviewer": "automated vc-code-reviewer security-reviewer (sonnet), independent of the implementing execute-agent",
   "decision": "approved-with-concerns",
   "reviewDecision": "APPROVE_WITH_FIXES",
@@ -91,11 +91,15 @@
   "nonBlockingFindings": [
     "F9 (non-blocking, per review): left as reviewed; no code change in this cycle.",
     "F10 (non-blocking, per review): left as reviewed; no code change in this cycle.",
+    "N1: memoryDown is not cleared after a transient bootstrap failure until reload or analyst rename.",
+    "N2: null-workspace ops via revoke skip the F2 workspace check; the server refuses cross-workspace.",
+    "N3: stale 7-day KEEP_TERMINAL_MS comment (actual purge is 24 h).",
+    "N4: a parked decision older than 24 h is purged unsent, by design.",
     "Residual: read-only demo behavior is checked via response rewrite in the preview e2e plus the Worker 403 read_only test, not against a live read-only workspace.",
     "Residual: AuditList is mounted in Phase 08b, so the audit-trail UI is not exercised here.",
     "Residual: renaming the analyst does not change the server-side analyst of an existing live sandbox session (documented in cleanAnalystName)."
   ],
   "mustStopBeforeFinalize": false,
   "autoStopCleared": true,
-  "notes": "F1 pending independent re-confirmation by the EVL vc-tester run and a re-review; all other findings resolved with named tests in this cycle."
+  "notes": "F1 independently re-confirmed. F1-F8 and F11 resolved with named tests; N1-N4 non-blocking."
 }
