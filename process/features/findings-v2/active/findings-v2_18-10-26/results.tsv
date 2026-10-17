@@ -1,0 +1,5 @@
+cycle	phase	domain	gate	fails	concerns	loop_status	note
+0	A	plan	CONDITIONAL	0	6	BASELINE	outer-pvl first pass (Phase A scope)
+1	A	plan	CONDITIONAL	0	6	CONTINUE	supplement cycle 1: 5 gaps applied; re-run V1
+2	A	plan	CONDITIONAL	0	3	CONTINUE	supplement cycle 2: 3 gaps applied (owner meta, gatesReview, CSS coordination); re-run V1
+3	A	plan	PASS	0	0	HALTED_SUCCESS	cycle 3 re-run from V1: PASS; E28/E29 added as execute instructions

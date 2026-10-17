@@ -1,0 +1,2 @@
+cycle	phase	domain	gate	fails	concerns	loop_status	note
+0	A	tests	PASS	0	0	HALTED_SUCCESS	EVL confirmation: 20 tokens, typecheck, full web 71/515, boundary B1-B3 green
