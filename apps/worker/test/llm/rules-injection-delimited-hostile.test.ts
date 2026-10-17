@@ -69,6 +69,7 @@ describe('rules-injection-delimited-hostile (AC51, G8)', () => {
       'temperature',
       'max_tokens',
       'response_format',
+      'stream',
     ]);
   });
 });

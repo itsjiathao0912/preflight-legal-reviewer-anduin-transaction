@@ -4,6 +4,10 @@
 // from the shared core task registry (Phase 05: `TASKS[task].buildMessages`, `responseFormat`),
 // so the forwarded body is byte-identical to the recordings (record-body-parity). The OCR body is
 // built by string templating so the (up to ~700 KB) base64 is never re-serialized (S2).
+// Streaming (plan ai-review-stream-dedup D1): the body ends with `"stream":true` (appended after
+// `response_format`; every earlier byte is unchanged) and the call sends
+// `accept: text/event-stream`. The reply is read by `upstream/sse.ts`; there is no reasoning
+// parameter, so the provider default applies.
 import {
   OcrResultSchema,
   responseFormat,
@@ -98,7 +102,7 @@ export function buildBody(
   const ms = JSON.stringify(models);
   return (
     `{"model":${m},"models":${ms},"messages":${messagesJson},"temperature":0,` +
-    `"max_tokens":${MAX_TOKENS[kind]},"response_format":${responseFormatJson}}`
+    `"max_tokens":${MAX_TOKENS[kind]},"response_format":${responseFormatJson},"stream":true}`
   );
 }
 
@@ -114,6 +118,7 @@ export function callOpenRouter(
     headers: {
       authorization: `Bearer ${cfg.apiKey}`,
       'content-type': 'application/json',
+      accept: 'text/event-stream',
       'x-title': 'aduin-transaction',
     },
     body,

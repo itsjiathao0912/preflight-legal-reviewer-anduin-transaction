@@ -4,15 +4,18 @@
 // read-only `a==='ro'` cookie; read failure = memory_unavailable/rules_unavailable, pre-stream)
 // -> build messages from TASKS[task] -> inputHash -> cache key (task prompt/schema versions,
 // injected rules hash) -> 4 cache read (HIT: zero claims, zero writes, zero upstream) ->
-// 5 Turnstile -> 6 claims -> 7 OpenRouter (hold-open NDJSON) -> classify -> cache write ->
-// ledger write -> terminal frame.
+// 5 Turnstile -> 6 claims -> 7 OpenRouter (hold-open NDJSON; the upstream reply is streamed as
+// SSE, AI with a 60 s idle timeout + 420 s ceiling, OCR with a 240 s timer) -> classify (SSE
+// assembly, then the same parse/validate tail) -> cache write -> ledger write -> terminal frame.
 // Refunds: refusals before dispatch, pre-dispatch aborts and NON_CONSUMING_STATUS 4xx refund
 // everything. A client abort after dispatch keeps ALL claims. Provider-side failures after
-// dispatch (network, 5xx/429/402) refund the visitor-scoped claims (request/doc/seen/
-// ocr pages, AC26) but KEEP the global counter and spend reservation, since the provider may
-// have counted/billed the call (review F1). Malformed output and 200-with-error bodies keep ALL
-// claims: a visitor can induce them via prompt injection (review F11). An upstream timeout also
-// keeps ALL claims (Phase 05 review M2: a slow reply is visitor-inducible).
+// dispatch (network, 5xx/429/402, upstream timeout, a stream that ends without a finish_reason)
+// refund the visitor-scoped claims (request/doc/seen/ocr pages, AC26) but KEEP the global
+// counter and spend reservation, since the provider may have counted/billed the call (review
+// F1). Malformed output, 200-with-error bodies and mid-stream error chunks keep ALL claims: a
+// visitor can induce them via prompt injection (review F11). The timeout refund (plan
+// ai-review-stream-dedup D2) replaces Phase 05 review M2: the idle timeout now catches a dead
+// upstream, and the global counter + spend still bound abuse.
 // Pre-stream refusals are HTTP via errorStatus; post-open failures are terminal error frames.
 import {
   TASKS,
@@ -78,7 +81,12 @@ function rulesEcho(r: { hash8: string; applied: number; total: number }): RulesE
     : { rules_hash8: r.hash8, rules_applied: r.applied, rules_total: r.total };
 }
 
-export const UPSTREAM_TIMEOUT_MS = 240_000;
+/** AI ceiling: a continuously active stream is cut here (never re-armed). */
+export const UPSTREAM_TIMEOUT_MS = 420_000;
+/** AI idle timeout: no upstream bytes for this long (armed at dispatch, re-armed by any read). */
+export const UPSTREAM_IDLE_MS = 60_000;
+/** OCR keeps its single wall-clock timer and has no idle timer (vision first-byte unprobed). */
+export const UPSTREAM_OCR_TIMEOUT_MS = 240_000;
 export const CACHE_TTL_S = 7 * 86_400;
 const DOC_HEADER = 'x-aduin-doc';
 
@@ -89,7 +97,12 @@ export interface ProxyDeps {
   timers?: Timers;
   log?: (line: string) => void;
   heartbeatMs?: number;
+  /** AI ceiling (default UPSTREAM_TIMEOUT_MS) */
   upstreamTimeoutMs?: number;
+  /** AI idle timeout (default UPSTREAM_IDLE_MS) */
+  upstreamIdleMs?: number;
+  /** OCR timer (default UPSTREAM_OCR_TIMEOUT_MS) */
+  upstreamOcrTimeoutMs?: number;
   /** Circuit-breaker state (default: per-isolate memory; 04b may persist it). */
   breaker?: BreakerPort;
 }
@@ -102,6 +115,8 @@ export interface ProxyContext {
   timers: Timers;
   heartbeatMs: number | undefined;
   upstreamTimeoutMs: number;
+  upstreamIdleMs: number;
+  upstreamOcrTimeoutMs: number;
   preLimiter: PreLimiter;
   logger: (cfg: ProxyConfig | undefined) => Logger;
   /** Circuit breaker: tripped for (UTC day, config fingerprint). */
@@ -433,9 +448,13 @@ export async function handleProxy(
 }
 
 /**
- * Abortable upstream call with the 240 s timeout. Workers Free has no wall-clock cap for a
- * connected streaming response (time waiting on fetch is not CPU), and the heartbeats keep the
- * NDJSON stream open. nemotron-3-super:free full reasoning was measured at 100-157 s.
+ * Abortable upstream call. AI: an IDLE timeout (`upstreamIdleMs`, no upstream bytes; SSE
+ * keepalive comments and reasoning deltas count as activity) plus a CEILING
+ * (`upstreamTimeoutMs`). OCR: one `upstreamOcrTimeoutMs` timer, no idle timer. Both end as
+ * reason `timeout` (a provider fault: visitor claims refunded, global + spend kept). Workers Free
+ * has no wall-clock cap for a connected streaming response (waiting on fetch is not CPU), and
+ * the NDJSON heartbeats keep the client connection open.
+ * The idle check is CPU-cheap: a read only writes a timestamp; ONE timer re-checks it.
  */
 async function once(
   fwd: Forward,
@@ -444,18 +463,8 @@ async function once(
   ctx: ProxyContext,
   signal: AbortSignal,
 ): Promise<Classified> {
-  const ac = new AbortController();
-  const onAbort = () => ac.abort();
-  signal.addEventListener('abort', onAbort);
-  let timedOut = false;
-  const timer = ctx.timers.setTimeout(() => {
-    timedOut = true;
-    ac.abort();
-  }, ctx.upstreamTimeoutMs);
   // An abort that lands before the request leaves the Worker is the only abort we refund.
   if (signal.aborted) {
-    ctx.timers.clearTimeout(timer);
-    signal.removeEventListener('abort', onAbort);
     return {
       ok: false,
       code: 'upstream_failed',
@@ -464,6 +473,34 @@ async function once(
       consumed: false,
     };
   }
+  const ac = new AbortController();
+  const onAbort = () => ac.abort();
+  signal.addEventListener('abort', onAbort);
+  const log = ctx.logger(cfg);
+  const idleMs = fwd.kind === 'ai' ? ctx.upstreamIdleMs : 0; // 0 = no idle timer (OCR)
+  const ceilingMs = fwd.kind === 'ai' ? ctx.upstreamTimeoutMs : ctx.upstreamOcrTimeoutMs;
+  let timedOut = false;
+  const ceiling = ctx.timers.setTimeout(() => {
+    timedOut = true;
+    log.log('proxy.upstream_ceiling_timeout', { kind: fwd.kind });
+    ac.abort();
+  }, ceilingMs);
+  // armed at dispatch, so a silent connect (no headers) also trips it
+  let lastActivity = ctx.now();
+  let idle: unknown;
+  const check = () => {
+    idle = undefined;
+    const idleFor = ctx.now() - lastActivity;
+    if (idleFor >= idleMs) {
+      timedOut = true;
+      log.log('proxy.upstream_idle_timeout', { kind: fwd.kind });
+      ac.abort();
+    } else idle = ctx.timers.setTimeout(check, idleMs - idleFor);
+  };
+  if (idleMs > 0) idle = ctx.timers.setTimeout(check, idleMs);
+  const onActivity = () => {
+    lastActivity = ctx.now();
+  };
   let dispatched = false;
   try {
     dispatched = true;
@@ -473,10 +510,11 @@ async function once(
       buildBody(fwd.kind, models, fwd.messagesJson, fwd.responseFormatJson),
       ac.signal,
     );
-    return await classify(fwd.kind, res, fwd.ai);
+    onActivity(); // headers arrived
+    return await classify(fwd.kind, res, fwd.ai, { onActivity, signal: ac.signal });
   } catch (e) {
     // class name only: never log error messages (they can carry upstream bodies)
-    ctx.logger(cfg).log('proxy.upstream_exception', {
+    log.log('proxy.upstream_exception', {
       kind: fwd.kind,
       name: e instanceof Error ? e.name : typeof e,
     });
@@ -485,14 +523,15 @@ async function once(
       code: 'upstream_failed',
       reason: timedOut ? 'timeout' : signal.aborted ? 'client_abort' : 'network',
       retryable: false,
-      // dispatched: the provider may have accepted (and counted) it -> keep the claims
+      // dispatched: the provider may have accepted (and counted) it -> keep the global claim
       consumed: dispatched,
-      // network only: a timeout keeps the visitor claims too (review M2: a slow-to-answer prompt
-      // is visitor-inducible, so refunding it would let a visitor loop free upstream calls)
-      ...(!timedOut && !signal.aborted ? { providerFault: true } : {}),
+      // network AND timeout are provider faults (visitor claims refunded, global + spend kept);
+      // a client abort after dispatch keeps ALL claims
+      ...(!signal.aborted ? { providerFault: true } : {}),
     };
   } finally {
-    ctx.timers.clearTimeout(timer);
+    ctx.timers.clearTimeout(ceiling);
+    if (idle !== undefined) ctx.timers.clearTimeout(idle);
     signal.removeEventListener('abort', onAbort);
   }
 }
