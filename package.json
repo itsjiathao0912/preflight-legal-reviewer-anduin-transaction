@@ -16,7 +16,8 @@
     "dev:stack": "pnpm --filter @aduin/web build && pnpm --filter @aduin/worker dev",
     "slice:check": "pnpm --filter @aduin/scripts slice:check",
     "seed:gen": "pnpm --filter @aduin/scripts seed:gen",
-    "seed:check": "pnpm --filter @aduin/scripts seed:check"
+    "seed:check": "pnpm --filter @aduin/scripts seed:check",
+    "dev:stack:seeded": "pnpm --filter @aduin/web build && pnpm --filter @aduin/worker dev:e2e"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

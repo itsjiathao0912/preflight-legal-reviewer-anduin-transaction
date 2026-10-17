@@ -21,7 +21,8 @@
     "precompute:ai": "tsx src/precompute/precompute-ai.ts",
     "precompute:ocr": "tsx src/precompute/precompute-ocr.ts",
     "record:ocr": "tsx src/record/record-ocr.ts",
-    "ocr:cer": "tsx src/ocr/cer.ts"
+    "ocr:cer": "tsx src/ocr/cer.ts",
+    "dev:seed": "tsx src/dev-seed.ts"
   },
   "dependencies": {
     "@aduin/core": "workspace:*",

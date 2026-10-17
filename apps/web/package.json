@@ -16,7 +16,8 @@
     "test:e2e": "playwright test --project=preview",
     "pretest:a11y": "tsx ../../scripts/src/build-samples.ts",
     "test:a11y": "playwright test --project=preview a11y-smoke",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "test:e2e:stack-memory": "playwright test --project=stack-memory"
   },
   "dependencies": {
     "@aduin/core": "workspace:*",

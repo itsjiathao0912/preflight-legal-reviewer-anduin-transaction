@@ -19,7 +19,15 @@ if (
 const STACK_URL = SLICE_BASE_URL?.replace(/\/$/, '') ?? LOCAL_STACK_URL;
 
 const argv = process.argv.join(' ');
-const wantsStack = /--project[= ]stack\b/.test(argv);
+// `(?![-\w])` so `--project=stack-memory` does not also start the Phase 04a stack server.
+const wantsStack = /--project[= ]stack(?![-\w])/.test(argv);
+const wantsStackMemory = /--project[= ]stack-memory(?![-\w])/.test(argv);
+
+// stack-memory = built plain-mode SPA + Worker + seeded local D1 on :8788 (pnpm dev:stack:seeded:
+// scripts/src/dev-seed.ts, random per-run cookie keys, recreated persist dir). Phase 08.
+const STACK_MEMORY_PORT = 8788;
+const STACK_MEMORY_URL = `http://127.0.0.1:${STACK_MEMORY_PORT}`;
+const STACK_MEMORY_SPECS = /stack-memory-.*\.spec\.ts/;
 
 export default defineConfig({
   testDir: './e2e',
@@ -30,7 +38,7 @@ export default defineConfig({
   projects: [
     {
       name: 'preview',
-      testIgnore: /slice\.spec\.ts/,
+      testIgnore: [/slice\.spec\.ts/, STACK_MEMORY_SPECS],
       use: {
         ...devices['Desktop Chrome'],
         baseURL: PREVIEW_URL,
@@ -41,6 +49,13 @@ export default defineConfig({
       name: 'stack',
       testMatch: /slice\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], baseURL: STACK_URL },
+    },
+    {
+      // Per-IP session cap is 5/day: specs give each browser context its own cf-connecting-ip
+      // (see e2e/fixtures/stack-memory.ts). The server is never reused (fresh seeded D1 per run).
+      name: 'stack-memory',
+      testMatch: STACK_MEMORY_SPECS,
+      use: { ...devices['Desktop Chrome'], baseURL: STACK_MEMORY_URL },
     },
   ],
   webServer: [
@@ -59,6 +74,18 @@ export default defineConfig({
             url: `${STACK_URL}/api/health`,
             reuseExistingServer: true,
             timeout: 120_000,
+          },
+        ]
+      : []),
+    // After the preview server: its plain-mode web build overwrites the e2e-mode bundle (E14).
+    ...(wantsStackMemory
+      ? [
+          {
+            command: 'pnpm dev:stack:seeded',
+            cwd: '../..',
+            url: `${STACK_MEMORY_URL}/api/health`,
+            reuseExistingServer: false,
+            timeout: 240_000,
           },
         ]
       : []),
