@@ -425,17 +425,20 @@ Files directly modified or created across the program (exact per-phase lists liv
 
 ## Current Execution State
 
-Last updated: 17-10-26 (PLAN session)
-Current phase: 1 of 4 (program at outer PVL)
-Phase 1 name: Core package engine and fixtures
-Phase 1 status: ⏳ PLANNED (research, innovate and plan-supplement satisfied; PVL next)
-Phase 1 EVL: not run
-Phase 1 report: `process/features/fund-package-intake/active/intake-mvp_17-10-26/intake-mvp_PHASE-1-core-package-engine_REPORT_17-10-26.md` (not written)
-Next phase: Phase 2 — Web data plane (waits for Phase 1 VERIFIED)
-Current loop step: PVL (outer PVL; cycle 1 supplement applied 17-10-26, re-validate from V1 next)
-Validate-contract status: not written for any phase
-Program Net Gate: PENDING
-Latest validator run: 17-10-26 PLAN session: `validate-plan-artifact` on the umbrella and each phase plan, `validate-phase-stub` on each phase plan, `validate-umbrella-artifact` on this plan (results recorded in the PLAN handoff message)
+Last updated: 17-10-26 (UPDATE PROCESS, program closeout)
+Current phase: 4 of 4 (program COMPLETE with known gaps)
+Phase 1 status: ✅ VERIFIED (EVL green; report `intake-mvp_PHASE-1-core-package-engine_REPORT_17-10-26.md`)
+Phase 2 status: ✅ VERIFIED (EVL green; report `intake-mvp_PHASE-2-web-data-plane_REPORT_17-10-26.md`)
+Phase 3 status: ✅ VERIFIED (EVL green; report `intake-mvp_PHASE-3-web-surfaces_REPORT_17-10-26.md`)
+Phase 4 status: ✅ VERIFIED (EVL green; deployed 3d2c7301-a4a5-487c-bd7d-2f2c0800be6f; report `intake-mvp_PHASE-4-closeout-deploy_REPORT_17-10-26.md`)
+Phase 4 EVL: green (core 3084, web 298, preview e2e 217+1 skip, stack-memory 11, worker 526, scripts 162; live F1-F4)
+Program report: `process/features/fund-package-intake/active/intake-mvp_17-10-26/intake-mvp_REPORT_17-10-26.md`
+Next phase: none (follow-ups in `process/features/fund-package-intake/backlog/`; the variance program consumes the baseline role)
+Current loop step: UPDATE-PROCESS (complete)
+Validate-contract status: written and PASS for all 4 phases
+Program Net Gate: CONDITIONAL on operator-run residuals only (live AI/OCR on packages, real-session package memory writes, R4 Turnstile iframe CSP, manual keyboard pass) plus accepted known gaps (G6 Blocked path unit-only, a11y serious x5, bundle +270 kB). Live AI/OCR spend $0.
+Archival: kept in `active/` as COMPLETE (AC-I3 live OCR and the operator residuals rest on Known-Gap items; `git mv` the folder to `completed/` after the operator run, as with subdoc-qa-mvp).
+Latest validator run: 17-10-26 UPDATE PROCESS: `validate-context-discovery`, `validate-plan-inventory`, `validate-all-context`, `validate-umbrella-artifact`, `git diff --check` (see commit)
 
 Loop step values: RESEARCH | INNOVATE | PLAN-SUPPLEMENT | PVL | EXECUTE | EVL | UPDATE-PROCESS
 Orchestrator rule: read "Current loop step" and "Validate-contract status" before spawning any subagent. Never spawn execute-agent when the loop step is RESEARCH, INNOVATE, PLAN-SUPPLEMENT or PVL.

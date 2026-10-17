@@ -166,6 +166,17 @@ Authoritative list: the `Published data-testid` bullet group in `subdoc-qa-mvp_P
 - **CSP implications for UI code:** no inline scripts, no eval (Zod runs jitless via `src/zod-jitless.ts`, imported first in `main.tsx`), fonts are files not data: URIs, `style-src` keeps `'unsafe-inline'` only for Radix scroll-lock styles (residual R-CSP-STYLE).
 - **Open (operator):** screenshots `13-memory` and `14-audit` need a Turnstile-verified session; manual keyboard pass not recorded.
 
+## Fund Package Intake surfaces (no new screens; `apps/web/src/features/{package,open-document,gate,counsel}`, `state/package.ts`)
+
+Source of truth: the Phase 2 and 3 reports in `process/features/fund-package-intake/active/intake-mvp_17-10-26/`. Intake folds into existing screens; the registry, sidebar and design tokens are unchanged.
+
+- **Upload modal:** multi-file drop (12 files, 40 MB, refusal message stores nothing), a Demo packages list, and a package confirmation table (`PackageConfirmTable.tsx`): firm, fund and version, per-file type, role, confidence and reason; low-confidence rows must be confirmed before Run checks; baseline role is offered for same-firm documents only. A single high-confidence sub agreement becomes a one-document package (coverage shows after findings render); Samples-list opens stay classic.
+- **Structure -> Package lens** (`PackageLens` with Documents, References, Terms, Coverage table): reference confirm and "None of these", terms `defined in package` / `unverified`, corrections persist across reload (24 h window).
+- **Findings header:** `CoverageLine` sits next to the gate pill; the gate popover lists `PackageGateReasons`. A partial package never looks fully checked.
+- **Questions:** "For the GP" group (`GpRequestGroup`) with one item per distinct missing document plus its quote, and one request DOCX per export click (`exportRequestDocx.ts`). Absent without a package.
+- **Data contract:** `usePackage` store, frozen `PackageView` (`features/package/contract.ts`); Dexie v2; reload restores the package (`state/last-doc.ts`, `App.tsx`). Render-first holds: findings never wait for package work.
+- **Known gaps:** Escape on the Upload modal returns focus to `<body>` (stub `intake-dialog-focus-return`); a11y serious (non-critical) color-contrast x1 (Findings) and label-content-name-mismatch x4 (Package lens); manual keyboard and screen-reader pass not run; main bundle +270 kB (837 kB).
+
 ## UI Test Conventions
 
 - Two Playwright projects (`apps/web/playwright.config.ts`): `preview` (`vite preview` of a `--mode e2e` build, stub memory API, no Worker; runs every Phase 03 spec) and `stack` (built SPA + Worker; only `slice.spec.ts`; select with `--project=stack`; `SLICE_BASE_URL` points it at a deployed https `*.workers.dev` Worker). Details and commands: `process/context/tests/all-tests.md`.

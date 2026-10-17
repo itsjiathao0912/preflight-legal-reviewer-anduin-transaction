@@ -12,3 +12,6 @@ iteration	timestamp	gaps_found	fail_count	concern_count	applied	saturation_statu
 10	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	EVL phase 1 green on independent vc-tester re-run (core 3076+3 skip, scripts 156, 27 tokens, diff gates)
 11	2026-10-17	4	0	4	4	ACTIVE	CONTINUE	P3 inner refresh after P2 (R1 one-doc packages show coverage, R2 reload restore join item J0, R3 testids/live(), R4 rollback 328ca295); re-validate P3
 12	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	EVL phase 2 green (web 266, core 3077, scripts 156, e2e 192+1 skip on rerun; intake-demo-packages flaked once at 5 s timeout -> harden in P3 join); P3 inner PVL PASS
+13	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	EVL phase 3 green (web 289, e2e 214+1 skip, stack-memory 10, core 3077, scripts 156); demo-packages timeout edit accepted as deviation (orchestrator-ordered flake hardening)
+14	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	EVL after review-fix cycle (0784938 core, 47e188f web) green: core 3084, web 298, e2e 214+1, stack 10, worker 526, scripts 156, record/precompute checks
+15	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	EVL phase 4 green: live 3d2c7301 (rollback cde74507), F1-F3 pass, F4 8/8 checks with 0 same-origin errors (raw exit 1 from Turnstile iframe console, ruled third-party), stack-memory 11, scripts 162

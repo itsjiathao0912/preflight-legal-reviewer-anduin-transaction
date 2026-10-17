@@ -1,6 +1,6 @@
 # aduin-transaction - All Context
 
-Last updated: 2026-10-17 (Phase 10 UPDATE PROCESS; code HEAD f0d924b)
+Last updated: 2026-10-17 (Fund Package Intake UPDATE PROCESS; code HEAD a4d7a34, process HEAD 6fb34fb)
 
 This file is the root context entrypoint for the repo.
 
@@ -24,7 +24,7 @@ Target user: Anduin's Digitization Service Analyst. Deliverables: live demo, REA
 
 Domain knowledge, defect taxonomy, competitors and product decisions: `process/context/product-domain.md`.
 
-**Live demo (program COMPLETE, 17-10-26):** https://aduin-transaction-web.giathaowork.workers.dev (Worker `aduin-transaction-web`, version `23612b12-51c7-4d75-a324-f4f2f6392ba8`, code af59da6 plus docs f0d924b; rollback `67c796ff`). Real D1 `aduin-transaction-db` (migrations 0001-0005, demo seed), Turnstile widget live, enforced CSP and security headers, `/api/health` no-store. Findings render in about 1 s without waiting for Turnstile. AI and OCR need a Turnstile token (human in a real browser); automated Chromium gets none, so the live AI/OCR sweep, AC51 echo and D4 burst are operator-run residuals in backlog. Live AI/OCR spend so far: $0. Deploy rules and recipe: `process/context/worker/all-worker.md`.
+**Live demo (program COMPLETE, 17-10-26):** https://aduin-transaction-web.giathaowork.workers.dev (Worker `aduin-transaction-web`, version `3d2c7301-a4a5-487c-bd7d-2f2c0800be6f`, web from main a4d7a34, Worker code 994ea54 unchanged by Intake; rollback chain `cde74507` -> `328ca295` -> `09e7a579` -> `47d98295` -> `23612b12`). Real D1 `aduin-transaction-db` (migrations 0001-0005, demo seed), Turnstile widget live, enforced CSP and security headers, `/api/health` no-store. Findings render in about 1 s without waiting for Turnstile. AI and OCR need a Turnstile token (human in a real browser); automated Chromium gets none, so the live AI/OCR sweep, AC51 echo and D4 burst are operator-run residuals in backlog. **Fund Package Intake (program COMPLETE with known gaps, 17-10-26; feature folder `process/features/fund-package-intake/`):** the Upload modal takes a whole package (up to 12 files, 40 MB), detects each file's type and role with a stated reason, asks the analyst to confirm unsure ones, resolves outside references ("LPA", "Annex F", W-8BEN-E) against the package, stops false undefined-term findings when the LPA defines the term, shows per-check coverage next to the gate, and puts one "For the GP" request for every missing document in Questions. No new screens. 13 detectors / 15 issue classes plus package-level checks (references, cross-document terms, coverage). Live AI/OCR spend so far: $0 (Intake made 0 model calls). Deploy rules and recipe: `process/context/worker/all-worker.md`.
 
 ---
 
@@ -200,10 +200,10 @@ aduin-transaction/
   .claude/ .codex/ .agents/ -- vibecode-pro-max-kit v3.2.5 agents, skills, hooks
   package.json, pnpm-workspace.yaml, pnpm-lock.yaml -- root scripts, workspaces (packages/*, apps/*, scripts), pnpm@11.13.1
   tsconfig.base.json, eslint.config.js, THIRD_PARTY_NOTICES.md
-  packages/core/            -- @aduin/core: parser/graph/detector engine + `src/llm/` LLM task framework + Phase 06 adapters (format-detect, pdf-text, docx via subpath `@aduin/core/docx`, ocr, page-noise, sup-segments) (src/index.ts seam; test/{unit,golden,property,seeded,recorded,security})
-  apps/web/                 -- @aduin/web: React 19 + Vite 8 + Tailwind 4 SPA. src/{styles,shell,features,components,state,engine,storage,api,memory}; engine runs in a Comlink Web Worker; e2e/ = Playwright specs (173 pass + 1 opt-in skip in preview, plus stack-memory 10) + fixtures; test/ = Vitest gates (223 tests) + support/mockupCss.ts; public/samples and firms.json are generated (gitignored). See process/context/ui/all-ui.md
+  packages/core/            -- @aduin/core: parser/graph/detector engine + `src/package/` Fund Package Intake module (types, detect, facts, references, resolve, terms, coverage, policy, request, baseline, analyze, config caps) + `src/llm/` LLM task framework + Phase 06 adapters (format-detect, pdf-text, docx via subpath `@aduin/core/docx`, ocr, page-noise, sup-segments) (src/index.ts seam; test/{unit,golden,property,seeded,recorded,security})
+  apps/web/                 -- @aduin/web: React 19 + Vite 8 + Tailwind 4 SPA. src/{styles,shell,features,components,state,engine,storage,api,memory}; engine runs in a Comlink Web Worker; e2e/ = Playwright specs (217 pass + 1 opt-in skip in preview, plus stack-memory 11) + fixtures; `src/features/package` (PackageView contract, Package lens) and `state/package.ts`; test/ + co-located tests = Vitest gates (298 tests) + support/mockupCss.ts; public/samples and firms.json are generated (gitignored). See process/context/ui/all-ui.md
   apps/worker/              -- @aduin/worker: Cloudflare Worker, wrangler.jsonc. src/{config,proxy,limits,upstream,identity,routes/proxy}: POST /api/ai, POST /api/ocr, GET /api/quota (NDJSON hold-open proxy to OpenRouter, quotas, spend cap, Turnstile, breaker); routes/memory, memory/, platform/, migrations/0001-0005 and seed/ are the Phase 04b D1 memory API. See process/context/worker/all-worker.md
-  scripts/                  -- @aduin/scripts: guards (guard:cf, secrets:scan), build-samples.ts, slice-check.ts (M1 check), spike runners, and Phase 10 live/ops scripts (conformance:free-plan, probe:live-session, probe:live-ai, shots:live, deploy:preflight; allow-listed, ledgered)
+  scripts/                  -- @aduin/scripts: guards (guard:cf, secrets:scan), build-samples.ts, slice-check.ts (M1 check), spike runners, and Phase 10 live/ops scripts (conformance:free-plan, probe:live-session, probe:live-ai, shots:live, deploy:preflight; allow-listed, ledgered; Intake adds `package:fixtures`, `package:facts-extract` and `smoke:live-package`)
   fixtures/                 -- fixture dirs (fingerprint vectors and memory seeds land in Phases 01/02)
   design/                   -- approved mockups and design assets
   docs/research/            -- reusable-repos.md (open-source candidates + licenses)
@@ -212,7 +212,7 @@ aduin-transaction/
   process/
     context/                -- this context system (all-context.md, product-domain.md, engine/, planning/, tests/, ui/, worker/)
     general-plans/          -- active/ completed/ backlog/ task folders (subdoc-qa-mvp_17-10-26 = the MVP phase program)
-    features/               -- feature-scoped storage (none yet)
+    features/               -- feature-scoped storage: fund-package-intake (active/intake-mvp_17-10-26 task folder, backlog/ 12 stubs), variance-management
     development-protocols/  -- RIPER-5 methodology docs (kit-managed)
 ```
 
@@ -255,15 +255,15 @@ Secrets live outside the repo (see `CLAUDE.md` credentials table). Env var names
 
 Resolved: persistence is D1 (real `aduin-transaction-db`, live); Turnstile is live; the demo needs no account (read-only sandbox plus a sandbox copy per session).
 
-- **Program status:** all phases are DONE (00-07, 08, 08b, 09, 10); Milestone 1 closed and live. No further phase is planned.
+- **Program status:** all phases are DONE (00-07, 08, 08b, 09, 10); Milestone 1 closed and live. No further phase is planned. Fund Package Intake (4 phases, `process/features/fund-package-intake/`) is also COMPLETE and live; its folder stays in `active/` until the operator residuals run. Test counts after Intake: core 3084 (+3 skip), web unit 298, preview e2e 217 (+1 skip), stack-memory 11, worker 526, scripts 162.
 - **Operator run (residual R2, backlog `process/general-plans/backlog/phase10-*_NOTE_17-10-26.md`):** with a human in a real browser, run the AC51 `rules_hash8` echo, the live AI/OCR sweep (max 3 AI per UTC day), AI timing at `max_tokens` 10000, and the D4 `rows_written` burst. Also capture demo screenshots 13-memory and 14-audit and record a manual keyboard pass. Residual R4: Turnstile iframe CSP with a human-solved challenge is unevidenced. Residual R-CSP-STYLE: `style-src 'unsafe-inline'` for Radix. Worker CPU p99 16 ms is above the 10 ms Free limit (observation).
 - **Open questions:** does Docxodus WASM run on Cloudflare Workers (not needed for the shipped DOCX path)? Which free OpenRouter vision model is good enough for live OCR (unproven, R2)? OpenRouter credits are not topped up; the paid fallback is unavailable.
 - **Deferred:** the missing-target cross-reference detector (feasibility INCONCLUSIVE, `process/general-plans/backlog/missing-target-xref_17-10-26/`).
-- **Open backlog:** AC6 edit text/severity (B-EDIT), UI notes U2-U4, core follow-ups (F4, F6-F8, N6-N8, live OCR bbox row-level, concurrent e2e port flake), Phase 08 review notes N1-N4, review m7 (fresh challenge per AI call), diff-only version drift questions (`process/general-plans/backlog/`).
+- **Open backlog:** Intake stubs in `process/features/fund-package-intake/backlog/` (12: doc-type LLM suggest, Annex/Question forms, package gate block e2e, smoke Turnstile console filter, code-splitting, dialog focus return, a11y serious items, manual keyboard pass, reference families and used-term recall, `too_many` refusal code, no-LLM live proof, operator live sweep), plus AC6 edit text/severity (B-EDIT), UI notes U2-U4, core follow-ups (F4, F6-F8, N6-N8, live OCR bbox row-level, concurrent e2e port flake), Phase 08 review notes N1-N4, review m7 (fresh challenge per AI call), diff-only version drift questions (`process/general-plans/backlog/`).
 
 ## Scan Metadata
 
 - Generated: 2026-10-17
-- HEAD: f0d924b (code), process commit follows
-- Mode: delta update after Phase 10 (deploy-final); earlier deltas: Phases 02, 04b, 05, 06, 07, 08, 08b, 09
+- HEAD: a4d7a34 (code), 6fb34fb (process), closeout process commit follows
+- Mode: delta update after Fund Package Intake (4 phases, deploy 3d2c7301); earlier deltas: Phase 10, Phases 02, 04b, 05, 06, 07, 08, 08b, 09
 - Package manager: pnpm 11.13.1 (workspaces: packages/*, apps/*, scripts)

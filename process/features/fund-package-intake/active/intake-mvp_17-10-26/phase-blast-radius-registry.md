@@ -24,13 +24,13 @@ Append-only: later agents add a `## Phase N` revision note, never overwrite. Umb
 Creates: `packages/core/src/package/*` (types, config, policy, detect, facts, definitions, references, terms, resolve, coverage, request, baseline, analyze, index), core tests under `packages/core/test/{unit,golden,seeded,property}/package-*` (now including `package-readiness`, `package-facts`, `package-scan-bounded`), `scripts/src/fixtures/{make-package,package-facts-extract}.ts`, `scripts/test/package-fixtures.test.ts`, `fixtures/package/**` (including `fixtures/package/design/**`: copies of the design-owned `samples/packages/**`, which stay READ-ONLY for every phase).
 Edits (append/additive only): `packages/core/src/index.ts`, `scripts/src/fixtures/check.ts`, `scripts/package.json`.
 NOT owned: `packages/core/src/{detectors,counsel,contracts,memory,structure,model}/**`, `apps/**`.
-status: PLANNED
+status: DONE
 
 ## Phase 2 — web data plane
 Creates: `apps/web/src/state/package.ts`, `apps/web/src/features/package/{contract,package-view,package-persist}.ts`, `apps/web/src/features/open-document/{PackageConfirmTable.tsx,package-actions.ts,demo-packages.ts}`, `apps/web/src/styles/package-intake.css`, `apps/web/e2e/fixtures/package.ts`, web unit tests `package-store`, `package-view`, `package-db-v2`, `engine-package-api`, `apps/web/src/features/open-document/package-confirm-table.test.tsx` (vitest-collected path), and nine `intake-*` upload specs (including `intake-demo-packages`).
 Edits: `apps/web/src/engine/{types,client,engine.worker}.ts`, `apps/web/src/storage/db.ts`, `apps/web/src/state/review.ts`, `apps/web/src/features/open-document/{OpenDocumentDialog.tsx,open-actions.ts,validate-upload.ts,samples.ts}` (`features/review/use-review-view.ts` is NOT edited: Phase 3 reads `usePackageView().gateReasons`), `apps/web/test/import-graph.test.ts`, `scripts/src/build-samples.ts`.
 NOT owned: `packages/**`, `apps/worker/**`, `features/{structure,counsel,gate,memory,compare}/**`, `shell/**`, `FindingsScreen.tsx`.
-status: PLANNED
+status: DONE
 
 ## Phase 3 — web surfaces (three strictly disjoint tracks)
 Contract consumed (read-only): every Phase 2 file listed above.
@@ -48,14 +48,14 @@ Creates: `apps/web/src/features/counsel/{GpRequestGroup.tsx,exportRequestDocx.ts
 Edits: `apps/web/src/features/counsel/CounselScreen.tsx`.
 
 Disjointness proof (checked at PLAN time against the real tree): `StructureScreen.tsx` / `structure/model.ts` appear only in 3a; `GateButton.tsx` / `FindingsScreen.tsx` / `features/gate/*` new files only in 3b (the existing `features/gate/GateReasons.tsx` and `gate-store.ts` are untouched); `CounselScreen.tsx` / `features/counsel/*` new files only in 3c (existing counsel files untouched); each track has its own CSS file and its own e2e spec names; no track edits a Phase 2 file. Join step J1 re-checks with `git diff --name-only`.
-status: PLANNED
+status: DONE
 
 ## Phase 4 — closeout and deploy
 Creates: `apps/web/e2e/{intake-perf-budget,intake-a11y-keyboard,stack-memory-package-privacy}.spec.ts`, `scripts/src/live/smoke-package.ts`, `scripts/test/live/smoke-package.test.ts`, evidence pack `harness/phase-4/*.json` in the task folder.
 Edits: `scripts/package.json` (one key).
 Remote: Worker `aduin-transaction-web` version only.
 NOT owned: all product source.
-status: PLANNED
+status: DONE
 
 ## Revision note (PVL cycle 1, 17-10-26; append-only note, names above were corrected in place to match)
 - Phase 1: `scripts/src/fixtures/build-package.ts` renamed `make-package.ts` (session bash hook blocks the old word); adds `fixtures/package/design/**` copies of read-only `samples/packages/**` plus three tests (`package-readiness`, `package-facts`, `package-scan-bounded`); no new shared seam files; the package format type is exported as `PackageDocFormat` (barrel stays one appended block).
@@ -69,8 +69,11 @@ status: PLANNED
 None across phases that run at the same time. The only concurrent work in the program is the three Phase 3 tracks, whose sets are disjoint (above). Sequential phases share only the seam files listed at the top (`scripts/package.json`: Phase 1 and Phase 4, different lines, never concurrent). Resolution: parallel-safe by phase ordering; no reassignment needed.
 
 ## Phase 1 — T14 revision note (17-10-26, PVL-supplement; append-only)
-Adds to the Phase 1 claim: edits to exactly five existing core files, no others under detectors or structure: `packages/core/src/structure/headings.ts`, `packages/core/src/structure/structurer.ts` (only if needed), `packages/core/src/structure/conditionals.ts`, `packages/core/src/detectors/flow.ts`, `packages/core/src/detectors/broken-conditional.ts`; new tests `packages/core/test/unit/{structure-heading-forms,broken-conditional-annex-question}.test.ts`, `packages/core/test/golden/package-design-goldens.test.ts`; existing core goldens or pinned counts may change only with an explanation-table row in the Phase 1 report. The Phase 1 "NOT owned" line above is superseded for these five files only (`util.ts`, `registry.ts`, every other detector and structure file stay read-only). Overlap check: no other phase claims any of these files (Phases 2-4 own `apps/**`, scripts and web specs; web specs pinning per-sample counts are read-only for Phase 1). status: PLANNED
+Adds to the Phase 1 claim: edits to exactly five existing core files, no others under detectors or structure: `packages/core/src/structure/headings.ts`, `packages/core/src/structure/structurer.ts` (only if needed), `packages/core/src/structure/conditionals.ts`, `packages/core/src/detectors/flow.ts`, `packages/core/src/detectors/broken-conditional.ts`; new tests `packages/core/test/unit/{structure-heading-forms,broken-conditional-annex-question}.test.ts`, `packages/core/test/golden/package-design-goldens.test.ts`; existing core goldens or pinned counts may change only with an explanation-table row in the Phase 1 report. The Phase 1 "NOT owned" line above is superseded for these five files only (`util.ts`, `registry.ts`, every other detector and structure file stay read-only). Overlap check: no other phase claims any of these files (Phases 2-4 own `apps/**`, scripts and web specs; web specs pinning per-sample counts are read-only for Phase 1). status: DONE
 
 ## Phase 3 — join-step revision note (17-10-26, PVL-supplement; append-only)
-Adds to the serialized JOIN agent's claim only (not to tracks 3a, 3b, 3c, which stay pairwise disjoint): edits `apps/web/src/state/last-doc.ts` and `apps/web/src/App.tsx` (last edited by the bug-fix session, commit 1f5cfa5, now done; re-read before editing, additive only), `apps/web/test/restore-last-doc.test.ts` (add cases); creates `apps/web/e2e/intake-reload-restores-package.spec.ts`; additive-assertion edits only, when J3 shows a need, to existing e2e specs `ingest-all-formats`, `restore-and-no-text`, `diff-pairs`, `sibling-clauses`, `compare-ai-summary` under `apps/web/e2e/`. Overlap check: no track claims any of these files; the join runs after all tracks hand back, so there is no concurrency. Phase 2 files remain read-only for the join except none: `last-doc.ts` and `App.tsx` were not Phase 2 files. status: PLANNED
+Adds to the serialized JOIN agent's claim only (not to tracks 3a, 3b, 3c, which stay pairwise disjoint): edits `apps/web/src/state/last-doc.ts` and `apps/web/src/App.tsx` (last edited by the bug-fix session, commit 1f5cfa5, now done; re-read before editing, additive only), `apps/web/test/restore-last-doc.test.ts` (add cases); creates `apps/web/e2e/intake-reload-restores-package.spec.ts`; additive-assertion edits only, when J3 shows a need, to existing e2e specs `ingest-all-formats`, `restore-and-no-text`, `diff-pairs`, `sibling-clauses`, `compare-ai-summary` under `apps/web/e2e/`. Overlap check: no track claims any of these files; the join runs after all tracks hand back, so there is no concurrency. Phase 2 files remain read-only for the join except none: `last-doc.ts` and `App.tsx` were not Phase 2 files. status: DONE
 
+
+## Closeout note (UPDATE PROCESS, 17-10-26)
+All four phases and Phase 3 tracks 3a/3b/3c: status DONE (EVL green, deployed 3d2c7301). Additional files touched beyond the original claim are listed in the phase reports (J0: `state/last-doc.ts`, `App.tsx`).

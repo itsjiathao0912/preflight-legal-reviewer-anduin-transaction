@@ -324,10 +324,10 @@ Orchestrator reads this before deciding which subagent to spawn next. The canoni
 - [x] 1. RESEARCH — satisfied by the program-level RESEARCH and the code reading done for this plan (no scoped research pass needed; a fresh agent re-verifies the Step A premise at EXECUTE entry)
 - [x] 2. INNOVATE — satisfied by the program-level INNOVATE (`intake-mvp_INNOVATE_17-10-26.md`, LOCKED)
 - [x] 3. PLAN-SUPPLEMENT — n/a: plan freshly written by the PLAN session, no research gaps (Step A re-verifies the premise at EXECUTE entry)
-- [ ] 4. PVL — vc-validate-agent: full V1-V7; validate-contract written per `.claude/skills/vc-validate-findings/references/example-validate-output.md` (Status / Gate / Plan updates applied / Execute-agent instructions / Test gates / High-risk pack / Backlog artifacts / Known gaps / Accepted by)
-- [ ] 5. EXECUTE — all checklist items done; per-section test gates run and green (or gaps documented)
-- [ ] 6. EVL — all EVL gates green; follow-up stubs registered; EVL HANDOFF SUMMARY written
-- [ ] 7. UPDATE PROCESS — phase report written, umbrella state updated, commit done
+- [x] 4. PVL — vc-validate-agent: full V1-V7; validate-contract written per `.claude/skills/vc-validate-findings/references/example-validate-output.md` (Status / Gate / Plan updates applied / Execute-agent instructions / Test gates / High-risk pack / Backlog artifacts / Known gaps / Accepted by)
+- [x] 5. EXECUTE — all checklist items done; per-section test gates run and green (or gaps documented)
+- [x] 6. EVL — all EVL gates green; follow-up stubs registered; EVL HANDOFF SUMMARY written
+- [x] 7. UPDATE PROCESS — phase report written, umbrella state updated, commit done
 
 **Validate-contract required before execute.** If step 4 (PVL) is unchecked or `## Validate Contract` reads "(placeholder — vc-validate-agent writes this section before EXECUTE)", the orchestrator must spawn vc-validate-agent first. A partial contract missing Plan updates applied / Execute-agent instructions / Test gates is treated as a placeholder.
 

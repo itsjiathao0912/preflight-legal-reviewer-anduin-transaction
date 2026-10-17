@@ -273,11 +273,11 @@ Orchestrator reads this before deciding which subagent to spawn next. The canoni
 
 - [x] 1. RESEARCH — satisfied by the program-level RESEARCH plus the code reading for this plan; a scoped research pass at phase entry re-reads Phase 1's report for any renamed export
 - [x] 2. INNOVATE — satisfied by the program-level INNOVATE (LOCKED); the four adaptations above are recorded, not re-decided
-- [ ] 3. PLAN-SUPPLEMENT — plan-agent: existing phase plan updated with Phase 1 report findings (renamed exports, measured counts); Inner Loop Refresh Note if sections changed (or "n/a — research clean")
-- [ ] 4. PVL — vc-validate-agent: full V1-V7; validate-contract written per `.claude/skills/vc-validate-findings/references/example-validate-output.md` (Status / Gate / Plan updates applied / Execute-agent instructions / Test gates / High-risk pack / Backlog artifacts / Known gaps / Accepted by)
-- [ ] 5. EXECUTE — all checklist items done; per-section test gates run and green (or gaps documented)
-- [ ] 6. EVL — all EVL gates green; follow-up stubs registered; EVL HANDOFF SUMMARY written
-- [ ] 7. UPDATE PROCESS — phase report written, umbrella state updated, commit done
+- [x] 3. PLAN-SUPPLEMENT — plan-agent: existing phase plan updated with Phase 1 report findings (renamed exports, measured counts); Inner Loop Refresh Note if sections changed (or "n/a — research clean")
+- [x] 4. PVL — vc-validate-agent: full V1-V7; validate-contract written per `.claude/skills/vc-validate-findings/references/example-validate-output.md` (Status / Gate / Plan updates applied / Execute-agent instructions / Test gates / High-risk pack / Backlog artifacts / Known gaps / Accepted by)
+- [x] 5. EXECUTE — all checklist items done; per-section test gates run and green (or gaps documented)
+- [x] 6. EVL — all EVL gates green; follow-up stubs registered; EVL HANDOFF SUMMARY written
+- [x] 7. UPDATE PROCESS — phase report written, umbrella state updated, commit done
 
 **Validate-contract required before execute.** If step 4 (PVL) is unchecked or `## Validate Contract` reads "(placeholder — vc-validate-agent writes this section before EXECUTE)", the orchestrator must spawn vc-validate-agent first. A partial contract missing Plan updates applied / Execute-agent instructions / Test gates is treated as a placeholder.
 

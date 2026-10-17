@@ -283,6 +283,16 @@ Whole suites, serial EVL: core 2914, worker 525, web unit 223 (29+ files), scrip
 - **Automated Chromium cannot obtain a Turnstile token** (residual R2). Anything needing a real session (AC51 echo, live AI/OCR sweep, AI timing, D4 burst) is an operator run; stubs `phase10-*_NOTE_17-10-26.md` in `process/general-plans/backlog/`.
 - **Evidence pack:** `node .claude/skills/vc-risk-evidence-pack/scripts/validate-risk-artifacts.mjs process/general-plans/active/subdoc-qa-mvp_17-10-26/harness/phase-10` (0 failures).
 
+## Fund Package Intake gate tokens and live package smoke (counts at HEAD 6fb34fb)
+
+Whole suites, serial EVL: core 3084 (+3 skip), web unit 298, preview e2e 217 passed plus 1 opt-in skip, `stack-memory` 11, worker 526, scripts 162, contracts 34. One token per call, no `--`.
+
+- **New preview e2e specs** (`apps/web/e2e/intake-*`, 24): multi-upload, limits-refusal, firm-tagging, scan-ocr-or-flag, low-confidence-gate, no-sub-agreement-held, no-llm-run, baseline-role-same-firm, demo-packages, correction-persists, reload-restores-package, package-lens, reference-confirm, crossdoc-terms-no-false-positive, crossdoc-terms-real-error, terms-unverified-without-lpa, coverage-visible, coverage-next-to-gate, gate-warning-policy, no-package-ui-on-samples, gp-group-absent-without-package, missing-docs-request-export, perf-budget (hartwell 24 ms, ngi 52 ms), a11y-keyboard. Stack project: `stack-memory-package-privacy` (no member text in any URL or body).
+- **Web unit tokens:** `package-store`, `package-view`, `package-db-v2`, `engine-package-api`, `package-confirm-table`, `package-lens`, `package-gate-ui`, `gp-request-group`, `request-export-contents`, `restore-last-doc`. Core tokens: see `engine/all-engine.md` (Fund Package Intake additions).
+- **Live package smoke:** `pnpm --filter @aduin/scripts smoke:live-package` (`--out` writes a result JSON; third-party URLs reduced to their origin). It checks app shell, confirm and run, findings, coverage line, Package tab, GP group items against `expected.json`, request DOCX, and no package UI on sample #3. **Caveat:** it exits 1 on console errors, and the Cloudflare Turnstile iframe (`challenges.cloudflare.com`) logs about 6 of its own in headless Chromium; the 17-10-26 run passed 8/8 checks with 0 first-party errors (stub `intake-live-smoke-turnstile-console`). There is no ignore list.
+- **Flake hardening:** `intake-demo-packages` runs seven packages back to back (about 10 s alone) and is load-sensitive; its visibility wait is 30 s. Serialize e2e as before (one invocation, port 4317).
+- **Known gaps:** package Blocked path (no sub agreement) is unit-proven only (`package-gate-block-e2e-reach`); no live AI/OCR on packages (needs human Turnstile, `intake-operator-live-sweep`); `package-db-v2` proves the Dexie upgrade in fake-indexeddb only. Evidence pack: `process/features/fund-package-intake/active/intake-mvp_17-10-26/harness/phase-4`.
+
 ## Debugging Quick Reference
 
 - **Worker tests fail to find bindings:** bindings come from `apps/worker/wrangler.jsonc`; the plugin config points at it.
