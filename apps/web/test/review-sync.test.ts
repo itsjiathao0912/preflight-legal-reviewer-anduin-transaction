@@ -68,7 +68,14 @@ function load(firmId: string | null, findings: FindingView[]) {
       source: 'sample',
       ref: '05',
     },
-    result: { docHash: DOC_HASH, findings, blocks: [], stages: [] } as unknown as EngineResult,
+    // Variance P02 (derived repair): one block, so the fixture is a readable document; with no
+    // blocks the shared gate reads `unreadable` (pill "Not ready") and the toasts follow the pill
+    result: {
+      docHash: DOC_HASH,
+      findings,
+      blocks: [{ id: 'b0', kind: 'paragraph', text: 'x', section: null }],
+      stages: [],
+    } as unknown as EngineResult,
     memory: { byId, applied: firmId !== null, unavailable: false },
     triage: {},
     toast: null,

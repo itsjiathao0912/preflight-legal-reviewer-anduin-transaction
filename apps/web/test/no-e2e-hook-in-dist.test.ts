@@ -42,6 +42,10 @@ describe('no-e2e-hook-in-dist', () => {
     expect(prod.includes('useRealMemory')).toBe(false);
     // Phase 10: the e2e Turnstile site-key override must not ship either
     expect(prod.includes('__aduinTurnstileSiteKey')).toBe(false);
+    // Variance Phase 02 (C1b): the variance delay / failure seam must not ship either
+    expect(prod.includes('varianceDelayMs')).toBe(false);
+    expect(prod.includes('varianceFail')).toBe(false);
+    expect(prod.includes('e2eVariance')).toBe(false);
   }, 180_000);
 
   it('positive control: the e2e build does contain the hook marker', async () => {
@@ -50,5 +54,8 @@ describe('no-e2e-hook-in-dist', () => {
     expect(e2e.includes('forceInvalidOutline')).toBe(true);
     expect(e2e.includes('useRealMemory')).toBe(true);
     expect(e2e.includes('__aduinTurnstileSiteKey')).toBe(true);
+    expect(e2e.includes('varianceDelayMs')).toBe(true);
+    expect(e2e.includes('varianceFail')).toBe(true);
+    expect(e2e.includes('e2eVariance')).toBe(true);
   }, 180_000);
 });
