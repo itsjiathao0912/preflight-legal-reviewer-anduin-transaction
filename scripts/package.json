@@ -27,6 +27,7 @@
     "conformance:free-plan": "tsx src/conformance/free-plan.ts",
     "probe:live-session": "tsx src/live/probe-session.ts",
     "probe:live-ai": "tsx src/live/probe-ai.ts",
+    "probe:live-variance": "tsx src/live/probe-variance.ts",
     "smoke:live-package": "tsx src/live/smoke-package.ts",
     "shots:live": "tsx src/screenshots/shots-live.ts",
     "deploy:preflight": "tsx src/deploy/preflight.ts",

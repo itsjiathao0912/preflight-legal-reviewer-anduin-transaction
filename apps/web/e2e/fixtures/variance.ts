@@ -104,3 +104,15 @@ export async function ageUploads(page: Page, name: string) {
     name,
   );
 }
+
+/** Variance Phase 05: pick a baseline by document name in the header `vs <baseline> ▾` control. */
+export async function chooseBaseline(page: Page, name: string) {
+  await page.getByTestId('baseline-control').click();
+  const modal = page.getByTestId('baseline-modal');
+  await expect(modal).toBeVisible();
+  await modal.getByRole('radio', { name, exact: true }).check();
+  await modal.getByTestId('baseline-submit').click();
+  await expect(modal).toBeHidden();
+  await varianceSettled(page);
+  await expect(page.getByTestId('baseline-control')).toContainText(`vs ${name}`);
+}

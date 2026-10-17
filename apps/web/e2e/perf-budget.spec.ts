@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { gotoApp, openDialog, sample } from './fixtures/app';
+import { hcFile, openHc } from './fixtures/variance-owners';
+import { changeRows, uploadOne } from './fixtures/variance';
 
 /**
  * AC29 (perf-budget-corpus). Timings are measured IN-PAGE (performance.now) from the click on the
@@ -100,5 +102,66 @@ test.describe('perf-budget', () => {
     console.log(line);
     testInfo.annotations.push({ type: 'perf', description: line });
     expect(ms).toBeLessThan(2_000);
+  });
+
+  // Variance Phase 05 (D1, additive): Fund III against the Fund II baseline (demo pair). Measured
+  // in-page from the Open click to the errors painted, then to the 7 change rows (variance settled).
+  test('should show Fund III variance within the 5 second deterministic target', async ({
+    page,
+  }, testInfo) => {
+    await gotoApp(page);
+    await openHc(page, 'fund-II.html', 'Fund II');
+    await page.evaluate(() => {
+      const w = window as unknown as {
+        __vperf?: { t0?: number; errors?: number; changes?: number };
+      };
+      w.__vperf = {};
+      document.addEventListener(
+        'click',
+        (e) => {
+          if (
+            w.__vperf!.t0 === undefined &&
+            (e.target as Element | null)?.closest('[data-testid="open-submit"]')
+          )
+            w.__vperf!.t0 = performance.now();
+        },
+        { capture: true },
+      );
+      const mo = new MutationObserver(() => {
+        const p = w.__vperf!;
+        if (p.t0 === undefined) return;
+        const stage = document.querySelector('[data-testid="stage-status-button"]');
+        if (p.errors === undefined && /Checks done/.test(stage?.textContent ?? ''))
+          p.errors = performance.now();
+        if (
+          document.querySelectorAll('[data-testid="finding-row"][data-kind="change"]').length >= 7
+        ) {
+          p.changes = performance.now();
+          mo.disconnect();
+        }
+      });
+      mo.observe(document.body, { subtree: true, childList: true });
+    });
+    await uploadOne(page, hcFile('fund-III.html'), {
+      firm: 'Hartwell & Crane LLP',
+      fund: 'Fund III',
+    });
+    await expect(changeRows(page)).toHaveCount(7, { timeout: 30_000 });
+    // the pair has no error findings: "errors painted" is the Checks done stage line
+    await expect(page.getByTestId('stage-status-button')).toContainText('Checks done');
+    const t = await page.evaluate(
+      () =>
+        (window as unknown as { __vperf: { t0?: number; errors?: number; changes?: number } })
+          .__vperf,
+    );
+    expect(t.t0, 'click captured').toBeDefined();
+    expect(t.changes, 'changes painted').toBeDefined();
+    const errMs = (t.errors ?? t.changes!) - t.t0!;
+    const chMs = t.changes! - t.t0!;
+    const line = `[perf-budget] ${BUNDLE_LABEL}: variance Fund III vs Fund II open->checks done ${errMs.toFixed(0)} ms, ->7 changes ${chMs.toFixed(0)} ms (budget 5000)`;
+    console.log(line);
+    testInfo.annotations.push({ type: 'perf', description: line });
+    expect(errMs).toBeLessThanOrEqual(chMs);
+    expect(chMs).toBeLessThan(5_000);
   });
 });

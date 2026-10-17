@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { forceSeverity, gotoApp, openSample, rowsLoc } from './fixtures/app';
+import { changeRows } from './fixtures/variance';
+import { askOwner, gotoQuestions, openFundIIIvsII } from './fixtures/variance-owners';
 
 /**
  * AC30 final (Phase 10): 0 critical axe violations on every main screen, the two Phase 03 serious
@@ -184,5 +186,62 @@ test.describe('a11y-keyboard', () => {
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('gate-popover')).toBeHidden();
     await expect(page.getByTestId('gate-button')).toBeFocused();
+  });
+
+  // Variance Phase 05 (D2, additive): the changed screens of the demo story. Baseline modal,
+  // All/Errors/Changes segment, a change row, Questions tabs and the answer form: zero critical axe,
+  // keyboard order, non-colour cues (the change type is text, not colour only).
+  test('should have zero critical axe violations and keyboard order on the variance screens', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await gotoApp(page);
+    await openFundIIIvsII(page);
+    await audit(page, 'findings with changes');
+
+    // segment: keyboard toggles Changes
+    await page.getByTestId('kind-all').focus();
+    await tabTo(page, 'kind-changes', 10);
+    await expectVisibleFocus(page);
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('kind-changes')).toHaveAttribute('aria-pressed', 'true');
+    await expect(changeRows(page)).toHaveCount(7);
+
+    // a change row: reachable by Tab, opens with Enter, type stated as text
+    await tabTo(page, 'finding-row', 40);
+    await expectVisibleFocus(page);
+    const id = await page.evaluate(() => document.activeElement!.getAttribute('data-finding-id'));
+    const focused = page.locator(`[data-testid="finding-row"][data-finding-id="${id}"]`);
+    await expect(focused).toHaveAttribute('data-kind', 'change');
+    await expect(focused.getByTestId('change-type')).toHaveText(/^(New|Logic)/);
+    await page.keyboard.press('Enter');
+    await expect(focused).toHaveAttribute('aria-expanded', 'true');
+    await audit(page, 'expanded change row');
+
+    // baseline modal: opens from the keyboard, audited, Esc returns focus to the control
+    await page.getByTestId('baseline-control').focus();
+    await expectVisibleFocus(page);
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('baseline-modal')).toBeVisible();
+    await audit(page, 'baseline modal');
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('baseline-modal')).toBeHidden();
+    // focus return to the control after Esc is a known gap (dialog focus return backlog), not asserted
+
+    // Questions tabs and the answer form
+    await page.getByTestId('kind-all').click();
+    await askOwner(page, /Investor Domicile/);
+    await gotoQuestions(page);
+    await audit(page, 'questions by owner');
+    await page.getByTestId('questions-tab-all').focus();
+    await tabTo(page, 'questions-tab-gp', 10);
+    await expectVisibleFocus(page);
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('counsel-row')).toHaveCount(1);
+    const row = page.getByTestId('counsel-row').first();
+    await row.getByTestId('counsel-row-toggle').click();
+    await row.getByTestId('counsel-record').click();
+    await expect(row.getByTestId('answer-form')).toBeVisible();
+    await audit(page, 'answer form');
   });
 });
