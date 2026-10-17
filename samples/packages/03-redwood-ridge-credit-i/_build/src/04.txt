@@ -1,0 +1,75 @@
+#T Pinecroft Administration LLC
+#T Investor AML and KYC Onboarding Checklist: Redwood Ridge Credit Opportunities Fund I, L.P.
+
+This checklist is issued by Pinecroft Administration LLC (the “Administrator”) as administrator of Redwood Ridge Credit Opportunities Fund I, L.P. (the “Fund”). It sets out the identification and verification steps that the Administrator completes before it confirms to the general partner that an investor’s subscription is in good order. It is a working document for the Fund’s onboarding team and is provided to investors and to fund counsel for information.
+
+# Section 1. Purpose and Scope
+
+**1.1 Purpose.** The Administrator is required by its anti-money laundering program, and by the Fund’s anti-money laundering policy, to identify each investor, to identify the natural persons that own or control it, to understand the source of its funds and to screen each of them against sanctions lists. This checklist records the minimum documents that the Administrator collects for each investor type.
+
+**1.2 Scope.** The checklist applies to every investor in the Fund, including investors that are admitted at a subsequent closing and transferees of an interest. It does not replace the representations that an investor gives in its subscription agreement. Where the subscription agreement and this checklist differ in the level of evidence they require, the Administrator applies the stricter standard.
+
+**1.3 Risk-Based Approach.** The Administrator assigns each investor a risk rating of low, medium or high. A high risk rating triggers enhanced due diligence under Section 5.
+
+# Section 2. Documents Required From All Investors
+
+**2.1 Identity.** For an entity, a copy of its certificate of formation or equivalent, its governing document, and a recent certificate of good standing. For a natural person, a government-issued photographic identity document (passport or national identity card), together with proof of residential address no more than three months old, such as a utility bill or a bank statement.
+
+**2.2 Authorized Signatories.** A list of the persons who are authorized to sign for the investor and to give instructions to the Administrator, with a specimen signature for each of them, and a certificate of incumbency or a board resolution that confirms their authority.
+
+**2.3 Tax Forms.** The IRS tax form that applies to the investor. A United States person provides IRS Form W-9. A non-United States individual provides IRS Form W-8BEN. A non-United States entity provides IRS Form W-8BEN-E, or IRS Form W-8IMY if it is an intermediary. The Administrator checks that each form is signed and dated and that the name matches the name in the subscription agreement.
+
+**2.4 Sanctions Screening.** The Administrator screens the investor, each of its beneficial owners and each of its control persons against the lists published by the Office of Foreign Assets Control, and against the consolidated lists of the United Nations, the European Union and the United Kingdom. The Administrator records the date and the result of each screen and repeats the screen at least once every twelve months.
+
+**2.5 Bank Reference.** The details of the bank account from which the investor will send its capital contributions, which must be in the investor’s own name. The Administrator does not accept contributions from third parties, and returns any wire that it receives from an account that it has not approved.
+
+# Section 3. Additional Requirements by Investor Type
+
+**3.1 Employee Benefit Plans.** For an employee benefit plan, including a 401(k) plan or a defined benefit pension plan, the Administrator collects the plan document or the summary plan description, the most recent Form 5500, the name of the plan’s trustee and of each fiduciary that has authority over the investment decision, and the plan’s employer identification number.
+
+**3.2 Insurance Companies.** For an insurance company, the Administrator collects its certificate of authority from its state of domicile, a recent statutory annual statement, the names of its officers who are authorized to sign, and the name of its chief compliance officer. If the insurance company will invest through a general account, the Administrator collects the written certification of the percentage of that general account that constitutes plan assets under ERISA.
+
+**3.3 Private Foundations and Charitable Organizations.** For a private foundation or other charitable organization, the Administrator collects its determination letter from the Internal Revenue Service, its trust instrument or articles of incorporation, a list of its trustees or directors, and its most recent annual return on Form 990-PF or Form 990.
+
+**3.4 Non-U.S. Natural Persons.** For a natural person that is resident outside the United States, the Administrator collects a certified copy of the investor’s passport, a certified translation into English of any document that is in another language, proof of address, and a self-certification of tax residence for the purposes of the Common Reporting Standard. The Administrator confirms whether the person is a politically exposed person and screens the investor’s country of residence against the list of high-risk jurisdictions.
+
+**3.5 Investors That Are Entities Owned by Others.** For an entity that has beneficial owners, the Administrator collects an organization chart that shows each person that owns twenty-five percent or more of its equity, and then applies the identification steps in Section 2 to each such person.
+
+# Section 4. Source-of-Funds Verification
+
+**4.1 Threshold.** Source-of-funds verification is required for any investor whose commitment is above $5,000,000. The Administrator collects the evidence described in Section 4.2 before it confirms the subscription, and does not accept a commitment above that amount until the verification is complete. For a commitment of $5,000,000 or less, the Administrator records the investor’s statement of the source of its funds in its subscription questionnaire and requests evidence only if the investor’s risk rating is high.
+
+**4.2 Acceptable Evidence.** Acceptable evidence of the source of funds includes: (a) the investor’s audited financial statements for the last completed fiscal year; (b) a letter from the investor’s auditor or from its bank that identifies the source of the funds; (c) in the case of a plan, a plan funding certificate or a letter from the plan sponsor that describes how the plan’s assets were accumulated; (d) in the case of an insurance company, an extract from its statutory annual statement that shows the assets of the relevant account; and (e) in the case of a natural person, documents that show the sale of an asset, an inheritance, employment income or the proceeds of a business, together with bank statements for the last six months.
+
+**4.3 Unacceptable Evidence.** The Administrator does not accept an investor’s own unsupported statement of its source of funds as evidence for a commitment above the threshold in Section 4.1, a document that is more than eighteen months old, or a document that cannot be verified with its issuer.
+
+**4.4 Escalation.** If the Administrator cannot verify the source of funds, it will not recommend the acceptance of the subscription, and it will tell the general partner and the Fund’s chief compliance officer. The chief compliance officer decides whether to accept, reject or escalate the subscription, and records the decision.
+
+# Section 5. Enhanced Due Diligence
+
+**5.1 Triggers.** The Administrator applies enhanced due diligence to a high-risk investor, including an investor that is a politically exposed person, an investor that is resident in a jurisdiction that the Financial Action Task Force identifies as high-risk, and an investor whose commitment, ownership or activity is unusual for its profile.
+
+**5.2 Measures.** Enhanced due diligence includes obtaining additional evidence of the source of wealth as well as the source of funds, obtaining the approval of the Fund’s chief compliance officer before admission, conducting a media search, and monitoring the investor’s account more frequently for the life of the Fund.
+
+# Section 6. Review and Approval
+
+**6.1 Maker and Checker.** One member of the onboarding team assembles the investor file and a second member reviews it against this checklist, before it is sent to the general partner.
+
+**6.2 Confirmation to the General Partner.** When the file is complete the Administrator sends the general partner a confirmation that the investor’s subscription is in good order. If any item is missing, the Administrator sends the general partner a single list of the outstanding items, with the reference to the section of this checklist that requires each of them.
+
+**6.3 Record Retention.** The Administrator keeps the investor files for at least five years after the investor ceases to be an investor in the Fund, or for longer if the law requires, and stores them in encrypted form on systems that are accessible only to authorized personnel.
+
+# Section 7. Onboarding Status Table
+
+The Administrator uses the table below to record the status of each investor’s file. The Administrator completes every row before the confirmation in Section 6.2 is sent.
+
+TABLE
+Step | Item | Completed by | Date
+1 | Identity documents received | ____________________ | ____________________
+2 | Tax form received and checked | ____________________ | ____________________
+3 | Sanctions screening complete | ____________________ | ____________________
+4 | Beneficial owners identified | ____________________ | ____________________
+5 | Source-of-funds evidence received (commitment above $5,000,000) | ____________________ | ____________________
+6 | Risk rating assigned | ____________________ | ____________________
+7 | Second review complete | ____________________ | ____________________
+ENDTABLE

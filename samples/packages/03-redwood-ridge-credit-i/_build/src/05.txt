@@ -1,0 +1,39 @@
+#T GP Requirements Email: Subscription Document Review
+
+From: Marcus Delgado <marcus.delgado@redwoodridge.example.com>
+To: Digitization team <digitization@example.com>
+Cc: Priya Raman-Holt <priya.raman-holt@redwoodridge.example.com>; Sutter Lane & Abernathy LLP fund team <fundteam@sutterlane.example.com>
+Date: 12 October 2026
+Subject: Redwood Ridge Credit Opportunities Fund I: requirements for the subscription document
+
+Hello team,
+
+Thank you for taking on the digitization of the subscription agreement for Redwood Ridge Credit Opportunities Fund I, L.P. This is our first fund, and Sutter Lane & Abernathy LLP drafted the documents with us from scratch, so there is no earlier Redwood Ridge subscription agreement for you to compare against. I have set out below the points that matter most to us. Priya and I will review the digital form together before we release it to investors.
+
+# Our requirements
+
+**1. Source-of-funds evidence.** We need source-of-funds evidence for any commitment of $2,000,000 or more. Our anchor investors include a retirement plan, an insurer and a foundation, and they will expect us to be careful. Please make sure the digital form asks for that evidence and does not let a subscription go forward without it.
+
+**2. Investor routes.** Each investor type should follow its own route through the questionnaire: individuals, entities, insurance companies, foundations and benefit plans. A benefit plan investor must complete the ERISA annex. Please make sure no route ends before the signature page, and that every investor type is asked for the tax form that fits it, including the W-8BEN for our one Italian individual investor.
+
+**3. ERISA limit.** We must stay under the twenty-five percent limit for benefit plan investors. Two of our five first-close investors are retirement plans, and one is an insurer that invests through its general account. Please make sure the form captures the general account percentage clearly, and that the person who reviews the commitments can see the running total.
+
+**4. Wire details.** Please do not put live bank details in any document that circulates outside the administrator’s secure portal. Our wire details should go to investors only after the administrator confirms them by telephone.
+
+**5. Signature pages.** The signature pages need to work for both the investor and for us as general partner, and they should be easy to separate from the rest of the agreement for closing.
+
+# Timing
+
+We expect to hold the first closing on 1 November 2026. To make that date, I would like the reviewed digital form by 26 October 2026. If you find anything that needs a decision from us or from counsel, please send me one consolidated list rather than several separate emails, so that Priya and I can answer in one pass.
+
+# One more note
+
+We are a new manager, and the investors are watching closely how we handle the first closing. I would rather you flag a problem than guess at what we meant.
+
+Thank you,
+
+Marcus Delgado
+Founder and Chief Investment Officer
+Redwood Ridge Capital Advisors, LLC
+1600 Larimer Street, Suite 2200, Denver, CO 80202
+Telephone: (303) 555-0142

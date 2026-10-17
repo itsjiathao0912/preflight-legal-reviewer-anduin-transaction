@@ -1,0 +1,140 @@
+#T Redwood Ridge Credit Opportunities Fund I, L.P.
+#T Amended and Restated Agreement of Limited Partnership: Article I (Definitions)
+
+This document reproduces Article I of the Amended and Restated Agreement of Limited Partnership of Redwood Ridge Credit Opportunities Fund I, L.P., a Delaware limited partnership (the “Partnership”), dated as of 1 November 2026. It is supplied to investors as a reference extract so that the defined terms used in the subscription agreement can be checked. The remaining Articles of the Partnership Agreement, which cover management, distributions, allocations, transfers, withdrawal, dissolution and miscellaneous matters, are not reproduced here.
+
+# Article I. Definitions
+
+**Section 1.1 Defined Terms.** As used in this Agreement, the following terms have the meanings set out below.
+
+“Act” means the Delaware Revised Uniform Limited Partnership Act, 6 Del. C. § 17-101 et seq., as amended from time to time.
+
+“Administrator” means Pinecroft Administration LLC, or any other person that the General Partner appoints to provide administrative, accounting, investor onboarding and anti-money laundering services to the Partnership.
+
+“Advisers Act” means the United States Investment Advisers Act of 1940, as amended, and the rules under it.
+
+“Affiliate” means, with respect to any person, any other person that directly or indirectly controls, is controlled by or is under common control with that person. For this purpose “control” means the power to direct the management and policies of a person, whether through ownership of voting securities, by contract or otherwise. No portfolio company of the Partnership is an Affiliate of the General Partner or the Manager solely because the Partnership holds an investment in it.
+
+“Agreement” means this Amended and Restated Agreement of Limited Partnership, as it may be amended, restated or supplemented from time to time.
+
+“Aggregate Commitments” means, at any time, the sum of the Capital Commitments of all Partners at that time, including the Capital Commitment of the General Partner.
+
+“Anti-Money Laundering Laws” means all laws, rules and regulations of any jurisdiction applicable to the Partnership, the General Partner, the Manager, the Administrator or any Partner that relate to money laundering, terrorist financing or the proceeds of crime.
+
+“Benefit Plan Investor” means a “benefit plan investor” within the meaning of Section 3(42) of ERISA, being (a) an “employee benefit plan” (as defined in Section 3(3) of ERISA) that is subject to the fiduciary responsibility provisions of Title I of ERISA, (b) a “plan” to which Section 4975 of the Code applies, including an individual retirement account, and (c) any entity whose underlying assets include Plan Assets by reason of a plan’s investment in that entity, but only to the extent of the percentage of the equity interests in the entity that is held by Benefit Plan Investors.
+
+“Business Day” means any day other than a Saturday, a Sunday or a day on which commercial banks in New York, New York or Denver, Colorado are authorized or required by law to close.
+
+“Capital Call” means a written notice delivered by the General Partner under Section 4.2 that requires a Partner to make a Capital Contribution.
+
+“Capital Commitment” means, with respect to a Partner, the amount that the Partner has agreed to contribute to the capital of the Partnership, as set out opposite the Partner’s name in the books and records of the Partnership, as that amount may be adjusted under this Agreement. The Capital Commitment of the General Partner and its Affiliates is equal to at least 1.5% of Aggregate Commitments.
+
+“Capital Contribution” means, with respect to a Partner, the amount of cash that the Partner has contributed to the capital of the Partnership in response to a Capital Call, including amounts that the General Partner applies under Section 4.6 against distributions otherwise payable to the Partner.
+
+“Carried Interest” means the amounts distributable to the General Partner under the distribution provisions of this Agreement in respect of the profits of the Partnership, calculated at a rate of fifteen percent (15%) of the cumulative net profits of the Partnership after the Limited Partners have received the Hurdle Amount and the General Partner has received the Catch-Up Amount.
+
+“Catch-Up Amount” means the amount distributed to the General Partner, after the Limited Partners have received a return of their Capital Contributions and the Hurdle Amount, until the General Partner has received, in respect of the Carried Interest, fifty percent (50%) of the aggregate of the Hurdle Amount distributed to the Limited Partners and the amounts distributed to the General Partner under this definition.
+
+“Closing” means each date on which the General Partner admits one or more persons to the Partnership as limited partners or accepts increased Capital Commitments from existing Partners.
+
+“Code” means the United States Internal Revenue Code of 1986, as amended.
+
+“Commitment Period” means the period that begins on the Initial Closing Date and ends on the third anniversary of the Final Closing Date, unless the General Partner ends it earlier under Section 4.4.
+
+“Defaulting Partner” means a Partner that fails to make any Capital Contribution, in whole or in part, on or before the due date stated in the relevant Capital Call, and that does not cure the failure within the cure period that Section 4.5 allows.
+
+“Delaware Act” has the meaning given to “Act.”
+
+“Disqualified Person” means any person that is a Benefit Plan Investor or a person to which a Benefit Plan Investor would be required to give a prohibited transaction exemption, and that the General Partner has determined cannot be admitted or cannot hold an additional Interest without causing the Partnership to hold Plan Assets.
+
+“Distributable Proceeds” means all cash received by the Partnership from investments, after the payment of or provision for expenses, the management fee, indemnities, debt service (including on the Subscription Facility), and reserves that the General Partner considers reasonably necessary.
+
+“ERISA” means the United States Employee Retirement Income Security Act of 1974, as amended, and the regulations promulgated under it, including the regulation of the United States Department of Labor at 29 C.F.R. § 2510.3-101, as modified by Section 3(42) of ERISA.
+
+“Exchange Act” means the United States Securities Exchange Act of 1934, as amended.
+
+“Final Closing Date” means the date of the last Closing, which may not be later than twelve months after the Initial Closing Date.
+
+“Fiscal Year” means the calendar year, or any other period that the General Partner determines is required by the Code.
+
+“General Partner” means Redwood Ridge Credit GP I, LLC, a Delaware limited liability company, and any successor general partner admitted under this Agreement.
+
+“Hurdle Amount” means, with respect to each Limited Partner, an amount that accrues on that Limited Partner’s unreturned Capital Contributions at a rate of seven percent (7%) per annum, calculated on a simple, non-compounding basis from the date on which each Capital Contribution is received by the Partnership until the date on which that Capital Contribution is returned to the Limited Partner by distribution. The Hurdle Amount does not compound, and no amount of Hurdle Amount accrues on any previously accrued Hurdle Amount.
+
+“Initial Closing Date” means the date of the first Closing, which the General Partner expects to occur on 1 November 2026.
+
+“Interest” means the entire limited partnership interest of a Partner in the Partnership, including the Partner’s share of profits and losses, its right to receive distributions and its other rights and obligations under this Agreement and the Act.
+
+“Investment” means any loan, note, bond, participation, equity interest, warrant or other investment that the Partnership acquires or originates, whether directly or through an intermediate vehicle, and any right that arises from it.
+
+“Investment Company Act” means the United States Investment Company Act of 1940, as amended, and the rules under it.
+
+“Investment Period” means the period during which the Partnership may make new Investments, which is the Commitment Period.
+
+“Key Person” means each of Marcus Delgado and Priya Raman-Holt, and any replacement that the General Partner appoints with the approval of the advisory committee.
+
+“Limited Partner” means each person that is admitted to the Partnership as a limited partner under this Agreement and has not ceased to be a limited partner, and, where the context requires, each former limited partner with respect to its Interest at the time it ceased to be a limited partner.
+
+“Management Fee” means the fee payable by the Partnership to the Manager under Section 6.1, at an annual rate of one and one-half percent (1.5%) of Invested Capital, calculated and paid quarterly in advance.
+
+“Invested Capital” means, at any time, the aggregate cost basis of Investments that the Partnership holds at that time, including the cost basis of Investments acquired using borrowings, less the cost basis of Investments or parts of Investments that have been sold, repaid or written off.
+
+“Manager” means Redwood Ridge Capital Advisors, LLC, a Delaware limited liability company, and its successors and assigns.
+
+“Memorandum” means the Confidential Private Placement Memorandum of the Partnership, as amended or supplemented from time to time.
+
+“Officer” means any person that the General Partner designates as an authorized officer of the Partnership.
+
+“Partner” means the General Partner or any Limited Partner, and “Partners” means all of them.
+
+“Partnership” means Redwood Ridge Credit Opportunities Fund I, L.P., a Delaware limited partnership.
+
+“Person” means any natural person, corporation, partnership, limited liability company, trust, estate, association, governmental authority or other entity.
+
+“Plan Assets” means the assets of any employee benefit plan, plan or account that is subject to the fiduciary responsibility provisions of Title I of ERISA or to Section 4975 of the Code, as determined under the regulation of the United States Department of Labor at 29 C.F.R. § 2510.3-101, as modified by Section 3(42) of ERISA, and includes the underlying assets of an entity in which such a plan invests where the plan’s investment is not an investment in a publicly offered security and the participation by Benefit Plan Investors in that entity is Significant Participation.
+
+“Prime Rate” means the rate of interest published from time to time in a leading financial publication that the General Partner designates as the “prime rate” for commercial loans in the United States.
+
+“Qualified Purchaser” means a “qualified purchaser” as defined in Section 2(a)(51)(A) of the Investment Company Act and the rules under it.
+
+“Reserves” means amounts that the General Partner sets aside from Distributable Proceeds for expenses, liabilities or contingencies of the Partnership, in a reasonable amount in the judgment of the General Partner.
+
+“Sanctions” means economic or financial sanctions, trade embargoes or restrictive measures administered or enforced by the Office of Foreign Assets Control of the United States Department of the Treasury, the United States Department of State, the United Nations Security Council, the European Union or His Majesty’s Treasury of the United Kingdom.
+
+“Securities Act” means the United States Securities Act of 1933, as amended, and the rules under it.
+
+“Side Letter” means a written agreement between the Partnership or the General Partner and a Limited Partner that supplements or modifies the terms of this Agreement or of the subscription agreement of that Limited Partner, as it applies to that Limited Partner.
+
+“Significant Participation” means, with respect to any class of equity interests in the Partnership, that Benefit Plan Investors hold twenty-five percent (25%) or more of the total value of that class, determined under Section 3(42) of ERISA by disregarding the value of any equity interest held by a person (other than a Benefit Plan Investor) that has discretionary authority or control with respect to the assets of the Partnership, or that provides investment advice for a fee, direct or indirect, with respect to those assets, and by disregarding the equity interest of any Affiliate of such a person.
+
+“Subscription Agreement” means, with respect to a Limited Partner, the subscription agreement that the Limited Partner executes and the General Partner accepts in connection with the Limited Partner’s admission to the Partnership, including the annexes to it.
+
+“Subscription Facility” means any credit facility, line of credit, guarantee or other financing arrangement that the Partnership enters into, including the facility with Front Range Commercial Bank, as lender, that is secured by the unfunded Capital Commitments of the Partners and the right to call Capital Contributions, in an aggregate principal amount that, at the time of any borrowing, does not exceed the amount that is equal to one times (1.0x) Aggregate Commitments.
+
+“Tax Matters” means any matter concerning the tax liability, tax elections, tax returns, tax audits or tax reporting of the Partnership, including those required by FATCA and the OECD Common Reporting Standard.
+
+“Term” means the period that begins on the Initial Closing Date and ends on the seventh anniversary of that date, as the General Partner may extend it by up to two successive periods of one year each under Section 12.1.
+
+“Transfer” means any sale, assignment, exchange, pledge, mortgage, encumbrance, gift or other disposition, whether voluntary or by operation of law, of all or any part of an Interest or of any economic or voting right in it.
+
+“Unfunded Commitment” means, with respect to a Partner at any time, the portion of its Capital Commitment that it has not contributed to the Partnership as Capital Contributions at that time, whether or not a Capital Call has been delivered for it, increased by the amount of any distribution that the Partner is required to return as a Capital Contribution under this Agreement and decreased by any reduction of its Capital Commitment that the General Partner has effected under this Agreement.
+
+“Withdrawal Event” means the occurrence, with respect to a Partner, of its bankruptcy, dissolution or any other event that, under Section 17-402 of the Act, causes the Partner to cease to be a partner, subject to any contrary provision of this Agreement.
+
+**Section 1.2 Construction.** In this Agreement, unless the context otherwise requires: (a) headings are for convenience and do not affect interpretation; (b) the singular includes the plural and the reverse; (c) “include” and “including” mean including without limitation; (d) references to Articles and Sections are to Articles and Sections of this Agreement; (e) references to a statute or regulation include that statute or regulation as amended and any successor to it; (f) all dollar amounts are in United States dollars; and (g) the parties have participated jointly in the negotiation and drafting of this Agreement, and no presumption arises that favors or disfavors any party by reason of authorship.
+
+**Section 1.3 Calculation of Percentages Under ERISA.** For purposes of determining whether Benefit Plan Investors hold Significant Participation, the General Partner will make the determination as of the date of each Closing, and as of the date of each Transfer, withdrawal or redemption of an Interest, using the information that the Partners have provided in their Subscription Agreements. In making that determination the General Partner may rely, without independent inquiry, on a Partner’s written representation as to its status as a Benefit Plan Investor and, in the case of a Partner that is an entity whose underlying assets include Plan Assets, as to the percentage of its equity interests that is held by Benefit Plan Investors. Where an insurance company holds an Interest through its general account, the General Partner will treat the Partner as a Benefit Plan Investor only to the extent of the percentage of the assets of that general account that constitute Plan Assets, as the Partner has certified.
+
+**Section 1.4 Insurance Company General Accounts.** A Limited Partner that is an insurance company and that has funded its Capital Commitment from its general account will certify to the General Partner, on or before each Closing and again at the end of each Fiscal Year, the maximum percentage of the assets of its general account that constitute Plan Assets within the meaning of Section 401(c) of ERISA and the regulations under it. The General Partner may rely on that certification, and the Limited Partner will notify the General Partner promptly of any change in that percentage that would cause Benefit Plan Investors to hold Significant Participation.
+
+**Section 1.5 Defaulting Partners; Cross-Reference to Remedies.** A Defaulting Partner is subject to the remedies in Section 4.6. Those remedies include interest on the unpaid amount at the Prime Rate plus six percentage points per year; loss of the right to participate in further Investments; suspension of voting rights; the application of distributions against the amount owed; a reduction of the Defaulting Partner’s Interest of up to fifty percent (50%); and a forced sale of the Defaulting Partner’s entire Interest at a discount of at least twenty-five percent (25%) of its fair value, as determined by the General Partner in good faith. Nothing in this Section limits the rights of the Partnership at law or in equity.
+
+**Section 1.6 Conflict With Subscription Agreements.** If a term defined in this Article I is defined differently in a Subscription Agreement, the definition in this Article I governs, except that a Subscription Agreement may define a term for purposes of that Subscription Agreement only, and the definition in the Subscription Agreement then governs for that limited purpose. A Side Letter prevails over this Agreement, but only as to the Limited Partner that is party to it, and only to the extent that the General Partner has agreed to that result in writing.
+
+**Section 1.7 Commitments and Reductions.** The General Partner may, with the written consent of the Limited Partner concerned, reduce the Capital Commitment of any Limited Partner. The General Partner may also reduce the Capital Commitment of a Limited Partner without that Limited Partner’s consent in the circumstances that Section 4.7 allows, including to remedy a default or to avoid the Partnership holding Plan Assets. Any reduction takes effect on the date stated in a written notice from the General Partner and does not release the Limited Partner from any Capital Call that was delivered before that date.
+
+**Section 1.8 Reserved Terms.** The terms “Capital Commitment,” “Unfunded Commitment,” “Defaulting Partner,” “Hurdle Amount,” “Significant Participation,” “Plan Assets” and “Subscription Facility” are used in the Subscription Agreement of each Limited Partner by reference to this Article I, and the General Partner will not amend those definitions in a manner that is adverse to a Limited Partner without the consent that Section 14.3 requires.
+
+**Section 1.9 Notices and Information Rights Relating to Defined Terms.** The General Partner will make available to each Limited Partner, on request and within ten Business Days, a statement of the most recent calculation made under Section 1.3, the current amount of Aggregate Commitments, the amount that the Partnership has borrowed under the Subscription Facility, and the Unfunded Commitment of that Limited Partner. The General Partner will deliver a revised statement within the same period after each Closing. A Limited Partner that is a Benefit Plan Investor, and any Limited Partner that is a fiduciary of a Benefit Plan Investor, may also request the information that it reasonably needs to satisfy its own reporting obligations under ERISA, and the General Partner will provide it to the extent that it holds the information and is not prohibited by law or by a duty of confidentiality from doing so. Information that the Partnership provides under this Section is confidential and may be used only for the purpose for which it was requested.
+
+**Section 1.10 Interpretation of Percentages and Periods.** Where this Agreement states a rate per annum, the rate accrues daily on the basis of a year of three hundred and sixty-five days and the actual number of days elapsed. Where a period is stated in days and the last day is not a Business Day, the period ends on the next Business Day. A reference to a time of day is to the time in New York, New York. A percentage that is stated in this Article I is not rounded unless the context requires it, and where rounding is required, a percentage is rounded to the nearest one hundredth of one percent. If the General Partner determines that a calculation under this Article I produced an inaccurate result, it will correct the calculation as soon as it becomes aware of the error and will adjust later distributions and Capital Calls to give effect to the correction, without interest, unless the error resulted from the gross negligence or willful misconduct of the General Partner.

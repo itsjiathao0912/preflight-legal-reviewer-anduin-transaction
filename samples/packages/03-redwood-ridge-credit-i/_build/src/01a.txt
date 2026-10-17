@@ -1,0 +1,112 @@
+#T Redwood Ridge Credit Opportunities Fund I, L.P.
+#T Subscription Agreement
+
+Confidential. Offered only to persons who qualify under the representations in this Agreement. Limited partnership interests have not been registered under the securities laws of any jurisdiction.
+
+This Subscription Agreement (this “Agreement”) is made by the investor identified on the signature page attached as Annex D (the “Investor”) in connection with its subscription for a limited partnership interest in Redwood Ridge Credit Opportunities Fund I, L.P., a Delaware limited partnership (the “Partnership”). The Partnership was formed to originate, acquire and hold senior secured and unitranche loans to middle-market companies domiciled in the United States, and to engage in related activities. The Investor wishes to subscribe on the terms below, and the Partnership is willing to consider that subscription on those terms.
+
+# Section 1. Definitions and Interpretation
+
+**1.1 Definitions.** In this Agreement the following terms have the meanings set out below.
+
+“General Partner” means Redwood Ridge Credit GP I, LLC, a Delaware limited liability company, in its capacity as the general partner of the Partnership.
+
+“Manager” means Redwood Ridge Capital Advisors, LLC, a Delaware limited liability company with its principal office at 1600 Larimer Street, Suite 2200, Denver, CO 80202, in its capacity as the investment manager of the Partnership.
+
+“Administrator” means Pinecroft Administration LLC, or any successor administrator appointed by the General Partner to provide administrative, investor onboarding and anti-money laundering services to the Partnership.
+
+“Partnership Agreement” means the Amended and Restated Agreement of Limited Partnership of the Partnership among the General Partner and the limited partners admitted from time to time, as it may be amended, restated or supplemented.
+
+“Memorandum” means the Confidential Private Placement Memorandum of the Partnership, as supplemented from time to time, together with any investor presentation that the Manager delivers with it.
+
+“Fund Documents” means this Agreement, the Partnership Agreement and the Memorandum.
+
+“Interest” means a limited partnership interest in the Partnership.
+
+“Commitment” means the amount that the Investor agrees to contribute to the Partnership, as set out opposite its name on the signature page attached as Annex D and as accepted by the General Partner.
+
+“Closing” means each date on which the General Partner admits one or more investors to the Partnership.
+
+“Initial Closing Date” means the date of the first Closing, which the General Partner currently expects to occur on 1 November 2026.
+
+“Business Day” means any day other than a Saturday, a Sunday or a day on which commercial banks in New York, New York or Denver, Colorado are authorized or required by law to close.
+
+“Capital Call” means a written notice from the General Partner requiring the Investor to contribute a portion of its Commitment to the Partnership.
+
+“Defaulting Investor” means an Investor that fails to fund any amount required by a Capital Call on or before the due date stated in that Capital Call.
+
+“Side Letter” means a written agreement between the Partnership or the General Partner and the Investor that supplements or modifies the terms of the Fund Documents as they apply to that Investor.
+
+“Securities Act” means the United States Securities Act of 1933, as amended, and the rules of the Securities and Exchange Commission under it.
+
+“Investment Company Act” means the United States Investment Company Act of 1940, as amended, and the rules under it.
+
+“Code” means the United States Internal Revenue Code of 1986, as amended.
+
+“ERISA” means the United States Employee Retirement Income Security Act of 1974, as amended, and the regulations under it.
+
+“Benefit Plan Investor” means, for purposes of this Agreement, a “benefit plan investor” within the meaning of Section 3(42) of ERISA, that is: (a) an employee benefit plan that is subject to the fiduciary responsibility provisions of Title I of ERISA; (b) a plan to which Section 4975 of the Code applies; and (c) an entity whose underlying assets include the assets of any such plan by reason of the plan’s investment in the entity.
+
+“Qualified Purchaser” means a “qualified purchaser” as defined in Section 2(a)(51)(A) of the Investment Company Act.
+
+“OFAC” means the Office of Foreign Assets Control of the United States Department of the Treasury.
+
+“Sanctions” means economic or financial sanctions, trade embargoes or restrictive measures administered or enforced by OFAC, the United States Department of State, the United Nations Security Council, the European Union or His Majesty’s Treasury of the United Kingdom.
+
+“Anti-Money Laundering Laws” means all laws, rules and regulations of any jurisdiction applicable to the Partnership, the General Partner, the Manager or the Investor that relate to money laundering, terrorist financing or the proceeds of crime, including the United States Bank Secrecy Act and the USA PATRIOT Act.
+
+“FATCA” means Sections 1471 through 1474 of the Code, any regulations or official interpretations under them, any intergovernmental agreement implementing them and any law adopted under such an agreement.
+
+“Delaware Act” means the Delaware Revised Uniform Limited Partnership Act, as amended.
+
+**1.2 Undefined Terms.** Capitalized terms used but not defined herein have the meanings given to them in the Partnership Agreement. If a term has a meaning in this Agreement and a different meaning in the Partnership Agreement, the meaning in this Agreement governs for purposes of this Agreement only. The Investor acknowledges that it has received, or has had the opportunity to review, the Partnership Agreement before signing this Agreement.
+
+**1.3 Interpretation.** Headings are for convenience only and do not affect the meaning of this Agreement. The words “include” and “including” mean “including without limitation.” References to a Section or an Annex are to a section of, or an annex to, this Agreement unless stated otherwise. References to a statute include that statute as amended and any successor statute. Dollar amounts are stated in United States dollars. The singular includes the plural and the reverse.
+
+# Section 2. Subscription and Acceptance
+
+**2.1 Subscription.** The Investor irrevocably subscribes for an Interest in the Partnership with the Commitment stated on its signature page, subject to acceptance by the General Partner under Section 2.3. The Investor agrees to be bound by the Partnership Agreement as a limited partner upon admission, and authorizes the General Partner to attach this Agreement and the signature page to the Partnership Agreement as the Investor’s counterpart signature.
+
+**2.2 Minimum Commitment.** The minimum Commitment is $2,000,000. The General Partner may accept a smaller Commitment in its sole discretion, and may require any Investor to subscribe for a larger Commitment where the General Partner considers it appropriate in light of the Investor’s regulatory or tax status. Commitments are expressed in whole dollars and are not subject to fractions.
+
+**2.3 Acceptance and Rejection.** The General Partner may accept or reject this subscription in whole or in part, for any reason or no reason, at any time before the Closing at which the Investor would be admitted. The subscription is accepted only when the General Partner countersigns the signature page in Annex D and delivers written notice of acceptance to the Investor. If the General Partner rejects the subscription, it will return any funds received from the Investor, without interest or deduction, within ten Business Days, and this Agreement will then be of no further effect except for Section 11.2 and Section 12.
+
+**2.4 Closings.** The General Partner may hold one or more Closings. The Partnership has a target size of $300,000,000 and a hard cap of $400,000,000 of aggregate Commitments, inclusive of the commitment of the General Partner. The General Partner currently expects the Initial Closing Date to occur on 1 November 2026, and may admit additional investors at subsequent Closings until the date that is twelve months after the Initial Closing Date. An investor admitted at a subsequent Closing will contribute its share of prior investments and expenses and bear equalization charges as provided in the Partnership Agreement.
+
+**2.5 Delivery of Documents.** The Investor will deliver the following to the Administrator, in each case duly completed and signed: (a) the signature page in Annex D; (b) the investor questionnaire in Annex A; (c) the ERISA representations in Annex B, where required by Section 8.2; (d) the applicable Internal Revenue Service tax form described in Section 7.1; (e) the documentation described in Section 6; and (f) any Side Letter that the Investor has negotiated with the General Partner. The Investor’s subscription is not complete, and the General Partner is not required to act on it, until the Administrator confirms that these deliveries have been received in good order.
+
+**2.6 Subscription Funds.** The Investor will not send any money to the Partnership before the General Partner accepts its subscription and issues the first Capital Call. If the Investor chooses to wire an initial amount earlier, the Administrator will hold it without obligation to invest or segregate it, and will return it on request if the subscription is rejected. Wire instructions appear in Annex C. The Investor must confirm any change to those instructions by telephone with a known contact at the Administrator before sending funds.
+
+**2.7 Representation Updates.** The Investor will promptly notify the General Partner if any representation made in this Agreement or in an Annex ceases to be true before it is admitted to the Partnership, and will deliver replacement documents on request. The General Partner may rely on the most recent information it has received from the Investor.
+
+# Section 3. Capital Contributions and Capital Calls
+
+**3.1 Capital Calls.** The Investor will contribute capital to the Partnership by wire transfer of immediately available funds, in the amount and by the date stated in each Capital Call. The General Partner will deliver each Capital Call at least ten Business Days before the due date, except that the General Partner may deliver a Capital Call on shorter notice, but not less than five Business Days, where the Partnership needs funds to complete an investment or to repay amounts due under the Subscription Facility. A Capital Call will state the purpose of the contribution, the Investor’s share of the amount called and the remaining undrawn Commitment. A Capital Call that the General Partner delivers after 5:00 p.m. Denver time is treated as delivered on the next Business Day.
+
+**3.2 Purposes of Capital Calls.** The General Partner may call capital to fund investments, to pay the management fee and the expenses of the Partnership, to repay borrowings, to meet the obligations of the Partnership under indemnities and guarantees, and to cover amounts that a Defaulting Investor failed to fund. Capital Calls are made pro rata among the investors in proportion to their Commitments, subject to the exceptions in the Partnership Agreement for investors that are excused from a particular investment for legal, regulatory or tax reasons.
+
+**3.3 Investment Period and Term.** The Partnership may make new investments during the three years that follow the final Closing. The term of the Partnership is seven years from the Initial Closing Date, and the General Partner may extend it by up to two successive periods of one year each. After the investment period ends, the General Partner may call capital only for follow-on investments, expenses, the management fee and the other purposes the Partnership Agreement permits.
+
+**3.4 Management Fee and Carried Interest.** The Partnership pays the Manager a management fee at an annual rate of 1.5% of invested capital, calculated and paid as the Partnership Agreement provides. Distributions follow a European waterfall: the Investor first receives a return of all capital contributed and a return equal to the Hurdle Amount, the General Partner then receives a catch-up until it and the Investor have shared the profits distributed at a ratio of 50% to the General Partner and 50% to the Investor, and every further distribution is split 85% to the Investor and 15% to the General Partner as carried interest. The Investor acknowledges that this paragraph is a summary, and that the Partnership Agreement governs.
+
+**3.5 General Partner Commitment.** The General Partner and its affiliates will commit to the Partnership an amount equal to at least 1.5% of aggregate Commitments. The Investor acknowledges that the General Partner may satisfy part of that commitment by a waiver of management fees to the extent the Partnership Agreement allows.
+
+**3.6 Subscription Facility; Reduction of Commitments.** The Partnership may enter into a credit facility with [insert Subscription Facility lender] to be secured by the right to call capital from the Investor and the other investors, and the Partnership may borrow under the Subscription Facility in an amount up to 1.0 times aggregate Commitments, so that the Partnership can complete investments before it calls capital. The Investor consents to the pledge of its obligation to fund Capital Calls, and agrees to deliver the acknowledgments, financial information and legal opinions that the lender reasonably requests. Commitments may be reduced from time to time at the discretion of the General Partner or the Investor. A reduction does not release the Investor from any Capital Call that was delivered before the reduction took effect.
+
+**3.7 No Set-Off.** The Investor will fund each Capital Call in full, without set-off, counterclaim, deduction or withholding of any kind. A claim that the Investor believes it has against the Partnership, the General Partner or the Manager is not a defense to the obligation to fund a Capital Call and the Investor must pursue it separately.
+
+**3.8 Return of Distributions.** The Investor acknowledges that it may be required to return distributions it has received, to the extent necessary to satisfy indemnification obligations of the Partnership, subject to the limits and the time periods in the Partnership Agreement. The amount returned will never exceed the aggregate distributions the Investor has received, and no return may be required after the second anniversary of the termination of the Partnership.
+
+# Section 4. Default and Remedies
+
+**4.1 Default.** An Investor becomes a Defaulting Investor if it does not fund the full amount of a Capital Call by the due date and does not cure the failure within ten Business Days after the General Partner gives it written notice of the failure. The General Partner may give that notice by email to the address on the Investor’s signature page, and the notice is effective when sent.
+
+**4.2 Remedies Available to the General Partner.** If the Investor is a Defaulting Investor, the General Partner may, in its sole discretion and without limiting any other right, do any one or more of the following: (a) charge interest on the unpaid amount from the due date until it is paid in full, at a rate equal to the prime rate published in a leading financial publication plus six percentage points per year, up to the maximum rate permitted by law; (b) prohibit the Defaulting Investor from participating in any further investment of the Partnership; (c) suspend the Defaulting Investor’s voting and consent rights; (d) apply distributions otherwise payable to the Defaulting Investor against the amounts it owes; (e) cause the Defaulting Investor’s Interest to be reduced by a stated percentage, up to fifty percent, with the forfeited portion reallocated among the other investors; and (f) require the Defaulting Investor to sell its entire Interest, at a price the General Partner determines in good faith to be a discount of at least twenty-five percent to its fair value.
+
+**4.3 Collection and Costs.** The General Partner may, in addition, bring legal action against the Defaulting Investor to collect the unfunded Commitment, and the Defaulting Investor will pay all costs the Partnership incurs in doing so, including reasonable fees of counsel. The Investor waives any defense that the remedies in Section 4.2 are a penalty or an exclusive remedy, and acknowledges that the damages the Partnership would suffer from a default are difficult to estimate and that the remedies are a reasonable pre-estimate of them.
+
+**4.4 Effect on the Subscription Facility.** The Investor understands that the Partnership may rely on the Investor’s obligation to fund Capital Calls when it borrows under the Subscription Facility, and that a default may cause the Partnership to incur losses that fall on the other investors. For that reason the Investor agrees that, where the lender requires it, the General Partner may call additional capital from the other investors to cover the default, up to the limits stated in the Partnership Agreement, and the Defaulting Investor remains liable to reimburse each of them.
+
+**4.5 Cumulative Rights; No Waiver.** The remedies described in this Section 4 are cumulative and are in addition to any other remedy available at law or in equity. A delay in exercising a remedy is not a waiver of it. The General Partner may waive or reduce a remedy for one Investor without being required to do the same for any other Investor.
+
+**4.6 Excused Investors.** An Investor will not be treated as a Defaulting Investor to the extent the General Partner has excused it, in writing, from funding a particular Capital Call under the Partnership Agreement for legal, regulatory or tax reasons, and the excuse is not itself a default or a waiver of any other obligation of the Investor.

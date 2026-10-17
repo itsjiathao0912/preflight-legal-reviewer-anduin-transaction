@@ -1,0 +1,103 @@
+#T Redwood Ridge Credit Opportunities Fund I, L.P.
+#T Confidential Private Placement Memorandum: Summary of Terms
+
+Confidential. This summary is provided to prospective investors in Redwood Ridge Credit Opportunities Fund I, L.P. to help them decide whether to review the full Confidential Private Placement Memorandum. It is not an offer to sell or a solicitation of an offer to buy an interest in any jurisdiction in which that offer or solicitation would be unlawful. If this summary conflicts with the Partnership Agreement or the subscription agreement, those documents govern.
+
+# Section 1. The Offering at a Glance
+
+Redwood Ridge Credit Opportunities Fund I, L.P. (the “Fund”) is a Delaware limited partnership that will originate and acquire senior secured and unitranche loans to middle-market companies in the United States. The Fund is the first fund sponsored by Redwood Ridge Capital Advisors, LLC (the “Manager”), a Denver-based investment adviser formed in 2025. The general partner of the Fund is Redwood Ridge Credit GP I, LLC (the “General Partner”). The Fund is offered on a private placement basis to institutional and high net worth investors that are both accredited investors and qualified purchasers.
+
+TABLE
+Term | Summary
+Fund | Redwood Ridge Credit Opportunities Fund I, L.P., a Delaware limited partnership
+General Partner | Redwood Ridge Credit GP I, LLC
+Manager | Redwood Ridge Capital Advisors, LLC, 1600 Larimer Street, Suite 2200, Denver, CO 80202
+Strategy | Senior secured and unitranche loans to U.S. middle-market companies
+Target size | $300,000,000
+Hard cap | $400,000,000
+Minimum commitment | $2,000,000, subject to the discretion of the General Partner to accept less
+Initial closing | Expected 1 November 2026
+Final closing | Not later than twelve months after the initial closing
+Investment period | Three years from the final closing
+Term | Seven years from the initial closing, with two one-year extensions at the discretion of the General Partner
+Management fee | 1.5% per annum on invested capital
+Preferred return (hurdle) | 7% per annum, simple and non-compounding
+Carried interest | 15%, after a 50% / 50% catch-up, on a European (whole-fund) basis
+General Partner commitment | At least 1.5% of aggregate commitments
+Leverage | Subscription facility of up to 1.0x aggregate commitments with Front Range Commercial Bank; no other fund-level leverage without advisory committee consent
+Administrator | Pinecroft Administration LLC
+Auditor | Garner Hollis LLP
+Fund counsel | Sutter Lane & Abernathy LLP
+ENDTABLE
+
+# Section 2. Investment Strategy
+
+**2.1 Opportunity.** The Manager believes that the retreat of regional banks from lending to middle-market companies has left a persistent financing gap for borrowers with earnings before interest, taxes, depreciation and amortization of between $10 million and $75 million. The Fund seeks to fill that gap through directly originated loans that are senior in the capital structure, secured by a first-priority lien on substantially all of the borrower’s assets, and priced at a spread over a floating reference rate.
+
+**2.2 Portfolio Construction.** The Manager expects the Fund to hold between 25 and 40 positions at the end of the investment period. No single investment will exceed fifteen percent of aggregate commitments at the time it is made, and no more than twenty-five percent of aggregate commitments will be invested in any one industry. The Manager expects that at least eighty percent of the portfolio will consist of first-lien senior secured loans or unitranche loans, and that up to twenty percent may be invested in second-lien loans, mezzanine instruments and equity co-investments that are received in connection with a credit investment.
+
+**2.3 Sourcing and Underwriting.** The Manager sources investments through relationships with private equity sponsors, independent sponsors, advisers and borrowers that it has built over the careers of its investment professionals. Each investment is subject to an investment committee review that considers the quality of the borrower’s cash flows, the strength of its collateral, the structure of its covenants and the experience of its sponsor. The Manager will not approve an investment unless the committee is satisfied that the loan can be repaid from the borrower’s cash flow, and not only from the enforcement of collateral.
+
+**2.4 Monitoring and Workouts.** The Manager will monitor each investment through monthly financial reporting, quarterly management calls and covenant compliance testing. Where a borrower defaults, the Manager will take the measures it considers appropriate, which may include an amendment, a restructuring, the replacement of management, or the enforcement of the Fund’s rights as a secured creditor. The Manager has engaged an outside restructuring adviser on a retainer basis for these purposes.
+
+# Section 3. Key Persons and Team
+
+**3.1 Marcus Delgado, Founder and Chief Investment Officer.** Mr. Delgado founded the Manager in 2025 and chairs its investment committee. He has more than twenty years of experience in leveraged finance, and previously led the middle-market lending group of a regional commercial bank in the Rocky Mountain region, where he was responsible for a loan portfolio of approximately $2.4 billion. He holds a degree in economics and an MBA.
+
+**3.2 Priya Raman-Holt, Chief Operating Officer and Chief Compliance Officer.** Ms. Raman-Holt is responsible for the Manager’s operations, compliance, investor relations and risk management. She has fifteen years of experience in operations and compliance at asset managers and a global accounting firm. She holds a degree in accounting and is a certified public accountant.
+
+**3.3 Key Person Event.** If either Mr. Delgado or Ms. Raman-Holt ceases to devote substantially all of his or her business time to the Manager and the Fund, and the General Partner does not appoint a replacement acceptable to the advisory committee within ninety days, the investment period will be suspended until a replacement is approved or the limited partners vote to resume it.
+
+**3.4 Team and Resources.** Besides the Key Persons, the Manager employs eleven investment and operations professionals, and expects to add four more before the final closing. The Manager’s personnel will devote such time to the Fund as they consider necessary, and may also act for other accounts that the Manager advises on terms that the Partnership Agreement describes.
+
+# Section 4. Economic Terms
+
+**4.1 Management Fee.** During the investment period, the Fund will pay the Manager a management fee at an annual rate of 1.5% of invested capital, payable quarterly in advance. After the investment period, the fee continues to be calculated on invested capital, so that it declines as investments are repaid or sold. The Manager will offset against the management fee a share of any transaction, origination, monitoring or similar fees that it or its affiliates receive from portfolio companies, to the extent provided in the Partnership Agreement.
+
+**4.2 Distribution Waterfall.** Distributions of proceeds follow a European (whole-fund) waterfall. First, one hundred percent to the limited partners until they have received a return of all contributed capital. Second, one hundred percent to the limited partners until they have received a preferred return of 7% per annum, calculated on a simple, non-compounding basis. Third, fifty percent to the general partner and fifty percent to the limited partners until the general partner has received fifteen percent of the cumulative profits distributed. Fourth, eighty-five percent to the limited partners and fifteen percent to the general partner. The general partner is subject to a clawback obligation if it has received more than fifteen percent of the aggregate profits at the end of the term of the Fund.
+
+**4.3 Expenses.** The Fund bears organizational expenses up to a cap of $1,500,000, its operating expenses, the costs of the subscription facility, the fees of the administrator, auditor and counsel, and the costs of investments that are not completed. The Manager bears its own overhead, including compensation of its personnel and the rent of its offices. Placement agent fees, if any, are borne by the Manager and are not charged to the Fund.
+
+**4.4 Subscription Facility.** The Fund expects to establish a subscription facility with Front Range Commercial Bank, secured by the unfunded commitments of the investors. The Fund may borrow under it in a principal amount of up to 1.0x aggregate commitments to bridge capital calls, and the Manager intends to repay each borrowing within 180 days. Investors will be asked to deliver acknowledgments and certain financial information to the lender, and the Fund will calculate its performance both with and without the effect of the facility.
+
+**4.5 General Partner Commitment.** The general partner and its affiliates will commit at least 1.5% of aggregate commitments, which may be funded in part by a waiver of management fees to the extent the Partnership Agreement permits.
+
+# Section 5. Capital Calls and Default
+
+**5.1 Capital Calls.** The general partner will call capital on at least ten business days’ notice, and may call it on not less than five business days’ notice where the Fund needs funds to complete an investment or to repay the subscription facility. Capital calls are made pro rata among the investors, except as described in the Partnership Agreement.
+
+**5.2 Default Remedies.** An investor that fails to fund a capital call is a defaulting partner and, if it does not cure the failure within ten business days of notice, is subject to remedies. Those remedies include interest at the prime rate plus six percentage points per year; the loss of the right to participate in further investments; the suspension of voting rights; the application of distributions against the amount owed; a reduction of the defaulting investor’s interest of up to fifty percent; and a forced sale of the interest at a discount of at least twenty-five percent to fair value. Each investor should consider these provisions carefully, as the remedies can result in a substantial loss of the investor’s capital.
+
+# Section 6. Investor Qualifications
+
+**6.1 Eligibility.** Each investor must be an accredited investor within the meaning of Regulation D under the Securities Act and a qualified purchaser within the meaning of the Investment Company Act. The Fund will not accept a subscription from an investor that the general partner believes was formed to invest in the Fund, unless each of its beneficial owners is also eligible.
+
+**6.2 Benefit Plan Investors.** The general partner intends to limit participation by benefit plan investors to less than twenty-five percent of the total value of each class of equity interests in the Fund, so that the assets of the Fund are not treated as plan assets under ERISA. Retirement plans, individual retirement accounts and certain insurance company general accounts count toward that limit. The general partner may reject or reduce a subscription from a benefit plan investor, or require a benefit plan investor to withdraw, to preserve that result.
+
+**6.3 Insurance Company General Accounts.** An insurance company that invests through its general account must tell the general partner what percentage of the assets of that general account constitute plan assets, so that the general partner counts only that percentage toward the twenty-five percent limit.
+
+**6.4 Non-U.S. Investors.** A non-U.S. investor will be asked to provide a withholding certificate on the applicable IRS Form W-8, and may be asked to provide information for the purposes of FATCA and the Common Reporting Standard. A non-U.S. investor may be subject to United States tax on income from loan origination that is effectively connected with a United States trade or business, and the general partner may require such an investor to invest through a blocker entity.
+
+**6.5 Tax-Exempt Investors.** Tax-exempt investors, including private foundations and retirement plans, should be aware that the Fund may borrow and may generate unrelated business taxable income. The general partner will use reasonable efforts to limit it, but cannot assure investors that none will be allocated to them.
+
+**6.6 Anti-Money Laundering.** The Fund and its administrator are required to verify the identity of each investor and the source of its funds. Investors that make large commitments will be asked for additional evidence of the source of funds, as the administrator’s procedures describe. A subscription will not be accepted until that process is complete.
+
+# Section 7. Principal Risk Factors
+
+**7.1 Credit Risk.** Borrowers may be unable to repay their loans, and the value of collateral may be insufficient to repay a loan in full after a default. Middle-market companies are often more vulnerable to economic downturns than larger companies, and have fewer resources to meet their obligations.
+
+**7.2 Illiquidity.** The Fund’s investments are illiquid, and the Fund may not be able to sell them quickly or at their carrying values. Interests in the Fund cannot be transferred without the consent of the general partner, and no market is expected for them.
+
+**7.3 Leverage.** The use of the subscription facility, and of any other borrowing, increases the risk of loss. If the Fund cannot repay a borrowing when it falls due, the lender may enforce its rights against the investors’ unfunded commitments.
+
+**7.4 New Manager.** The Manager has not previously managed a fund, and its investment professionals have not previously managed a fund together, so there is no track record of the Fund. Investors will have to rely on the experience of the Key Persons in other settings, and on the Manager’s ability to build its team and systems.
+
+**7.5 Key Person Dependence.** The performance of the Fund depends on the efforts of Mr. Delgado and Ms. Raman-Holt, and the loss of either could have an adverse effect. The key person provisions described above may not be sufficient to protect investors.
+
+**7.6 Conflicts of Interest.** The Manager and its affiliates may advise other accounts that invest in the same loans or in different tranches of the same borrower, and may have conflicts of interest in allocating investments and in the exercise of their rights as creditors. The Manager has adopted allocation and conflict policies described in the full Memorandum.
+
+**7.7 Regulatory and Tax.** Changes in law, including tax law and securities regulation, could adversely affect the Fund or its investors. The Fund has not sought a ruling from any tax authority.
+
+# Section 8. Service Providers
+
+The Fund’s service providers are as follows: administrator, Pinecroft Administration LLC; auditor, Garner Hollis LLP; fund counsel, Sutter Lane & Abernathy LLP; and subscription facility lender, Front Range Commercial Bank. The Fund may change a service provider on notice to the advisory committee. Each service provider has agreed to keep the Fund’s information confidential and to comply with the applicable law.

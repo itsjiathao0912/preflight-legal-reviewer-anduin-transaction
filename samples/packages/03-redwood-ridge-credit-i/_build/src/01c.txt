@@ -1,0 +1,289 @@
+# Section 9. Transfer Restrictions
+
+**9.1 General Prohibition.** The Investor will not sell, assign, pledge, encumber, exchange or otherwise transfer, voluntarily or by operation of law, all or any part of its Interest, or any economic or voting right in it, without the prior written consent of the General Partner, which the General Partner may give or withhold in its sole discretion. Any purported transfer in violation of this Section 9 is void and the Partnership will not recognize it.
+
+**9.2 Conditions to Consent.** As a condition to any transfer it approves, the General Partner may require that: (a) the transferee is a person that makes the representations in Section 5 and, where applicable, Section 8 and Annex B; (b) the transfer does not require registration of the Interest under the Securities Act or of the Partnership under the Investment Company Act; (c) the transfer does not cause the Partnership to be treated as a publicly traded partnership for purposes of the Code, or to hold Plan Assets; (d) the transferee has completed the Administrator’s onboarding procedures described in Section 6; and (e) the transferor or the transferee pays the reasonable costs of the Partnership in connection with the transfer, including fees of counsel.
+
+**9.3 Legends.** The General Partner may place a legend on any document that evidences an Interest to state that the Interest has not been registered under the Securities Act and is subject to the restrictions in this Section 9 and in the Partnership Agreement. The Investor consents to the placement of that legend and to the issuance of stop-transfer instructions.
+
+**9.4 No Withdrawal.** The Investor may not withdraw from the Partnership or redeem any part of its Interest except as the Partnership Agreement provides, and the Investor acknowledges that the Partnership Agreement allows withdrawal only in limited circumstances, including those in Section 8.8. Death, incapacity, bankruptcy or dissolution of the Investor does not terminate the Partnership or give the Investor’s successor a right to withdraw.
+
+**9.5 Affiliate Transfers.** The General Partner will not unreasonably withhold its consent to a transfer by the Investor of all of its Interest to an affiliate that is under common control with the Investor, if the affiliate satisfies the conditions in Section 9.2 and the Investor remains liable for the Commitment. The General Partner may treat a series of transfers as a single transfer if it considers that they were designed to avoid the restrictions in this Section 9.
+
+**9.6 Change of Control.** If the Investor undergoes a change of control, or if the Investor is a vehicle formed to invest in the Partnership and an interest in it is transferred, the General Partner may treat that event as a transfer of the Interest for purposes of this Section 9, and the Investor will notify the General Partner within ten Business Days of the change of control.
+
+# Section 10. Power of Attorney
+
+**10.1 Grant.** The Investor irrevocably constitutes and appoints the General Partner, and each of its authorized officers, as the Investor’s true and lawful attorney-in-fact, with full power of substitution, in its name, place and stead, to make, execute, sign, acknowledge, swear to, deliver, file and record the documents described in Section 10.2.
+
+**10.2 Scope.** The power of attorney in Section 10.1 covers: (a) the Partnership Agreement and every amendment to it that is made in accordance with its terms, including to reflect the admission of additional investors and the substitution of transferees; (b) every certificate of limited partnership and every amendment to it that the Delaware Act requires; (c) every document that is necessary to effect the dissolution and winding up of the Partnership; (d) every instrument, certificate or agreement that the lender under the Subscription Facility reasonably requires in connection with the pledge of Capital Calls; and (e) every document that is necessary to carry out any action taken under Section 4 or Section 8.8.
+
+**10.3 Coupled With an Interest.** The Investor acknowledges that the power of attorney is coupled with an interest, that it is irrevocable, that it survives the death, incapacity, dissolution, bankruptcy or insolvency of the Investor, and that it survives any transfer of all or part of the Interest, where the transferee has agreed to the Partnership Agreement, until every obligation of the Investor under the Fund Documents has been performed.
+
+**10.4 Limits.** The power of attorney does not authorize the General Partner to make any amendment to the Partnership Agreement that requires the consent of the Investor and for which the Investor’s consent has not been obtained, to increase the Investor’s Commitment, or to make the Investor liable for any obligation beyond its Commitment, except as the Partnership Agreement permits.
+
+**10.5 Further Assurances.** The Investor will sign and return any further document that the General Partner reasonably requests to confirm the power of attorney, and will, if requested, provide a notarized copy of this Section 10 for filing with any governmental authority or the lender under the Subscription Facility.
+
+# Section 11. Acknowledgments, Confidentiality and Indemnification
+
+**11.1 Risks and Conflicts.** The Investor has reviewed the discussion of risk factors and conflicts of interest in the Memorandum. It understands that an investment in the Partnership is speculative and involves a high degree of risk, including the risks of borrower default, illiquidity of senior secured and unitranche loans, valuation uncertainty, the use of leverage through the Subscription Facility and other borrowings, and dependence on the key persons of the Manager. The Investor also understands that the General Partner, the Manager and their affiliates are engaged in other activities and will have conflicts of interest as described in the Memorandum.
+
+**11.2 Confidentiality.** The Investor will keep confidential, and will not disclose to any person other than its legal, tax and financial advisers who need to know and who are bound by a duty of confidentiality, the Fund Documents and all non-public information about the Partnership, the Manager and the portfolio investments that it receives. The Investor may disclose information to the extent a law, regulation or court order requires it, after giving the General Partner prompt written notice where that is lawful. This Section survives termination of this Agreement and the dissolution of the Partnership.
+
+**11.3 Freedom of Information Laws.** An Investor that is subject to a public records or freedom of information law will notify the General Partner before any disclosure, will assert every available exemption from disclosure of the Partnership’s confidential information, and agrees that the General Partner may withhold from it any information that the General Partner reasonably believes could be disclosed under such a law and could harm the Partnership or a portfolio company.
+
+**11.4 Indemnification by the Investor.** The Investor will indemnify and hold harmless the Partnership, the General Partner, the Manager, the Administrator and each of their respective partners, members, officers, directors, employees and agents from and against any loss, liability, damage, cost or expense, including reasonable fees of counsel, that arises out of or results from any inaccuracy in a representation, or breach of a warranty or covenant, made by the Investor in this Agreement or in any Annex. This indemnity is in addition to every other remedy of the Partnership and survives the Investor’s admission and any transfer of its Interest.
+
+**11.5 Privacy and Data.** The Investor consents to the General Partner, the Manager and the Administrator collecting, using, storing and sharing the personal and financial information the Investor provides, for the purposes of administering the Investor’s Interest, complying with law, and complying with the requirements of the Subscription Facility. The Investor represents that it has the right to provide to them information about any individual it names in Annex A or in its tax forms.
+
+**11.6 Electronic Delivery.** The Investor consents to the General Partner, the Manager and the Administrator delivering notices, reports, Capital Calls, tax information and other communications by email or by posting on a secure investor portal. The Investor will notify the Administrator promptly if its email address changes, and agrees that an electronic signature on any Fund Document has the same effect as a handwritten signature.
+
+**11.7 Reports.** The Partnership will deliver to the Investor annual audited financial statements prepared in accordance with generally accepted accounting principles in the United States, within one hundred and twenty days after the end of each fiscal year, and unaudited quarterly reports within sixty days after the end of each of the first three fiscal quarters. The Partnership will also deliver the tax information the Investor needs to complete its tax returns, in the form and at the times the Partnership Agreement states.
+
+# Section 12. Governing Law and Jurisdiction
+
+**12.1 Governing Law.** This Agreement, and every claim, controversy or dispute that arises out of or relates to it or to the Interest, whether in contract, tort or otherwise, is governed by and construed in accordance with the laws of the State of Delaware, without giving effect to any choice-of-law or conflict-of-law rule that would require the application of the law of another jurisdiction.
+
+**12.2 Jurisdiction and Venue.** Each of the Investor, the Partnership and the General Partner irrevocably submits to the exclusive jurisdiction of the Court of Chancery of the State of Delaware, or, if that court lacks jurisdiction, the Superior Court of the State of Delaware or the United States District Court for the District of Delaware, for the purpose of any action that arises out of or relates to this Agreement. Each of them waives any objection to venue in those courts and any claim that the courts are an inconvenient forum.
+
+**12.3 Waiver of Jury Trial.** To the fullest extent permitted by law, each party irrevocably waives any right it may have to a trial by jury in any action that arises out of or relates to this Agreement, the Fund Documents or the Interest. Each party acknowledges that it has been induced to enter into this Agreement by, among other things, this mutual waiver.
+
+**12.4 Service of Process.** The Investor consents to service of process by registered or certified mail, return receipt requested, to the address on its signature page, and, if the Investor is outside the United States, irrevocably appoints the registered agent of the Partnership in the State of Delaware as its agent to receive service of process in any action in those courts.
+
+**12.5 Costs.** In any action to enforce this Agreement, the prevailing party is entitled to recover its reasonable costs and expenses, including fees of counsel, from the other party, as determined by the court.
+
+# Section 13. Miscellaneous
+
+**13.1 Entire Agreement.** This Agreement, together with the Annexes, the Partnership Agreement and any Side Letter, is the entire agreement of the parties on its subject and supersedes every prior understanding, whether written or oral. If this Agreement conflicts with the Partnership Agreement, the Partnership Agreement governs, except as stated in Section 1.2.
+
+**13.2 Amendment and Waiver.** No provision of this Agreement may be amended or waived except in a writing signed by the General Partner and, in the case of an amendment, the Investor. A waiver of one breach is not a waiver of any other breach, and a failure to exercise a right is not a waiver of it.
+
+**13.3 Notices.** A notice to the Partnership, the General Partner or the Manager must be in writing and delivered by hand, by a nationally recognized courier or by email to Redwood Ridge Capital Advisors, LLC, 1600 Larimer Street, Suite 2200, Denver, CO 80202, Attention: Chief Compliance Officer, with a copy to investor-relations@redwoodridge.example.com. A notice to the Investor will be delivered to the address on its signature page. A notice is effective on receipt, or, if sent by email, when sent without a delivery failure message.
+
+**13.4 Counterparts.** This Agreement may be signed in any number of counterparts, each of which is an original and all of which together are one agreement. A signature delivered by facsimile, by portable document format or by an electronic signature service is as effective as an original.
+
+**13.5 Severability.** If a court of competent jurisdiction holds a provision of this Agreement invalid or unenforceable, that provision will be enforced to the maximum extent permissible, and the other provisions will remain in full force and effect.
+
+**13.6 Survival; Binding Effect.** The representations, warranties, covenants and indemnities in this Agreement survive the Investor’s admission to the Partnership, the transfer of its Interest and the termination of the Partnership. This Agreement binds the Investor and its heirs, executors, successors and permitted assigns and benefits the Partnership, the General Partner, the Manager and their respective successors and assigns. The Investor may not assign this Agreement without the prior written consent of the General Partner.
+
+**13.7 Third-Party Beneficiaries.** The Manager, the Administrator and the lender under the Subscription Facility are intended third-party beneficiaries of Section 5, Section 6, Section 8 and Section 10, and may enforce those provisions directly. No other person is a third-party beneficiary of this Agreement.
+
+---PB---
+
+# Annex A. Investor Questionnaire
+
+The Investor must answer every question. Where a question offers boxes, mark each box that applies unless the question says “check one.” Print or type all responses. The Administrator will return any incomplete questionnaire.
+
+## Part 1. Identity and Status
+
+**Question 1.** Full legal name of the Investor, as it appears on its tax form.^{1}
+
+TABLE
+Field | Response
+Legal name | ____________________________
+Address of principal office or residence | ____________________________
+Country of tax residence | ____________________________
+Email for notices | ____________________________
+ENDTABLE
+
+**Question 2.** Jurisdiction of organization and date of formation (entities) or date of birth and citizenship (individuals).
+
+TABLE
+Field | Response
+Jurisdiction or citizenship | ____________________________
+Date of formation or birth | ____________________________
+ENDTABLE
+
+**Question 3.** Type of Investor (check one).
+
+TABLE
+Check | Investor type
+☐ | Individual
+☐ | Corporation, limited liability company or partnership
+☐ | Trust or estate
+☐ | Insurance company (investing through its general account)
+☐ | Private foundation or charitable organization
+☐ | 401(k) or other defined contribution plan^{3}
+☐ | Defined benefit pension plan^{3}
+☐ | Individual retirement account (IRA)^{3}
+☐ | Other benefit plan
+ENDTABLE
+
+**Question 4.** Accredited investor status. The Investor qualifies as an accredited investor under the following category (mark all that apply).^{2}
+
+TABLE
+Check | Category
+☐ | A natural person with individual net worth, or joint net worth with a spouse, of more than $1,000,000, excluding the primary residence
+☐ | A natural person with income of more than $200,000 in each of the last two years ($300,000 jointly), and a reasonable expectation of the same this year
+☐ | An entity with total assets of more than $5,000,000 that was not formed to invest in the Partnership
+☐ | An employee benefit plan, insurance company, bank or other institution listed in Rule 501(a)(1) of Regulation D
+☐ | An entity all of whose equity owners are accredited investors
+ENDTABLE
+
+**Question 5.** Qualified Purchaser status. The Investor is a Qualified Purchaser because it is (mark all that apply):
+
+TABLE
+Check | Category
+☐ | A natural person who owns at least $5,000,000 in investments
+☐ | A person acting for its own account or for other Qualified Purchasers who owns and invests on a discretionary basis at least $25,000,000 in investments
+☐ | A trust that was not formed to invest in the Partnership and whose trustee and settlors are Qualified Purchasers
+☐ | An entity that owns at least $25,000,000 in investments
+ENDTABLE
+
+## Part 2. Benefit Plan Investor and Insurance Company Status
+
+**Question 6.** Is the Investor a Benefit Plan Investor?
+
+TABLE
+Check | Response
+☐ | Yes
+☐ | No
+ENDTABLE
+
+**Question 7.** Annex B status. Annex B (ERISA Representations) is completed by each Benefit Plan Investor in accordance with Section 8.2. If you answered Yes to Question 6 (Benefit Plan Investor), skip to Question 15. If you answered No, continue to Question 8.
+
+**Question 8.** If the Investor is an insurance company that will use assets of its general account to fund the Commitment, state the maximum percentage of those assets that constitute Plan Assets, and the date as of which the percentage was calculated.
+
+TABLE
+Field | Response
+Percentage of general account assets that are Plan Assets | ____ %
+Calculation date | ____________________________
+ENDTABLE
+
+## Part 3. Tax Status
+
+**Question 9.** Tax status of the Investor for United States federal income tax purposes (check one).
+
+TABLE
+Check | Tax status
+☐ | Taxable U.S. person
+☐ | U.S. person subject to tax
+☐ | Tax-exempt U.S. person
+☐ | Non-U.S. person
+ENDTABLE
+
+**Question 10.** IRS tax form delivered with this questionnaire.
+
+TABLE
+Check | Form
+☐ | IRS Form W-9
+☐ | IRS Form W-8BEN
+☐ | IRS Form W-8BEN-E
+☐ | IRS Form W-8IMY
+ENDTABLE
+
+**Question 11.** FATCA and CRS classification. State the Investor’s FATCA status, its CRS classification, and each jurisdiction in which it is resident for tax purposes, together with its taxpayer identification number in that jurisdiction.
+
+TABLE
+Field | Response
+FATCA status | ____________________________
+CRS classification | ____________________________
+Jurisdictions of tax residence and taxpayer identification numbers | ____________________________
+ENDTABLE
+
+**Question 12.** Source of funds. Describe the source of the funds the Investor will use to satisfy its Commitment (for example, plan contributions, general account assets, investment proceeds or personal savings), and state whether the Commitment is more than $5,000,000.
+
+TABLE
+Field | Response
+Source of funds | ____________________________
+Commitment more than $5,000,000? | ☐ Yes   ☐ No
+ENDTABLE
+
+**Question 13.** If the Investor is a private foundation or other tax-exempt organization, confirm that it has reviewed Section 7.5 and understands that it may be allocated UBTI.
+
+[NTD: SL&A to confirm whether the foundation needs a separate UBTI rep.]
+
+TABLE
+Check | Response
+☐ | The Investor has reviewed Section 7.5 and understands that it may be allocated UBTI
+☐ | The Investor is not a tax-exempt organization
+ENDTABLE
+
+**Question 14.** Authorized signatory. State the name, title and email address of each person who is authorized to sign on behalf of the Investor, and confirm that a certificate of incumbency or a copy of the authorizing resolution will be provided to the Administrator on request.
+
+TABLE
+Field | Response
+Name and title | ____________________________
+Email address | ____________________________
+ENDTABLE
+
+Footnotes to Annex A
+
+FN 1: Provide the name exactly as it appears on the Investor’s IRS tax form.
+FN 2: See Section 5.3 for the accredited investor representations.
+FN 3: Investors that mark this row must also complete Annex B (ERISA Representations).
+
+---PB---
+
+# Annex B. ERISA Representations
+
+This Annex B is completed by each Investor that is required to complete it under Section 8.2. It supplements, and does not replace, the representations in Section 8.
+
+**B.1 Plan Identification.** The Investor represents that it is (mark one):
+
+TABLE
+Check | Description
+☐ | An employee benefit plan that is subject to the fiduciary responsibility provisions of Title I of ERISA
+☐ | An entity whose underlying assets include Plan Assets by reason of a plan’s investment in the entity
+☐ | A plan, account or arrangement that is not subject to Title I of ERISA but is subject to Section 4975 of the Code
+☐ | None of the above
+ENDTABLE
+
+**B.2 Percentage of Plan Assets.** If the Investor is an entity whose underlying assets include Plan Assets, the maximum percentage of its equity interests held by Benefit Plan Investors, as calculated under Section 3(42) of ERISA, is ____ %. The Investor will notify the General Partner promptly if that percentage changes.
+
+**B.3 Fiduciary Independence.** The fiduciary of the Investor that has decided to invest in the Partnership is independent of the General Partner, the Manager and their affiliates, is a bank, an insurance carrier, a registered investment adviser, a broker-dealer or an independent fiduciary with total assets under management or control of at least $50,000,000, or is otherwise a fiduciary that is responsible for exercising independent judgment in evaluating the investment, and is not relying on any advice from the General Partner or the Manager for a fee.
+
+**B.4 Reasonable Compensation.** The fees and expenses that the Partnership will pay to the Manager and to the General Partner, including the management fee and carried interest described in Section 3.4, are reasonable in the circumstances, in the judgment of the fiduciary of the Investor, and the investment has been authorized in accordance with the governing documents of the Investor.
+
+**B.5 Plan Documents.** The investment in the Partnership is permitted under the governing documents of the Investor and under its investment policy, and the Investor’s decision to invest has been made by a fiduciary who is not an employee of the Manager. A trustee or authorized officer of the Investor has approved the Commitment.
+
+**B.6 Information.** The Investor will give the General Partner any information it reasonably requests, as soon as practicable, to confirm its status for purposes of Section 8.3, and the Investor acknowledges that the General Partner may rely on this Annex B without further inquiry.
+
+**B.7 Acknowledgement.** The Investor acknowledges that it has read Section 8 and that the representations in it are true and correct and that, by signing Annex D, it makes them again.
+
+---PB---
+
+# Annex C. Wire Instructions
+
+The Investor will send contributions to the Partnership only to the account that is described below. Before the first wire, the Investor must confirm these instructions by telephone with a known contact at the Administrator, as Section 2.6 requires. The details below are fictional and are included for illustration only.
+
+TABLE
+Item | Detail
+Beneficiary | Redwood Ridge Credit Opportunities Fund I, L.P. Subscription Account
+Receiving bank | Fictional Test Bank, N.A., Denver, Colorado
+ABA routing number: 999000011 | Used for domestic wires
+Account number: 9900123456 | Restricted account held in the name of the Partnership
+Reference | Investor name and Commitment amount
+ENDTABLE
+
+The Administrator will never change wire instructions by email alone. The Investor should treat any request that it receive to change these instructions as suspicious and should report it to the Administrator at once. The Administrator will return funds sent to any other account only after it has confirmed that the remitter is the Investor.
+
+---PB---
+
+# Annex D. Signature Pages
+
+## Part 1. Investor Signature Page
+
+By signing below, the Investor (a) subscribes for an Interest in the Partnership with the Commitment stated below, (b) agrees to be bound by the terms of this Agreement and, upon admission, of the Partnership Agreement, (c) makes each of the representations, warranties and covenants in this Agreement and the Annexes, and (d) grants the power of attorney in Section 10.
+
+TABLE
+Item | Detail
+Commitment (in U.S. dollars) | $ ____________________________
+Name of Investor | ____________________________
+Signature of authorized signatory | ____________________________
+Name and title of signatory | ____________________________
+Date | ____________________________
+Address for notices | ____________________________
+ENDTABLE
+
+## Part 2. Acceptance by the General Partner
+
+The General Partner accepts the subscription of the Investor in the Commitment stated above, effective as of the date set out below, and admits the Investor to the Partnership as a limited partner on the terms of the Partnership Agreement.
+
+TABLE
+Item | Detail
+Accepted Commitment (in U.S. dollars) | $ ____________________________
+Redwood Ridge Credit GP I, LLC, as General Partner | ____________________________
+Name and title of signatory | ____________________________
+Date of acceptance | ____________________________
+ENDTABLE
