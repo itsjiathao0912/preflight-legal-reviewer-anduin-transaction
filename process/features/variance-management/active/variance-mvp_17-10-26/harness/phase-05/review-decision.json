@@ -1,0 +1,16 @@
+{
+  "task": "Variance MVP Phase 05 leg 1 (local)",
+  "reviewer": "vc-execute-agent self-review (independent EVL vc-tester and a sonnet security review of the deploy checklist still to run)",
+  "decision": "approved-with-concerns",
+  "blockingFindings": [],
+  "nonBlockingFindings": [
+    "Leg 2 (remote migration and deploy) not run: needs the F0 user confirmation; the phase cannot be VERIFIED before it.",
+    "Picker label for non-numeric sample ids: narrow derived repair in Intake-owned OpenDocumentDialog.tsx (showed #NaN).",
+    "Change-type chip overlaps the row title (agent probe); backlog stub, Phase 02 owner.",
+    "Baseline modal does not return focus to its control after Esc (not asserted; existing backlog intake-dialog-focus-return).",
+    "Redwood Ridge (no firm) shows no baseline control and no muted no-baseline line: no-firm documents skip variance entirely; the muted line applies to firm documents only.",
+    "The demo pair's firm pointer is Fund I after Fund I, II, III uploads; the demo script picks Fund II in the vs control (spec does the same)."
+  ],
+  "notes": "0 model calls, 0 remote calls. Code commits bd8ff4e (feat) and 07db58b (test) on local main; not pushed.",
+  "timestamp": "2026-10-18"
+}

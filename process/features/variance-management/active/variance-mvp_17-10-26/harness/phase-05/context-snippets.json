@@ -1,0 +1,15 @@
+{
+  "task": "Variance MVP Phase 05 leg 1",
+  "snippets": [
+    { "file": "apps/worker/migrations/0006_variance.sql", "lines": "7-17", "description": "nullable ADD COLUMN owner, owner_source (counsel_question), intent, scope (counsel_answer, decision)" },
+    { "file": "apps/worker/migrations/0006_variance.sql", "lines": "20-69", "description": "decision_guard_update and answer_guard_update recreated with intent and scope; demo_ro_decision_update and demo_ro_counsel_answer_update recreated verbatim to keep trigger precedence" },
+    { "file": "apps/worker/migrations/0006_variance.sql", "lines": "72-124", "description": "question_owner_immutable; regression_check table with no-delete, guard-update, cap and demo read-only triggers" },
+    { "file": "apps/worker/migrations/0006_variance.sql", "lines": "126-136", "description": "INSERT OR IGNORE of 3 law_firm and 6 law_firm_alias rows; schema_version '6' set last" },
+    { "file": "apps/worker/src/memory/health.ts", "lines": "EXPECTED_SCHEMA_VERSION", "description": "the Worker expects schema '6'; /api/memory/health answers 503 otherwise (F5b check)" },
+    { "file": "apps/worker/src/platform/index.ts", "lines": "55-67", "description": "MEMORY_WRITE_WEIGHTS (decision 32, run 12, counselAnswer 18, counselAnswerWithAssertion 23)" },
+    { "file": "scripts/src/build-samples.ts", "lines": "VARIANCE_DEMO and the 12 + 4 guard", "description": "B1: four (variance demo) samples, firm hartwell-crane, explicit 12 + N guard" },
+    { "file": "scripts/src/fixtures/make-package.ts", "lines": "DESIGN_FIRMS", "description": "B3b: northgate-iii -> hartwell-crane, lotus-bay-asia-ii -> ostrander-pell, redwood-ridge-i null; generated JSON regenerated" },
+    { "file": "scripts/src/live/probe-variance.ts", "lines": "whole file", "description": "G2b live probe: assertLiveBase allow-list (shared common.ts), ledgered session claim, AI/OCR aborted, upload route, third-party console noise recorded not failed" },
+    { "file": "apps/worker/wrangler.jsonc", "lines": "unchanged", "description": "no route, custom domain or new binding; Worker aduin-transaction-web, D1 aduin-transaction-db" }
+  ]
+}

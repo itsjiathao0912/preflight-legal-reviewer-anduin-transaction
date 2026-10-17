@@ -1,0 +1,18 @@
+{
+  "task": "Variance MVP Phase 05: demo samples and specs (leg 1, local), then remote D1 migration 0006 and one Worker deploy to workers.dev (leg 2, user-confirmed)",
+  "planPath": "process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-05-demo-deploy_PLAN_17-10-26.md",
+  "riskLevel": "high",
+  "riskClasses": [
+    "schema/data migration",
+    "deploy/runtime/container/proxy/gateway behavior"
+  ],
+  "riskClass": "schema/data migration (0006 on the live populated D1, not idempotent); deploy/runtime (one wrangler deploy of Worker aduin-transaction-web plus static assets)",
+  "workDescription": "Leg 1 (this pack, local only): Hartwell & Crane variance-demo samples, design package firm retag, demo e2e specs, perf and a11y cases, live variance probe (offline-tested), counts-wording test, populated-DB rehearsal of 0006 on a scratch local D1. Leg 2 (separate spawn, after the F0 user confirmation): backup export, Time Travel bookmark, one migrations apply --remote, read-only verification, one wrangler deploy, live smoke and probe.",
+  "approver": "vc-execute-agent leg 1 (autopilot standing consent covers Sections A-E, F1, F2b only); the USER must confirm the F0 packet before any remote command",
+  "mustStopBeforeFinalize": true,
+  "humanApprovalRequired": true,
+  "why": "0006 drops and recreates guard triggers and adds columns on the live populated D1 (forward-only, not idempotent); the deploy replaces the live Worker and web bundle together (it also ships another session's Preflight rename c677ce6).",
+  "rollback": "Data: forward-only. Every new column is nullable, so the previous Worker (b04f1a8c-41f5-4c20-92dc-196d6e7d252a, then 3d2c7301-a4a5-487c-bd7d-2f2c0800be6f) keeps working against the 0006 schema. Data rollback pointer = the Time Travel bookmark recorded in leg 2 before the apply plus the export to the scratchpad; a restore is never run by an agent. Code: wrangler rollback <id recorded at F3a> reverts Worker and assets together (F6b); never the Worker alone after the new bundle shipped (an older Worker drops assertion, scope, intent).",
+  "forwardOnlyNote": "Remote order: migrations list --remote (expect only 0006 pending) -> time-travel info -> export --remote to the scratchpad -> before counts -> deployments list (must equal the recorded live id) -> ONE migrations apply --remote -> F3b checks -> deploy from the EVL commit. A new Worker against an unmigrated D1 refuses writes (503 memory_unavailable), so the apply strictly precedes the deploy.",
+  "date": "2026-10-18"
+}
