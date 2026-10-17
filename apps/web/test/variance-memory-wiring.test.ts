@@ -21,6 +21,7 @@ const h = vi.hoisted(() => ({
   provider: null as null | ((key: { doc_hash: string }, keys: string[]) => FindingWire[]),
   api: null as MemoryApi | null,
   downloads: [] as string[],
+  resolved: {} as Record<string, string>,
 }));
 vi.mock('../src/api/client', () => ({ memoryApi: () => h.api, isRealMemoryApi: () => false }));
 vi.mock('../src/lib/download', () => ({ downloadBlob: (n: string) => void h.downloads.push(n) }));
@@ -49,6 +50,7 @@ vi.mock('../src/state/memory-sync', async (orig) => {
       return 'pending:d';
     },
     enqueueRevoke: async () => 'skipped',
+    resolveId: async (id: string) => h.resolved[id] ?? null,
   };
   return {
     ...real,
@@ -154,6 +156,7 @@ beforeEach(() => {
   h.decides.length = 0;
   h.throwAnswer = null;
   h.api = null;
+  h.resolved = {};
 });
 
 describe('variance-memory-wiring', () => {
@@ -318,6 +321,35 @@ describe('variance-memory-wiring', () => {
     expect(out.memoryNote).toBe(NOT_RECORDED_NOTE);
     expect(calls).toEqual(['storeFindings']);
     expect(useReview.getState().triage.f_change!.ownerAnswers).toEqual({ gp: 'A', counsel: null });
+  });
+
+  it('should re-block only the revoked owner when an owner answer on a change row is reopened from firm memory', async () => {
+    ready({ f_change: { status: 'counsel', ownerAnswers: { gp: null, counsel: null } } });
+    await useReview.getState().recordAnswer('f_change', answer(), 'gp');
+    await useReview.getState().recordAnswer('f_change', answer({ option: 'B' }), 'counsel');
+    const ids = useReview.getState().triage.f_change!.ownerAnswerIds!;
+    h.resolved[ids.gp!] = 'dec-gp';
+    h.resolved[ids.counsel!] = 'dec-counsel';
+    const fp = fingerprintFor(CHANGE, FIRM)!;
+    await useReview.getState().refreshMemory('dec-gp', { fingerprint: fp, decision: 'answered' });
+    const t = useReview.getState().triage.f_change!;
+    expect(t.ownerAnswers).toEqual({ gp: null, counsel: 'B' });
+    expect(t.ownerAnswerIds?.gp).toBeUndefined();
+    expect(t.ownerAnswerIds?.counsel).toBe(ids.counsel);
+  });
+
+  it('should fall back to the computed change-row fingerprint when the pending id is not synced yet', async () => {
+    ready({ f_change: { status: 'counsel', ownerAnswers: { gp: null } } });
+    await useReview.getState().recordAnswer('f_change', answer(), 'gp');
+    const fp = fingerprintFor(CHANGE, FIRM)!;
+    await useReview.getState().refreshMemory('dec-x', { fingerprint: fp, decision: 'answered' });
+    expect(useReview.getState().triage.f_change!.ownerAnswers).toEqual({ gp: null });
+    // a different fingerprint leaves the answer alone
+    await useReview.getState().recordAnswer('f_change', answer(), 'gp');
+    await useReview
+      .getState()
+      .refreshMemory('dec-y', { fingerprint: 'f'.repeat(64), decision: 'answered' });
+    expect(useReview.getState().triage.f_change!.ownerAnswers).toEqual({ gp: 'A' });
   });
 
   it('should fetch regression checks for a document with no fingerprinted finding using the sentinel fingerprint', async () => {

@@ -501,7 +501,7 @@ describe('outbox', () => {
     expect((await box.list())[0]!.state).toBe('synced');
   });
 
-  it('variance: terminal answer ops drop intent and the assertion label; the question carries owner', async () => {
+  it('variance: terminal answer ops drop intent, the assertion label and the question interpretations; the question carries owner', async () => {
     const f = flaky();
     const { box } = outbox(f.api);
     await box.enqueueAnswer(
@@ -521,7 +521,7 @@ describe('outbox', () => {
       {
         finding_ref: 'f1',
         fingerprint: FP,
-        interpretations: ['A', 'B'],
+        interpretations: ['Old text: Cayman only.', 'New text: Singapore too.'],
         owner: 'gp',
         owner_source: 'override',
       },
@@ -538,7 +538,13 @@ describe('outbox', () => {
     const rows = await box.list();
     expect(rows[0]!.state).toBe('synced');
     const raw = JSON.stringify(await db.outbox.toArray());
-    for (const secret of ['private intent text', 'secret appendix label', 'answer quote'])
+    for (const secret of [
+      'private intent text',
+      'secret appendix label',
+      'answer quote',
+      'Cayman only',
+      'Singapore too',
+    ])
       expect(raw).not.toContain(secret);
     expect(raw).toContain('firm_template'); // scope is an enum, kept
   });

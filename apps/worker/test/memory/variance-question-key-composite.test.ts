@@ -147,4 +147,19 @@ describe('variance-question-key-composite (H2(d))', () => {
     expect(d.status).toBe(400);
     expect(d.body.error.reason).toBe('id_charset');
   });
+  test('a body owner that differs from the key suffix is refused; an absent body owner takes the suffix', async () => {
+    const h = makeMem();
+    const s = await session(h);
+    const run = await newRun(h, s, FIRM, 'Fund II');
+    const fid = `f_${'e'.repeat(32)}`;
+    const w = await storedFinding(h, s, run, fid, `Mismatch quote ${Math.random()}.`);
+    const bad = await ask(h, s, `${fid}@gp`, w.fingerprint, { owner: 'counsel' });
+    expect(bad.status).toBe(400);
+    expect(bad.body.error.reason).toBe('owner_key_mismatch');
+    const ok = await ask(h, s, `${fid}@fund_admin`, w.fingerprint);
+    expect(ok.status, JSON.stringify(ok.body)).toBe(200);
+    const r = await row(s.workspaceId, ok.body.question_id);
+    expect(r?.owner).toBe('fund_admin');
+    expect(r?.owner_source).toBe('suggested');
+  });
 });
