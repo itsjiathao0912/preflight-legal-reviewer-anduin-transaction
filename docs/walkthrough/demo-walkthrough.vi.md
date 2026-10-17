@@ -1,7 +1,7 @@
 # Hướng dẫn demo Sub-doc QA (bản live hiện tại)
 
-> Viết ngày 17/10/2026, dựa trên code ở `main` (sau phase 10) và một vòng chạy thử trên bản live
-> https://aduin-transaction-web.giathaowork.workers.dev (version `23612b12`).
+> Viết ngày 17/10/2026, dựa trên code ở `main` (commit `0a67dc4`) và bản live
+> https://aduin-transaction-web.giathaowork.workers.dev (version `47d98295-c583-4dc0-9f96-f9e161c8cf35`; bản trước để rollback: `23612b12`).
 > Tên nút, nhãn và câu thông báo được giữ **nguyên tiếng Anh như trên màn hình**, để bạn đối chiếu khi demo.
 > Đường dẫn code là đường dẫn tương đối từ gốc repo.
 
@@ -12,8 +12,8 @@
 | # | Điều cần biết | Hệ quả khi demo | Cách xử lý |
 |---|---|---|---|
 | 1 | **Memory và AI cần qua Turnstile.** Lần đầu app gọi memory, Cloudflare sẽ hỏi "Verify you are human". Trình duyệt tự động không qua được. | Nếu bỏ qua bước xác minh, sample có firm (#3–#6) sẽ hiện hai banner: "Memory unavailable" và "AI review skipped: the firm rules could not be read…". | Demo bằng **trình duyệt thường**. Mở #3 trước buổi demo, qua bước xác minh một lần. |
-| 2 | **Gate chỉ đếm finding mức "Blocks digitization" (critical)**, và không đếm finding do AI tạo. Các lỗi golden trên sample thật (#1, #3, #5, #11) đều ở mức "Fix before build" (high) hoặc "Note". | **Mọi sample thật đều mở ra với gate "Ready to digitize"**, kể cả #5 có 2 tham chiếu sai. Khi chưa mở tài liệu nào, gate cũng hiện "Ready to digitize". | Đừng nói "gate đang chặn" khi mở sample thật. Muốn diễn cảnh gate chuyển từ Blocked sang Ready thì dùng file `fixtures/memory/fund-II.html` (bước 8 trong §3). |
-| 3 | **Dữ liệu memory seed trên D1 không khớp sample nào.** Seed đang deploy thuộc "Firm X / Firm Y / Demo Fund I–II". Bản seed khớp Partners Group (`fixtures/memory/demo-seed-spec.json`) chưa được deploy. | Mở #5 hay #6 sẽ **không** tự có "Previously handled" hay "Already answered". | Tự tạo memory ngay khi demo: dismiss một finding trên #3, rồi mở #5 (bước 4 trong §3). |
+| 2 | **Gate chỉ đếm finding mức "Blocks digitization" (critical), và không bao giờ đếm finding do AI tạo.** Tham chiếu sai (`ref-label-coherence`, `ref-this-section`) là critical khi nằm trong *ngữ cảnh điều hướng*: phần hướng dẫn (instructions scope), một answer option, hoặc một khối chứa điều kiện. Ngoài ngữ cảnh đó thì là high. | 4 tham chiếu "Part B" bị tráo trên #3 và #5 là critical. "this Section 11" trên #1 vẫn là high (đoạn representation). Vì vậy gate chặn ở #3/#5 nhưng **không** chặn ở #1. Khi chưa có tài liệu, gate hiện "No document" (trung tính). | Chỉ nói "gate đang chặn" với #3/#5, và chỉ khi memory chưa có câu trả lời counsel (xem điều 3). Với #1 hãy nói rõ là lỗi high nên không chặn, đúng chủ đích. Đã kiểm chứng trên bản live: #5 mở không có memory sẽ hiện "Blocked · 2". |
+| 3 | **Seed memory trên D1 đã khớp sample.** `ws_demo` là Partners Group, gồm 7 decisions và rule `sr01` (proposed). Dữ liệu Firm X / Firm Y cũ đã bị xóa khỏi `ws_demo` (chỉ ở `ws_demo`). Seed có sẵn câu trả lời counsel **A** cho hai tham chiếu bị tráo (`sd06`, `sd07`). | Khi có memory (đã qua Turnstile), #3/#5 hiện hai finding đó là "Already answered" và gate là **Ready**, tức là không tự chặn. Muốn diễn cảnh Blocked thì phải chủ động tạo ra. | Hai cách: (a) mở #5 khi chưa có memory (trước khi qua Turnstile, hoặc phiên không có memory) sẽ thấy "Blocked · 2"; (b) trong Memory, **Reopen** `sd06` hoặc `sd07` kèm lý do, hai finding đó quay về New và chặn gate (bước 5–6 trong §3). |
 | 4 | **Màn "Documents" vẫn là placeholder**: chỉ có chữ "Recent documents, samples and uploads: coming in a later build." | Đừng bấm vào khi demo. | Mở tài liệu qua **ô chọn tài liệu** ở đầu menu (doc switcher). |
 | 5 | **Hạn mức AI free:** mỗi visitor được 3 tài liệu AI mới mỗi ngày, toàn hệ thống 35 request mỗi ngày. Mở sample không tốn lượt nào. | "Run AI on this sample", "Summarize changes", "AI draft" và upload khi AI đang bật đều tiêu lượt. | Tập dượt với **"No AI"**. Chỉ bật AI cho đúng một cảnh cần show. |
 | 6 | **Deep link `#memory` không dùng được**: app luôn mở vào `#findings`. | Gõ URL `/#memory` sẽ rơi về Findings. | Vào Memory bằng mục trong menu dọc. |
@@ -55,7 +55,7 @@
 | **Compare versions** | Không có badge | Chuyển sang màn Compare | |
 | **"{Firm} memory"** | Tên đổi theo firm của tài liệu, ví dụ "Partners Group memory". Không có firm thì hiện "Firm memory". | Chuyển sang màn Memory | `MemoryView` |
 | **Documents** | — | Màn placeholder (xem §0, điều 4) | `placeholders/PlaceholderView.tsx` |
-| **Gate pill** | "Blocked · N" (ổ khóa đỏ) hoặc "Ready to digitize" (xanh) | Mở popover "Digitization is blocked" kèm danh sách lý do. Bấm một lý do sẽ nhảy tới đúng finding hoặc câu hỏi. | `shell/GateButton.tsx`, `gate/GateReasons.tsx` |
+| **Gate pill** | "Blocked · N" (ổ khóa đỏ), "Ready to digitize" (xanh), hoặc "No document" (trung tính, khi chưa mở tài liệu) | Mở popover "Digitization is blocked" kèm danh sách lý do. Bấm một lý do sẽ nhảy tới đúng finding hoặc câu hỏi. | `shell/GateButton.tsx`, `gate/GateReasons.tsx` |
 | **AI on / No AI** | Công tắc AI. Lựa chọn được lưu lại (`ui:v1:ai`). | Bật lần đầu sẽ hiện **Privacy prompt**, gồm 2 nút "Keep AI off" và "Accept and turn AI on". Tắt thì app xóa các finding AI và hiện banner "AI review is off". | `AiSwitch.tsx`, `state/session.ts` |
 | **Allowance** | "3 of 3 fresh-AI documents left today", số lấy từ `GET /api/quota` | — | `ai/Allowance.tsx` |
 | **Analyst badge** (LT Linh Tran ✎) | Tên analyst giả lập | Bút chì: đổi tên. Đổi tên sẽ khởi tạo lại phiên memory. | `AnalystBadge.tsx` |
@@ -118,20 +118,24 @@
 
 ## 3. Lộ trình demo đề xuất (khoảng 5 phút)
 
-> Chuẩn bị: dùng trình duyệt thường, đã qua Turnstile một lần, menu đặt **No AI**.
+> Chuẩn bị: dùng trình duyệt thường, đã qua Turnstile một lần (để memory hoạt động), menu đặt **No AI**.
+> Seed `ws_demo` đã có sẵn Partners Group: 7 decisions, rule `sr01` (proposed), và câu trả lời counsel A cho `sd06`/`sd07`.
 
 | Bước | Thao tác | Màn hình hiện gì | Câu nói gợi ý |
 |---|---|---|---|
-| 1 | Doc switcher → **#1 Franklin Lexington PMF 2024** | Banner "Memory not applied" (sample không có firm). Hai finding "Fix before build": *The text says "this Section 11" but it sits in Section 12 (Qualified Client Status…); a self-reference should cite Section 12.* | "Rule tìm ra tham chiếu tự trỏ sai: đang nằm trong Section 12 mà ghi Section 11." |
+| 1 | Doc switcher → **#1 Franklin Lexington PMF 2024** | Banner "Memory not applied" (sample không có firm). Hai finding "Fix before build" (high): *The text says "this Section 11" but it sits in Section 12 (Qualified Client Status…); a self-reference should cite Section 12.* Gate pill: **Ready to digitize**. | "Rule tìm ra tham chiếu tự trỏ sai. Lỗi này nằm trong đoạn representation nên là high, và gate không chặn: đúng chủ đích, vì nó không đổi đường đi của form." |
 | 2 | Bấm finding đầu tiên | Tài liệu cuộn tới và tô vàng đoạn trích dẫn. Dòng finding mở rộng: Expected "Section 12 (…)", Found, "Rule ref-this-section · deterministic", "Why it was flagged". | "Mọi finding đều có trích dẫn thật, có rule id; chạy lại lần nữa vẫn ra đúng kết quả đó." |
-| 3 | Doc switcher → **#3 PG Master Fund 2019** | 2 finding "Broken cross-reference": *"agreement custodian" is said to be in Part B of Section 6, but that target is "Investment amount" (fit 0); it fits Section 4 (CUSTODIAN INFORMATION) better…* | "Hai tham chiếu bị tráo: thông tin custodian là Section 4, số tiền mới là Section 6." |
-| 4 | Trên #3: bấm finding custodian → **Dismiss…** → chọn "Law firm's standard wording" → **Save** | Toast "Dismissed. The gate is now Ready.". Dòng chuyển xám, đoạn tô trong tài liệu mờ đi. Có nút "Restore finding". | "Analyst quyết định, và quyết định có lý do. Không có lý do thì không cho dismiss." |
-| 5 | Doc switcher → **#5 PG NGI 2024** → bấm finding custodian | Nhãn **"Dismissed in Partners Group Private Equity (Master Fund), re-confirm"**. Finding **vẫn nằm trong danh sách chính** vì là lỗi mức high. Nút đổi thành "Re-confirm dismissal…". | "Tool nhớ quyết định ở quỹ trước của cùng firm. Vì đây là lỗi ảnh hưởng form, nó không tự ẩn đi mà bắt analyst xác nhận lại." |
-| 6 | Menu → **Partners Group memory** | Tab Decisions có quyết định vừa dismiss, cùng 1 quyết định seed (sd06) và rule seed sr03. Tab Audit trail có "Decision recorded". | "Mọi quyết định đều vào audit, không ai sửa hay xóa được." |
-| 7 | Menu → **Compare versions** → Base "PG NGI 2024", Compare "PG NGI 2026" (mặc định chế độ Versions) | Chip "Earlier findings": **4 fixed · 3 still present · 0 new**. Danh sách thay đổi: Appendix C bị bỏ; đổi tên Units→Shares (29 chỗ), Member→Shareholder, Memorandum→Prospectus, Placement Fee→Sales Load, placement agent→distributor; phí theo class (3.5% Class A, 1.5% Class S). | "Bản 2026 đã sửa hai tham chiếu bị tráo, và tool chỉ ra đúng những gì đổi." |
-| 8 | (Tùy chọn) Doc switcher → **#9 RW Holdings scans** | Trình xem scan: chip 22 trang lần lượt chuyển sang Done, "22 of 22 read", ảnh trang bên trái, chữ đọc được bên phải, badge confidence. **Không gọi mạng**, vì OCR đã có sẵn. | "Bản scan 1200 DPI được đọc bằng model vision free, kết quả lưu sẵn." Finding footnote 2 thiếu ở Partnership/LLC **chưa được kiểm tra trên bản live**: xem trước rồi mới nói. |
-| 9 | (Cảnh gate) Upload `fixtures/memory/fund-II.html`, firm "Firm X", AI off | Gate **"Blocked · 2"** (2 lỗi điều kiện gãy mức critical). Dismiss từng lỗi kèm lý do: toast "1 blocking reason left." rồi "The gate is now Ready." | "Gate chặn số hóa cho tới khi mọi lỗi critical được xử lý." |
-| 10 | (Tùy chọn) Trên một finding: **Needs counsel** → menu **Counsel questions** → **Export DOCX** → **Download DOCX** | Q1 dạng "Broken cross-reference at SUBSCRIPTION AGREEMENT INSTRUCTIONS: which reading should we digitize?", kèm các cách hiểu A/B/C. File DOCX được tải xuống. | "Câu hỏi gửi counsel được soạn sẵn, gom vào một lần gửi." |
+| 3 | Doc switcher → **#5 PG NGI 2024** (đã có memory) | Hai tham chiếu "Part B" bị tráo hiện là **"Already answered"** (từ seed `sd06`/`sd07`), nằm trong nhóm **Previously handled**. Gate pill: **Ready to digitize**. | "Tool nhớ câu trả lời counsel từ quỹ trước của cùng firm. Analyst không phải hỏi lại cùng một câu." |
+| 4 | Menu → **Partners Group memory** | Tab Decisions có 7 decisions, gồm `sd06` và `sd07`. Tab Rules có `sr01` ở trạng thái proposed (chưa có hiệu lực cho tới khi được duyệt). Tab Audit trail có các mục đã ghi. | "Mọi quyết định đều vào audit, không ai sửa hay xóa được." |
+| 5 | Trong Decisions: **Reopen…** `sd06` (hoặc `sd07`) → nhập lý do → xác nhận | Toast xác nhận. Quyết định chuyển Reopened. | "Analyst có thể mở lại quyết định cũ, nhưng phải nêu lý do, và việc này nằm trong audit." |
+| 6 | Quay lại **#5** | Finding của `sd06` quay về nhãn **New**, là critical (nằm trong ngữ cảnh điều hướng). Gate pill: **Blocked · 1** (hoặc 2 nếu mở lại cả hai). Bấm pill để xem lý do. | "Mở lại quyết định thì finding hiện lại và gate chặn lại ngay." |
+| 7 | Menu → **Counsel questions** → mở câu hỏi của finding đó → **Record answer** → chọn **A** → **Save answer** | Toast "Answer recorded. The gate is now Ready." (nếu còn một mục thì "…N items left on the gate."). Gate pill chuyển **Ready to digitize**. | "Gate chỉ mở khi counsel trả lời. Đây là câu chuyện gate trên chính sample thật." |
+| 8 | Menu → **Compare versions** → Base "PG NGI 2024", Compare "PG NGI 2026" (mặc định chế độ Versions) | Chip "Earlier findings": **4 fixed · 3 still present · 0 new**. Danh sách thay đổi: Appendix C bị bỏ; đổi tên Units→Shares (29 chỗ), Member→Shareholder, Memorandum→Prospectus, Placement Fee→Sales Load, placement agent→distributor; phí theo class (3.5% Class A, 1.5% Class S). | "Bản 2026 đã sửa hai tham chiếu bị tráo, và tool chỉ ra đúng những gì đổi." |
+| 9 | (Tùy chọn) Doc switcher → **#9 RW Holdings scans** | Trình xem scan: chip 22 trang lần lượt chuyển sang Done, "22 of 22 read", ảnh trang bên trái, chữ đọc được bên phải, badge confidence. **Không gọi mạng**, vì OCR đã có sẵn. | "Bản scan 1200 DPI được đọc bằng model vision free, kết quả lưu sẵn." Finding footnote 2 thiếu ở Partnership/LLC **chưa được kiểm tra trên bản live**: xem trước rồi mới nói. |
+| 10 | (Tùy chọn) Upload `fixtures/memory/fund-II.html`, firm "Firm X", AI off | Gate **"Blocked · 2"** (2 lỗi điều kiện gãy mức critical). Dismiss từng lỗi kèm lý do: toast "1 blocking reason left." rồi "The gate is now Ready." Lưu ý: dữ liệu Firm X không còn trong seed `ws_demo`, nên đây chỉ là cảnh dismiss, không có memory carry-over. | "Gate chặn số hóa cho tới khi mọi lỗi critical được xử lý." |
+| 11 | (Tùy chọn) Trên một finding: **Needs counsel** → menu **Counsel questions** → **Export DOCX** → **Download DOCX** | Q1 dạng "Broken cross-reference at SUBSCRIPTION AGREEMENT INSTRUCTIONS: which reading should we digitize?", kèm các cách hiểu A/B/C. File DOCX được tải xuống. | "Câu hỏi gửi counsel được soạn sẵn, gom vào một lần gửi." |
+
+**Cảnh Blocked không cần memory:** mở #5 trước khi qua Turnstile (hoặc trong phiên không có memory) sẽ thấy ngay "Blocked · 2", vì hai tham chiếu tráo là critical và chưa có câu trả lời. Đã kiểm chứng trên bản live.
 
 ---
 
@@ -192,7 +196,9 @@ Findings   7 open · 0 block digitization                      [Checks done · A
 | Counsel trả lời A, B hoặc C | **Không chặn** (nếu là mục re-confirm thì cũng tính là đã xác nhận lại) |
 | Nhãn Already answered | Không chặn |
 
-- **Finding high, medium, low và mọi finding AI không bao giờ chặn gate.**
+- **Quy tắc mức độ cho tham chiếu sai** (`ref-label-coherence`, `ref-this-section`): là **critical ("Blocks digitization")** khi tham chiếu nằm trong *ngữ cảnh điều hướng* (phần hướng dẫn, một answer option, hoặc một khối chứa điều kiện); ngoài ra là **high**. Ví dụ: 4 tham chiếu "Part B" bị tráo trên #3/#5 là critical; "this Section 11" trên #1 là high.
+- **Finding high, medium, low và mọi finding AI không bao giờ chặn gate.** AI không bao giờ gate.
+- Chưa mở tài liệu nào thì pill hiện "No document" (trung tính), không phải "Ready to digitize".
 - Bấm một lý do trong popover: lý do liên quan counsel thì nhảy sang màn Counsel; lý do khác thì nhảy sang Findings và chọn đúng finding.
 - Hết lý do thì pill chuyển xanh, "Ready to digitize".
 
@@ -278,7 +284,7 @@ Structure **không lưu gì**. Nó là cách nhìn khác trên cùng kết quả
 | **Chip** | Changes (added / removed / renamed / changed) và Earlier findings (fixed / still present / new). Chip có số 0 bị tắt. | Lọc danh sách; **Clear** để bỏ lọc |
 | **Danh sách thay đổi** | Các nhóm: Sections, Terms renamed, Definitions, Fees, Requirements, Earlier findings, "Low confidence, not counted" | Chọn một mục → khung diff |
 | **Khung diff** | Chữ thêm/bớt đánh dấu bằng gạch chân và gạch ngang, có chú thích, **không chỉ dựa vào màu**; hoặc hai cột Base/Compare; footer "Rule-based diff · deterministic, no AI" | Reveal nếu có số nhạy cảm |
-| **Needs counsel** | Chỉ bật khi mục đó gắn với một finding **của tài liệu đang mở** | Giống Needs counsel ở Findings. Khi tắt, nút ghi "Available after counsel sheet (Phase 08)" (**câu chữ cũ, sai**) |
+| **Needs counsel** | Chỉ bật khi mục đó gắn với một finding **của tài liệu đang mở** | Giống Needs counsel ở Findings. Khi tắt, nút ghi "Only changes linked to a finding in the open document can be sent to counsel." |
 | **Summarize changes** | Chỉ có ở chế độ Versions | Gọi `/api/ai` với task `drift-narrative` (tốn lượt): tóm tắt các thuật ngữ bị đổi tên |
 
 Kết quả #5 → #6 (khóa bằng golden test): **removed 1** (Appendix C), **renamed 1**, **changed 21**, same 9; **fixed 4, still present 3, new 0**.
@@ -323,25 +329,21 @@ Kết quả #5 → #6 (khóa bằng golden test): **removed 1** (Appendix C), **
 
 ## 12. Lỗi, chỗ chưa xong và rủi ro thấy được trên UI
 
-| # | Vấn đề | Nơi | Mức ảnh hưởng tới demo |
+| # | Vấn đề | Nơi | Trạng thái / mức ảnh hưởng tới demo |
 |---|---|---|---|
-| 1 | Sample thật không có finding critical nên gate luôn "Ready to digitize", kể cả #5 có 2 tham chiếu sai | `findings/severity`, các detector | **Cao.** Người chấm có thể hỏi "sai mà vẫn Ready?" |
-| 2 | Chưa mở tài liệu nào mà gate vẫn hiện "Ready to digitize" | `GateButton` | Trung bình |
-| 3 | Seed D1 không khớp sample nào; bản seed Partners Group chưa deploy | `apps/worker/seed/demo.sql` | **Cao** nếu muốn show memory có sẵn |
+| 1 | Sample thật không có finding critical nên gate luôn "Ready to digitize" | `findings/severity`, các detector | **Đã sửa** (live `47d98295`): tham chiếu sai trong ngữ cảnh điều hướng là critical; #5 mở không có memory hiện "Blocked · 2". |
+| 2 | Chưa mở tài liệu nào mà gate vẫn hiện "Ready to digitize" | `GateButton` | **Đã sửa** (live `47d98295`): hiện "No document" trung tính. |
+| 3 | Seed D1 không khớp sample nào | `apps/worker/seed/demo.sql` | **Đã sửa** (live `47d98295`): `ws_demo` là Partners Group, 7 decisions, rule `sr01` (proposed). |
 | 4 | Màn Documents là placeholder | `registry.ts` | Thấp (tránh bấm là được) |
-| 5 | Tiêu đề finding lộ thuật ngữ nội bộ "(fit 0)", "(fit 0.5)" | detector `ref-label-coherence` | Trung bình: khó đọc với người chấm |
-| 6 | Nút "Needs counsel" ở Compare khi bị tắt ghi "Available after counsel sheet (Phase 08)", câu chữ cũ và sai | `compare/CompareScreen.tsx:31` | Thấp |
+| 5 | Tiêu đề finding lộ thuật ngữ nội bộ "(fit 0)", "(fit 0.5)" | detector `ref-label-coherence` | **Đã sửa** (live `47d98295`): tiêu đề không còn "(fit …)". |
+| 6 | Nút "Needs counsel" ở Compare khi bị tắt ghi câu chữ cũ "Available after counsel sheet (Phase 08)" | `compare/CompareScreen.tsx` | **Đã sửa** (live `47d98295`): "Only changes linked to a finding in the open document can be sent to counsel." |
 | 7 | "Needs counsel" ở Findings không ghi vào memory (chỉ lưu trong trình duyệt) | `state/review.ts needsCounsel` | Thấp |
 | 8 | Memory và AI cần qua Turnstile; trình duyệt tự động không qua được | toàn app | Trung bình: phải dùng trình duyệt thường |
 | 9 | Finding footnote 2 trên #9 chưa xác minh trên bản live | `footnote-requirement` | Trung bình |
 | 10 | `setCounselAnswer` trong `state/review.ts` có vẻ là code thừa | — | Không ảnh hưởng |
+| 11 | Heading dạng "Section N." / "Article I." chưa được nhận là section; đích của điều kiện kiểu Annex / Question chưa được phân giải | structurer, detector điều kiện | Trung bình: có thể bỏ sót hoặc báo thiếu. Đã lên kế hoạch trong Intake Phase 1 (`process/features/fund-package-intake/`). |
 
-**Đề xuất sửa nhanh trước khi nộp:** giao session build làm các mục **1, 2, 3, 5, 6**, mỗi mục là một sửa nhỏ:
-- (1) Nâng các finding tham chiếu bị tráo hoặc tự trỏ sai lên **Blocks digitization**, hoặc ghi rõ trong README vì sao không.
-- (2) Khi chưa có tài liệu, gate ở trạng thái trung tính.
-- (3) Deploy seed Partners Group.
-- (5) Bỏ "(fit …)" khỏi tiêu đề finding.
-- (6) Sửa câu chữ nút Needs counsel ở Compare.
+Mục 1, 2, 3, 5 và 6 đã được sửa và live ở version `47d98295-c583-4dc0-9f96-f9e161c8cf35` (code `0a67dc4`, rollback `23612b12`). Các mục còn lại là gap đã biết, không cần sửa trước khi nộp.
 
 ---
 
@@ -357,4 +359,4 @@ Kết quả #5 → #6 (khóa bằng golden test): **removed 1** (Appendix C), **
 | Approve / Reject / Add / Deactivate rule | firm_rule, audit_event |
 | AI chạy mới | ai_cache, quota_counter, spend_ledger |
 
-TL;DR: Demo bằng trình duyệt thường đã qua Turnstile, để menu ở No AI. Đi theo thứ tự #1 → #3 (dismiss) → #5 (re-confirm) → Memory → Compare #5→#6 → (#9) → (fund-II để diễn cảnh gate). Đừng nói "gate đang chặn" trên sample thật, và đừng bấm vào Documents.
+TL;DR: Demo bằng trình duyệt thường đã qua Turnstile, để menu ở No AI. Đi theo thứ tự #1 (high, gate Ready) → #5 (Already answered từ seed) → Memory (Reopen sd06) → #5 (New, Blocked) → Counsel questions (Record answer A, Ready) → Compare #5→#6 → (#9). Gate chặn ở #3/#5, không chặn ở #1. Đừng bấm vào Documents.

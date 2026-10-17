@@ -7,7 +7,7 @@ that blocks digitization until the critical items are answered.
 
 [Live demo](https://aduin-transaction-web.giathaowork.workers.dev) · [Docs](docs/README.md) · [Architecture](docs/architecture/README.md) · [Decisions](docs/architecture/decisions.md)
 
-![tests 3,995](https://img.shields.io/badge/tests-3%2C995_passing-brightgreen)
+![tests 3,997](https://img.shields.io/badge/tests-3%2C997_passing-brightgreen)
 ![detectors 13](https://img.shields.io/badge/detectors-13-blue)
 ![issue classes 15](https://img.shields.io/badge/issue_classes-15-blue)
 ![deploy Cloudflare Workers](https://img.shields.io/badge/deploy-Cloudflare_Workers-F38020)
@@ -16,7 +16,7 @@ that blocks digitization until the critical items are answered.
 
 ![Findings screen of the live app: the document on the left, findings with cited evidence on the right](docs/demo/img/03-findings.png)
 
-Live version 23612b12-51c7-4d75-a324-f4f2f6392ba8 (code af59da6) · status: D1 `aduin-transaction-db` is live (schema v5, demo seed of 3 law firms, 1 workspace, 3 firm rules, 8 decisions), the Turnstile managed widget is live, and CSP is enforced (`style-src` keeps `unsafe-inline` for Radix). The zero-upstream smoke run passed.
+Live version 47d98295-c583-4dc0-9f96-f9e161c8cf35 (code 0a67dc4) · status: D1 `aduin-transaction-db` is live (schema v5, demo seed: Partners Group workspace with 7 decisions and 1 proposed rule), the Turnstile managed widget is live, and CSP is enforced (`style-src` keeps `unsafe-inline` for Radix). The zero-upstream smoke run passed.
 
 ## At a glance
 
@@ -86,7 +86,9 @@ This tool does the mechanical part deterministically and shows its evidence, the
 3. **Compare versions**: compare sample 5 against sample 6. Drift rows appear with a short AI narrative
    (precomputed on the live samples).
 4. **Counsel questions**: confirmed items become questions. Export the sheet as DOCX. The gate pill reads
-   "Blocked · N" until every blocking question has an answer.
+   "Blocked · N" until every blocking question has an answer. Broken cross-references in a routing context
+   (instructions, an answer option, a conditional block) are critical and block; elsewhere they are high and do
+   not. AI findings never gate, and with no document open the pill reads "No document".
 5. **Structure** shows the section tree, cross-reference graph and investor-type paths. The logic outline
    exports as JSON.
 6. **Firm memory** remembers earlier decisions for a law firm and proposes a rule after three matching
@@ -147,7 +149,7 @@ Secrets stay outside the repo. For local AI, put `OPENROUTER_API_KEY` in the git
 ## Tests and gates
 
 <details>
-<summary>Gate commands and final counts (core 2,914, worker 525, web unit 223, scripts 150, e2e 173, stack-memory 10)</summary>
+<summary>Gate commands and final counts (core 2,914, worker 525, web unit 226, scripts 152, e2e 175, stack-memory 10)</summary>
 
 | Gate                                  | Command                                                                                                                              |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
@@ -161,8 +163,8 @@ Secrets stay outside the repo. For local AI, put `OPENROUTER_API_KEY` in the git
 | Live smoke                            | `SLICE_BASE_URL=https://aduin-transaction-web.giathaowork.workers.dev pnpm --filter @aduin/web exec playwright test --project=stack` |
 | Safety guards                         | `pnpm guard:cf` and `pnpm secrets:scan`                                                                                              |
 
-There is no CI pipeline; every gate runs locally. Final counts: core 2,914, worker 525, web unit 223, scripts 150,
-preview e2e 173 passed plus 1 opt-in skip, stack-memory 10. The tool has 13 detectors covering 15 issue classes.
+There is no CI pipeline; every gate runs locally. Final counts: core 2,914, worker 525, web unit 226, scripts 152,
+preview e2e 175 passed plus 1 opt-in skip, stack-memory 10. The tool has 13 detectors covering 15 issue classes.
 
 </details>
 
