@@ -15,7 +15,10 @@
     "seed:gen": "tsx src/seed/gen-demo-seed.ts",
     "seed:check": "tsx src/seed/check-seed.ts",
     "spike:s07": "tsx src/spikes/s07-browser-timing/run.ts",
-    "spike:s06-local": "tsx src/spikes/s06-local/run.ts"
+    "spike:s06-local": "tsx src/spikes/s06-local/run.ts",
+    "record:author": "tsx src/record/author-recordings.ts",
+    "record:ai": "tsx src/record/record-ai.ts",
+    "precompute:ai": "tsx src/precompute/precompute-ai.ts"
   },
   "dependencies": {
     "@aduin/core": "workspace:*",

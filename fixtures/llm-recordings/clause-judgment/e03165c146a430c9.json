@@ -1,0 +1,43 @@
+{
+  "case": "hostile-oversized-quote",
+  "taskId": "clause-judgment",
+  "promptVersion": "clause-judgment@1",
+  "inputHash": "e03165c146a430c9dd82d61122e84ed63b384170e58ef88ff68b62827f0d0583",
+  "model": "nvidia/nemotron-3-super-120b-a12b:free",
+  "messagesDigest": "e03165c146a430c9dd82d61122e84ed63b384170e58ef88ff68b62827f0d0583",
+  "request": {
+    "task": "clause-judgment",
+    "sample": "01",
+    "candidates": [
+      {
+        "id": "c_624f0f476f804afb",
+        "quote": "7. If I am, or am acting (directly or indirectly) on behalf of, (i) an “employee benefit plan” within the meaning of Section 3(3) of the U.S. Employee Retirement Income Security Act of 1974, as amended (“ERISA”), (ii) a “plan” within the meaning of Section 4975(e)(1) of the U.S. Internal Revenue Code of 1986, as amended (the “Code”), (iii) a plan or employee benefit plan that is not subject to ERISA or Section 4975 of the Code but is subject to any local, state, federal or other governmental laws substantially similar to Title I of ERISA of Section 4975 of the Code (“Similar Law”) or (iv) any other entity or account that is deemed under applicable law to hold the assets of such an “employee benefit plan” or a “plan” described in (i),(ii) or (iii) above (each of the foregoing described in clauses (i), (ii) and (iii) referred to as a “Plan”), then I hereby represent and warrant to and agree with the Fund and Franklin Templeton Fund Adviser, LLC (the “Adviser”) that:",
+        "section_path": [],
+        "issue_class_hint": "defined_term_issue"
+      }
+    ],
+    "rule_texts": [],
+    "mode": "json_schema"
+  },
+  "response": {
+    "raw": "{\"findings\":[{\"issue_class\":\"ambiguity\",\"severity\":\"medium\",\"confidence\":0.6,\"explanation\":\"Quote longer than the 1000-character limit.\",\"interpretations\":[],\"candidate_id\":\"c_624f0f476f804afb\",\"quote\":\"7. If I am, or am acting (directly or indirectly) on behalf of, (i) an “employee benefit plan” within the meaning of Section 3(3) of the U.S. Employee Retirement Income Security Act of 1974, as amended (“ERISA”), (ii) a “plan” within the meaning of Section 4975(e)(1) of the U.S. Internal Revenue Code of 1986, as amended (the “Code”), (iii) a plan or employee benefit plan that is not subject to ERISA or Section 4975 of the Code but is subject to any local, state, federal or other governmental laws substantially similar to Title I of ERISA of Section 4975 of the Code (“Similar Law”) or (iv) any other entity or account that is deemed under applicable law to hold the assets of such an “employee benefit plan” or a “plan” described in (i),(ii) or (iii) above (each of the foregoing described in clauses (i), (ii) and (iii) referred to as a “Plan”), then I hereby represent and warrant to and agree with the Fund and Franklin Templeton Fund Adviser, LLC (the “Adviser”) that: 7. If I am, or am acting (directly or indirectly) on behalf of, (i) an “employee benefit plan” within the meaning of Section 3(3) of the U.S. Employee Retirement Income Security Act of 1974, as amended (“ERISA”), (ii) a “plan” within the meaning of Section 4975(e)(1) of the U.S. Internal Revenue Code of 1986, as amended (the “Code”), (iii) a plan or employee benefit plan that is not subject to ERISA or Section 4975 of the Code but is subject to any local, state, federal or other governmental laws substantially similar to Title I of ERISA of Section 4975 of the Code (“Similar Law”) or (iv) any other entity or account that is deemed under applicable law to hold the assets of such an “employee benefit plan” or a “plan” described in (i),(ii) or (iii) above (each of the foregoing described in clauses (i), (ii) and (iii) referred to as a “Plan”), then I hereby represent and warrant to and agree with the Fund and Franklin Templeton Fund Adviser, LLC (the “Adviser”) that:\"}]}",
+    "parsed": {
+      "findings": [
+        {
+          "issue_class": "ambiguity",
+          "severity": "medium",
+          "confidence": 0.6,
+          "explanation": "Quote longer than the 1000-character limit.",
+          "interpretations": [],
+          "candidate_id": "c_624f0f476f804afb",
+          "quote": "7. If I am, or am acting (directly or indirectly) on behalf of, (i) an “employee benefit plan” within the meaning of Section 3(3) of the U.S. Employee Retirement Income Security Act of 1974, as amended (“ERISA”), (ii) a “plan” within the meaning of Section 4975(e)(1) of the U.S. Internal Revenue Code of 1986, as amended (the “Code”), (iii) a plan or employee benefit plan that is not subject to ERISA or Section 4975 of the Code but is subject to any local, state, federal or other governmental laws substantially similar to Title I of ERISA of Section 4975 of the Code (“Similar Law”) or (iv) any other entity or account that is deemed under applicable law to hold the assets of such an “employee benefit plan” or a “plan” described in (i),(ii) or (iii) above (each of the foregoing described in clauses (i), (ii) and (iii) referred to as a “Plan”), then I hereby represent and warrant to and agree with the Fund and Franklin Templeton Fund Adviser, LLC (the “Adviser”) that: 7. If I am, or am acting (directly or indirectly) on behalf of, (i) an “employee benefit plan” within the meaning of Section 3(3) of the U.S. Employee Retirement Income Security Act of 1974, as amended (“ERISA”), (ii) a “plan” within the meaning of Section 4975(e)(1) of the U.S. Internal Revenue Code of 1986, as amended (the “Code”), (iii) a plan or employee benefit plan that is not subject to ERISA or Section 4975 of the Code but is subject to any local, state, federal or other governmental laws substantially similar to Title I of ERISA of Section 4975 of the Code (“Similar Law”) or (iv) any other entity or account that is deemed under applicable law to hold the assets of such an “employee benefit plan” or a “plan” described in (i),(ii) or (iii) above (each of the foregoing described in clauses (i), (ii) and (iii) referred to as a “Plan”), then I hereby represent and warrant to and agree with the Fund and Franklin Templeton Fund Adviser, LLC (the “Adviser”) that:"
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "authored",
+    "served_model": "nvidia/nemotron-3-super-120b-a12b:free",
+    "recordedAt": "2026-10-17T00:00:00.000Z"
+  }
+}

@@ -121,3 +121,109 @@ CONTEXT_PARTIAL: none.
 - Commands to stay green: `pnpm --filter @aduin/core test`, `test contracts`, `test:golden`, `pnpm --filter @aduin/scripts fixtures:check`, `pnpm typecheck`, `pnpm lint`.
 - Dependency changes: none.
 - Follow-up stubs: none created. The P2-4 residual (#2/#5 inferred-cue weighting) stays in `core-followups_REF`. Its row should be updated at UPDATE PROCESS.
+
+## Stage 1c — core-fixtures-scripts (opus, 2026-10-17)
+
+Status: COMPLETE. F1-F4 ticked. Not committed. Orchestration deviation: TeamCreate is unavailable, so 1c ran first and this section replaces the F1 SendMessage (G7/E8). Stages 1a and 1b must read it before W4 / V5.
+
+### Coordination contract for 1a (worker-wiring) and 1b (web-lane)
+
+**Recording files** — `fixtures/llm-recordings/{taskId}/{inputHash16}.json`, pretty JSON (2 spaces + newline), excluded from prettier. Keys (in this order):
+`case` (casebook id), `taskId`, `promptVersion`, `inputHash` (64 hex), `model`, `messagesDigest` (= inputHash), `request`, `response {raw, parsed}`, `meta {source 'authored'|'live', served_model, tokens? {in,out}, recordedAt, cost_usd? (live), response_mode? (live)}`.
+- `LlmRecordingSchema.parse(file)` passes. It strips `case` and `request`, so read the raw JSON when you need them.
+- `request` = `{task, sample ('01'|'03'), candidates: AiCandidate[] (exact engine output), rule_texts: string[], mode: 'json_schema'}`. To replay through the Worker, POST `/api/ai` with `{v:1, task: request.task, law_firm_id, candidates: request.candidates, settings:{}}`. Then answer the upstream fetchMock with an OpenRouter completion whose `choices[0].message.content = response.raw` (and `model = meta.served_model`, `usage.cost = 0`).
+- The forwarded messages are `TASKS[task].buildMessages({candidates}, selectInjectedRules(rule_texts))`. In `json_object` mode, `schemaInstruction(task)` is appended as the last system message (no current recording uses this mode). `inputHash` is taken over exactly those messages.
+
+| case | task | file | source | expected behavior |
+|---|---|---|---|---|
+| sample-01 | clause-judgment | `clause-judgment/37dbea6ce6ecfe4b.json` | live | 3 findings. After the verify chain, 2 are kept (two findings cite the same document quote and dedupe to one id), 0 rejected |
+| sample-03 | clause-judgment | `clause-judgment/e7e3ad45fe791fe5.json` | live | 4 findings. 2 kept, 2 rejected `quote_not_found` (one quote is mojibake `â€œU.S. personâ€`, one is paraphrased). This is a real-model AC28 case |
+| counsel-draft-03 | counsel-draft | `counsel-draft/2e7df78bf60f8d26.json` | live | 2 drafts. Quality is poor: the model echoed the clause text |
+| firm-rules-in-context-03 | clause-judgment | `clause-judgment/8ae2bdc4b8f87c12.json` | authored | 1 placeholder finding. rule_texts = [`Placeholders for the investor name on the wire "FFC" line are firm standard wording.`] (synthetic active rule) — for 1a `firm-rule-in-context-recorded-llm` |
+| hostile-hallucinated-quote | clause-judgment | `clause-judgment/b4345a3f9db36f5a.json` | authored | validates. Verify rejects `quote_not_found` |
+| hostile-prose-around-json | clause-judgment | `clause-judgment/ea32e6ea25cb04cc.json` | authored | raw = prose + fenced JSON. Worker `parseContent` succeeds, so expect success |
+| hostile-extra-keys | clause-judgment | `clause-judgment/71d8dabe64fc9f40.json` | authored | top-level `reasoning` and per-finding `suggested_fix`/`severity_override` are stripped, so the result is valid |
+| hostile-severity-critical | clause-judgment | `clause-judgment/29dab8deebe21a5c.json` | authored | 1 dropped (`critical`), 1 kept, `ext.dropped = 1` |
+| hostile-oversized-quote | clause-judgment | `clause-judgment/e03165c146a430c9.json` | authored | dropped at task.validate, so the result has 0 findings. Direct verify gives `quote_too_long` |
+
+Hostile cases send one candidate each, so each has its own inputHash.
+
+**Worker JSON import (W4 probe):** these are plain JSON files. 1a's `import.meta.glob` probe should glob `fixtures/llm-recordings/**/*.json`.
+
+**Body parity:** `scripts/src/record/ai-request.ts` `upstreamBody()` uses the Worker `buildBody` template and key order: `{"model":M,"models":[M],"messages":<JSON.stringify(messages)>,"temperature":0,"max_tokens":6000,"response_format":<responseFormat(TASKS[task], mode)>}`. The messages are serialized as `[{role,content}]`. 1a's `aiMessages` must emit `JSON.stringify(TASKS[task].buildMessages(...))` with the same key order, and the Worker `response_format` must become core `responseFormat(task, AI_RESPONSE_MODE)`, not `z.toJSONSchema(AiResultSchema)`. With that, the Worker-side `record-body-parity` can assert byte equality against `request` plus this template.
+
+**RecordedTransport:** `packages/core/test/helpers/recorded-transport.ts` exports:
+- `RecordedTransport` (implements `LlmTransport`; reads `recordingPath(taskId, inputHash)` from disk; rejects with `RecordingMissError` when the file is missing, or when `inputHash`, `taskId` or `promptVersion` differ; never calls fetch; records `calls`)
+- `loadRecordings()`, `recordingByCase(id)`, `messagesFor(request)`, `transportRequest(request, model)`, `RECORDINGS_DIR`, type `RecordedRequest`
+
+It is core-test-local, because the web and worker packages cannot import core test files. They should replay the JSON directly.
+
+**Precomputed files (for 1b V3/V5, G6):** `apps/web/public/precomputed/{docHash}.{rulesHash8}.json`, committed (not gitignored).
+- `44d13ec6b132c5eac32211014d095a32719e3b14547474d65b32e5d10dea4d66.none.json` (sample #1)
+- `4fa88f277183a9a03161ba3201840eeb60577b4a326c4767aeb74af540980aa8.none.json` (sample #3)
+- docHash = core docHash (sha256 of the raw sample bytes, the same as the engine `g.doc.id`).
+- rulesHash8 = `none`. Bundled samples carry no active firm rules, and the demo seed rule `sr01` is `proposed`, so it is never injected. This is E18(e) option "[] / none": the web stub `firmRules` should return `[]` for the sample path. The 1a `rules-hash-seed-parity` test should agree: the active demo seed rules give `none`.
+- Body: `{v:1, kind:'aduin-precomputed-ai', docHash, sample, rulesHash8, task:'clause-judgment', promptVersion:'clause-judgment@1', schemaVersion:'clause-judgment.s1', inputHash, model, served_model, source:'authored'|'live', result: AiResult}`.
+- `result` has already been through `task.validate`, and `AiResultSchema` passes. The web must still run it through `verifyAi` with provenance `cache` on open.
+- Expected after verify: #1 gives 2 findings and 0 rejected; #3 gives 2 findings and 2 rejected (`quote_not_found`).
+
+### Scripts (F2/F3)
+
+| Command | Behavior |
+|---|---|
+| `pnpm --filter @aduin/scripts record:author` / `record:author --check` | Writes or checks the authored recordings, deterministically and offline. Keeps live files. `--check` exits 1 on a missing, stale or orphan file |
+| `pnpm --filter @aduin/scripts record:ai --dry-run` | Plan only, no key, no network |
+| `ALLOW_LIVE_LLM=1 pnpm --filter @aduin/scripts record:ai --max-requests N [--cases a,b] [--mode json_object] [--space-ms N]` (or env `RECORD_MAX_REQUESTS`) | Live run. In-code ceiling `LIVE_REQUEST_CEILING = 8` (the cap can only lower it). Allow-list `nvidia/nemotron-3-super-120b-a12b:free` only. Base URL pinned to `https://openrouter.ai`, `redirect:'error'`. Stops at the first `usage.cost > 0` (nothing written) or at a non-free served model. Every fetch counts (no retries). Error bodies are redacted and truncated to 200 chars. The key is never printed or stored |
+| `pnpm --filter @aduin/scripts precompute:ai --from-recordings [--dry-run] [--check]` | Offline, deterministic bytes. `--dry-run` writes nothing, `--check` exits 1 on a stale file. Without `--from-recordings` it records live first through `record-ai`, with the same guards |
+
+### Live run (F4, APPROVED-LIVE 8)
+
+- Live requests used: **3 of 8**. No retries, no failures, `usage.cost = 0` on all three.
+  1. R1 probe = `counsel-draft-03`, strict `json_schema`. HTTP 200, raw is pure JSON, valid.
+  2. `sample-01`: 2229 tokens in, 3674 out.
+  3. `sample-03`: 4217 tokens in, 5783 out.
+- R2 (`json_object`) was not needed.
+- Served model id on all three: `nvidia/nemotron-3-super-120b-a12b:free`.
+- Strict-mode verdict: ACCEPTED. **Recommendation for 1a: `AI_RESPONSE_MODE = json_schema`.**
+- Note for the Worker `MAX_TOKENS.ai = 6000`: sample #3 used 5783 output tokens, close to the cap. A larger document may truncate the output, which would be classified as malformed. Flagged for 1a/EVL, not changed here (Worker scope).
+- Key sourced only with the approval marker. `pnpm secrets:scan` is OK after recording. No secrets file was written under `apps/worker/`.
+
+### Gate outcomes (Stage 1c)
+
+| Command | Result |
+|---|---|
+| `pnpm --filter @aduin/core test llm-quote-must-exist` | 2 files, 11 pass (Stage 0 inline + new recorded file) |
+| `pnpm --filter @aduin/core test llm-schema` | 1 file, 9 pass |
+| `pnpm --filter @aduin/scripts test precompute-ai` | 5 pass |
+| `pnpm --filter @aduin/scripts test record-body-parity` | 10 pass (scripts side) |
+| `pnpm --filter @aduin/scripts test record-ai` | 9 pass (guards: ALLOW_LIVE_LLM, cap required, ceiling 8, free allow-list, pinned host, redact, abort at cost > 0, cap stop, key never in output) |
+| `pnpm --filter @aduin/core test` | 49 files, 349 pass |
+| `pnpm --filter @aduin/scripts test` | 8 files, 46 pass |
+| `pnpm --filter @aduin/scripts fixtures:check` | OK (46 files) |
+| `record:author --check`, `precompute:ai --from-recordings --check` | OK |
+| `pnpm typecheck`, `pnpm lint`, `pnpm secrets:scan`, `pnpm guard:cf` | exit 0 / OK |
+
+Not mine (Stage 1a): the `@aduin/worker` gates `record-body-parity` and `rules-hash-seed-parity`.
+
+### Deviations (within blast radius; also in the plan `## Deviations`)
+
+1. No TeamCreate, so the run was sequenced 1c → (1a ∥ 1b), and this section is the handoff.
+2. `.prettierignore` += `fixtures/llm-recordings/`, `apps/web/public/precomputed/` (generated byte-deterministic JSON).
+3. Extra files `scripts/src/record/{ai-request,casebook,author-recordings}.ts`, script `record:author`, test `scripts/test/record-ai.test.ts`.
+4. The recorded-quote test asserts the AC28 property (kept quotes exist, unlocatable quotes are rejected), not "zero rejected", because live sample #3 contains two unlocatable quotes.
+5. Precomputed files are keyed `none`.
+
+### Test infra gaps found
+
+- None blocking.
+- Known-gap (unchanged): live model quality. The live #3 run had 2 of 4 quotes unlocatable, the counsel drafts only echo the clause text, and #1 cited the same quote for two candidates. AC28/AC51 stay Hybrid with this residual. Backlog: Phase 10 live-quality sweep (prompt tuning would need a promptVersion bump).
+
+CONTEXT_PARTIAL: none.
+
+### Forward Preview
+
+- Test infra found: `RecordedTransport` + `loadRecordings` (core test helper); casebook + `record:author --check` as the drift detector after any prompt or candidate change.
+- Blast radius changes: `packages/core/test/{helpers/recorded-transport.ts, recorded/*}`, `fixtures/llm-recordings/**`, `scripts/src/{record,precompute}/**`, `scripts/test/{precompute-ai,record-ai,record-body-parity}.test.ts`, `scripts/package.json`, `apps/web/public/precomputed/*.none.json`, `.prettierignore`.
+- Commands to stay green: the gates above, plus `record:author --check` and `precompute:ai --from-recordings --check` after any `llm/` or detector change. A changed candidate set moves the inputHash, so the authored files must be re-authored, live ones re-recorded, and precompute re-run.
+- Dependency changes: none.
+- Follow-up stubs: none created. The Phase 10 live-quality sweep is already named in the plan.

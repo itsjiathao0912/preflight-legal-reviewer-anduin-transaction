@@ -1,0 +1,43 @@
+{
+  "case": "hostile-prose-around-json",
+  "taskId": "clause-judgment",
+  "promptVersion": "clause-judgment@1",
+  "inputHash": "ea32e6ea25cb04ccfbe95e6f2c4539cc073884c3e3d2ef02c0e0c005d7b27d3a",
+  "model": "nvidia/nemotron-3-super-120b-a12b:free",
+  "messagesDigest": "ea32e6ea25cb04ccfbe95e6f2c4539cc073884c3e3d2ef02c0e0c005d7b27d3a",
+  "request": {
+    "task": "clause-judgment",
+    "sample": "01",
+    "candidates": [
+      {
+        "id": "c_439057b9bc027023",
+        "quote": "This Account Application is utilized for the offering of shares of beneficial interest (the “Shares”) of Franklin Lexington Private Markets Fund (the “Fund”).",
+        "section_path": [],
+        "issue_class_hint": "defined_term_issue"
+      }
+    ],
+    "rule_texts": [],
+    "mode": "json_schema"
+  },
+  "response": {
+    "raw": "Sure! Here is my review of the excerpt.\n```json\n{\"findings\":[{\"issue_class\":\"defined_term_issue\",\"severity\":\"low\",\"confidence\":0.4,\"explanation\":\"The defined term \\\"Shares\\\" is introduced here; check it is used consistently.\",\"interpretations\":[],\"candidate_id\":\"c_439057b9bc027023\",\"quote\":\"shares of beneficial interest (the “Shares”)\"}]}\n```\nLet me know if you need anything else.",
+    "parsed": {
+      "findings": [
+        {
+          "issue_class": "defined_term_issue",
+          "severity": "low",
+          "confidence": 0.4,
+          "explanation": "The defined term \"Shares\" is introduced here; check it is used consistently.",
+          "interpretations": [],
+          "candidate_id": "c_439057b9bc027023",
+          "quote": "shares of beneficial interest (the “Shares”)"
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "authored",
+    "served_model": "nvidia/nemotron-3-super-120b-a12b:free",
+    "recordedAt": "2026-10-17T00:00:00.000Z"
+  }
+}

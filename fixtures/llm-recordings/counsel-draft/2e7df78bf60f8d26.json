@@ -1,0 +1,58 @@
+{
+  "case": "counsel-draft-03",
+  "taskId": "counsel-draft",
+  "promptVersion": "counsel-draft@1",
+  "inputHash": "2e7df78bf60f8d2608546accca54f9596e43a29e661bf5cf77df321927b35212",
+  "model": "nvidia/nemotron-3-super-120b-a12b:free",
+  "messagesDigest": "2e7df78bf60f8d2608546accca54f9596e43a29e661bf5cf77df321927b35212",
+  "request": {
+    "task": "counsel-draft",
+    "sample": "03",
+    "candidates": [
+      {
+        "id": "c_fcfcb4a816686edb",
+        "quote": "☐ For all custodial accounts, please send all pages (including the terms and conditions) of this Subscription Agreement to the Custodian indicated in Part B of Section 6 for forwarding to the Fund",
+        "section_path": [
+          "SUBSCRIPTION AGREEMENT INSTRUCTIONS"
+        ],
+        "issue_class_hint": "broken_cross_reference"
+      },
+      {
+        "id": "c_54cd421d8bdba4af",
+        "quote": "☐ Wire cleared funds equal to the amount specified in Part B of Section 4 to:",
+        "section_path": [
+          "SUBSCRIPTION AGREEMENT INSTRUCTIONS"
+        ],
+        "issue_class_hint": "broken_cross_reference"
+      }
+    ],
+    "rule_texts": [],
+    "mode": "json_schema"
+  },
+  "response": {
+    "raw": "{\"drafts\": [{\"candidate_id\": \"c_fcfcb4a816686edb\", \"text\": \"☐ For all custodial accounts, please send all pages (including the terms and conditions) of this Subscription Agreement to the Custodian indicated in Part B of Section 6 for forwarding to the Fund\"}, {\"candidate_id\": \"c_54cd421d8bdba4af\", \"text\": \"☐ Wire cleared funds equal to the amount specified in Part B of Section 4 to:\"}]}",
+    "parsed": {
+      "drafts": [
+        {
+          "candidate_id": "c_fcfcb4a816686edb",
+          "text": "☐ For all custodial accounts, please send all pages (including the terms and conditions) of this Subscription Agreement to the Custodian indicated in Part B of Section 6 for forwarding to the Fund"
+        },
+        {
+          "candidate_id": "c_54cd421d8bdba4af",
+          "text": "☐ Wire cleared funds equal to the amount specified in Part B of Section 4 to:"
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "nvidia/nemotron-3-super-120b-a12b:free",
+    "tokens": {
+      "in": 362,
+      "out": 304
+    },
+    "recordedAt": "2026-10-17T00:17:20.990Z",
+    "cost_usd": 0,
+    "response_mode": "json_schema"
+  }
+}

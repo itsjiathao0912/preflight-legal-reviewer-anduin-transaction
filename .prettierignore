@@ -14,3 +14,6 @@ AGENTS.md
 playwright-report/
 test-results/
 apps/worker/worker-configuration.d.ts
+# Phase 05: byte-deterministic generated JSON (scripts record:author / precompute:ai own the format)
+fixtures/llm-recordings/
+apps/web/public/precomputed/

@@ -1,0 +1,71 @@
+{
+  "v": 1,
+  "kind": "aduin-precomputed-ai",
+  "docHash": "4fa88f277183a9a03161ba3201840eeb60577b4a326c4767aeb74af540980aa8",
+  "sample": "03",
+  "rulesHash8": "none",
+  "task": "clause-judgment",
+  "promptVersion": "clause-judgment@1",
+  "schemaVersion": "clause-judgment.s1",
+  "inputHash": "e7e3ad45fe791fe5d37b45dd6f4ed4274bb3ae94a8849009dc9ce1c3f82497b8",
+  "model": "nvidia/nemotron-3-super-120b-a12b:free",
+  "served_model": "nvidia/nemotron-3-super-120b-a12b:free",
+  "source": "live",
+  "result": {
+    "v": 1,
+    "findings": [
+      {
+        "candidate_id": "c_9b07218f8183451e",
+        "issue_class": "ambiguity",
+        "severity": "medium",
+        "confidence": 0.9,
+        "quote": "☐ Send all pages (including the Terms and Conditions) of this Subscription Agreement and associated documentation to:",
+        "explanation": "The instruction ends with a colon but does not specify where to send the documents, leaving the reader uncertain about the required action.",
+        "interpretations": [
+          "Send to the custodian indicated elsewhere",
+          "Send to the fund administrator",
+          "Send to the transfer agent"
+        ]
+      },
+      {
+        "candidate_id": "c_54cd421d8bdba4af",
+        "issue_class": "ambiguity",
+        "severity": "medium",
+        "confidence": 0.9,
+        "quote": "☐ Wire cleared funds equal to the amount specified in Part B of Section 4 to:",
+        "explanation": "The wire instruction ends with a colon but omits the beneficiary details, making it impossible to execute the wire as written.",
+        "interpretations": [
+          "Wire to the Fund's designated bank account",
+          "Wire to the custodian's account",
+          "Wire to the transfer agent"
+        ]
+      },
+      {
+        "candidate_id": "c_7eff7dd7e95bd2d8",
+        "issue_class": "meaningful_typo",
+        "severity": "high",
+        "confidence": 0.95,
+        "quote": "I am not subject to backup withholding because: (a) I am exempt from backup withholding, or (b) I have not been notified by the Internal Revenue Service (â€œIRSâ€) that I am subject to backup withholding as a result of a failure to report all interest or dividends, or (c) the IRS has notified me that I am no longer subject to backup withholding; and 3.",
+        "explanation": "The clause ends with â€œ; and 3.â€ which is nonsensical and likely a typo that alters the intended meaning of the certification.",
+        "interpretations": [
+          "The sentence was meant to end after subsection (c)",
+          "An additional subsection (d) was omitted",
+          "The â€œand 3.â€ is a stray character"
+        ]
+      },
+      {
+        "candidate_id": "c_06828a091f0ab7cf",
+        "issue_class": "defined_term_issue",
+        "severity": "high",
+        "confidence": 0.9,
+        "quote": "â€œU.S. personâ€ means:",
+        "explanation": "The definition of â€œU.S. personâ€ begins but provides no content after the colon, leaving the term undefined.",
+        "interpretations": [
+          "The definition is missing due to a drafting error",
+          "The term is intended to be defined elsewhere in the document",
+          "The drafter intended to list the statutory definition but omitted it"
+        ]
+      }
+    ]
+  }
+}

@@ -148,10 +148,10 @@ Execution (D7): Stage 0 single opus `core-llm` freezes contracts first; then AGE
 - [ ] V5 e2e via Playwright route interception of `/api/ai` and `/api/quota` from recordings; abort any openrouter.ai request: `sample-zero-calls`, `auto-downgrade`, `ai-resume`, `provenance`, `ai-banners` (incl. AI toggle-off case), `locator-chip`. G16: the five AI specs (not `locator-chip`) call `__aduinE2E.setApiBase('/')` before opening a document; specs that never call it stay fail-soft. V5 does not start until `core-fixtures-scripts` SendMessage confirms F1 recordings and F3 precomputed files (G7).
 
 ### Stage 1c - core-fixtures-scripts (opus)
-- [ ] F1 (deliver FIRST; then SendMessage to `worker-wiring` and `web-lane` before their W4/V5 start, G7) `packages/core/test/helpers/recorded-transport.ts` (throws on miss); `fixtures/llm-recordings/{task}/{inputHash16}.json` authored for #1, #3, hostile set, one counsel-draft sample; tests `llm-quote-must-exist`, `llm-schema`, `ai-severity-cap`, `ai-mask-before-storage`, `defined-term-scan-bounded`.
-- [ ] F2 `scripts/src/record/record-ai.ts` (refuses without `ALLOW_LIVE_LLM=1` and `--max-requests`; G8: in-code ceiling of 8 requests (CLI value may only lower it), allow-list of `:free` model ids only, aborts at the first `usage.cost > 0`, redacts error bodies; never prints or stores the Authorization header or keys).
-- [ ] F3 `scripts/src/precompute/precompute-ai.ts` with `--from-recordings` (offline, deterministic bytes) and `--dry-run` (writes nothing); ship `apps/web/public/precomputed/{docHash}.{rulesHash8}.json` for #1/#3 COMMITTED (G6; not gitignored, `public/precomputed/ocr` untouched); test `pnpm --filter @aduin/scripts test precompute-ai`; docs 13-26 deferred to Phase 10.
-- [ ] F4 Live under APPROVED-LIVE (see Live Budget) to replace authored recordings; direct to OpenRouter with local key sourced with the approval marker.
+- [x] F1 (deliver FIRST; then SendMessage to `worker-wiring` and `web-lane` before their W4/V5 start, G7) `packages/core/test/helpers/recorded-transport.ts` (throws on miss); `fixtures/llm-recordings/{task}/{inputHash16}.json` authored for #1, #3, hostile set, one counsel-draft sample; tests `llm-quote-must-exist`, `llm-schema`, `ai-severity-cap`, `ai-mask-before-storage`, `defined-term-scan-bounded`.
+- [x] F2 `scripts/src/record/record-ai.ts` (refuses without `ALLOW_LIVE_LLM=1` and `--max-requests`; G8: in-code ceiling of 8 requests (CLI value may only lower it), allow-list of `:free` model ids only, aborts at the first `usage.cost > 0`, redacts error bodies; never prints or stores the Authorization header or keys).
+- [x] F3 `scripts/src/precompute/precompute-ai.ts` with `--from-recordings` (offline, deterministic bytes) and `--dry-run` (writes nothing); ship `apps/web/public/precomputed/{docHash}.{rulesHash8}.json` for #1/#3 COMMITTED (G6; not gitignored, `public/precomputed/ocr` untouched); test `pnpm --filter @aduin/scripts test precompute-ai`; docs 13-26 deferred to Phase 10.
+- [x] F4 Live under APPROVED-LIVE (see Live Budget) to replace authored recordings; direct to OpenRouter with local key sourced with the approval marker.
 
 ### Stage 2 - security-reviewer (sonnet, read-only)
 - [ ] R1 STRIDE on rules injection (delimiter breakout, oversize, cross-workspace) and record scripts (key leakage, cap bypass); findings to phase report.
@@ -332,6 +332,16 @@ Cycle 3 additions: `apps/web/test/engine-ai-api.test.ts` (new), `apps/web/src/ap
 Cycle 2 additions: `apps/web/test/import-graph.test.ts` (gate, unchanged), `apps/web/e2e/status-stages.spec.ts` (assertion update), `apps/web/src/engine/{types.ts,client.ts}` (additive).
 
 For the orchestrator to append to `phase-blast-radius-registry.md` `## Phase 05` (the plan does not edit the registry): add `apps/worker/src/proxy/ports.ts`, `apps/worker/src/index.ts`, `apps/worker/src/upstream/classify.ts`, `apps/worker/src/config.ts`, `apps/worker/test/fakes/platform.ts`, `apps/worker/test/proxy/{proxy-budget,free-only-config,llm-failure-injection-matrix-d1,rules-hash-seed-parity}.test.ts`, `apps/web/public/precomputed/{docHash}.{rulesHash8}.json` (samples #1/#3, committed), `apps/web/e2e/locator-chip.spec.ts`, `scripts/test/precompute-ai.test.ts`, `process/general-plans/active/subdoc-qa-mvp_17-10-26/harness/phase-05/`. Phase 06 keeps `apps/web/public/precomputed/ocr`; Phase 07 must not touch the Worker files above.
+
+## Deviations
+
+Stage 1c (core-fixtures-scripts, 2026-10-17), all within blast radius:
+- Orchestration: TeamCreate is unavailable in this session, so Stage 1 runs as 1c first, then 1a worker-wiring and 1b web-lane in parallel on disjoint directories. The F1 SendMessage handoff (G7/E8) is replaced by the Stage 1c section of the phase report (recording format, RecordedTransport, precompute format), which 1a/1b read before W4/V5.
+- `.prettierignore` gains `fixtures/llm-recordings/` and `apps/web/public/precomputed/` (byte-deterministic generated JSON; prettier would reformat it and break `record:author --check` / `precompute:ai --check`). One-line root config edit outside the listed touchpoints.
+- Extra script files `scripts/src/record/{ai-request,casebook,author-recordings}.ts` (shared request builder, case list, authored-recording writer; scripts `record:author`).
+- `record-body-parity` also exists on the scripts side (`scripts/test/record-body-parity.test.ts`); the plan's gate `pnpm --filter @aduin/worker test record-body-parity` stays Stage 1a's. `rules-hash-seed-parity` is a Worker test (1a).
+- Recording files carry two extra keys beyond `LlmRecordingSchema` (`case`, `request`) and live ones carry `meta.cost_usd` / `meta.response_mode`; the schema is non-strict, so they parse.
+- Precomputed files are keyed `rulesHash8 = none` (bundled samples carry no active firm rules; E18(e) option "none").
 
 ## Test Infra Improvement Notes
 
