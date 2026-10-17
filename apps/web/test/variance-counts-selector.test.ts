@@ -163,13 +163,17 @@ describe('variance-counts-selector', () => {
     const rows = buildRows(sel.mergeFindings(ERRORS, CHANGES), null, useReview.getState().triage);
     const gate = sel.reviewGate(rows, useReview.getState().result, POLICY);
     expect(gate.reasons.length).toBe(3);
-    expect(useReview.getState().toast?.msg).toBe(`Dismissed. ${sel.dismissGateText(gate)}`);
+    expect(useReview.getState().toast?.msg).toBe(
+      `Dismissed. ${sel.dismissGateText(gate)} Saved for this document only. Pick a law firm to remember this decision.`,
+    );
     expect(useReview.getState().toast?.msg).not.toContain('Ready');
     // dismissing a change row writes local triage only and still agrees
     await useReview.getState().dismiss('c1', 'tool_false_alarm', '');
     expect(useReview.getState().triage['c1']?.status).toBe('dismissed');
     expect(useReview.getState().triage['c1']?.decisionId ?? null).toBeNull();
-    expect(useReview.getState().toast?.msg).toBe('Dismissed. 2 blocking reasons left.');
+    expect(useReview.getState().toast?.msg).toBe(
+      'Dismissed. 2 blocking reasons left. Saved for this document only. Pick a law firm to remember this decision.',
+    );
     sel.setVarianceSource(() => ({ findings: [], policy: undefined }));
   });
 });

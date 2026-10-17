@@ -37,7 +37,8 @@ export function Banners() {
           <Icon name="info" />
           <p className="bn-p">
             <b>Memory not applied.</b> This document has no law firm, so earlier decisions are not
-            looked up.
+            looked up and new ones stay with this document. To use firm memory, open it again and
+            pick a law firm.
           </p>
         </div>
       ) : null}
