@@ -37,13 +37,14 @@ import type {
   StageId,
   StageReport,
 } from '../engine/types';
+import { buildRows, placement, visibleRows, type Triage } from '../features/review/model';
 import {
-  buildRows,
-  computeGate,
-  placement,
-  visibleRows,
-  type Triage,
-} from '../features/review/model';
+  dismissGateText,
+  gateLineText,
+  mergeFindings,
+  reviewGate,
+  varianceSlice,
+} from '../features/variance/select';
 import { fingerprintFindings, type MemoryResult } from '../memory/fingerprintFindings';
 import { appDb } from '../storage/db';
 import { useFilters } from './filters';
@@ -534,11 +535,23 @@ export const useReview = create<ReviewState>((set, get) => {
     }
   };
 
-  const gateLine = (): string => {
-    const n = computeGate(buildRows(get().result?.findings ?? [], get().memory, get().triage))
-      .reasons.length;
-    return n ? `${n} item${n > 1 ? 's' : ''} left on the gate.` : 'The gate is now Ready.';
+  /** Variance P02 (C2b): the same merged rows and gate as the view (pill, popover). */
+  const reviewRowsNow = () => {
+    const v = varianceSlice();
+    return {
+      rows: buildRows(
+        mergeFindings(get().result?.findings ?? [], v.findings),
+        get().memory,
+        get().triage,
+      ),
+      policy: v.policy,
+    };
   };
+  const gateNow = () => {
+    const { rows, policy } = reviewRowsNow();
+    return reviewGate(rows, get().result, policy);
+  };
+  const gateLine = (): string => gateLineText(gateNow());
 
   onSyncEvent((e) => {
     // 409: another decision is active for this finding; show the current one
@@ -736,10 +749,9 @@ export const useReview = create<ReviewState>((set, get) => {
     dismiss: async (id, reason, note) => {
       const prev = get().triage[id] ?? null;
       const wasRe = get().memory?.byId[id]?.label === 'dismissed_reconfirm';
-      const before = visibleRows(
-        placement(buildRows(get().result?.findings ?? [], get().memory, get().triage)).main,
-        useFilters.getState(),
-      ).map((r) => r.f.id);
+      const before = visibleRows(placement(reviewRowsNow().rows).main, useFilters.getState()).map(
+        (r) => r.f.id,
+      );
       const idx = before.indexOf(id);
       const created = await decide(id, 'dismissed', reason, note);
       await writeTriage(id, {
@@ -748,17 +760,13 @@ export const useReview = create<ReviewState>((set, get) => {
         ...(note ? { note } : {}),
         decisionId: created,
       });
-      const after = visibleRows(
-        placement(buildRows(get().result?.findings ?? [], get().memory, get().triage)).main,
-        useFilters.getState(),
-      ).map((r) => r.f.id);
+      const after = visibleRows(placement(reviewRowsNow().rows).main, useFilters.getState()).map(
+        (r) => r.f.id,
+      );
       const next = after.length ? after[Math.min(Math.max(idx, 0), after.length - 1)]! : null;
       set({ selectedId: next ?? id, selectSeq: get().selectSeq + 1 });
-      const left = computeGate(buildRows(get().result?.findings ?? [], get().memory, get().triage))
-        .reasons.length;
       get().showToast(
-        (wasRe ? 'Re-confirmed. ' : 'Dismissed. ') +
-          (left ? `${left} blocking reason${left > 1 ? 's' : ''} left.` : 'The gate is now Ready.'),
+        (wasRe ? 'Re-confirmed. ' : 'Dismissed. ') + dismissGateText(gateNow()),
         () => void restoreSnapshot(id, prev, created),
       );
       return next;

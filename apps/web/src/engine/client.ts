@@ -7,6 +7,8 @@ import type {
   EngineResult,
   EngineSettings,
   ReadPackageDocResponse,
+  RunVarianceInput,
+  RunVarianceResponse,
   StageReport,
   VerifyAiContext,
   VerifyAiResponse,
@@ -83,5 +85,17 @@ export async function readPackageDocInWorker(
     return await engine().readPackageDoc(input, opts);
   } catch {
     return { ok: false, code: 'unknown' };
+  }
+}
+
+/** Variance Phase 02 (C1): the variance pass in the engine worker (code-only failure, never throws). */
+export async function runVarianceInWorker(
+  input: RunVarianceInput,
+  settings: EngineSettings,
+): Promise<RunVarianceResponse> {
+  try {
+    return await engine().runVariance(input, settings);
+  } catch {
+    return { ok: false, side: 'pass', code: 'unknown' };
   }
 }

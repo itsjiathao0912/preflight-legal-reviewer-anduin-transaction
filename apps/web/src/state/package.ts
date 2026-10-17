@@ -954,3 +954,42 @@ async function scanOf(ref: string): Promise<ScanSetInput | null> {
     ? { pages: pages.map((p) => ({ n: p.n, url: `/samples/${p.file}`, sourceHash: p.sourceHash })) }
     : null;
 }
+
+/** Variance D-S0-1: bytes of one package member, or why they are unavailable. */
+export type PackageMemberSource =
+  | { bytes: Uint8Array; format: PackageDocument['format']; name: string }
+  | { unavailable: true; reason?: 'scan' | 'missing' };
+
+const SCAN_FORMATS: ReadonlySet<string> = new Set(['ocr', 'image']);
+
+function formatOfName(name: string): PackageDocument['format'] {
+  const k = inputKindOf(name);
+  return k === 'image' ? 'image' : k;
+}
+
+/**
+ * Variance D-S0-1 (additive, pure read): the bytes of a member of the current package, from the
+ * in-memory source first, then the stored package row (stored upload or bundled `sampleRef`). Scan
+ * members and purged or unknown members return `{unavailable: true}`. Never mutates the store.
+ */
+export async function readPackageMemberSource(docId: string): Promise<PackageMemberSource> {
+  const current = usePackage.getState().current;
+  const doc = current?.docs.find((d) => d.id === docId);
+  const s = sources.get(docId);
+  if (s?.kind === 'scan') return { unavailable: true, reason: 'scan' };
+  if (s?.kind === 'bytes') {
+    const format = doc?.format ?? formatOfName(s.name);
+    if (SCAN_FORMATS.has(format) || doc?.needsOcr) return { unavailable: true, reason: 'scan' };
+    return { bytes: s.bytes, format, name: s.name };
+  }
+  const row = current ? await readPackage(current.id) : null;
+  const sd = row?.docs.find((d) => d.id === docId);
+  if (!sd) return { unavailable: true, reason: 'missing' };
+  if (SCAN_FORMATS.has(sd.format) || sd.needsOcr || sd.sampleRef?.startsWith('scan:'))
+    return { unavailable: true, reason: 'scan' };
+  let bytes: Uint8Array | null = null;
+  if (sd.storedDocId) bytes = await readMemberBytes(sd.storedDocId);
+  else if (sd.sampleRef) bytes = await fetchBundled(sd.sampleRef);
+  if (!bytes) return { unavailable: true, reason: 'missing' };
+  return { bytes, format: sd.format, name: sd.name };
+}

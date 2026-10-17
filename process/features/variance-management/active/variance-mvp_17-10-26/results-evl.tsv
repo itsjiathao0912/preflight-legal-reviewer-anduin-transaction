@@ -3,3 +3,4 @@ cycle	phase	domain	gate	failing	loop_status	note
 1	P01	tests	FAIL	AC-V6 strict precision 15.4%	CONTINUE	fix: VAR-COS-PAGE-LABEL rule + strict precision assertion
 1	P01	tests	PASS	none	HALTED_SUCCESS	EVL re-run green; AC-V6 strict 2.9%/6.7%
 0	P03	tests	PASS	none	HALTED_SUCCESS	EVL first run green; security review PASS WITH NOTES (M1 fund-scope supersede, M2 fundName not wired)
+0	P02	tests	PASS	none	HALTED_SUCCESS	EVL first run green; preview e2e 228+1skip; web unit 338

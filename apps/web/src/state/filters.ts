@@ -5,6 +5,8 @@ import { KEYS, safeGetJson, safeSet } from './storage';
 
 export type StatusFilter = 'active' | 'open' | 'accepted' | 'counsel' | 'dismissed' | 'all';
 export type SortKey = 'sev' | 'doc' | 'cls';
+/** Variance P02: the All / Errors / Changes segment. */
+export type KindFilter = 'all' | 'errors' | 'changes';
 
 export interface Filters {
   sev: 'all' | SevKey;
@@ -12,6 +14,9 @@ export interface Filters {
   status: StatusFilter;
   sort: SortKey;
   det: string;
+  kind: KindFilter;
+  /** Variance P02: "Show cosmetic changes (N)" (off by default). */
+  showCosmetic: boolean;
 }
 
 export const DEFAULT_FILTERS: Filters = Object.freeze({
@@ -20,6 +25,8 @@ export const DEFAULT_FILTERS: Filters = Object.freeze({
   status: 'active',
   sort: 'sev',
   det: 'all',
+  kind: 'all',
+  showCosmetic: false,
 });
 
 const STATUSES: StatusFilter[] = ['active', 'open', 'accepted', 'counsel', 'dismissed', 'all'];
@@ -37,6 +44,8 @@ export function loadFilters(): Filters {
   if (typeof p.cls === 'string' && (p.cls === 'all' || ISSUE_CLASSES_VIEW.includes(p.cls)))
     f.cls = p.cls;
   if (typeof p.det === 'string' && p.det.length <= 120) f.det = p.det;
+  if (p.kind === 'all' || p.kind === 'errors' || p.kind === 'changes') f.kind = p.kind;
+  if (typeof p.showCosmetic === 'boolean') f.showCosmetic = p.showCosmetic;
   return f;
 }
 
@@ -47,8 +56,8 @@ interface FilterState extends Filters {
 
 export const useFilters = create<FilterState>((set, get) => {
   const save = () => {
-    const { sev, cls, status, sort, det } = get();
-    safeSet(KEYS.filters, JSON.stringify({ sev, cls, status, sort, det }));
+    const { sev, cls, status, sort, det, kind, showCosmetic } = get();
+    safeSet(KEYS.filters, JSON.stringify({ sev, cls, status, sort, det, kind, showCosmetic }));
   };
   return {
     ...loadFilters(),

@@ -14,6 +14,8 @@ import type { BlockView, EngineSettings, FindingView, StageId } from './engine/t
  *   setApiBase(base)            switch the AI lane on in the preview build (G16; only the five AI
  *                               specs call it, before opening a document, with /api/* intercepted)
  *   forceInvalidOutline(on)     make the next outline export fail schema validation (Phase 09)
+ *   varianceDelayMs(ms)         Variance P02: delay the next variance passes by ms (render-first spec)
+ *   varianceFail(on)            Variance P02: make the variance passes fail (muted error line)
  *   useRealMemory(on)           Phase 08b: use the real Worker memory client (with setApiBase('/'))
  *                               so a spec can answer /api/** through a page.route fake Worker
  *   api                         { seedDecision, seedAnswer, setCounselAnswer, state } bound at install
@@ -26,6 +28,8 @@ interface HookState {
   transform: Transform | null;
   forceInvalidOutline: boolean;
   realMemory: boolean;
+  varianceDelayMs: number;
+  varianceFail: boolean;
 }
 
 const state: HookState = {
@@ -34,11 +38,23 @@ const state: HookState = {
   transform: null,
   forceInvalidOutline: false,
   realMemory: false,
+  varianceDelayMs: 0,
+  varianceFail: false,
 };
 
 export function e2eSettings(): Pick<EngineSettings, 'e2eFailStage'> {
   if (IS_E2E) {
     return state.failStage ? { e2eFailStage: state.failStage } : {};
+  }
+  return {};
+}
+
+/** Variance P02 (C1b): E2E-only variance delay / failure settings ({} outside IS_E2E). */
+export function e2eVarianceSettings(): Pick<EngineSettings, 'e2eVariance'> {
+  if (IS_E2E) {
+    return state.varianceDelayMs || state.varianceFail
+      ? { e2eVariance: { delayMs: state.varianceDelayMs, fail: state.varianceFail } }
+      : {};
   }
   return {};
 }
@@ -92,6 +108,12 @@ export function installE2eHook(api: Record<string, unknown>): void {
       },
       useRealMemory: (on: boolean) => {
         state.realMemory = on === true;
+      },
+      varianceDelayMs: (ms: number) => {
+        state.varianceDelayMs = typeof ms === 'number' && ms > 0 ? Math.min(ms, 120_000) : 0;
+      },
+      varianceFail: (on: boolean) => {
+        state.varianceFail = on === true;
       },
       // the only runtime writer of the API base; stays inside the IS_E2E block (E21a)
       setApiBase: (base: string) => {

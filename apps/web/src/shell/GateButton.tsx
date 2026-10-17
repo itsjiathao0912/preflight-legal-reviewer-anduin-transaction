@@ -13,7 +13,7 @@ export function GateButton() {
   const open = useGatePopover((s) => s.open);
   const setOpen = useGatePopover((s) => s.setOpen);
   const hasDocument = useReview((s) => s.result !== null);
-  const { gate, rows } = useReviewView();
+  const { gate, rows, variancePending } = useReviewView();
   const pkg = usePackageView();
   const pkgReasons = pkg?.gateReasons ?? [];
   const pkgBlocks = pkgReasons.filter((r) => r.level === 'block');
@@ -23,7 +23,14 @@ export function GateButton() {
     status: gate.status === 'blocked' || pkgBlocks.length > 0 ? ('blocked' as const) : gate.status,
     reasons: [...gate.reasons, ...pkgBlocks],
   };
-  const v = gatePillView(hasDocument, merged);
+  const base = gatePillView(hasDocument, merged);
+  // Variance P02 (F2, UI-only): while a baseline resolves and the pass runs, the pill never shows
+  // Ready; the gate itself keeps exactly two states (computeGate unchanged).
+  const pending = hasDocument && variancePending;
+  const v =
+    pending && base.state === 'ready'
+      ? { ...base, className: 'gate pending', label: 'Checking changes' }
+      : base;
   return (
     <Popover
       open={open}
@@ -38,13 +45,21 @@ export function GateButton() {
           className={v.className}
           type="button"
           data-testid="gate-button"
-          data-gate-state={v.state}
+          data-gate-state={pending && base.state === 'ready' ? 'pending' : v.state}
+          data-variance-pending={pending ? 'true' : 'false'}
         >
           <Icon name={v.icon} />
-          <span className="lbl">{v.label}</span>
+          <span className="lbl" aria-live="polite">
+            {v.label}
+          </span>
           {v.state === 'blocked' ? (
             <span className="gn" aria-hidden="true">
               {merged.reasons.length}
+            </span>
+          ) : null}
+          {pending && base.state !== 'ready' ? (
+            <span className="gpend" data-testid="gate-pending" aria-live="polite">
+              Checking changes
             </span>
           ) : null}
           <Icon name="chev" />

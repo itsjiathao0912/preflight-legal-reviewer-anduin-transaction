@@ -312,6 +312,16 @@ Whole suites after Variance Phase 03, independent EVL (local D1 only): core 3165
 - **Never run `pnpm seed:gen` without `REFERENCE_0003_FIRM_IDS`** (now pinned in `scripts/src/seed/gen-demo-seed.ts`), or 0003 stops being byte-identical. `schema_version` is pinned in five places that move together with a migration: `scripts/src/dev-seed.ts`, `memory/health.ts`, `memory-endpoint-contract.test.ts`, `stack-memory-smoke.spec.ts`, `stack-memory-package-privacy.spec.ts`.
 - **Known gaps:** remote apply of 0006 and the deployed `rows_written` burst (Phase 05 / operator R2); no revoke path (20-check ceiling); the client label ignores fund scope until Phase 04 wires `fundName`.
 
+## Variance Phase 02 gate tokens (web Findings, HEAD 15aa796)
+
+Whole suites after Variance Phase 02, independent EVL (no deploy, 0 model calls): web unit 47 files / 338, full preview e2e 228 passed + 1 opt-in skip (was 217 + 1; +11 variance tests), typecheck and lint green. One token per call, no `--`; free port 4317 before each e2e call; never run two e2e agents at once.
+
+- **Web unit tokens (`pnpm --filter @aduin/web test <token>`):** `variance-counts-selector` (5), `variance-baseline-source-contract` (7), `variance-store` (5), `package-member-source` (6), `variance-no-llm-full-run-web` (2), `no-e2e-hook-in-d` (2), `import-graph` (4, no new ALLOWED line).
+- **E2E tokens (`pnpm --filter @aduin/web test:e2e <token>`):** `variance-render-first` (3: 3 s delay, failure, 20 s timeout; uses seam `varianceDelayMs` / `varianceFail`, IS_E2E only), `variance-cosmetic-hidden-default`, `variance-baseline-from-package` (3), `variance-baseline-same-firm-only`, `variance-no-baseline-errors-only` (2), `variance-ai-never-gates` (Hybrid: stubbed `/api/ai`, openrouter aborted; live path is operator R2).
+- **Regression block (23 tokens, keep green):** counsel-gate, gate-pill, diff-pairs, memory-no-reflag, turnstile-no-block, a11y-keyboard, layout-vs-mockup, no-llm-corpus, sample-zero-calls, filter-sort, app-shell, placeholder-routes, mobile-shell, restore-and-no-text, nine `intake-*` tokens (run `intake-demo-packages` alone); unit `package-store` 21, `package-view` 8, `package-gate-ui` 7, `gate-pill` 4, `restore-last-doc` 10.
+- **Fixtures and pitfalls:** `apps/web/e2e/fixtures/variance.ts` (`uploadOne`, `varianceSettled`, `changeRows`, `errorRows`, `ageUploads`, `NGI_2024/NGI_2026`). Use the NGI 2024/2026 pair for cosmetic and diff e2e (Hartwell gives 1 change, 0 cosmetic hunks). Specs that upload two same-firm documents now get change rows: count error rows with `:not([data-kind="change"])`. Samples never become a firm-pointer baseline.
+- **Known gaps:** agent-probe keyboard walk and `DESIGN_PROBE=1` not run; human keyboard pass and live Turnstile render-first are backlog residuals.
+
 ## Debugging Quick Reference
 
 - **Worker tests fail to find bindings:** bindings come from `apps/worker/wrangler.jsonc`; the plugin config points at it.
