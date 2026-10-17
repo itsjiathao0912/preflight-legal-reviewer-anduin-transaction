@@ -10,11 +10,25 @@ test.describe('locator-chip', () => {
       const rows = page.getByTestId('finding-row');
       await expect(rows.first()).toBeVisible();
       await rows.first().click();
+      // Findings v2 (P-18): the chip lives under Details (Where), which starts collapsed
+      const body = page.getByTestId('finding-body');
+      await body.getByTestId('finding-details').locator('summary').click();
       const chip = page.getByTestId('finding-locator');
       await expect(chip).toBeVisible();
       await expect(chip).toHaveText(/ · ¶ [1-9]\d*$/);
       await expect(chip).toHaveAttribute('aria-label', /^Location: .+, paragraph [1-9]\d*$/);
-      const loc = (await page.getByTestId('finding-body').locator('.sub2').textContent()) ?? '';
+      // the severity line reads `Severity · <loc>` (E-B17)
+      // own text nodes only: the line also carries tags (memory, AI) right after the location
+      const loc = await body
+        .locator('.fv2-sec-h')
+        .first()
+        .evaluate((e) =>
+          Array.from(e.childNodes)
+            .filter((n) => n.nodeType === 3)
+            .map((n) => n.textContent ?? '')
+            .join(''),
+        );
+      expect(loc).toContain(' · ');
       const num = /Section (\d+[A-Z]?)/.exec(loc)?.[1];
       if (num) await expect(chip).toContainText(num);
     });

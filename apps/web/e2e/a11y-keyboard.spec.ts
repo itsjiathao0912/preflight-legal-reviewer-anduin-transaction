@@ -147,7 +147,8 @@ test.describe('a11y-keyboard', () => {
     });
     await expect(page.getByTestId('loading-state')).toHaveCount(0);
 
-    // triage: Tab to the first finding, expand it, accept it
+    // triage: Tab to the first finding, expand it, accept it (Findings v2: Ask counsel on the sticky
+    // bar after the list; on this blocking row it records an accept)
     await tabTo(page, 'finding-row');
     await expectVisibleFocus(page);
     await page.screenshot({ path: testInfo.outputPath('keyboard-focus.png') });
@@ -159,7 +160,7 @@ test.describe('a11y-keyboard', () => {
     const focused = page.locator(`[data-testid="finding-row"][data-finding-id="${id}"]`);
     await page.keyboard.press('Enter');
     await expect(focused).toHaveAttribute('aria-expanded', 'true');
-    await tabTo(page, 'action-accept', 40);
+    await tabTo(page, 'action-counsel', 120);
     await expectVisibleFocus(page);
     await page.keyboard.press('Enter');
     await expect(focused).toHaveAttribute('data-status', 'accepted');

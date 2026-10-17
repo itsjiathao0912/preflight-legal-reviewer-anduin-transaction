@@ -27,7 +27,7 @@ test.describe('variance-gate-two-states', () => {
     );
     for (const t of titles.filter((x) => !/Minimum Subscription/.test(x))) {
       await changeRow(page, new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))).click();
-      await page.getByTestId('finding-body').getByTestId('action-dismiss').click();
+      await page.getByTestId('action-dismiss').click();
       await chooseReasonAndSave(page, 'firm_standard_wording');
     }
     await expect(gate).toContainText('Blocked · 1');

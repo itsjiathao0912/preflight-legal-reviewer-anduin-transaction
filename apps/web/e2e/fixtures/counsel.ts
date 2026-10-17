@@ -4,6 +4,7 @@ import { analyzeHtml, fingerprintFor, runDeterministic, type Finding } from '@ad
 import { expect, type Page } from '@playwright/test';
 import mammoth from 'mammoth';
 import { memorySettled, openDialog, row } from './app';
+import { acceptRow, askCounsel } from './findings-actions';
 import { seedMemory, type SeedDecision } from './seedMemory';
 
 /**
@@ -123,17 +124,20 @@ export async function gotoFindings(page: Page): Promise<void> {
   await expect(page.getByTestId('findings-meta')).toBeVisible();
 }
 
-/** Findings screen: mark a finding Needs counsel. */
+/**
+ * Findings screen: Ask counsel (E-B5). A blocking row lands in `accepted` (it still needs counsel's
+ * answer); any other row lands in `counsel` (Needs counsel). The helper asserts the right one.
+ */
 export async function markCounsel(page: Page, id: string): Promise<void> {
-  await row(page, id).click();
-  await page.getByTestId('action-counsel').click();
-  await expect(row(page, id)).toHaveAttribute('data-status', 'counsel');
+  await askCounsel(page, id);
 }
 
-/** Findings screen: accept a finding. */
+/**
+ * Findings screen: accept a finding (E-B5). Blocking rows: Ask counsel. Other rows: Close issue then
+ * Real issue, so no Needs counsel question is created (counsel-sheet depends on the difference).
+ */
 export async function markAccepted(page: Page, id: string): Promise<void> {
-  await row(page, id).click();
-  await page.getByTestId('action-accept').click();
+  await acceptRow(page, id);
   await expect(row(page, id)).toHaveAttribute('data-status', 'accepted');
 }
 

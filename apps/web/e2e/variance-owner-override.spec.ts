@@ -45,12 +45,18 @@ test.describe('variance-owner-override', () => {
     await changeRow(page, BENEFICIAL).click();
     await page.getByTestId('finding-body').getByTestId('owner-select').selectOption('you');
     await expect(changeRow(page, BENEFICIAL).getByTestId('owner-chip')).toHaveText('You');
-    const ask = page.getByTestId('finding-body').getByTestId('action-counsel');
+    // the sticky bar sits outside the expanded body (Findings v2)
+    const ask = page.getByTestId('action-counsel');
     await expect(ask).toBeDisabled();
     await expect(ask).toHaveAttribute('title', 'Change the owner first');
 
     // ask the overridden owner: the select becomes read-only
     await askOwner(page, TAX);
+    await expect(changeRow(page, TAX)).toHaveAttribute('data-status', 'counsel');
+    // Findings v2 moves to the next row after an action: re-open Tax Status to read its select
+    if ((await changeRow(page, TAX).getAttribute('aria-expanded')) !== 'true')
+      await changeRow(page, TAX).click();
+    await expect(changeRow(page, TAX)).toHaveAttribute('aria-expanded', 'true');
     const sel = page.getByTestId('finding-body').getByTestId('owner-select');
     await expect(sel).toBeDisabled();
     await expect(sel).toHaveAttribute('title', /already asked/);

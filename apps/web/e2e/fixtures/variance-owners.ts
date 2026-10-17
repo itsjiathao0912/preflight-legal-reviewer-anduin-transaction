@@ -35,10 +35,11 @@ export function changeRow(page: Page, title: RegExp): Locator {
   return changeRows(page).filter({ hasText: title });
 }
 
-/** Expand a change row and press Ask owner. */
+/** Expand a change row and press Ask owner (the sticky bar acts on the open row; it sits outside the body). */
 export async function askOwner(page: Page, title: RegExp) {
   await changeRow(page, title).click();
-  await page.getByTestId('finding-body').getByTestId('action-counsel').click();
+  await expect(changeRow(page, title)).toHaveAttribute('aria-expanded', 'true');
+  await page.getByTestId('action-counsel').click();
 }
 
 export async function gotoQuestions(page: Page) {

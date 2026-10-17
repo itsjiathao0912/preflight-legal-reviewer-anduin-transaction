@@ -1,12 +1,14 @@
 import { expect, test } from '@playwright/test';
 import { chooseReasonAndSave, forceSeverity, gotoApp, openSample, row } from './fixtures/app';
+import { askCounsel } from './fixtures/findings-actions';
 import { engineFindings, seedMemory } from './fixtures/seedMemory';
 
 // Phase 02 (E9): new AC10 flags (NTD, placeholders, sensitive) join the #5 findings. Golden picks
 // are by detector, counts are derived from engine output, never by engine index or a literal.
 const goldens = (id: string) =>
   engineFindings(id).filter((f) => f.detector_id === 'ref-label-coherence');
-const left = (n: number) => `${n} blocking reason${n > 1 ? 's' : ''} left.`;
+// D12 outcome toast (Findings v2): the close outcome names the gate state and the reasons left.
+const left = (n: number) => `Closed · Gate still blocked (${n})`;
 
 test.describe('gate-pill', () => {
   test('should keep the gate Blocked after Accept on a critical finding; Dismiss with a reason lowers N', async ({
@@ -21,9 +23,8 @@ test.describe('gate-pill', () => {
     await expect(page.getByTestId('findings-meta')).toHaveText(
       `${n} open · ${n} block digitization`,
     );
-    await row(page, a!.id).click();
-    await page.getByTestId('action-accept').click();
-    await expect(row(page, a!.id)).toHaveAttribute('data-status', 'accepted');
+    // Accept on a blocking row = Ask counsel (it still needs counsel's answer, so the gate stays)
+    expect(await askCounsel(page, a!.id)).toBe('accepted');
     await expect(page.getByTestId('gate-button')).toHaveText(new RegExp(`Blocked · ${n}`));
     await row(page, b!.id).click();
     await page.getByTestId('action-dismiss').click();

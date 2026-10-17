@@ -6,6 +6,8 @@ import { ImpactLines } from '../../variance/ImpactLines';
 import { OwnerSelect } from '../../variance/OwnerChip';
 import { useVariance } from '../../variance/variance-store';
 import type { Row } from '../model';
+// Variance styles (diff, impact, owner chip, change-type chip) were loaded by the old ChangeRow.
+import '../../../styles/variance.css';
 
 /**
  * D-2 adapter: change and regression rows keep the Variance parts inside the accordion (diff,

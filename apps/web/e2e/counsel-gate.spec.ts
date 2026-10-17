@@ -33,7 +33,9 @@ test.describe('counsel-gate', () => {
     await expect(page.getByTestId('gate-reason')).toHaveCount(2);
     await expect(gateReason(page, p4.id)).toHaveAttribute('data-kind', 'open');
     await expect(gateReason(page, p4.id)).toHaveAttribute('data-target', 'findings');
-    await expect(gateReason(page, p6.id)).toHaveAttribute('data-kind', 'awaiting_counsel');
+    // Findings v2: Ask counsel on a blocking row records an accept, so the reason is `unanswered`
+    // (accepted, waiting for counsel); it still links to the counsel question
+    await expect(gateReason(page, p6.id)).toHaveAttribute('data-kind', 'unanswered');
     await expect(gateReason(page, p6.id)).toHaveAttribute('data-target', 'counsel');
 
     await gateReason(page, p6.id).click();

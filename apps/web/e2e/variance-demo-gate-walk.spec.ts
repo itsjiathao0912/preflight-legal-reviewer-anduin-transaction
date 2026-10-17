@@ -89,7 +89,7 @@ test.describe('variance-demo-gate-walk', () => {
     // step 1: the analyst's own items (Mark as expected with a reason)
     for (const t of [/Minimum Subscription/, /Beneficial Owners/]) {
       await changeRow(page, t).click();
-      await page.getByTestId('finding-body').getByTestId('action-dismiss').click();
+      await page.getByTestId('action-dismiss').click();
       await chooseReasonAndSave(page, 'firm_standard_wording');
     }
     const n1 = await countsAgree(page, 'own items resolved');

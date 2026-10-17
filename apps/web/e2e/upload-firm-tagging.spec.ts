@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { gotoApp, openDialog, openSample, rowsLoc } from './fixtures/app';
+import { acceptRow } from './fixtures/findings-actions';
 
 const RICH = readFileSync(
   join(
@@ -63,8 +64,7 @@ test.describe('upload-firm-tagging', () => {
       timeout: 60_000,
     });
     await expect(rowsLoc(page).first()).toBeVisible();
-    await rowsLoc(page).first().click();
-    await page.getByTestId('action-accept').click();
+    await acceptRow(page, (await rowsLoc(page).first().getAttribute('data-finding-id'))!);
     await expect(page.getByTestId('undo-toast')).toContainText(
       'Pick a law firm to remember this decision.',
     );

@@ -80,7 +80,7 @@ export function AccordionRow({
         {!change && f.detector_kind === 'ai' ? (
           <span className="fv2-tag fv2-tag-ai" data-testid="ai-tag">
             <Icon name="spark" />
-            AI
+            AI<span className="sr"> suggestion</span>
           </span>
         ) : null}
         {twin ? (
