@@ -4,3 +4,7 @@ iteration	timestamp	gaps_found	fail_count	concern_count	applied	saturation_statu
 2	2026-10-17	2	0	2	0	ACTIVE	CONTINUE	re-validate cycle 2: P1 PASS, P2 PASS, P3 PASS, P4 CONDITIONAL (gaps 7-8); supplement P4 only
 3	2026-10-17	2	0	2	2	ACTIVE	CONTINUE	supplement cycle 2 applied to P4 (gaps 7-8); re-validate P4 from V1
 4	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	all four phase plans Gate: PASS (P1-P3 cycle 2, P4 cycle 3)
+5	2026-10-17	1	0	1	0	ACTIVE	CONTINUE	inner refresh: parent requests P1 scope add (Section/Article heading forms in structurer; broken-conditional Annex/Question targets; rebase on 0a67dc4); supplement P1, re-validate P1 (+P4 C7 tokens)
+6	2026-10-17	7	0	7	0	ACTIVE	CONTINUE	inner PVL P1 (T14 scope) CONDITIONAL 7 concerns (2 high: heading bold/caps rule, nonexistent annex scope); P4 inner PASS; supplement P1
+7	2026-10-17	7	0	7	7	ACTIVE	CONTINUE	P1 supplement applied (T14 gaps 1-7; rollback 47d98295); re-validate P1 from V1
+8	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	P1 inner PVL PASS after T14 supplement; all 4 phase plans PASS

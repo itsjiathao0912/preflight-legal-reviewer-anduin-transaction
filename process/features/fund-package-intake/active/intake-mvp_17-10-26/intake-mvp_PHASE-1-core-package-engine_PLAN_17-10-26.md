@@ -24,13 +24,15 @@ metadata:
 
 ## Overview
 
-Phase 1 builds the whole intake brain as pure, deterministic TypeScript in `packages/core/src/package/` (new folder; the frozen v1 contracts, the 13 detectors, `computeGate` and its matrix are NOT edited). It contains: document type and role detection with confidence and a fixed reason; a lightweight "package facts" reader (title lines, headings, definitions) used for reference documents; external-reference extraction with verbatim, location-bearing quotes; reference resolution against package files with a synonym table; cross-document defined-term logic (definitions from reference documents, suppression of the offering-noun `undefined-term` finding when the package defines the term, an "unverified" list otherwise); coverage per check group as data; gate policy for missing documents as data (`DEFAULT_PACKAGE_POLICY`, `packageGateReasons`); the deduplicated GP document request list; and same-firm baseline eligibility (`eligibleBaselines`).
+Phase 1 builds the whole intake brain as pure, deterministic TypeScript in `packages/core/src/package/` (new folder; the frozen v1 contracts, `computeGate` and its matrix are NOT edited; no new detector or issue class is added; exactly two existing modules are extended by the T14 scope addition, see Step B0). It contains: document type and role detection with confidence and a fixed reason; a lightweight "package facts" reader (title lines, headings, definitions) used for reference documents; external-reference extraction with verbatim, location-bearing quotes; reference resolution against package files with a synonym table; cross-document defined-term logic (definitions from reference documents, suppression of the offering-noun `undefined-term` finding when the package defines the term, an "unverified" list otherwise); coverage per check group as data; gate policy for missing documents as data (`DEFAULT_PACKAGE_POLICY`, `packageGateReasons`); the deduplicated GP document request list; and same-firm baseline eligibility (`eligibleBaselines`).
 
 Phase 1 also produces every fixture the later phases consume: a synthetic Hartwell and Crane package (Fund III subscription agreement, Northgate LPA definitions excerpt as DOCX, Fund II prior subscription agreement), authored expectations, the `PackageAnalysis` schema snapshot, a demo-package manifest, and short committed "real facts" for the local-only real documents so goldens run in CI without them.
 
 Why first: Phases 2 and 3 only wire this module into the browser worker, the store and the screens. No UI, no worker, no Dexie in this phase.
 
 **Premise check first (INNOVATE finding 1):** the `undefined-term` detector only fires on offering nouns (Units, Interests, Stock). The SPEC premise "dozens of false undefined-term errors" is therefore re-scoped to: LISTING ("defined in LPA" / "unverified"), coverage counts, and suppression of the offering-noun finding when the package defines it. Step A baselines the existing goldens before anything is built so this is measured, not assumed.
+
+**T14 scope addition (parent-approved, 17-10-26): structure heading forms and conditional targets (Step B0).** Real agreements write headings as `Section 4.`, `SECTION 4`, `Article 4.`, `Article IV.`, `ARTICLE 4` (with or without a title), and the structurer only knows `4. Title`; the design packages 02 and 03 use `Section N.` headings and package 03 has a conditional that points at `Question 15` while package 01 points at `Annex F`. Without B0 the engine would find no sections in those packages (weak reference, conditional and investor-path checks) and the LPA documents use `Article` headings. B0 extends the heading recognizer and the conditional target resolver only; "13 detectors / 15 issue classes" stays true. Details, allow-list, tests and the corpus-regression table are in Step B0, Step G (G22-G25) and the Acceptance rows AC-S1..AC-S4.
 
 ## Phase Completion Rules
 
@@ -59,14 +61,19 @@ Each criterion names its proving scenario (`proven by:`) and strategy (`strategy
 | AC-I19 | Missing sub agreement blocks with a reason; missing LPA/PPM warns only; policy is data (a modified policy row changes the outcome) | `package-gate-policy-matrix` (extends the `gate-state-matrix` pattern; `computeGate` untouched) | Fully-Automated |
 | AC-I20 (core half) | One request item per distinct missing target label, deduped (T3), quote kept | `package-request` unit | Fully-Automated |
 | AC8 (re-run) | Same package, same config: byte-equal analysis; shuffled input order identical | `package-determinism` (run twice plus shuffled order) | Fully-Automated |
+| AC-S1 (T14) | The structurer accepts `Section N.`, `SECTION N`, `Article N.`, `Article I.` (roman), `ARTICLE N`, each with or without a title, and rejects prose such as "Section 3 of the Act" mid-sentence | `structure-heading-forms` unit (all forms, roman I..XX, titled and bare, negatives) | Fully-Automated |
+| AC-S2 (T14) | `broken-conditional` resolves `Annex X` and `Question N` targets: "complete Annex F" with no Annex F is a finding; "skip to Question 15" with 14 questions is a finding; existing targets stay silent; no structural evidence stays `uncertain` | `broken-conditional-annex-question` unit | Fully-Automated |
+| AC-S3 (T14) | Design-package DOCX goldens encode each answer-key should-catch and should-not-catch for the heading, Annex and Question cases (LB2 offshore agreement, RR1 agreement, NG3 and RR1 LPA definitions) | `package-design-goldens` (copies under `fixtures/package/design/**`) | Fully-Automated |
+| AC-S4 (T14) | The existing 12 HTML samples (and the 13th appendix sample where it is in the corpus) show no false-positive flood; every changed golden count is explained | `package-design-goldens` corpus-regression block plus the full core suite and the explanation table in the Phase 1 report | Fully-Automated |
 
-Non-criteria guarded here: frozen contracts v1 and the contracts snapshot stay byte-identical; `packages/core/src/detectors/**`, `packages/core/src/counsel/**`, `packages/core/src/contracts/**` untouched.
+Non-criteria guarded here: frozen contracts v1 and the contracts snapshot stay byte-identical; `packages/core/src/counsel/**`, `packages/core/src/contracts/**` untouched; in `packages/core/src/detectors/**` and `packages/core/src/structure/**` only the five T14 allow-list files change (Step B0, Blast Radius); the registry and the other detectors stay byte-identical.
 
 ## Entry Gate
 
-- Clean working tree for the blast radius; record `git rev-parse HEAD` as `P1_BASE` in the phase report (later phases diff against it). SUPERSEDED by the Step 0 re-sync below: `P1_BASE` is the literal 40-character sha recorded there, never the symbolic `HEAD`, and every `git diff --quiet P1_BASE` gate uses that literal.
-- **Step 0 re-sync (BLOCKING; runs before Step A).** The parent orchestrator session owns uncommitted demo-readiness fixes in the shared checkout: core detectors `ref-label-coherence.ts`, `ref-this-section.ts`, `util.ts`, two core goldens (`golden-01-this-section-11`, `golden-03-05-swapped-part-b-refs`), web `GateButton.tsx`, `features/gate/gate-pill.ts` (new), `base.css`, `CompareScreen.tsx` and their e2e/unit specs (`gate-pill`, `filter-sort`, `diff-pairs`, `test/gate-pill.test.ts`), worker `seed/demo.sql`, `seed/test-seed.sql`, `test/env.d.ts`, `vitest.config.ts`, and `scripts/src/seed/*`. Wait for the parent session's "fixes deployed" message carrying the commit hash and the live version id. Then: (1) re-read the changed files above; (2) `git status --short` must show no modified tracked file (never stash, checkout, reset or restore another actor's edits; if one remains, STOP and report); (3) record `P1_BASE` = that literal sha and the new live rollback target = the version id the parent reports (fallback `23612b12-51c7-4d75-a324-f4f2f6392ba8`) in the phase report; (4) re-measure the baseline counts quoted in this plan (core 2914, web 223, preview 173 plus 1 skip), because the parent's fixes change them.
-- **Design packages (Step 0, orchestrator addition B).** The design session produces fictional packages under `samples/packages/{01-northgate-infrastructure-iii,02-lotus-bay-asia-growth-ii,03-redwood-ridge-credit-i}/` (each: `docs/`, `README.md`, `answer-key.md` with seeded defects, exact quotes and AC-I* mapping, `_build/`). They are READ-ONLY for this program. Confirm they are committed (`git ls-files samples/packages` lists the docs, README.md and answer-key.md of each) and read each `answer-key.md`. If any is not committed by then, fall back to the synthetic Hartwell builder alone for that package, record the fallback in the phase report, and change nothing else (Hartwell remains the deterministic fixture). At PLAN time `docs/` was still empty, so file names below are by folder, not by file.
+- No modified tracked non-process file; record `git rev-parse HEAD` as `P1_BASE` in the phase report (later phases diff against it). `P1_BASE` is the literal 40-character sha recorded by the Step 0 re-sync below, never the symbolic `HEAD`.
+- **Step 0 re-sync (BLOCKING; runs before Step A).** The parent demo-readiness fixes are DEPLOYED: code commit `0a67dc4`, process commit `faff59c`, live version `47d98295-c583-4dc0-9f96-f9e161c8cf35` (fallback `23612b12-51c7-4d75-a324-f4f2f6392ba8`). There is no wait. Proceed when (1) `git merge-base --is-ancestor 0a67dc4 HEAD` holds and (2) `git status --short` shows no modified tracked non-process file (modified process plan files are the orchestrator's and are expected; never stash, checkout, reset or restore another actor's edits; if a tracked source file is modified, STOP and report). Then: (3) re-read at HEAD the files the parent changed (`detectors/util.ts`, `ref-label-coherence.ts`, `ref-this-section.ts`, the two goldens `golden-01-this-section-11` and `golden-03-05-swapped-part-b-refs`); (4) record `P1_BASE` = the literal 40-char `git rev-parse HEAD` sha at start (never the symbolic `HEAD`; every `P1_BASE` diff gate uses that literal) and the rollback target `47d98295-c583-4dc0-9f96-f9e161c8cf35` in the phase report; (5) re-measure the baseline counts quoted in this plan (core 2914, web 223, preview 173 plus 1 skip).
+- **Step 0 rebase note (T14 item 5).** The parent commit `0a67dc4` (demo readiness; now on `main`, tree clean at hand-off) changed `packages/core/src/detectors/util.ts` (new `refRoutingContext` and `refSeverity`: a broken cross-reference is `critical` in an instructions scope, an answer option or a conditional block, else `high`), `ref-label-coherence.ts`, `ref-this-section.ts` and goldens `golden-01-this-section-11` and `golden-03-05-swapped-part-b-refs`. Assumption updates for this phase: (a) `refRoutingContext` reads `g.structure.conditionals`, `optionGroups` and scope kind, so B0 heading changes can move a block into or out of an `instructions` scope and flip a `high` to `critical`: those are expected goldens changes to explain; (b) no B0 code edits `util.ts`; (c) `P1_BASE` is the HEAD sha recorded at start (descends from `0a67dc4`); keep the Step 0 re-sync, and re-read `util.ts`, `ref-label-coherence.ts`, `ref-this-section.ts` and the two goldens at that sha before B0.
+- **Design packages (Step 0, orchestrator addition B).** The design session produces fictional packages under `samples/packages/{01-northgate-infrastructure-iii,02-lotus-bay-asia-growth-ii,03-redwood-ridge-credit-i}/` (each: `docs/`, `README.md`, `answer-key.md` with seeded defects, exact quotes and AC-I* mapping, `_build/`). They are READ-ONLY for this program. Confirm they are committed (`git ls-files samples/packages` lists the docs, README.md and answer-key.md of each) and read each `answer-key.md`. If any is not committed by then, fall back to the synthetic Hartwell builder alone for that package, record the fallback in the phase report, and change nothing else (Hartwell remains the deterministic fixture). The design packages are committed (c1c5fe0; docs, `README.md`, `answer-key.md` present, verified at the T14 supplement); the B0 goldens use `02-lotus-bay-asia-growth-ii/docs/01-LB2-Subscription-Agreement-Offshore-v2.docx`, `03-redwood-ridge-credit-i/docs/01-RR1-Subscription-Agreement.docx` and the LPA definitions files `01-northgate-infrastructure-iii/docs/02-NG3-LPA-Definitions-and-Key-Terms.docx` and `03-redwood-ridge-credit-i/docs/02-RR1-LPA-Definitions.docx`.
 - Baseline suites green before any edit: `pnpm --filter @aduin/core test` (2914 tests at f0d924b) and `pnpm --filter @aduin/core typecheck`.
 - Program SPEC and INNOVATE read; this plan read in full; `process/context/engine/all-engine.md` read (frozen v1, barrel append-only rule).
 
@@ -90,7 +97,7 @@ Non-criteria guarded here: frozen contracts v1 and the contracts snapshot stay b
 
 Create (core): `packages/core/src/package/{types,config,policy,detect,facts,definitions,references,terms,resolve,coverage,request,baseline,analyze,index}.ts` (14 files; `facts.ts` is an adaptation: INNOVATE's list had no facts.ts, but the stage-1 reader needs a home that imports `structure()` while `analyze.ts` stays free of parser imports so the main thread can import it later).
 Modify (append only): `packages/core/src/index.ts` (one export block at the end).
-Create (tests): see section "Test files".
+Modify (T14, allow-list; nothing else under `detectors/` or `structure/`): `packages/core/src/structure/headings.ts` (heading recognizer `sectionCandidate`, `SECTION_RE`), `packages/core/src/structure/structurer.ts` (only if the accept rules need roman or Article handling; otherwise untouched), `packages/core/src/structure/conditionals.ts` (target extraction: `TARGET_RE`, `MORE_TARGETS_RE`, the `targets` strings), `packages/core/src/detectors/flow.ts` (target resolution: `parseTarget`, `conditionalTargets`, `checkTarget`, shared with `unreachable-flow` and the investor-path extractors) and `packages/core/src/detectors/broken-conditional.ts` (consumer; edit only if the finding text needs a target kind word). Create (tests): see section "Test files".
 Create (scripts): `scripts/src/fixtures/make-package.ts`, `scripts/src/fixtures/package-facts-extract.ts`, `scripts/test/package-fixtures.test.ts`. Modify: `scripts/src/fixtures/check.ts` (include the package fixtures in the drift gate), `scripts/package.json` (two new script keys only).
 Create (fixtures): `fixtures/package/hartwell/{fund-iii-subscription-agreement.html,northgate-lpa-definitions.docx,fund-ii-subscription-agreement-prior.html}`, `fixtures/package/{expected.json,schema.v1.json,demo-packages.json}`, `fixtures/package/real-facts/*.json`. Plus `fixtures/package/design/{northgate-iii,lotus-bay-asia-ii,redwood-ridge-i}/**` and `fixtures/package/design/checksums.json` (copies of read-only `samples/packages/**`, only when committed by the design session).
 
@@ -109,7 +116,8 @@ Frozen for later phases (names and shapes are the contract; Phase 2 and Phase 3 
   - `CrossDocTerm`: term, status (`defined_in_package | unverified`), mentions, defining docId and definition quote when defined, reason (`no_reference_document | not_in_reference_documents`) when unverified.
   - `CoverageGroup`: id (`structure_flow | internal_refs | defined_terms | external_refs | investor_paths`), label, status (`full | partial | blocked`), missingTypes, reasons. `DocumentRequest`: id, targetKey, label, targetFamily, quote, count, firstDocId. `PackageAnalysis`: schema literal `package-analysis.v1`, documents, references, terms, coverage, requests, dropped (all arrays sorted deterministically; no timestamps, ids from clocks, or timings).
 - **Variance interface (consumer: variance-mvp L10, AC-V1, AC-V8; frozen here and in Phase 2):** pure `eligibleBaselines(pkg {id, firmId}, candidates)` in core (`BaselineCandidate` = docId, name, firmId, packageId, optional storedDocId and createdAt) returns candidates in the same package whose own non-null `firmId` does not differ from the package `firmId` (defense in depth: a same-package candidate with a differing non-null `firmId` is rejected), or in the same non-null firm; never another firm; a null-firm package sees within-package candidates only. Phase 2 adds the browser side (`usePackage` store `setRole`, `baselineDocs`, `addEarlierDocument`). Variance reads the baseline role from the package store and never from D1.
-- Unchanged: frozen contracts v1, `packages/core/test/__snapshots__/contracts.json-schema.snap`, the 13 detectors and `detectors/registry.ts`, `computeGate` and its matrix, taxonomy (15 issue classes), `limits` in `config/limits.ts`, the Finding schema, fingerprints and memory labels.
+- T14 contract check (verified at PLAN time): heading forms do not touch frozen contracts. `Section.number` stays a string, blocks stay kind `heading`, `Conditional.targets` stays `string[]`, and `section_path` strings in findings are the only exported trace; no new `BlockKind`, issue class or schema field. If EXECUTE finds that a contract change would be required (for example a new block kind), STOP and report NEEDS_CONTEXT; never edit `packages/core/src/contracts/**`.
+- Unchanged: frozen contracts v1, `packages/core/test/__snapshots__/contracts.json-schema.snap`, the 13 detectors (two of them, `broken-conditional` and through `flow.ts` the flow consumers, extended without a new issue class) and `detectors/registry.ts`, `computeGate` and its matrix, taxonomy (15 issue classes), `limits` in `config/limits.ts`, the Finding schema, fingerprints and memory labels.
 
 ## Blast Radius
 
@@ -124,7 +132,9 @@ Files directly created or modified (exact):
 - `scripts/src/fixtures/make-package.ts`, `scripts/src/fixtures/package-facts-extract.ts` (new); `scripts/src/fixtures/check.ts`, `scripts/package.json` (modify, additive); `scripts/test/package-fixtures.test.ts` (new)
 - `fixtures/package/**` (new, generated and committed) (includes `fixtures/package/design/**`). Read-only sources: `samples/packages/**` (design-owned, never edited).
 
-Read-only here (touch = BLOCKED): `packages/core/src/detectors/**`, `packages/core/src/counsel/**`, `packages/core/src/contracts/**`, `packages/core/src/memory/**`, `packages/core/src/structure/**`, `packages/core/src/model/**`, `apps/**`.
+T14 allow-list (the ONLY edits allowed under detectors and structure): `packages/core/src/structure/headings.ts`, `packages/core/src/structure/structurer.ts` (only if needed), `packages/core/src/structure/conditionals.ts`, `packages/core/src/detectors/flow.ts`, `packages/core/src/detectors/broken-conditional.ts`. New tests: `packages/core/test/unit/structure-heading-forms.test.ts`, `packages/core/test/unit/broken-conditional-annex-question.test.ts`, `packages/core/test/golden/package-design-goldens.test.ts`; existing goldens or unit tests whose literal counts legitimately change are edited only with an entry in the explanation table (Step B0). Registry rows: see `phase-blast-radius-registry.md` Phase 1 revision note.
+
+Read-only here (touch = BLOCKED): the rest of `packages/core/src/detectors/**` (including `util.ts`, `registry.ts`), `packages/core/src/counsel/**`, `packages/core/src/contracts/**`, `packages/core/src/memory/**`, the rest of `packages/core/src/structure/**`, `packages/core/src/model/**`, `apps/**`.
 
 ## Data Flow
 
@@ -141,10 +151,21 @@ Failure modes: structurer exception on a member gives facts with `needsOcr` fals
 ### Step A — Premise check and baseline (FIRST task; nothing else starts before A5)
 
 - [ ] A1. Record `P1_BASE` (`git rev-parse HEAD`) and `git status --short` (must be clean for the blast radius) in the phase report.
-- [ ] A2. Run `pnpm --filter @aduin/core test golden-11-undefined-units` (exit 0, more than 0 tests; 4 tests at f0d924b) and `pnpm --filter @aduin/core typecheck` (exit 0).
+- [ ] A2. Run `pnpm --filter @aduin/core test golden-11-undefined-units` (exit 0, more than 0 tests; 5 tests at HEAD) and `pnpm --filter @aduin/core typecheck` (exit 0).
 - [ ] A3. Create `packages/core/test/unit/package-undefined-term-baseline.test.ts`: for each of the 12 HTML samples (use `htmlSamples()` and `analyzed(n)` from `packages/core/test/helpers/samples.ts`) pin, as literal expectations measured by running the engine now, the count and the sorted `used_term` list of findings with `detector_id` `undefined-term`, and the count of `defined_term_issue` findings by `detector_id`. Measure first, then write the literals.
 - [ ] A4. Record the measured table in the phase report under `## Premise Check`. Expected from `golden-11-undefined-units`: `undefined-term` fires only on #11 ("Units") and not on #5/#6. If the table shows more samples with `undefined-term` findings, record each as a RESCOPE NOTE (ACs stay listing + suppression + coverage per INNOVATE finding 1); do not add a generic undefined-term rule.
 - [ ] A5. Run `pnpm --filter @aduin/core test package-undefined-term-baseline` (exit 0) and commit `test: pin undefined-term baseline before intake`.
+
+### Step B0 — Structure heading forms and conditional targets (T14; after A5, before any detection work)
+
+- [ ] B0.1. Re-read at `P1_BASE`: `packages/core/src/structure/headings.ts` (`SECTION_RE = /^\s*(\d{1,2}[A-Z]?)\.(?:\s+(.*))?$/`, `sectionCandidate`, `titleIsHeading`, `HEADING_LIMITS`), `packages/core/src/structure/structurer.ts` (accept rules around `sectionCandidate`: next number, letter suffix, restatement, gap up to 3, reset to 1), `packages/core/src/structure/numbering-scopes.ts` (`scopeOpener`, read-only), `packages/core/src/structure/conditionals.ts`, `packages/core/src/detectors/flow.ts`, `packages/core/src/detectors/broken-conditional.ts`, `packages/core/src/detectors/util.ts` (read-only, parent change 0a67dc4).
+- [ ] B0.2. Write `packages/core/test/unit/structure-heading-forms.test.ts` and `packages/core/test/unit/broken-conditional-annex-question.test.ts` FIRST and run both red (scenarios in G22 and G23).
+- [ ] B0.3. `headings.ts` `sectionCandidate`: accept keyword-led forms `Section N.` / `SECTION N` / `Section N` followed by a title, `Article N.` / `ARTICLE N` / `ARTICLE N TITLE`, and roman `Article I.` .. `Article XX.` (head word case-insensitive; number grammar `\d{1,2}[A-Z]?` or UPPERCASE roman `[IVXL]{1,6}` only). Qualification rule (PVL gap 1; measured: LB2 v2, RR1 agreement and RR1 LPA headings are neither bold nor caps): a keyword-led line qualifies on THREE conditions only: the keyword, the number grammar, and a bounded title: total line at most 120 characters, no sentence-final period after the title (the period directly after the number, `Section 4.`, is fine), and the title text is not a lowercase-led sentence. Bold or caps are NOT required for keyword-led forms (this is a new form with its own rule; the existing `N. Title` bold-or-caps rule and `Part` rules stay byte-identical, so no threshold is loosened). A bare `Section 4.` or `Article IV` line (title on the next line) qualifies the same way. Roman numerals convert to an integer for `num`; the `number` string stays the arabic string so `Section 4` and `Article IV` references resolve consistently (single documented choice, recorded in the report). Negatives (must NOT become headings or sections): a line that begins mid-sentence ("Section 3 of the Act applies ..."), `Section 4975 of the Code`, a lowercase sentence after the number, a statutory cite ("Section 3(42) of ERISA"), `Section N:` instruction lines (sample #9 OCR has 8), lowercase or mixed-case roman (`Article iv`), `Article IV of the Agreement ...` prose, and dotted decimals (`Section 1.1 Title.`, `1.1 Title`). The new regex is a module-level `export const` so `redos.test.ts` collects it, plus the bounded hostile-input test in G22.
+- [ ] B0.4. `structurer.ts`: edit ONLY if the accept rules cannot take the new candidates unchanged (for example roman sequences must follow I, II, III with the same gap and restatement rules). If edited, the diff is limited to accept/number handling, no new block kind, no new scope kind.
+- [ ] B0.5. `conditionals.ts` and `flow.ts`: extend target extraction and resolution to `Annex X` (single letter or number label) and `Question N`. NO scope kind is used or added: there is no annex scope kind (`ScopeKind` = `body|instructions|terms|signature|appendix|part`), and `numbering-scopes.ts` and `structure/types.ts` stay OFF the allow-list (the allow-list is unchanged at five files). Resolution is from block text (PVL gap 2): annex labels = blocks (any kind) whose text matches `^Annex <label>` at block start, plus `appendix` scope titles; question numbers = blocks whose text matches `^Question <N>` inside the enclosing annex (the nearest preceding `^Annex <label>` block; if none, the whole document), numbered continuously across Parts (RR1 numbers questions 1-14 across Parts 1-3; never per Part). `TARGET_RE`/`MORE_TARGETS_RE` gain the two heads; `parseTarget` returns a typed target (`annex` label, `question` number); in `checkTarget` the Annex and Question branches run BEFORE the bare-Part branch (which reads `t.parts[0]!`, undefined for these targets). `Annex X` is `missing` when at least one `^Annex` label exists in the document and X is not among them, `found` when it is, `uncertain` when the document has no annex label at all (the Harbourline W-8 guide case). `Question N` is `missing` only when at least one `^Question` block exists in the enclosing annex and the highest number is below N, `found` when N exists, else `uncertain`. Uncertain never produces a finding. One shared exported helper in `flow.ts` (for example `annexLabels(blocks)` and `questionNumbers(blocks, annexLabel)`) feeds D2 `scopeLabels` and the D3 internal-versus-external exclusion, so intake and the detector agree; the package module imports it and never re-implements it. `Section`/`Part` behavior byte-identical (existing `flow` and conditional tests unchanged). If EXECUTE finds `numbering-scopes.ts` or `structure/types.ts` unavoidable, STOP and report NEEDS_CONTEXT (the orchestrator would amend the allow-list, the registry and the gates together); never edit them unilaterally.
+- [ ] B0.6. `broken-conditional.ts`: edit only if the explanation or `interpretations` text needs the target kind (a one-line wording generalization); detector id, class, severity (critical) and `patternKey` unchanged; no new issue class (taxonomy stays 15). `unreachable-flow` and the investor-path extractors consume `flow.ts`; their outputs may legitimately gain results (the RR1 benefit-plan route is also an `investor_path_dead_end` per the answer key); record every such change in the explanation table.
+- [ ] B0.7. Corpus regression (run before and after B0.3-B0.6 on the same engine): the 12 HTML samples via `htmlSamples()` and `analyzed(n)` (and sample #13 / #9 where already in the core goldens). Produce the EXPLANATION TABLE in the Phase 1 report (`## T14 Corpus Regression`): one row per golden or pinned count that changed (golden/test name, old count, new count, reason). Goldens that may change and therefore need a row if they do: `golden-01-this-section-11`, `golden-03-05-swapped-part-b-refs`, `golden-heading-extraction-03-05`, `golden-09-ocr-footnote2`, `golden-11-undefined-units`, `statutory-cite-not-flagged`, `package-undefined-term-baseline` (A3 literals), the investor-path and flow tests (`investor/paths.ts`: a `complete Annex F` for a Benefit Plan Investor can create a `part-c` gap and flip `uncertain`), `graph-extraction-fixtures` (`target:` edges in `graph/graph.ts`), `structure-view-build` (`targetFound`, `issue`, target text in `structure-view/build.ts`), `outline/logic-outline-export-contents` (targets in `outline/build.ts`), `redos`, `corpus`, `golden-05-06-drift`, the tests that use the `conditionals.html` fixture, `determinism`, the engine seeded and property corpora that pin per-sample finding counts, the scripts and web specs that pin per-sample counts (web specs are read-only here: if one would change, record it for Phase 2 instead of editing; sample #13 is one of the 12 HTML samples, not a 13th file). Each of these tests is run before and after, and every changed literal gets an explanation-table row. A new finding on a corpus sample is acceptable only with a reason in the table (real heading now recognized or real Annex/Question target missing); a silent increase, or more than 3 new findings on any single sample, or any new finding classified as noise, STOPS the step: tighten the pattern, never loosen a threshold. Nothing is hand-edited to green.
+- [ ] B0.8. Run `pnpm --filter @aduin/core test structure-heading-forms`, `broken-conditional-annex-question`, `contracts`, `determinism` (one token per call), `pnpm --filter @aduin/core typecheck`; then `git diff --name-only P1_BASE -- packages/core/src/detectors packages/core/src/structure` must list only the five allow-list files (at B0 time the full `packages/core/src` set check below applies from Step E6 on). Commit `feat: structurer accepts Section and Article headings; broken-conditional resolves Annex and Question targets` with explicit paths.
 
 ### Step B — Types, limits, policy
 
@@ -210,6 +231,11 @@ Failure modes: structurer exception on a member gives facts with `needsOcr` fals
 - [ ] G19. `package-facts` (`buildPackageFacts`: titleLines <= 12 x 200, headText <= 1500, headings <= 200 x 120, empty lines give `needsOcr: true`, structurer exception gives empty titles with type `other`; `extractUsedTerms`: used-twice rule, local-term exclusion, stoplist).
 - [ ] G20. `package-scan-bounded` (modeled on `test/unit/defined-term-scan-bounded.test.ts`: long unbroken runs and a 1 MB single block through `extractExternalReferences`, `extractPackageDefinitions` and `extractUsedTerms` finish under a fixed time bound; this is the test the Risks table promises for catastrophic regex).
 - [ ] G21. Design-package rows (additive to the goldens above, only for packages confirmed at Step 0): `package-type-detection-golden`, `package-reference-extraction-golden`, `package-crossdoc-terms-golden`, `package-reference-recall-matrix` and `package-request` each gain rows driven by `fixtures/package/expected.json` entries derived from each package's `answer-key.md` (seeded defects with exact quotes; AC-I5, I11, I14-I16, I20 mapped as in F1b). NGI #5/#6, #13 and #9 stay the real-document cases of the same goldens.
+- [ ] G22. `structure-heading-forms` (AC-S1, unit): every form (`Section 4. Title`, `SECTION 4`, `Section 4`, `Article 4.`, `ARTICLE 4 DEFINITIONS`, `Article I.`, `Article XII. Title`), roman I..XX conversion, NON-bold and NON-caps keyword-led titles still accepted (gap 1), accept rules (next number, letter suffix, gap); negatives that must not become headings: "Section 3 of the Act applies" mid-sentence, "Section 4975 of the Code", "Section 3(42) of ERISA", lowercase sentence after the number, `Section N: <sentence>.` instruction lines, uppercase-only check (lowercase `Article iv`), `Article IV of the Agreement ...` prose, dotted decimals (`Section 1.1 Title.`, `1.1 Title`), a title over 120 chars, a title with a sentence-final period; `4. Title` behavior unchanged. Regex-time bound: the exported heading regex runs over hostile input (a 100 000-character line of digits, of `Section ` repeats, and of mixed roman letters) under a fixed time bound (modeled on `test/unit/defined-term-scan-bounded.test.ts`), and `redos.test.ts` now collects it.
+- [ ] G23. `broken-conditional-annex-question` (AC-S2, unit): "If the Investor is a Benefit Plan Investor, complete Annex F." with and without an Annex F scope; "If you answered Yes to Question 6, skip to Question 15." with 14 and with 15 questions; Section/Part targets unchanged; document with no annex or question evidence gives no finding; one finding per instruction; severity critical.
+- [ ] G24. `packages/core/test/golden/package-design-goldens.test.ts` (AC-S3, AC-S4): reads the committed copies under `fixtures/package/design/**` (never `samples/packages/**`) through the DOCX adapter and the engine; encodes from each package `answer-key.md` and `samples/packages/README.md`. Counts are measured at B0.7 and written as literals (measure first). LB2 offshore v2 (`01-LB2-Subscription-Agreement-Offshore-v2.docx`): `Section N.` headings give sections found (count asserted; 0 today), "Annex C" mentions are NOT internal sections and produce no new finding (no conditional targets Annex there), E8 placeholder and E9 sensitive data still caught. RR1 agreement (`01-RR1-Subscription-Agreement.docx`): sections found (count asserted); F1 `skip to Question 15` is a `broken-conditional` finding (should-catch) and the 14-question list does not flag other questions (should-not-catch); F7, F8, F10 still found; every other "Section N.N" cross-reference stays silent except F3 (the `Section 8.4` coherence case is a known engine gap: measure it, record it, do NOT assert it silent). NG3 and RR1 LPA definitions files (`02-NG3-LPA-Definitions-and-Key-Terms.docx`, `02-RR1-LPA-Definitions.docx`): section counts asserted (NG3 LPA 9 Articles, RR1 LPA 1 Article) and the measured per-detector counts pinned (today 3 defined-term-issue findings for NG3 LPA and 14 for RR1 LPA, unrelated to B0; NOT asserted zero); the RR1 LPA is an Article I extract whose cross-references to later Articles (`Section 4.6`) may become broken references once Article I is recognized: pin whatever is measured and explain it. NG3 sub agreement (`01-NG3-Subscription-Agreement.docx`): D6 `complete Annex F` is now a `broken-conditional` finding (critical), D1-D5 and D10 remain as before (15 sections, `N. Title`). NG2 baseline (the Fund II prior subscription agreement under `fixtures/package/design/northgate-iii/`): NG2 gains the same Annex F finding (answer key: 5 findings on the baseline today, so 6 after); add an NG2 row and an explanation-table entry (NG2-annexF). Corpus-regression block: the 12 HTML sample corpus finding counts equal the post-B0.7 table with no row unexplained.
+- [ ] G25. Add the new test tokens to the Step H1 run list: `structure-heading-forms`, `broken-conditional-annex-question`, `package-design-goldens` (one token per call, more than 0 tests each).
+
 
 ### Step H — Close
 
@@ -242,8 +268,11 @@ Failure modes: structurer exception on a member gives facts with `needsOcr` fals
 | `pnpm --filter @aduin/core test package-facts` | Fully-Automated | AC-I4/AC-I5 input facts (needsOcr, caps, used terms) |
 | `pnpm --filter @aduin/core test package-scan-bounded` | Fully-Automated | no catastrophic regex on hostile input (AC8 robustness; Risks row) |
 | `pnpm --filter @aduin/core test determinism` | Fully-Automated | AC8 base |
+| `pnpm --filter @aduin/core test structure-heading-forms` | Fully-Automated | AC-S1 (T14) |
+| `pnpm --filter @aduin/core test broken-conditional-annex-question` | Fully-Automated | AC-S2 (T14) |
+| `pnpm --filter @aduin/core test package-design-goldens` | Fully-Automated | AC-S3, AC-S4 (T14) |
 | `pnpm --filter @aduin/core test contracts` and `git diff --quiet P1_BASE -- packages/core/test/__snapshots__ packages/core/src/contracts` | Fully-Automated | frozen contracts v1 unchanged |
-| `git diff --quiet P1_BASE -- packages/core/src/detectors packages/core/src/counsel packages/core/src/memory packages/core/src/contracts packages/core/src/structure packages/core/src/model packages/core/src/graph packages/core/src/findings packages/core/src/llm packages/core/src/adapters packages/core/src/engine.ts apps` (P1_BASE = the literal sha from Step 0) | Fully-Automated | detectors, gate, memory, apps untouched |
+| `git diff --name-only P1_BASE -- packages/core/src` (P1_BASE = the literal sha from Step 0) must list exactly the five T14 allow-list files, `packages/core/src/index.ts` and files under `packages/core/src/package/`, nothing else; plus `git diff --quiet P1_BASE -- apps` | Fully-Automated | untouched surface: every other core directory (detectors, counsel, memory, contracts, structure, model, graph, findings, llm, adapters, investor, structure-view, outline, diff, session, ocr, config, engine) and apps unchanged (frozen v1; proves nothing about the allow-list files' content, which G22-G24 prove) |
 | `pnpm --filter @aduin/scripts test package-fixtures` and `pnpm --filter @aduin/scripts fixtures:check` | Fully-Automated | fixtures reproducible (AC8) |
 | `PACKAGE_LOCAL=1 pnpm --filter @aduin/core test package-realfacts-local` | Hybrid (local files; opt-in) | AC-I5 real files still match committed facts |
 | `pnpm --filter @aduin/core test`, `pnpm --filter @aduin/scripts test`, `pnpm typecheck`, `pnpm lint`, `pnpm guard:cf`, `pnpm secrets:scan` | Fully-Automated | regression (base AC1-AC64 keep passing) |
@@ -257,8 +286,8 @@ pnpm --filter @aduin/core test
 # Expected: exit 0, previous 2914 tests plus the new package tests, 0 failed
 pnpm --filter @aduin/scripts fixtures:check
 # Expected: exit 0 (no drift, no stray, no missing)
-git diff --quiet P1_BASE -- packages/core/src/detectors packages/core/src/counsel packages/core/src/memory packages/core/src/contracts packages/core/src/structure packages/core/src/model packages/core/src/graph packages/core/src/findings packages/core/src/llm packages/core/src/adapters packages/core/src/engine.ts apps
-# Expected: exit 0
+git diff --name-only P1_BASE -- packages/core/src
+# Expected: exactly the five allow-list files (headings.ts, structurer.ts if edited, conditionals.ts, flow.ts, broken-conditional.ts), packages/core/src/index.ts and packages/core/src/package/**; then: git diff --quiet P1_BASE -- apps (exit 0)
 ```
 
 - All checklist items checked; premise table recorded; phase report written to the report destination; execution commits made with explicit paths.
@@ -270,18 +299,22 @@ git diff --quiet P1_BASE -- packages/core/src/detectors packages/core/src/counse
 | Wrong high-confidence type | High | Conservative threshold (score ≥ 3 and margin ≥ 2); two-subscription roles always `low`; golden on committed real facts; T1 ruling wording |
 | Real-file score ties (NGI #5/#6) and SEC cover boilerplate with no type phrase | Med | Step C6: earliest-title-line tie-break, tie never `high`, SEC-cover rule to `ppm` at `low`, golden run first on committed real facts; Known-Gap with backlog stub for any remaining miss |
 | Reference recall below 100% on NGI #5/#6 | Med | Seeded matrix with independent noun-count ground truth; tune pattern DATA, not code paths; if a rule cannot be tuned, record a Known-Gap with a backlog stub and keep AC-I11 CONDITIONAL (no LLM task is added without an orchestrator ruling; adding one is a hard stop because it is needs-live-provider) |
+| T14 heading/target change floods the corpus with new findings or moves goldens | High | Step B0.7 before/after corpus table with a reason per changed count, red-first tests with negatives, stop rule (more than 3 new findings on one sample or any noise finding), patterns tightened never thresholds loosened; five-file allow-list gate |
+| T14 edits shared `flow.ts` and so also change `unreachable-flow` and investor-path results | Med | Explanation table covers those detectors; Section/Part behavior pinned byte-identical by the existing tests |
+| Keyword-led heading rule drops bold/caps and so over-accepts prose lines | Med | Bounded rule (keyword, number grammar, title at most 120 chars, no final period, not lowercase-led) plus the G22 negatives (`Section N:` lines, lowercase roman, `Article IV of the Agreement` prose, dotted decimals); corpus has 0 keyword-led lines so the 12 samples cannot regress; B0.7 stop rule |
+| Annex/Question resolution from block text reads wrong evidence (per-Part numbering, no annex labels) | Med | Enclosing-annex scoping, continuous numbering across Parts, `uncertain` when no label or question evidence; one shared helper in `flow.ts` for detector and intake; no scope kind or `numbering-scopes.ts` edit (allow-list stays five files) |
 | Barrel export-name collision | Low | Typecheck after the barrel append; rename on the package side |
 | Real documents missing locally | Low | Committed facts are the CI proof; missing local files recorded as Known-Gap with backlog stub |
 | Catastrophic regex | Med | Bounded quantifiers, linear-time patterns, per-block caps; a `defined-term-scan-bounded` style test for references |
 
 ## Rollback
 
-All changes are additive files plus one appended barrel block and two script keys. Roll back by reverting the phase commits (`git revert <sha>`); nothing in later phases exists yet. No data migration, no deploy.
+All changes are additive files plus one appended barrel block and two script keys, plus the T14 edits to five existing core files (each in its own commit, so `git revert` of that commit alone restores the previous heading and conditional behavior). Roll back by reverting the phase commits (`git revert <sha>`); nothing in later phases exists yet. No data migration, no deploy.
 
 ## Blockers That Would Justify BLOCKED Status
 
 - Step A shows the premise is wrong in a way that changes ACs (surface to the orchestrator as RESCOPE; do not widen detectors).
-- A required change in a read-only path (detectors, contracts, counsel) turns out to be unavoidable.
+- A required change in a read-only path (detectors or structure files outside the five-file T14 allow-list, contracts, counsel) turns out to be unavoidable, or heading forms would require a frozen contract change (NEEDS_CONTEXT).
 - The barrel append cannot be made collision-free without touching existing exports.
 
 ## Phase Loop Progress
@@ -309,72 +342,84 @@ Signal score 2/7 (S4 phase program, S7 14+ new files). Recommended: sequential, 
 ## Resume and Execution Handoff
 
 - Selected plan file path: `process/features/fund-package-intake/active/intake-mvp_17-10-26/intake-mvp_PHASE-1-core-package-engine_PLAN_17-10-26.md`
-- Last completed step: not started (plan written; outer PVL next)
-- Validate-contract status: written 2026-10-17 (Gate: PASS, outer-pvl, PVL cycle 2)
-- Next step: spawn vc-validate-agent (outer PVL) for this plan; after Gate: PASS spawn vc-execute-agent (opus) with this exact plan path, the validate-contract path, and Step A first.
+- Last completed step: not started (PVL supplement cycle applied for gaps 1-7; re-validate from V1 next)
+- Validate-contract status: written 2026-10-17 (Gate: PASS, inner-pvl: phase-1, pass 2 after the C1-C7 supplement; residuals recorded as known-gaps with backlog stubs)
+- Next step: spawn vc-execute-agent (opus) with this exact plan path, the validate-contract (this plan, `## Validate Contract`) and Step 0 then Step A first; emit the /goal block (BRANCH B: umbrella governs) before EXECUTE.
 - Validators for the plan artifact: `node .claude/skills/vc-generate-plan/scripts/validate-plan-artifact.mjs <this plan>` and `node .claude/skills/vc-generate-phase-program/scripts/validate-phase-stub.mjs <this plan>`.
 - Next instruction: ENTER VALIDATE MODE for this plan, then ENTER EXECUTE MODE only after `Gate: PASS`.
+
+## Inner Loop Refresh Note: 2026-10-17 — changed sections: Overview, Acceptance Criteria (AC-S1..AC-S4), Entry Gate (rebase note), Touchpoints, Public Contracts, Blast Radius, Implementation Checklist (new Step B0, G22-G25), Verification Evidence, Exit Gate, Risks, Rollback, Blockers, Resume. Invalidates prior validate-contract.
+
+Written after the 2026-10-17 validate-contract (same calendar day, later in time; the refresh follows that contract and a V1 date check must treat it as newer). Reason: parent-approved T14 scope addition (structure heading forms plus Annex/Question conditional targets, design-package DOCX goldens, corpus regression) and rebase onto parent commit 0a67dc4.
 
 ## Validate Contract
 
 Status: PASS
 Date: 17-10-26
 date: 2026-10-17
-generated-by: outer-pvl
-supersedes: 2026-10-17 (outer-pvl) — cycle-1 CONDITIONAL contract (G1-G6); the supplemented plan body now carries the evidence
+generated-by: inner-pvl: phase-1
+supersedes: 2026-10-17 (inner-pvl: phase-1) — inner PVL pass 1 (Gate: CONDITIONAL, concerns C1-C7); the plan body was supplemented for C1-C7 and this re-validation from V1 has current evidence against HEAD 6893bca (code at 0a67dc4)
 
 Parallel strategy: sequential (one opus vc-execute-agent, then one sonnet vc-tester for EVL)
-Rationale: signal score 2/7 (S4 phase program, S7 14+ files); dominant signal S7; steps depend on each other (types, detect, analyze). Agent count: 1 execute + 1 tester. Agrees with the plan's Execution Strategy.
+Rationale: signal score 2/7 (S4 phase program, S7 14+ new files); dominant signal S7; B0 edits five shared core files and the new module imports them, so one author keeps order (B0 before B, types before detect before analyze). Agent count: 1 execute + 1 tester. Agrees with the plan's Execution Strategy.
 
-Gate: PASS — PVL cycle 2 (after 1 supplement cycle): 0 FAILs, 0 unresolved CONCERNs. All six cycle-1 gaps verified resolved in the plan body against real code.
+Gate: PASS — inner PVL pass 2 (re-validation from V1 after SUPPLEMENT_APPLIED): 0 FAILs, 0 open CONCERNs. All seven prior concerns (C1-C7) are resolved in the plan body and each was re-checked against real code at HEAD; three low-severity execute-agent notes (E8-E10) are carried as instructions, not gaps. Named residuals are Known-Gaps with backlog stubs; every developed behavior has a Fully-Automated gate.
 
-### Prior gap resolution (verified against real code at HEAD 025d589)
+### Resolution of the prior concerns (re-verified at HEAD, read-only probes in the session scratchpad)
 
-| Gap | Status | Evidence |
-|---|---|---|
-| G1 `DocFormat` shadow | RESOLVED | `packages/core/src/index.ts:114` still exports adapter `DocFormat` (`format-detect.ts:13` union); plan exports `PackageDocFormat` only (Public Contracts, E6) plus type-level assertion (E6, G1 test). No existing barrel name collides with any of the 25 new package names (grep of `packages/core/src`: 0 hits). |
-| G2 detection tie-break and S-11 rule | RESOLVED | Step C6 (a)-(e): earliest-title-line tie-break, tie never `high`, SEC-cover rule to `ppm` at `low`, golden-first tuning of DATA, per-file Known-Gap with backlog stub `intake-local-real-facts`. |
-| G3 missing unit and bounded-scan tests | RESOLVED | G18 `package-readiness`, G19 `package-facts` (incl. `extractUsedTerms`), G20 `package-scan-bounded`; all in Blast Radius and Verification Evidence; model file `defined-term-scan-bounded.test.ts` exists. |
-| G4 untouched-surface diff too narrow | RESOLVED | Verification row and Exit Gate diff now cover detectors, counsel, memory, contracts, structure, model, graph, findings, llm, adapters, `engine.ts`, `apps`, against the literal `P1_BASE` sha. |
-| G5 baseline defense-in-depth and masking note | RESOLVED | E4 and G14 reject a same-package candidate with a differing non-null `firmId`; H1 records that `DocumentRequest.quote` is unmasked and must route through core `maskAndClamp` (`counsel/template-draft.ts:10`, exported from the barrel). |
-| G6 blocked-word file name | RESOLVED | File renamed `make-package.ts` (matches `make-docx.ts`, `make-pdf.ts`); `real-facts/*.json` excluded from the drift rebuild (F4, shape check only). |
+- C1 keyword-led heading rule: RESOLVED. B0.3 now qualifies `Section N.` / `Article N|roman` on keyword, number grammar and a bounded title (120 chars, no final period, not a lowercase sentence), with no bold or caps requirement; `N. Title` and `Part` rules stay byte-identical. Measured at HEAD: LB2 v2 (15 keyword-led lines), RR1 agreement (13) and RR1 LPA headings are `bold:false caps:false` (only the NG3 LPA `Article` lines are bold), so the old rule would give 0 sections; HEAD gives 0 sections for LB2 v2, RR1 agreement, both LPAs; NG3 agreement 15 and NG2 14 (`N. Title`).
+- C2 Annex/Question from block text: RESOLVED. `ScopeKind` is `body|instructions|terms|signature|appendix|part` (no annex kind); the plan now resolves from `^Annex <label>` and `^Question <N>` block text with a shared `flow.ts` helper and keeps `numbering-scopes.ts` and `structure/types.ts` off the allow-list. Measured: RR1 has 14 `paragraph` Question blocks across Parts 1-3 and 4 Annex blocks (A-D); sample #12 has `Annex A:` .. `Annex E:` blocks (so `complete ... Annex D` stays silent); Harbourline W-8 guide has no `^Annex` block (stays `uncertain`); LB2 v2 has annex blocks A, B, D, E and no Annex conditional (its "Annex C" mentions are not conditionals). The real RR1 sentence `If you answered Yes to Question 6 (Benefit Plan Investor), skip to Question 15.` sits within `VERB_WINDOW` 160 and `TARGET_WINDOW` 80, so adding the two heads to `TARGET_RE` is sufficient. `checkTarget` bare-Part branch reads `t.parts[0]!`, so the Annex and Question branches must run first (written in B0.5).
+- C3 conditional consumers: RESOLVED. B0.7 now lists `graph-extraction-fixtures`, `structure-view-build`, `outline/logic-outline-export-contents`, `redos`, `corpus`, `golden-05-06-drift`, `conditionals.html` users, investor-path tests and `determinism`. All named test files exist at HEAD (`test/unit/graph-extraction-fixtures`, `structure-view-build`, `test/unit/outline/logic-outline-export-contents`, `test/security/redos`, `test/corpus/corpus`, `test/golden/diff/golden-05-06-drift`, `test/fixtures/conditionals.html`).
+- C4 G24 counts and NG2: RESOLVED. Section counts and measured per-detector counts replace "zero findings"; measured again at HEAD: NG3 LPA 3 and RR1 LPA 14 `defined-term-issues`, NG2 baseline 5 findings (plan adds the NG2 Annex F row and the NG2-annexF explanation entry), NG3 agreement 6 findings. The F3 `Section 8.4` coherence case is pinned as measured, not asserted silent.
+- C5 diff gate path set: RESOLVED. The gate is `git diff --name-only P1_BASE -- packages/core/src` and must list exactly the five allow-list files, `src/index.ts` and `src/package/**`, plus `git diff --quiet P1_BASE -- apps`.
+- C6 entry gate: RESOLVED. Step 0 uses `git merge-base --is-ancestor 0a67dc4 HEAD` (probe: holds) and "no modified tracked non-process file" (probe: only process plan files modified; `.DS_Store` is untracked), records the literal 40-char `P1_BASE` and the rollback target `47d98295-c583-4dc0-9f96-f9e161c8cf35`.
+- C7 G22 negatives and regex-time bound: RESOLVED. G22 lists `Section N:` lines, lowercase roman, `Article IV of the Agreement` prose, dotted decimals (`Section 1.1 Title.` is real: the NG3 LPA has dozens of such lines), title over 120 chars, title with final period, plus a hostile-input bound modeled on `test/unit/defined-term-scan-bounded.test.ts` (exists).
 
-### Layer 1 and Layer 2 findings
+### Other checks
+
+- Baseline: `pnpm --filter @aduin/core test golden-11-undefined-units` = 5 tests green (re-run in this pass); full-suite baseline 2914 measured in the previous pass, tree unchanged in core since (HEAD moved by docs-only commits).
+- Names the plan relies on exist: `sectionCandidate`, private `SECTION_RE` (headings.ts); accept rules in `structurer.ts` (`scopeOpener` is evaluated before `sectionCandidate`); `TARGET_RE`, `MORE_TARGETS_RE`, `VERB_WINDOW`, `TARGET_WINDOW` (conditionals.ts); `parseTarget`, `conditionalTargets`, `checkTarget`, exported `SECTION_RE`/`PART_RE` (flow.ts); `refRoutingContext`, `refSeverity` (util.ts, read-only).
+- Frozen contracts v1 untouched: heading stays kind `heading`, `Section.number` stays a string, `Conditional.targets` stays `string[]`; no new block kind, issue class or schema field.
+- Registry: the Phase 1 revision note lists exactly the five files; no other phase or the variance program claims them (grep over `process/`: only intake plans and the Phase 02 subdoc plan and report mention them, the latter completed history).
+- `validate-plan-artifact.mjs` and `validate-phase-stub.mjs`: 0 failures, 0 warnings. Design packages committed (`git ls-files samples/packages` lists docs, README and answer-key for all three). `results.tsv` records 7 lines (header, baseline, cycle rows): `PHASE_COMPLETE: VALIDATE` is legal.
 
 Dimension findings:
-- Infra fit: PASS — verified on disk: `CARVE_OUT_RE` and `family` exported from `detectors/undefined-term.ts`, `extractDefinedTerms` in `structure/defined-terms.ts`, `sameDocx` in `scripts/src/fixtures/make-docx.ts`, `sha256Hex` in the barrel, `htmlSamples` helper, `fixtures:check` script; `packages/core/src/package/` does not exist yet (clean create).
-- Test coverage: PASS — every owned AC (AC-I4, 5, 6 core, 7, 9, 10-17, 19, 20, AC8) has a named Fully-Automated gate; Step G writes red first; Known-Gap only as a named residual (Hybrid local real facts) with a backlog stub.
-- Breaking changes: PASS — frozen contracts v1, snapshot, 13 detectors, `computeGate`, `limits` untouched and gated; barrel change is one appended block; no export collision.
-- Security surface: PASS — pure browser-side module; same-firm rule with in-package defense in depth; verbatim-quote check; bounded-scan test; masking hand-off recorded; 0 live model calls (suggester is a seam only).
-- Section A (premise check): PASS — runs first and pins literals measured before any build.
-- Section B (types, limits, policy): PASS — mechanical.
-- Section C (detection): PASS — C6 deterministic tie-break and cover rule; residual risk is real-file accuracy, handled by tune-data-then-Known-Gap.
-- Section D (facts, definitions, references): PASS — by-import reuse of the carve-out regex, bounded patterns.
-- Section E (terms, coverage, request, baseline, analyze): PASS.
-- Section F (fixtures and scripts): PASS — design packages are not committed yet (`git ls-files samples/packages` is empty; two of three have README and answer-key, none has docs); the plan's Step 0 fallback to synthetic Hartwell covers it (accepted, not a gap).
-- Section G/H (tests, close): PASS.
-- Blast-radius disjointness vs `phase-blast-radius-registry.md`: PASS — unchanged from cycle 1.
-- Structural validator (`validate-plan-artifact.mjs`): 0 failures, 0 warnings.
+- Infra fit: PASS — file paths, names and the entry gate resolve at HEAD; no wait, no deploy; allow-list, registry and rollback consistent.
+- Test coverage: PASS — every developed behavior has a Fully-Automated gate (table below); G22-G24 are red-first with negatives and measured literals; the only Hybrid row is the opt-in local-facts check with a backlog stub.
+- Breaking changes: PASS — frozen contracts, snapshot and `computeGate` gated; Section/Part/`N. Title` behavior byte-identical (the 12 HTML samples contain 0 keyword-led heading lines, measured); new conditional heads add conditionals only on NG3/NG2 (Annex A and Annex F), RR1, Harbourline and #12, all explained by the B0.7 table with a stop rule.
+- Security surface: PASS — pure parser and detector code, no secret, auth, API, billing or trust-boundary change beyond the cross-firm baseline rule (own Fully-Automated gate); new patterns bounded and linear with an explicit time-bound test; 0 live model calls.
+- Section A (premise check): PASS — baseline literals measured before B0.
+- Section B0 (heading forms and conditional targets): PASS — mechanically feasible as written; highest-risk edit remains `checkTarget` branch order (E4).
+- Section B-H (types, detection, facts, terms, coverage, fixtures, tests, close): PASS — unchanged since the outer contract, which was verified against real code.
+- Blast-radius disjointness vs `phase-blast-radius-registry.md`: PASS.
 
-Open gaps: none blocking. Observations (not gaps): A2 says 4 tests for `golden-11-undefined-units`, measured 5 earlier (the gate only requires more than 0); the uncommitted parent-session edits are handled by the Step 0 re-sync.
+Open gaps: none (no FAIL, no open CONCERN). Named residuals are Known-Gaps below, none a developed behavior without a gate.
+Out-of-scope gaps deferred to backlog: none this cycle.
 
 ### Plan updates applied
-- None by this agent. The plan body supplement from cycle 1 is what this contract validates.
+- None by this agent (write scope is the contract plus the two Resume status lines). The plan body already carries the C1-C7 supplement.
 
 ### Execute-agent instructions
-- E1 (Step 0, blocking): do not start until the parent session confirms the demo-readiness fixes are committed; `git status --short` must show no modified tracked file; record the literal 40-char `P1_BASE`. Never stash, checkout, reset or restore.
-- E2 (Step 0): `git ls-files samples/packages` is empty now. Re-check; for any design package without committed docs, `answer-key.md` and `README.md`, use the Hartwell fallback and record it in the phase report; `demo-packages.json` then omits that package and sets `primaryDemoId` = `hartwell`.
-- E3 (Step A): measure the baseline first; literals in `package-undefined-term-baseline` are measured, never assumed.
-- E4 (Step C): write `package-type-detection-golden` first and run over committed real facts; tune DATA only. A tie never yields `high`.
-- E5 (Step E6): `PackageDocFormat` only; never export a name that shadows `DocFormat`.
-- E6 (Step H2): stage by explicit path; `make-package.ts` and every new path must avoid the three blocked words; use a scratchpad script if a staging command is rejected. Never `git add -A` or `git add .`.
-- E7 (Step H1): `DocumentRequest.quote` is stored unmasked; record the Phase 3c masking hand-off in the report.
+- E1 (Step 0): `git merge-base --is-ancestor 0a67dc4 HEAD` and no modified tracked non-process file; never stash, checkout, reset or restore; record the literal 40-char `P1_BASE` and rollback target `47d98295-c583-4dc0-9f96-f9e161c8cf35`.
+- E2 (Step A): measure baseline literals first; never assume.
+- E3 (Step B0): write G22 and G23 red first; keep a before/after run of the same engine for B0.7; stop rule stands (more than 3 new findings on one sample, any noise finding, or an unexplained count change stops the step; tighten patterns, never loosen thresholds).
+- E4 (Step B0.5): run the Annex and Question branches in `checkTarget` before the bare-Part branch; `uncertain` never yields a finding.
+- E5 (Step C): `package-type-detection-golden` first over committed real facts; tune DATA only; a tie never yields `high`.
+- E6 (Step E6): export `PackageDocFormat` only; never shadow `DocFormat`.
+- E7 (Step H): stage by explicit path; avoid the three blocked words in new paths; never `git add -A`; record that `DocumentRequest.quote` is stored unmasked (Phase 3c routes it through `maskAndClamp`).
+- E8 (regex bound; new, low): `test/security/redos.test.ts` does not import `structure/headings` (it hard-codes `HEADING_RES`), so exporting the new heading regex does not by itself add it to redos; G22's own hostile-input time bound is the gate for it. Optional: add `import * as headings` plus `...collect(headings)` to `ALL` as an explained edit (the `>= 45` sanity check still holds). New exported regexes in `flow.ts` and `conditionals.ts` ARE auto-collected (`collect(flow)`, `collect(conditionals)`) and must stay under the 2000 ms budget there.
+- E9 (heading vs scope; new, low): `scopeOpener` runs before `sectionCandidate`, so a bold or caps keyword-led line containing `Instructions`, `Terms and Conditions`, `Signature Pages` or `Appendix X` opens a scope instead of a section (same as `N. Title` today). Pin one such case in G22 as measured, do not change `numbering-scopes.ts`.
+- E10 (label grammar; new, low): the annex label match is `^Annex <label>` with NO required trailing period: sample #12 writes `Annex D:` and the design packages write `Annex F.`; include both forms in G23 (and `Annex D:` with a label present stays silent).
 
 ### Test gates (5-column table; strategy carries only the 3 proving strategies)
 
 | criterion id | behavior | strategy | proving test | gap-resolution |
 |---|---|---|---|---|
 | premise | undefined-term baseline pinned before intake | Fully-Automated | `pnpm --filter @aduin/core test package-undefined-term-baseline` | B |
+| AC-S1 | `Section N.`, `SECTION N`, `Article N` or roman, bold or not, titled or bare, accepted; prose, statute cites, `Section N:` lines, dotted decimals rejected; hostile-input time bound | Fully-Automated | `pnpm --filter @aduin/core test structure-heading-forms` | B |
+| AC-S2 | `Annex X` and `Question N` targets: missing is a finding, present is silent, no annex evidence is uncertain | Fully-Automated | `pnpm --filter @aduin/core test broken-conditional-annex-question` | B |
+| AC-S3 | design DOCX goldens encode answer-key should-catch and should-not-catch (LB2, RR1, NG3, NG2, two LPAs) | Fully-Automated | `pnpm --filter @aduin/core test package-design-goldens` | B |
+| AC-S4 | 12-sample corpus counts equal the post-B0.7 table, every change explained | Fully-Automated | `pnpm --filter @aduin/core test package-design-goldens` (corpus block) and `pnpm --filter @aduin/core test` | B |
 | AC-I1 core | 12 files, 40 MB, per-file refusal, no side effects | Fully-Automated | `pnpm --filter @aduin/core test package-limits` | B |
 | schema | PackageAnalysis schema deep-equals `fixtures/package/schema.v1.json`; `DocFormat` unchanged | Fully-Automated | `pnpm --filter @aduin/core test package-types-contract` | B |
 | AC-I4 | type, role, confidence, template reason per file | Fully-Automated | `pnpm --filter @aduin/core test package-detect` | B |
@@ -394,36 +439,69 @@ Open gaps: none blocking. Observations (not gaps): A2 says 4 tests for `golden-1
 | AC22 base | `computeGate` unchanged | Fully-Automated | `pnpm --filter @aduin/core test gate-state-matrix` | A |
 | AC-I20 core, T3 | one request per missing label, deduped | Fully-Automated | `pnpm --filter @aduin/core test package-request` | B |
 | AC8 | byte-equal, shuffled order identical | Fully-Automated | `pnpm --filter @aduin/core test package-determinism` and `pnpm --filter @aduin/core test determinism` | B / A |
-| robustness | no catastrophic regex on hostile input | Fully-Automated | `pnpm --filter @aduin/core test package-scan-bounded` | B |
-| frozen v1 | contracts snapshot and detectors untouched | Fully-Automated | `pnpm --filter @aduin/core test contracts` plus `git diff --quiet P1_BASE --` over the Exit Gate path set | A |
+| robustness | no catastrophic regex on hostile input (package scans, new heading regex, new conditional regexes) | Fully-Automated | `pnpm --filter @aduin/core test package-scan-bounded`, `pnpm --filter @aduin/core test redos` and the G22 time-bound cases | B |
+| frozen v1 | contracts snapshot untouched; only the five allow-list files change in core src outside `src/package/` and the barrel | Fully-Automated | `pnpm --filter @aduin/core test contracts` plus `git diff --name-only P1_BASE -- packages/core/src` set check and `git diff --quiet P1_BASE -- apps` | A |
 | fixtures | generated fixtures reproduce | Fully-Automated | `pnpm --filter @aduin/scripts test package-fixtures` and `pnpm --filter @aduin/scripts fixtures:check` | B |
 | AC-I5 local | real local files still match committed facts | Hybrid | `PACKAGE_LOCAL=1 pnpm --filter @aduin/core test package-realfacts-local` (precondition: `_full-prospectus` present locally; never a CI gate) | D |
 
-Failing stubs (Fully-Automated rows only, red first, consumed by execute-agent): for each row above, in the file named by its proving test, `test("should <behavior cell>", () => { throw new Error("NOT IMPLEMENTED — TDD stub: <behavior cell>") })`. The Hybrid row gets none.
+gap-resolution legend: A proven now; B fixed in this plan (gate added by the checklist); C deferred to a named later phase/plan; D backlog test-building stub (named residual). Known-Gap is never a `strategy:` value.
+
+Legacy line form (retained for existing consumers):
+- core package module: [Fully-automated: the one-token `pnpm --filter @aduin/core test <token>` calls in the table above] | [hybrid: `PACKAGE_LOCAL=1 pnpm --filter @aduin/core test package-realfacts-local`, needs local `_full-prospectus`] | [agent-probe: none] | [known-gap: live LLM doc-type suggester (seam only), B0 residual forms]
+- structure and detectors (T14): [Fully-automated: `structure-heading-forms`, `broken-conditional-annex-question`, `package-design-goldens`, `contracts`, `determinism`, `redos`] | [hybrid: none] | [agent-probe: none] | [known-gap: Schedule/Exhibit targets, per-Part question numbering, dash or next-line heading titles]
+- fixtures and scripts: [Fully-automated: `pnpm --filter @aduin/scripts test package-fixtures`, `pnpm --filter @aduin/scripts fixtures:check`] | [hybrid: none] | [agent-probe: none] | [known-gap: none]
+
+Failing stubs (Fully-Automated rows only, red first; in the file named by each row's proving test; the Hybrid row gets none). Skeleton for every row, `<behavior>` is the behavior cell of that row:
+
+```
+test("should <behavior>", () => {
+  throw new Error("NOT IMPLEMENTED — TDD stub: <behavior>")
+})
+```
+
+Row-specific stubs (verbatim scenario names for the three T14 gates, which carry the highest risk):
+
+```
+// structure-heading-forms.test.ts
+test("should accept Section N. and Article roman headings without bold or caps", () => { throw new Error("NOT IMPLEMENTED — TDD stub: keyword-led headings") })
+test("should reject Section N: instruction lines, dotted decimals, lowercase roman and Article IV of the Agreement prose", () => { throw new Error("NOT IMPLEMENTED — TDD stub: heading negatives") })
+test("should finish the heading regex on 100000-char hostile lines under the time bound", () => { throw new Error("NOT IMPLEMENTED — TDD stub: heading regex bound") })
+// broken-conditional-annex-question.test.ts
+test("should flag complete Annex F when no Annex F block exists and stay silent when it does", () => { throw new Error("NOT IMPLEMENTED — TDD stub: annex target") })
+test("should flag skip to Question 15 with 14 questions numbered across Parts and stay silent with 15", () => { throw new Error("NOT IMPLEMENTED — TDD stub: question target") })
+test("should stay uncertain with no annex or question evidence", () => { throw new Error("NOT IMPLEMENTED — TDD stub: uncertain target") })
+// package-design-goldens.test.ts
+test("should pin measured section counts and answer-key findings for LB2, RR1, NG3, NG2 and both LPAs", () => { throw new Error("NOT IMPLEMENTED — TDD stub: design goldens") })
+test("should keep the 12-sample corpus counts equal to the post-B0.7 table", () => { throw new Error("NOT IMPLEMENTED — TDD stub: corpus regression") })
+```
 
 Regression suite (after all steps): `pnpm --filter @aduin/core test`, `pnpm --filter @aduin/scripts test`, `pnpm typecheck`, `pnpm lint`, `pnpm guard:cf`, `pnpm secrets:scan`, all exit 0; one token per call, no `--`, confirm more than 0 tests ran.
 
 What This Coverage Does NOT Prove:
-- Detection goldens prove the rules on committed facts and four to five real files only, not accuracy on unseen subscription documents or non-English files.
+- Heading goldens prove the five design DOCX files and the 12 HTML samples (none has a keyword-led heading line), not other drafting styles such as `Section 4 -` dashes, centered all-caps `ARTICLE IV` with the title on the next line, or non-English headings.
+- Annex and Question resolution is proven on the measured documents; a document that numbers questions per Part, or names annexes `Schedule` or `Exhibit`, is not covered (those targets are out of B0 scope).
+- Detection goldens prove the rules on committed facts and four to five real files only, not accuracy on unseen subscription documents.
 - Reference recall proves seeded and NGI #5/#6 phrases, not arbitrary drafting styles; the ground truth shares its exclusion list with the extractor.
-- Suppression and unverified-term logic is proven on a synthetic LPA excerpt, not on a real LPA or a real multi-document package.
+- Suppression and unverified-term logic is proven on a synthetic LPA excerpt and the design LPAs, not on a real multi-document package.
 - Same-firm eligibility is proven as a pure function; the browser store, Dexie persistence and UI (Phases 2 and 3) are not exercised here.
-- Determinism is proven for this module in one Node process, not for the browser worker path.
+- Determinism is proven in one Node process, not for the browser worker path; web specs that pin per-sample counts are read-only here and are recorded for Phase 2.
 - Quote masking at render and export is not proven here (Phase 3c).
 - Bounded-scan timing proves hostile-input safety on this machine's time bound, not worst-case browser performance.
 - The Hybrid local-facts check proves nothing in CI.
 
 ### High-risk pack
-Required: no. The module is pure and browser-side: no auth, billing, schema migration, public API, deploy or secret surface. The cross-firm baseline rule is a trust-boundary rule covered by the Fully-Automated `package-baseline-eligibility` gate and the Phase 2 e2e `intake-baseline-role-same-firm`; a manual-first pack is recommended at Phase 2 EVL, not here.
+Required: no. Pure browser-side and parser-side code: no auth, billing, schema migration, public API, deploy or secret surface. The cross-firm baseline rule is a trust-boundary rule covered by the Fully-Automated `package-baseline-eligibility` gate and the Phase 2 e2e `intake-baseline-role-same-firm`; a manual-first pack is recommended at Phase 2 EVL, not here.
 
 ### Backlog artifacts to create during durable capture
 - `process/features/fund-package-intake/backlog/intake-llm-doc-type-suggest_NOTE_17-10-26.md` — LLM suggester task (seam only ships; needs-live-provider).
 - `process/features/fund-package-intake/backlog/intake-local-real-facts_NOTE_17-10-26.md` — only if a local real file is missing or misses its authored type.
+- `process/features/fund-package-intake/backlog/intake-annex-question-forms_NOTE_17-10-26.md` — `Schedule`/`Exhibit` conditional targets, per-Part question numbering and dash or next-line heading titles (named residuals of B0).
 
 ### Known gaps on record
-- Live suggester behavior: none shipped (T2); seam proven by a fake only; residual with backlog stub (named residual, every developed behavior has a Fully-Automated gate; vacuous-green ban satisfied).
-- AC-I5 for local-only real files is Hybrid (opt-in); CI proves committed facts only.
+- Live suggester behavior: none shipped (T2); seam proven by a fake only; residual `known-gap: documented`, backlog stub `intake-llm-doc-type-suggest` (every developed behavior has a Fully-Automated gate; vacuous-green ban satisfied).
+- AC-I5 for local-only real files is Hybrid (opt-in); CI proves committed facts only; backlog stub `intake-local-real-facts` if a local file is missing.
+- B0 residual forms (Schedule/Exhibit targets, per-Part questions, dash or next-line heading titles): `known-gap: documented`, backlog stub `intake-annex-question-forms`; none is a developed behavior without a gate.
 
-No `## Autonomous Goal Block` is written to this phase plan: BRANCH B — the umbrella `intake-mvp-umbrella_PLAN_17-10-26.md` carries `## Stable Program Goal`, which governs.
+No `## Autonomous Goal Block` is written to this phase plan: BRANCH B — the umbrella `intake-mvp-umbrella_PLAN_17-10-26.md` carries `## Stable Program Goal` (verified on disk, count 1), which governs.
 
-Accepted by: n/a — Gate is PASS; no concern accepted or deferred beyond the named residual Known-Gaps above.
+Accepted by: not required for the gate (Gate: PASS, no open CONCERN). The named residuals above are recorded as known-gaps with backlog stubs by session (autonomous /goal, autopilot VALIDATE), not as accepted concerns.

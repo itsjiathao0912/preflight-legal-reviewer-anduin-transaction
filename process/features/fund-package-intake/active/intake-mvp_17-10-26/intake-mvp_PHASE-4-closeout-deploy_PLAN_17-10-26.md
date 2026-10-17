@@ -53,7 +53,7 @@ Nothing new is built in the product. The only files created are tests, one live 
 
 ## Entry Gate
 
-- Phases 1, 2 and 3 VERIFIED; their reports exist; `git status --short` clean for tracked files; record `git rev-parse HEAD` as `P4_BASE`; `ROLLBACK_VERSION` is recorded as the rollback target: the live version id reported by the parent session's "fixes deployed" message (orchestrator addition A), fallback `23612b12-51c7-4d75-a324-f4f2f6392ba8`; confirm it with `wrangler deployments list` at step E1.
+- Phases 1, 2 and 3 VERIFIED; their reports exist; `git status --short` clean for tracked files; record `git rev-parse HEAD` as `P4_BASE`; `ROLLBACK_VERSION` is recorded as the rollback target: `47d98295-c583-4dc0-9f96-f9e161c8cf35` (the live version after the parent's deployed demo-readiness fixes, code `0a67dc4`), fallback `23612b12-51c7-4d75-a324-f4f2f6392ba8`; confirm it with `wrangler deployments list` at step E1.
 - `P1_BASE` is a LITERAL 40-character sha copied from the Phase 1 report (the parent session's fixes commit recorded at Phase 1 Step 0), resolved BEFORE any C6/C7 command; never the symbolic `HEAD`. If `git status --short` shows ANY modified tracked file at entry, STOP and report to the orchestrator; never commit, stash, checkout, reset or restore another actor's edits. Untracked files outside the program (for example `.DS_Store`, `docs/walkthrough/`) are ignored; untracked files under `apps/**`, `packages/**`, `scripts/**` that are not Phase 1-3 outputs are a BLOCKED condition.
 - Credentials exist at `~/.config/cloudflare/credentials.env` (never printed).
 
@@ -120,8 +120,8 @@ Failure modes: preflight failure means no deploy; deploy failure leaves live on 
 - [ ] C3. Static gates: `pnpm typecheck`, `pnpm lint`, `pnpm guard:cf`, `pnpm secrets:scan`, `pnpm --filter @aduin/scripts fixtures:check`, `pnpm seed:check`, `pnpm --filter @aduin/scripts record:author --check`, `pnpm --filter @aduin/scripts precompute:ai --from-recordings --check` (never bare `--check`: it takes the guarded record-live path), `pnpm slice:check` (this runs its own plain web build and the stack slice spec; run it BEFORE the preview e2e and always rebuild plain again before deploying), `git diff --check`.
 - [ ] C4. Preview e2e, ONE invocation, nothing else running: `pnpm --filter @aduin/web test:e2e` (previous 173 passed plus 1 opt-in design-probe skip, plus every intake spec and the three new Phase 4 preview specs). On a failure: re-run that spec alone serially once before classifying (a known concurrent-run flake class exists; none is expected because nothing runs concurrently); a real failure is a fix cycle, not an in-place edit.
 - [ ] C5. `pnpm --filter @aduin/web test:e2e:stack-memory` (previous 10 passed plus `stack-memory-package-privacy`), run ONLY after C4 has finished.
-- [ ] C6. Contract gates: `git diff --quiet P1_BASE -- apps/worker packages/core/src/contracts packages/core/src/detectors packages/core/src/counsel` (exit 0) and `pnpm --filter @aduin/core test contracts` (contracts snapshot unchanged).
-- [ ] C7. Base-AC re-run table (one token per call): AC8 `pnpm --filter @aduin/core test determinism`; AC13 `pnpm --filter @aduin/core test golden-11-undefined-units`; AC22 `pnpm --filter @aduin/core test gate-state-matrix`; AC25 `pnpm --filter @aduin/web test:e2e no-llm-corpus`, `sample-zero-calls`; AC29 `pnpm --filter @aduin/web test:e2e perf-budget`; AC30 `pnpm --filter @aduin/web test:a11y`; PLUS (validate E4/Gap 3, one token per call, each must run more than 0 tests; an unmatched token exits 1 and is a plan defect to report, never a skip) core `package-determinism`; web `engine-package-api`, `package-db-v2`; e2e `gate-pill`, `counsel-gate`, `a11y-keyboard`, `intake-no-llm-run`, `intake-firm-tagging`, `intake-gate-warning-policy`, `intake-crossdoc-terms-real-error`, `intake-perf-budget`, `intake-a11y-keyboard`, `intake-demo-packages`, `stack-memory-package-privacy`. The `-e2e` labels in the Acceptance table below are NOT tokens; use these real spec names. AC40 `pnpm --filter @aduin/scripts test conformance-free-plan`; AC41 `pnpm --filter @aduin/web test:e2e upload-firm-tagging`; AC58 `pnpm --filter @aduin/worker test memory-storage-contract`, `memory-retention-purge-test`, `pnpm --filter @aduin/web test retention-purge`. (These duplicate parts of C2-C5 on purpose: the report lists them as the named re-run evidence.)
+- [ ] C6. Contract gates: `git diff --quiet P1_BASE -- apps/worker packages/core/src/contracts packages/core/src/detectors packages/core/src/counsel ':(exclude)packages/core/src/detectors/broken-conditional.ts' ':(exclude)packages/core/src/detectors/flow.ts'` (the two detector files are the T14 allow-list; structure files are not in this diff) (exit 0) and `pnpm --filter @aduin/core test contracts` (contracts snapshot unchanged).
+- [ ] C7. Base-AC re-run table (one token per call): AC8 `pnpm --filter @aduin/core test determinism`; AC13 `pnpm --filter @aduin/core test golden-11-undefined-units`; AC22 `pnpm --filter @aduin/core test gate-state-matrix`; AC25 `pnpm --filter @aduin/web test:e2e no-llm-corpus`, `sample-zero-calls`; AC29 `pnpm --filter @aduin/web test:e2e perf-budget`; AC30 `pnpm --filter @aduin/web test:a11y`; PLUS (validate E4/Gap 3, one token per call, each must run more than 0 tests; an unmatched token exits 1 and is a plan defect to report, never a skip) core `package-determinism`, `structure-heading-forms`, `broken-conditional-annex-question`, `package-design-goldens`; web `engine-package-api`, `package-db-v2`; e2e `gate-pill`, `counsel-gate`, `a11y-keyboard`, `intake-no-llm-run`, `intake-firm-tagging`, `intake-gate-warning-policy`, `intake-crossdoc-terms-real-error`, `intake-perf-budget`, `intake-a11y-keyboard`, `intake-demo-packages`, `stack-memory-package-privacy`. The `-e2e` labels in the Acceptance table below are NOT tokens; use these real spec names. AC40 `pnpm --filter @aduin/scripts test conformance-free-plan`; AC41 `pnpm --filter @aduin/web test:e2e upload-firm-tagging`; AC58 `pnpm --filter @aduin/worker test memory-storage-contract`, `memory-retention-purge-test`, `pnpm --filter @aduin/web test retention-purge`. (These duplicate parts of C2-C5 on purpose: the report lists them as the named re-run evidence.)
 
 ### Step D — Plain web build with the site key, preflight (scratchpad scripts; no word restrictions inside them)
 
@@ -247,32 +247,37 @@ Signal score 4/7 (S4 phase program, S6 deploy/runtime high-risk class, S7 files,
 Status: PASS
 Date: 17-10-26
 date: 2026-10-17
-generated-by: outer-pvl
-supersedes: 2026-10-17 (outer-pvl) — PVL cycle 3 re-validation from V1 after SUPPLEMENT_APPLIED (gaps 7-8 landed in the plan body)
+generated-by: inner-pvl: phase-4
+supersedes: 2026-10-17 (outer-pvl) — inner PVL has current evidence (scoped re-validation of C6/C7 after the Phase 1 T14 scope addition)
 
 Parallel strategy: sequential
 Rationale: recount 3/7 (S4 phase program, S6 deploy/runtime high-risk class, S7 5+ files). Dominant signal: S6 (single outward-facing deploy). Fit overrides the score: the deploy is single-flight; Playwright shares port 4317 and one web output folder. Model: ONE opus vc-execute-agent (Steps B, D, E, F, G), one independent sonnet vc-tester (EVL, serial re-run of the contract commands), one sonnet vc-code-reviewer/security pass over the evidence pack. Agent count: 1 + 1 + 1 = 3 (parallel subagents alternative: 4 + 7 = 11, not recommended; workflow and agent team not applicable). Cost guard: not triggered.
 
-### V1 pre-check evidence (cycle 3)
+### V1 pre-check evidence (inner PVL, scoped to C6 and C7)
 - Structural validator on the plan: 0 failures, 0 warnings. Blast Radius, Public Contracts, Touchpoints, Verification Evidence present.
-- Gap 7 RESOLVED against real code: C3 now reads `pnpm --filter @aduin/scripts precompute:ai --from-recordings --check`. `scripts/src/precompute/precompute-ai.ts` lines 125-133 confirm that without `--from-recordings` the script takes the record-live path (guarded by ALLOW_LIVE_LLM), and its header documents `--from-recordings --check` as the offline drift gate; `process/context/tests/all-tests.md` lines 201 and 206 name the same form.
-- Gap 8 RESOLVED against the P1 plan: B4 now reads coverage status text, GP item count and labels from `fixtures/package/expected.json` for the chosen package and states the `northgate-iii`-else-`hartwell` rule. The P1 plan (F1b, F2) creates `expected.json` (authored coverage and requests; northgate-iii entries derived from the answer key) and the P2 plan (F5, F5b) lists design packages first in `/samples/packages.json`. P3 testids `findings-coverage-line`, `gp-group`, `gp-request-export` exist in its plan. `expected.json` is not on disk yet because P1 has not executed (expected; an execute-time precondition covered by the A1 entry gate).
-- Regression check on the supplement edit: only C3 and B4 text changed; no other step, token, command or contract reference was altered. C7 tokens, A1 STOP rule, D1 single-match rule, F5 rollback, G3 guard run all still present. No push, no secret put, no D1 or route action introduced.
-- `results.tsv`: 5 lines (header, baseline, cycles 1-3), so at least 1 recorded PVL fix cycle.
-- Dirty tracked tree from the parent session's demo-readiness fixes: accepted, not a plan gap (A1 STOP rule and the Step 0 re-sync handle it).
+- Scope of change since the cycle-3 PASS (`git diff` of this plan): exactly two lines, C6 and C7. Nothing else in the plan body changed.
+- C7 new tokens map one-to-one to Phase 1 test files (Phase 1 plan "Test files" allow-list line, Step B0.2, G22-G25, Verification Evidence rows):
+  - `structure-heading-forms` = `packages/core/test/unit/structure-heading-forms.test.ts` (AC-S1, G22)
+  - `broken-conditional-annex-question` = `packages/core/test/unit/broken-conditional-annex-question.test.ts` (AC-S2, G23)
+  - `package-design-goldens` = `packages/core/test/golden/package-design-goldens.test.ts` (AC-S3 and AC-S4, G24)
+  All three are core tokens (`pnpm --filter @aduin/core test <token>`), one per call, Fully-Automated. The files are not on disk yet because Phase 1 has not executed (expected; an execute-time precondition covered by the A1 entry gate and the rule that each token must run more than 0 tests).
+- C6 exclusions equal the Phase 1 T14 allow-list for `detectors/`: `broken-conditional.ts` and `flow.ts` (the same two `:(exclude)` pathspecs appear in the Phase 1 Verification Evidence git-diff gate). The other three allow-list files (`structure/headings.ts`, `structure/structurer.ts`, `structure/conditionals.ts`) sit under `packages/core/src/structure`, which C6 does not diff, so no exclusion is needed. `contracts/` and `counsel/` stay byte-identical, `apps/worker` stays byte-identical. The contracts snapshot gate is unchanged.
+- No regression: A1 STOP rule, literal `P1_BASE`, D1 single-match site-key rule, E-step single-Worker STOP, F5 non-interactive rollback, G3 final guard run, C3 `--from-recordings --check` form, B4 `expected.json` rule, and all other C7 tokens are still present and unchanged. No push, no secret put, no D1 or route action introduced.
+- `results.tsv`: 5 lines (header, baseline, cycles 1-3, inner-refresh row), so at least 1 recorded PVL fix cycle.
+- Working tree: tracked modifications are the program's own process files; no product-source edit by this validation.
 
 ### Dimension findings
-- Infra fit: PASS — scripts, ports, Worker name, rollback target, no route/zone/D1/secret change all verified.
-- Test coverage: PASS — C3 uses the offline `--from-recordings --check` form (Gap 7 closed); B4 expectations come from `expected.json` (Gap 8 closed); every developed behavior has a Fully-Automated or Hybrid gate.
-- Breaking changes: PASS — no source, contract, schema, route, secret or wrangler change; only the served static bundle changes.
-- Security surface: PASS — credentials only via the APPROVED-marker line in the same Bash call; public site key from the live bundle, mode-600 file deleted after F; AI/OCR aborted and counted; privacy spec proves no document text leaves the browser.
+- Infra fit: PASS — scripts, ports, Worker name, rollback target, no route/zone/D1/secret change; C6 pathspec syntax valid for `git diff --quiet`.
+- Test coverage: PASS — every new token has a named Phase 1 test file and a Fully-Automated gate; AC-S1..AC-S4 are re-run in Phase 4 as named evidence.
+- Breaking changes: PASS — Phase 4 still edits no source; the T14 edits belong to Phase 1 and are fenced by the five-file allow-list and the contracts snapshot gate.
+- Security surface: PASS — unchanged: credentials only via the APPROVED-marker line in the same Bash call; public site key from the live bundle with the mode-600 file deleted after F; AI/OCR aborted and counted; privacy spec proves no document text leaves the browser.
 - Section A Entry: PASS — literal `P1_BASE`, STOP on dirty tracked tree, rollback target recorded.
-- Section B Specs and live script: PASS — B4 reads package facts from `expected.json`; failing-POST rule unfiltered.
-- Section C Regression: PASS — C3 precompute form corrected; C7 tokens all resolve.
-- Section D Plain web bundle and preflight: PASS — single-match site-key rule and key-file deletion in plan.
-- Section E Deploy: PASS — single Worker, STOP conditions, one 10500 retry, no secret or D1 command.
-- Section F Live smoke: PASS — non-interactive rollback plus F1/F2 re-run after rollback.
-- Section G Evidence and report: PASS — final guard run after the last commit in plan.
+- Section B Specs and live script: PASS — unchanged.
+- Section C Regression: PASS — C6 allow-list exclusions and C7 T14 tokens match Phase 1 exactly.
+- Section D Plain web bundle and preflight: PASS — unchanged.
+- Section E Deploy: PASS — unchanged.
+- Section F Live smoke: PASS — unchanged.
+- Section G Evidence and report: PASS — unchanged.
 
 Totals: 0 FAILs / 0 CONCERNs / 11 PASSes. Net gate: PASS. Net-gate vacuous-green ban satisfied: operator residuals are named Known-Gap rows with backlog stubs, never the sole coverage of a developed behavior.
 
@@ -281,21 +286,24 @@ Totals: 0 FAILs / 0 CONCERNs / 11 PASSes. Net gate: PASS. Net-gate vacuous-green
 |---|---|
 | 1 entry gate literal `P1_BASE`, dirty tree | RESOLVED (A1, Entry Gate) |
 | 2 pre-deploy rehearsal of live assertions | RESOLVED (B3) |
-| 3 spec tokens and C7 completeness | RESOLVED (C7) |
+| 3 spec tokens and C7 completeness | RESOLVED (C7, now including the three T14 tokens) |
 | 4 site-key extraction and key-file deletion | RESOLVED (D1) |
 | 5 non-interactive rollback | RESOLVED (F5) |
 | 6 final guard run after commits | RESOLVED (G3) |
 | 7 `precompute:ai --from-recordings --check` | RESOLVED (C3) |
 | 8 B4 expectations from `expected.json` for the chosen package | RESOLVED (B4) |
+| 9 C6 T14 allow-list exclusions and C7 T14 tokens (new this cycle) | RESOLVED (C6, C7; verified against the Phase 1 plan) |
 
 ### Plan updates applied
-None by validate in this cycle. The supplement for gaps 7-8 was applied to the plan text by plan-agent before this re-validation.
+None by validate in this cycle. The C6 and C7 edits were applied to the plan text before this re-validation.
 
 ### Execute-agent instructions
 - E1-E12 from cycle 1 stay in force unless the plan text states them (A1 STOP rule, B3, C7 tokens, D1, F5, G3 are in the plan; E5 ordering, E7 preflight-immediately-before-deploy plus `git diff --quiet af59da6 -- apps/worker`, E8 credential line and `deployments list` before and after, E10 abort-and-count, E12 hook-safe scripts remain binding).
-- E13 (C3): run `pnpm --filter @aduin/scripts precompute:ai --from-recordings --check`; the bare `--check` goes through the record-live path and must never be run. (Now also in the plan text.)
-- E14 (B4): the smoke asserts coverage status text, GP item count and labels from `fixtures/package/expected.json` for the package it opens (`northgate-iii` when listed in `/samples/packages.json`, else `hartwell`); never hard-code package facts. If `expected.json` lacks an entry for the chosen package, fall back to `hartwell` and record it. (Now also in the plan text.)
+- E13 (C3): run `pnpm --filter @aduin/scripts precompute:ai --from-recordings --check`; the bare `--check` goes through the record-live path and must never be run. (Also in the plan text.)
+- E14 (B4): the smoke asserts coverage status text, GP item count and labels from `fixtures/package/expected.json` for the package it opens (`northgate-iii` when listed in `/samples/packages.json`, else `hartwell`); never hard-code package facts. If `expected.json` lacks an entry for the chosen package, fall back to `hartwell` and record it. (Also in the plan text.)
 - E15 (ROLLBACK_VERSION): if the parent session's reported live id differs from `deployments list` at E1, STOP and report; otherwise use the confirmed id in every rollback command.
+- E16 (C6): run the C6 `git diff --quiet P1_BASE ...` with the literal 40-character sha. If it exits non-zero, list `git diff --name-only P1_BASE -- packages/core/src/detectors packages/core/src/counsel packages/core/src/contracts apps/worker`; any file other than `detectors/flow.ts` and `detectors/broken-conditional.ts` is a BLOCKED condition (route to a fix cycle, never an in-place edit).
+- E17 (C7 T14 tokens): `structure-heading-forms`, `broken-conditional-annex-question` and `package-design-goldens` are core tokens, one per call, each must run more than 0 tests. An unmatched token exits 1: report it as a plan defect against Phase 1 (its test file is missing), never skip it. The Phase 1 report's `## T14 Corpus Regression` explanation table is the reference for any changed golden count.
 
 ### Test gates (run after each step; EVL re-runs all serially)
 
@@ -304,12 +312,15 @@ C3 5-column table (strategy column carries only the three proving strategies; Kn
 | criterion id | behavior | strategy | proving test | gap-resolution |
 |---|---|---|---|---|
 | AC8 | Package flow is reproducible; settings-free analyze equals today | Fully-Automated | `pnpm --filter @aduin/core test package-determinism`; `pnpm --filter @aduin/core test determinism`; `pnpm --filter @aduin/web test engine-package-api` | A |
+| AC-S1 (T14) | Structurer accepts `Section N.`, `SECTION N`, `Article N.`, roman `Article I.`, rejects mid-sentence prose | Fully-Automated | `pnpm --filter @aduin/core test structure-heading-forms` | A |
+| AC-S2 (T14) | `broken-conditional` resolves `Annex X` and `Question N` targets | Fully-Automated | `pnpm --filter @aduin/core test broken-conditional-annex-question` | A |
+| AC-S3 / AC-S4 (T14) | Design-package DOCX goldens encode the answer-key catches; the 12 HTML samples show no false-positive flood | Fully-Automated | `pnpm --filter @aduin/core test package-design-goldens` | A |
 | AC13 | "Units" still undefined without the LPA; a term defined nowhere stays an error with the LPA | Fully-Automated | `pnpm --filter @aduin/core test golden-11-undefined-units`; `pnpm --filter @aduin/web test:e2e intake-crossdoc-terms-real-error` | A |
 | AC22 | Strict gate unchanged; missing sub agreement blocks; LPA/PPM warns | Fully-Automated | `pnpm --filter @aduin/core test gate-state-matrix`; e2e `gate-pill`, `counsel-gate`, `intake-gate-warning-policy` | A |
 | AC25 | No-LLM mode complete including the package flow | Fully-Automated | e2e `no-llm-corpus`, `sample-zero-calls`, `intake-no-llm-run` (each its own call) | A |
 | AC29 | Package flow perf: hartwell under 2 s, ngi under 5 s (e2e bundle, Desktop Chromium) | Fully-Automated | `pnpm --filter @aduin/web test:e2e perf-budget`; `pnpm --filter @aduin/web test:e2e intake-perf-budget` | B (new spec B1) |
 | AC30 | Zero critical axe violations and keyboard operation on the package surfaces | Hybrid | `pnpm --filter @aduin/web test:a11y`; e2e `a11y-keyboard`, `intake-a11y-keyboard` (precondition: port 4317 free, nothing else running) | B (new spec B2); manual keyboard pass = D |
-| AC40 | Worker unchanged, parsing stays in the browser, fits Workers Free | Fully-Automated | `pnpm --filter @aduin/worker test`; `git diff --quiet P1_BASE -- apps/worker`; `git diff --quiet af59da6 -- apps/worker`; `pnpm --filter @aduin/scripts test conformance-free-plan`; live `/api/health` | A |
+| AC40 | Worker unchanged, parsing stays in the browser, fits Workers Free; contracts, counsel and detectors (except the two T14 files) unchanged | Fully-Automated | `pnpm --filter @aduin/worker test`; C6 `git diff --quiet P1_BASE -- apps/worker packages/core/src/contracts packages/core/src/detectors packages/core/src/counsel` with the two T14 excludes; `pnpm --filter @aduin/core test contracts`; `git diff --quiet af59da6 -- apps/worker`; `pnpm --filter @aduin/scripts test conformance-free-plan`; live `/api/health` | A |
 | AC41 | Documents linked to firm, fund, version across the package | Fully-Automated | e2e `upload-firm-tagging`, `intake-firm-tagging` | A |
 | AC58 | Server keeps only snippets, hashes, metadata; package flow sends no document text, creates no D1 table | Fully-Automated | `pnpm --filter @aduin/worker test memory-storage-contract`, `memory-retention-purge-test`; `pnpm --filter @aduin/web test retention-purge`, `package-db-v2`; `pnpm --filter @aduin/web test:e2e:stack-memory` (includes `stack-memory-package-privacy`) | A / B (new spec B3) |
 | AC-I1..AC-I20 | All program criteria still green in one serial run | Fully-Automated | C2 suites + C4 preview run + C5 stack-memory (each criterion's own gate per the umbrella traceability table) | A |
@@ -323,10 +334,11 @@ Legacy line form (existing consumers):
 - Package perf: [Fully-automated: `pnpm --filter @aduin/web test:e2e intake-perf-budget`]
 - Package a11y: [hybrid: `pnpm --filter @aduin/web test:e2e intake-a11y-keyboard` + precondition port 4317 free] | [known-gap: manual keyboard pass]
 - Package privacy: [Fully-automated: `pnpm --filter @aduin/web test:e2e:stack-memory` after the preview run]
+- T14 structure: [Fully-automated: `pnpm --filter @aduin/core test structure-heading-forms`, `broken-conditional-annex-question`, `package-design-goldens`]
 - Live smoke: [hybrid: `pnpm --filter @aduin/scripts smoke:live-package` + precondition deploy done] | [known-gap: real-session checks]
 - Regression: [Fully-automated: C1-C7 serial]
 
-Failing stubs for NEW Fully-Automated rows (copied verbatim into the execute-agent red-first step; existing-suite rows already have their tests):
+Failing stubs for NEW Fully-Automated rows (copied verbatim into the execute-agent red-first step; existing-suite rows and the Phase 1 T14 tests already have their tests):
 
 Failing stub (AC29 package perf):
 test("should finish hartwell under 2 s and ngi under 5 s in the e2e bundle", () => {
@@ -353,6 +365,8 @@ What this coverage does NOT prove:
 - The live smoke runs without a Turnstile token: it proves render-first findings, headers, no failing POST and zero AI/OCR, but NOT real-session memory writes, the AC51 `rules_hash8` echo, live AI/OCR quality or quota, the D4 `rows_written` burst, Worker CPU p99 under a human session, or the Turnstile iframe under CSP with a solved challenge (R4).
 - `stack-memory-package-privacy` proves no document text leaves the browser on a local seeded stack; it does not prove the same on the deployed D1.
 - `git diff` of `apps/worker` proves source parity, not that Cloudflare serves exactly that artifact (F1/F2 and the version id cover that).
+- The C6 diff proves only that detectors other than the two T14 files, contracts and counsel did not change; it does not prove the two T14 files behave correctly (that is `broken-conditional-annex-question` and `package-design-goldens`), and the structure files are covered by `structure-heading-forms` and the full core suite, not by the diff.
+- The T14 tokens prove the Phase 1 corpus and design-package behavior on committed fixtures; they do not prove heading or Annex forms in documents outside those fixtures.
 - Preflight proves the artifact shape, not runtime behavior.
 
 ### High-risk pack
@@ -366,10 +380,10 @@ Required: yes (class: deploy/runtime plus trust boundary; `mustStopBeforeFinaliz
 - Any local-real-facts stub from the Phase 1 report; a site-key extraction script note (test infra improvement).
 
 ### Open gaps
-none (gaps 1-8 resolved).
+none (gaps 1-9 resolved).
 - Known-Gap (named residual, not a proving strategy): operator residuals R-live (see "What This Coverage Does NOT Prove"), stubs above; manual keyboard pass for the package surfaces (carried). Every developed package behavior has a Fully-Automated or Hybrid gate, so the vacuous-green ban is satisfied.
 
 Goal block: BRANCH B (the umbrella plan holds `## Stable Program Goal`); no goal-block section is written to this phase plan.
 
-Gate: PASS (0 FAILs, 0 CONCERNs; gaps 7 and 8 verified resolved; 3 recorded PVL cycles in `results.tsv`)
+Gate: PASS (0 FAILs, 0 CONCERNs; C6 and C7 T14 changes verified against the Phase 1 plan; 3 recorded PVL cycles plus the inner refresh row in `results.tsv`)
 Accepted by: session (autonomous, autopilot) — accepted items: parent-session uncommitted edits handled by the A1/Step 0 STOP rule; Turnstile and session-dependent operator residuals carried as named Known-Gaps with backlog stubs.
