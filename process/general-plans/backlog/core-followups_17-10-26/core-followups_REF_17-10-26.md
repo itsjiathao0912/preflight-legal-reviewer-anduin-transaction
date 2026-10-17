@@ -22,7 +22,7 @@ metadata:
 
 | # | Item | Owner phase |
 |---|---|---|
-| U1 | The "§N ¶N" locator chip is missing on the expanded finding header and on some collapsed rows. Check whether the location data is missing or long titles drop the chip | 02 / 05 (next UI touch) |
+| U1 | DONE (shipped in Phase 05, `locator-chip` e2e). Was: The "§N ¶N" locator chip is missing on the expanded finding header and on some collapsed rows. Check whether the location data is missing or long titles drop the chip | done |
 | U2 | Measure the contrast of small grey captions, locators and rail icons (4.5:1 text, 3:1 icons); adjust tokens if needed | 10 |
 | U3 | Add a keyboard-focus screenshot to the design probe set; the manual keyboard pass is in P10 | 10 |
 | U4 | The notes underline is thin and relies on colour (icon and chip compensate); rail badges overlap glyphs as in the mockup; 2 serious axe items in the P03 report | 10 |
@@ -53,7 +53,7 @@ metadata:
 | P2-6 | `used-before-defined` residual false positives on titles, signature captions and headings (#2 "RIA Representative", #7/#10 "Subscription Agreement"); `unused` misses lowercase uses ("net worth", #10) and `capitalization` fires on a heading (#10) | 05 |
 | P2-7 | Structure view icons `restart`, `half`, `branch`, `pin`, `radio`, `boxes`, `ext` from app.html are not in the web sprite; substitutes are used (undo, ring, jump, rule, ring, check, doc) | 10 |
 | P2-8 | The "Show flow diagram" toggle renders a section/condition list, not the app.html SVG diagram | 09 |
-| P2-9 | U1 locator chip: explicitly deferred from Phase 02 to Phase 05 (engine `toView.ref` lacks the paragraph part; Phase 05 touches `features/review/**` next) | 05 |
+| P2-9 | DONE (shipped in Phase 05). Was: U1 locator chip: explicitly deferred from Phase 02 to Phase 05 (engine `toView.ref` lacks the paragraph part; Phase 05 touches `features/review/**` next) | done |
 | F3 | Done in Phase 02 (`mask-widening`: digit runs over 31, IBAN, alpha-prefixed) | done |
 | F4 | DONE (Phase 05, bounded defined-term scan; goldens unchanged). Was: Quadratic defined-term scans in `defined-term-issues` (Phase 02 review F4); deferred from the Phase 02 review fix cycle. F7 (raw hex tokens) skipped: `tokens.css` has no matching tokens | 05 |
 
@@ -84,3 +84,21 @@ metadata:
 | P5-5 | P2-4 residual: #2 / #5 structure badge counts are not driven by "check one" (see P2-4) | 09 |
 | W3 / W10 / P2-6 | Still open (W3 `x-aduin-doc` client-attested; W10 refused-request claim rows; P2-6 `used-before-defined` false positives) | unchanged |
 | W13 | Unchanged: core `limits.findingsChunk` (50) vs server cap (25 findings per chunk) | 08 |
+
+## Phase 06 follow-ups (PDF / DOCX / OCR review, 2026-10-17; final verdict APPROVE at 73599b5)
+
+| # | Item | Owner phase |
+|---|---|---|
+| F4 | No image-coverage signal for PDF pages that mix text and images (text-only extraction may hide an image-only clause) | later / 10 |
+| F6 | pdf.js document is re-opened per rendered page; reuse one document across pages | later |
+| F7 | Lower the megapixel cap or resize during decode for large page images | later |
+| F8 | Lower-quality JPEG retry when a page body exceeds the OCR body cap | later |
+| N6 | A method-8 (deflate) zero-byte DOCX entry is refused; fails closed, no action unless a real DOCX trips it | later |
+| N7 | The repack self-check does not compare the local-header name with the central-directory name; no effect today because both are written from the same verified entry | later |
+| N8 | `DecompressionStream` per entry; bounded by the 2000-entry cap | later |
+| P6-1 | Detector for references to non-existent sections (missing-target xref). P1, before Phase 10; corpus check required (run on the 13 sample docs to confirm no false-positive flood) | before 10 |
+| P6-2 | Test infra: concurrent Playwright runs share port 4317 and `test-results`, which causes flakes when two agents run e2e at once. Serialize e2e or use per-agent ports | 10 / any |
+| P6-3 | Live OCR bbox is row-level (not word-level) and confidence is uninformative (0.95); ground truth is agent-transcribed on 3 pages, so a human spot-check is recommended | 10 |
+| F10 | CSP and security headers on the web app (Phase 10 precondition) | 10 |
+| F12 | Deploy the Worker (ocr2 prompt, image magic check, model-facing schema without `ext`) before the web bundle; the live Worker still runs ocr1 until then | 10 |
+| P6-4 | Re-seed the remote demo D1 during the Phase 10 deploy | 10 |

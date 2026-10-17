@@ -1,9 +1,9 @@
 ---
 name: report:subdoc-qa-mvp-phase-06-pdf-docx-ocr
-description: "Sub-doc QA MVP Phase 06 execution report (per sub-step: 06a worker OCR prompt + probes, 06b core seams, later 06c-06f)"
+description: "Sub-doc QA MVP Phase 06 execution report (06a-06f, three security review fix cycles, UPDATE PROCESS closeout with SPEC achievement)"
 date: 17-10-26
 phase: phase-06-pdf-docx-ocr
-status: IN_PROGRESS
+status: COMPLETE_WITH_GAPS
 feature: subdoc-qa-mvp
 plan: process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-06-pdf-docx-ocr_PLAN_17-10-26.md
 metadata:
@@ -456,3 +456,77 @@ No commit.
 - Tests: 8 new N5 cases in `packages/core/test/security/docx-zip-bomb.test.ts` (31 pass), incl. mammoth spy on a 30,000-byte invalid-UTF-8 name and a 2000-entry timing bound (< 2 s).
 - Gates green: docx-zip-bomb 31, docx 42, security 59, ingest-all-formats 10, golden-09-ocr-footnote2 13; core tsc; eslint + prettier on touched files.
 - Harness: review-decision.json (N5 resolved, no pending), adversarial-validation.json (+N5). F1/N5 pending independent re-confirmation.
+
+## UPDATE PROCESS closeout (17-10-26)
+
+Verdict: Phase 06 is DONE (COMPLETE_WITH_GAPS). Commits on main: 027a450 (06a/06b), 2d198f4 (06c), 6473186 (06d), b9767ac (06e/06f), 69bddd5 (review fixes F1/F2/F3/F5/F9/F11), 5c1c25d (F1 repack), 73599b5 (N5). Final independent review: APPROVE (F1 and N5 re-confirmed at 73599b5). Review path: APPROVE_WITH_FIXES (F1, F2) -> REJECT (bypass A ZIP64 sentinel, bypass B CD gap) -> PARTIAL (N5 name-length overflow) -> APPROVE.
+
+### What Was Done
+- Core adapters: `format-detect`, `pdf-text`, `docx`, `ocr`, `page-noise`, `sup-segments`; DOCX via the `@aduin/core/docx` subpath with a verify -> repack -> self-check pipeline (limits: 20 MB per entry, 64 MB total, 2000 entries, 255-byte names). OCR text contract uses `^{n}` footnote markers; findings carry `finding.region`; OCR-only footnote-requirement branch.
+- Worker: OCR prompt `ocr2`, model-facing OCR schema omits `ext`, image magic check (415).
+- Web: render + OCR queue (main thread), scan viewer and OCR states and banners, AI-off means no OCR egress, privacy copy discloses page images, sample #9 scan set (22 pages) with precomputed OCR.
+- Security review fixes F1, N5, F2, F3, N3, F5, F9, F11 (see `harness/phase-06/review-decision.json`).
+
+### What Was Skipped/Deferred
+All as backlog rows in `core-followups_REF_17-10-26.md`: F4, F6, F7, F8, N6, N7, N8 (backlog); F10 CSP + security headers and F12 deploy Worker before web (Phase 10 preconditions); A0 scan-viewer mockup (optional, not made).
+
+### Test Gate Outcomes
+- Full EVL at b9767ac: 37/37 green (iteration 001 report).
+- Scoped EVL after fixes at 73599b5: docx-zip-bomb 31, docx 42, security 59, ingest-all-formats 10, golden-09-ocr-footnote2 13, plus the web, worker and scripts gates listed above; typecheck and lint clean (iteration 002 report).
+- Evidence validator `validate-risk-artifacts.mjs` on `harness/phase-06`: 0 failures, 0 warnings.
+
+### Plan Deviations
+See the plan and the per-step sections above. Notable: sample #9 ground truth is 3 pages (dense pages 6 and 19 left out); precompute calls OpenRouter directly with a byte-identical copy of the Worker OCR body (parity enforced by `ocr-live-guard`); `apps/worker/test/proxy/global-daily-cap-and-budget.test.ts` sends a real PNG because of the new magic check.
+
+### Test Infra Gaps Found
+- Concurrent Playwright runs share port 4317 and `test-results`, which causes flakes when two agents run e2e at once (serialize e2e or use per-agent ports). Backlog row added.
+- Full core runs under heavy machine load show timing-only timeouts (`size-cap`, `diff-determinism`); pass in isolation.
+- Live bbox is row-level only and confidence is uninformative (0.95); ground truth is agent-transcribed, not human-made.
+
+### SPEC Achievement
+| AC | Result | Evidence |
+|---|---|---|
+| AC1 (HTML, PDF, DOCX, scans open; corrupt/unsupported clear message) | met | `ingest-all-formats` green (core 10, web e2e 2) incl. corrupt, empty, oversize, encrypted |
+| AC2 (sample #9 scan set opens from the picker) | met | `sample-picker-smoke` 2/2 and `scan-set-smoke` 1/1 (22 chips, 0 `/api` calls) |
+| AC3 (per-page OCR progress) | met | `scan-set-smoke` and `ocr-position-confidence` named assertions (running -> done) |
+| AC4 (page and region highlight) | met (Hybrid, automated gate green) with residual | recorded e2e asserts the region box; live bbox is row-level, not word-level (backlog) |
+| AC14 (Account Type grid: Partnership/LLC lacks footnote 2, soft) | met via the OCR-only footnote-requirement branch, deduped with PATH-04; Hybrid | `golden-09-ocr-footnote2` 13/13 on recorded OCR; live marker fidelity confirmed on page 1 (Trust^2, Corporation^2, Partnership/LLC unmarked) |
+| AC23 (reviewable text with page+region, confidence, low-confidence marked) | met with residual | `ocr-position-confidence` 2/2; `ocr:cer` 0.6% weighted on 3 agent-transcribed pages (reported, not gated); confidence uninformative live |
+| AC24 (OCR failure graceful) | met | core `ocr-unavailable` 3/3 and e2e 4/4 (incl. AI off) |
+| AC37 (page-count boundary 30 pages) | met | `upload-limits` 5/5 |
+| AC38 (privacy notice covers page images) | met | `privacy-notice` 3/3, `ocr-ai-consent` (page images disclosed; AI off sends nothing) |
+Unmet as gates: none. Residuals with backlog rows: live bbox row-level, uninformative conf, agent-transcribed ground truth (human spot-check).
+
+### Live Usage
+27 of 30 APPROVED-LIVE requests used (2 in 06a, 3 in 06f run 1, 22 in 06f run 2), free model `nvidia/nemotron-3.5-super-vl:free`, every `usage.cost` 0 ($0 total). 22 of 22 pages precomputed. Latency 18-139 s per page.
+
+### Known Gaps
+- Live bbox is row-level; confidence is uninformative (0.95).
+- OCR ground truth is agent-transcribed (3 pages).
+- Deployed Worker still runs the `ocr1` schema until the Phase 10 redeploy. The Worker must deploy before the web bundle (F12).
+- N4: AI is on by default, so page images leave the browser by default after the upload-dialog disclosure.
+- Carried: image uploads skip the core polyglot check (mitigated by magic check, header size cap, canvas re-encode, Worker magic check).
+
+### Closeout Packet
+1. Plan: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-06-pdf-docx-ocr_PLAN_17-10-26.md`.
+2. Classification: Ready for UPDATE PROCESS archival (umbrella stays active; the phase is marked DONE in the registry and the umbrella state; phase plan stays beside the umbrella until the program closes).
+3. Finished: see What Was Done. Verified: all Phase 06 gates green, review APPROVE. Unverified: live OCR bbox quality beyond page 1, deployed behavior (Phase 10).
+4b. Validate-contract: present, Gate PASS (PVL cycles 001-002).
+5. Cleanup: context docs (engine, worker, ui, tests, root), registry, umbrella state, backlog, EVL reports and TSV rows updated in this commit. No Phase 06 code uncommitted.
+6. Next: Phase 07c (in progress by another agent), 09 EVL, 08, 08b, missing-target xref detector, then 10.
+7. Commit: process commit on main after the seven source commits.
+8. Regression: earlier verified surfaces (Phases 02, 03, 04a, 04b, 05) re-ran green in the full EVL at b9767ac.
+9. SPEC achievement: above.
+Drift score: HIGH (many files, core/worker/web/scripts touched, security fix cycles, backlog notes written, context docs updated). Strongly recommend UPDATE PROCESS -- harness/protocol files touched.
+
+### Forward Preview
+#### Test Infra Found
+`ocr-live-guard`, `ocr:cer`, `precompute:ocr` (APPROVED-LIVE capped, ceiling 26), `fixtures:check`, `docx-zip-bomb` security suite, `scan-set` helper, `render-pages` and `ocr-queue` web seams.
+#### Blast Radius Changes
+Beyond the plan: `apps/web/src/features/review/{FindingsScreen.tsx,components/Banners.tsx}`, `scripts/src/samples/scan-set.ts`, one worker test (`global-daily-cap-and-budget`).
+#### Commands to Stay Green
+`pnpm --filter @aduin/core test` (docx-zip-bomb, docx, security, ingest-all-formats, golden-09-ocr-footnote2), `pnpm --filter @aduin/worker test`, `pnpm --filter @aduin/scripts test ocr-live-guard`, `pnpm --filter @aduin/web test`, web e2e `ocr-unavailable` / `ocr-position-confidence` / `scan-set-smoke` / `ingest-all-formats` / `sample-picker-smoke` / `upload-limits` (one token per call), `pnpm typecheck`, `pnpm lint`, `pnpm guard:cf`, `pnpm secrets:scan`.
+#### Dependency Changes
+`jpeg-js` 0.4.4 devDependency in `@aduin/scripts`; `@aduin/core/docx` subpath export. No new runtime packages.
+
+TL;DR: Phase 06 closed, review APPROVE, all SPEC criteria for the phase met with named residuals in backlog; deploy Worker before web in Phase 10.

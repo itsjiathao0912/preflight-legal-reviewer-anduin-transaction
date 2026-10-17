@@ -22,6 +22,7 @@ Source of truth: the code under `packages/core/src` plus the Phase 01 report
 |---|---|
 | `model/` | zod frozen shapes: Doc, Block, Line, Anchor, Reference, Region, Cue, LogicGraph; `line-stream`, `anchors`, `hash`, `errors` |
 | `adapters/html.ts` | SAX (htmlparser2) parse, row merge per `<tr>`, nearest-declaration bold walk, cp1252 remap, entities, glyph normalization, noise-rule list + repeated running headers, size cap, long-line split, windows-1252 fallback |
+| `adapters/{format-detect,pdf-text,docx,ocr,page-noise,sup-segments}.ts`, `ocr/confidence.ts` | Phase 06 input adapters (below): extension + magic-byte detection, text-PDF with positions, DOCX (own subpath `@aduin/core/docx`), OCR result to Doc, shared page-noise rules, superscript segment markers |
 | `structure/` | structurer: headings (H), numbering scopes, references, statutory (S), conditionals, option groups, defined terms, fields |
 | `graph/` | `graph.ts` + `query.ts` (logic graph over structure) |
 | `findings/` | `schema`, `taxonomy`, `ids`, `severity`, `make-finding.ts` (finding builder + `patternKey()` helper) |
@@ -86,6 +87,16 @@ Report: `subdoc-qa-mvp_PHASE-05-llm-ai-lane_REPORT_17-10-26.md` (Stage 0 section
 - **Deterministic fixes:** F4 bounded defined-term scan via a word index, P2-3 total `explain()` on sparse facts, P2-4 `check one` exclusivity cue (sample #10 badge 31 to 30; #2 and #5 do not move).
 - **Snapshot note:** only the contracts snapshot entries above changed; goldens (#1=2, #3=2, #5=2, #11=1) and `fixtures:check` are unchanged. Recordings live in `fixtures/llm-recordings/{taskId}/{inputHash16}.json`; a changed candidate set or prompt moves the inputHash, so re-run `record:author`, re-record live ones, then `precompute:ai`.
 - **Open:** drafts text is not yet masked/clamped for UI (L6), `computeGate` must exclude `detector_kind: 'ai'` (L4), both Phase 08.
+
+## Phase 06 additions (PDF, DOCX, OCR adapters; commits 027a450 .. 73599b5)
+
+Report: `subdoc-qa-mvp_PHASE-06-pdf-docx-ocr_REPORT_17-10-26.md` (closeout section has SPEC achievement and live usage). No frozen contract changed (additive only).
+
+- **format-detect** picks the adapter from extension plus magic bytes and rejects unsupported/corrupt/empty/oversize/encrypted input with a clear `CoreError`. `pdf-text` extracts text with positions and per-page progress (unpdf/pdf.js); `page-noise` holds the shared running-header/footer rules used by PDF and OCR; `sup-segments` turns superscript footnote markers into `^{n}` segments.
+- **DOCX** lives in `adapters/docx.ts`, imported as the subpath `@aduin/core/docx` so mammoth never enters the main barrel (`"exports": {".": ..., "./docx": ...}`). Pipeline: `verifyZipEntries` inflates every entry, then `repackZip` rebuilds a canonical STORE zip from exactly those verified entries, then `assertRepackMatches` self-checks the repack, and only the repacked bytes reach mammoth (this removed the parser differential found in review F1). Limits: 20 MB per entry, 64 MB total, 2000 entries, 255-byte entry names; names must be valid UTF-8 (fatal decode), with no control chars, backslashes, `.`/`..`/empty segments, absolute or drive paths. ZIP64 sentinels (0xffff / 0xffffffff), ZIP64 signatures in the directory/tail region, a gap between the central directory and the EOCD, nonzero disk numbers and normalized duplicate names are refused. Suite: `test/security/docx-zip-bomb.test.ts` (31 cases, mammoth spy proves it is never called on refusal).
+- **OCR text contract:** `adapters/ocr.ts` turns model OCR pages into a Doc. Footnote markers and checkboxes travel inside line text as `^{n}` and the checkbox glyphs (prompt `ocr2`); the adapter strips the space the model puts before `^{n}`. Every OCR line carries page + region; `finding.region` (additive, optional) lets a finding point at the line box on the scanned page. `ocr/confidence.ts` scores per-page confidence (live model confidence is uninformative at 0.95, so low-confidence marking rests on adapter heuristics).
+- **OCR-only footnote branch (AC14):** the footnote-requirement detector has a branch for OCR docs (footnote requirement read from the `^{n}` text), deduped against PATH-04 so the same Account Type finding is reported once. Golden: `golden-09-ocr-footnote2` (13 cases) on recorded OCR output.
+- **Render and OCR queue are web, not core:** `apps/web/src/engine/{render-pages,ocr-queue}.ts` run on the main thread (page images, per-page hashing over original bytes, quota call, `/api/ocr` posts). Core only maps results.
 
 ## Gate commands (no `--` under pnpm 11.13.1)
 

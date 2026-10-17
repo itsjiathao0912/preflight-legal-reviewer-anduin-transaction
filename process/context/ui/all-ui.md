@@ -111,6 +111,16 @@ Authoritative list: the `Published data-testid` bullet group in `subdoc-qa-mvp_P
 - **New data-testids:** `ai-banner` (`data-reason`), `ai-retry`, `ai-not-precomputed`, `ai-run-sample`, `ai-rules-notice`, `ai-suggestion-label`, `finding-locator`; `ai-allowance` has `data-source` (`quota|stub`).
 - **Open:** the `rules_changed` banner has no automated test; AI draft text is not shown yet (mask and clamp `drafts[].text` first, Phase 08).
 
+## Scan Viewer And OCR (Phase 06, `apps/web/src/features/scan`, `apps/web/src/engine/{render-pages,ocr-queue}.ts`)
+
+- **Scan viewer** (`ScanPane`, `scan-model.ts`, `scan-store.ts`, `scan.css`) is embedded in the Findings route for a document with scanned pages (OCR source, or a PDF with scan pages): page chips with per-page state, page image beside extracted text, per-line confidence, low-confidence marking, region highlight on the finding's page, prev/next. Summary line has `aria-live=polite`; the scroll pane is focusable (`tabIndex 0`, role region, labelled).
+- **Pipeline:** PDFs are rendered to page images and OCR runs per page on the main thread (`render-pages`, `ocr-queue`; page hash over ORIGINAL bytes). Only page images ever go to `/api/ocr`, never the PDF. Bundled sample #9 (22 scanned pages) reads precomputed OCR from `public/precomputed/ocr/**` with 0 `/api` calls.
+- **AI off means no OCR egress:** `runOcrQueue({ aiOff })` takes a getter (`() => boolean`, read before the quota call and before each page, so switching AI off mid-run stops the rest). Precomputed and cached results still apply. A per-load `AbortController` stops a superseded queue and skips scan-store writes for superseded loads.
+- **States and banners** (`ScanNotices`): `ocr-unavailable` (text not extracted, page images stay), `ocr-down`, `ocr-ai-off` (AI review is off, so scans are shown as images only), `scan-notice`, `numbering-notice`.
+- **Privacy copy** (`features/open-document/privacy-copy.ts`, shown in the upload dialog): "Scanned pages are sent as images to a third-party free AI model to read the text, only while AI review is on." AI is on by default, so page images leave the browser by default after this disclosure (review note N4).
+- **New data-testids:** `scan-viewer`, `scan-summary`, `scan-progress`, `scan-page`, `scan-page-chip`, `scan-page-image`, `scan-page-image-pending`, `scan-page-label`, `scan-page-state`, `scan-prev`, `scan-next`, `scan-text`, `scan-line`, `scan-text-highlight`, `scan-region`, `scan-confidence`, `scan-low-confidence`, `scan-no-text`, `scan-notice`, `ocr-unavailable`, `ocr-down`, `ocr-ai-off`, `numbering-notice`.
+- **Known gaps:** live OCR boxes are row-level (not word-level) and live confidence is uninformative (0.95); the optional `design/mockups/scan-viewer.html` was not made (the viewer reuses the app.html docpane/paper/banner/badge styles).
+
 ## UI Test Conventions
 
 - Two Playwright projects (`apps/web/playwright.config.ts`): `preview` (`vite preview` of a `--mode e2e` build, stub memory API, no Worker; runs every Phase 03 spec) and `stack` (built SPA + Worker; only `slice.spec.ts`; select with `--project=stack`; `SLICE_BASE_URL` points it at a deployed https `*.workers.dev` Worker). Details and commands: `process/context/tests/all-tests.md`.

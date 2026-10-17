@@ -71,3 +71,5 @@ iteration	timestamp	gaps_found	fail_count	concern_count	applied	saturation_statu
 69	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	phase=08 pvl Gate: PASS after 2 supplement cycles (trend 12,2,0)
 70	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	phase=08b pvl Gate: PASS after 2 supplement cycles (trend 9,4,0; E12 endpoint/health list, E13 Dexie triage seam)
 71	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	phase=09 pvl Gate: PASS after 2 supplement cycles (trend 6,1,0; advisory E10 0-based OCR page index)
+72	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	phase=06 evl full confirmation at b9767ac 37/37 green (iteration-001 report)
+73	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	phase=06 evl scoped confirmation after review fixes F1/F2/F3/F5/F9/F11, F1 repack, N5; final review APPROVE at 73599b5 (iteration-002 report)
