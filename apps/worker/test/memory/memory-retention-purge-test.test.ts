@@ -16,6 +16,12 @@ import {
   T0,
   wireFinding,
 } from './memory-harness';
+import { answer, askQuestion, withAssertion } from './variance-harness';
+
+const checksIn = async (ws: string) =>
+  (await env.DB.prepare('SELECT COUNT(*) AS n FROM regression_check WHERE workspace_id = ?1')
+    .bind(ws)
+    .first<{ n: number }>())!.n;
 
 async function rowsFor(ws: string): Promise<number> {
   let n = 0;
@@ -114,5 +120,32 @@ describe('memory-retention-purge-test (AC58, AC38)', () => {
     expect(await claimPurgeSlot(env.DB, t)).toBe(true);
     expect(await claimPurgeSlot(env.DB, t + 59 * 60_000)).toBe(false);
     expect(await claimPurgeSlot(env.DB, t + 60 * 60_000)).toBe(true);
+  });
+
+  test('F1: a sandbox holding a regression_check is purged without aborting; other workspaces keep theirs', async () => {
+    const h = makeMem();
+    const s = await session(h);
+    const q = await askQuestion(h, s, { firm: 'hartwell-crane' });
+    expect((await answer(h, s, q, withAssertion())).status).toBe(200);
+    expect(await checksIn(s.workspaceId)).toBe(1);
+    const created = h.clock.now;
+    // a second, younger sandbox with its own check must survive the same purge
+    h.clock.now += 5 * DAY_MS;
+    const young = await session(h);
+    const yq = await askQuestion(h, young, { firm: 'hartwell-crane' });
+    expect((await answer(h, young, yq, withAssertion('Appendix D'))).status).toBe(200);
+    expect(PURGE_CHILD_TABLES.indexOf('regression_check')).toBeLessThan(
+      PURGE_CHILD_TABLES.indexOf('counsel_answer'),
+    );
+    const r = await runPurge(env.DB, created + 31 * DAY_MS);
+    expect(r.workspaces).toBeGreaterThanOrEqual(1);
+    expect(await rowsFor(s.workspaceId)).toBe(0);
+    expect(await checksIn(s.workspaceId)).toBe(0);
+    expect(await checksIn(young.workspaceId)).toBe(1);
+    expect(
+      (await env.DB.prepare("SELECT COUNT(*) AS n FROM workspace WHERE status = 'purging'").first<{
+        n: number;
+      }>())!.n,
+    ).toBe(0);
   });
 });

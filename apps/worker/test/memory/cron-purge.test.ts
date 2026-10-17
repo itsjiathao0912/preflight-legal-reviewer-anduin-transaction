@@ -3,6 +3,7 @@ import { createScheduledController, env } from 'cloudflare:test';
 import { describe, expect, test } from 'vitest';
 import worker from '../../src/index';
 import { DAY_MS, makeMem, session } from './memory-harness';
+import { answer, askQuestion, withAssertion } from './variance-harness';
 
 const at = (scheduledTime: number) =>
   createScheduledController({ scheduledTime, cron: '17 3 * * *' });
@@ -20,6 +21,23 @@ describe('cron-purge (AC38, AC58)', () => {
     expect(
       await env.DB.prepare("SELECT id FROM workspace WHERE id = 'ws_demo'").first(),
     ).not.toBeNull();
+  });
+
+  test('F1: scheduled() purges a sandbox that holds a regression_check (batch does not abort)', async () => {
+    const h = makeMem();
+    const s = await session(h);
+    const q = await askQuestion(h, s, { firm: 'hartwell-crane' });
+    expect((await answer(h, s, q, withAssertion())).status).toBe(200);
+    const checks = () =>
+      env.DB.prepare('SELECT COUNT(*) AS n FROM regression_check WHERE workspace_id = ?1')
+        .bind(s.workspaceId)
+        .first<{ n: number }>();
+    expect((await checks())?.n).toBe(1);
+    await worker.scheduled(at(h.clock.now + 31 * DAY_MS), env as never);
+    expect(
+      await env.DB.prepare('SELECT id FROM workspace WHERE id = ?1').bind(s.workspaceId).first(),
+    ).toBeNull();
+    expect((await checks())?.n).toBe(0);
   });
 
   test('scheduled() is non-fatal without D1 or on a D1 error', async () => {

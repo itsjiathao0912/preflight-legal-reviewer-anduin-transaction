@@ -1,4 +1,4 @@
-// Migrations 0001-0004 apply on local D1: 20 tables, schema_version set LAST by each migration.
+// Migrations 0001-0006 apply on local D1: 21 tables, schema_version set LAST by each migration.
 import { env } from 'cloudflare:test';
 import { describe, expect, test } from 'vitest';
 import { EXPECTED_SCHEMA_VERSION } from '../../src/memory/health';
@@ -20,6 +20,7 @@ const TABLES = [
   'law_firm',
   'law_firm_alias',
   'quota_counter',
+  'regression_check',
   'review_run',
   'rule_evidence',
   'spend_ledger',
@@ -27,7 +28,7 @@ const TABLES = [
 ];
 
 describe('migrations (AC42, AC43, AC47)', () => {
-  test('0001-0005 are applied in order and recorded', async () => {
+  test('0001-0006 are applied in order and recorded', async () => {
     const r = await env.DB.prepare('SELECT name FROM d1_migrations ORDER BY id').all<{
       name: string;
     }>();
@@ -37,10 +38,11 @@ describe('migrations (AC42, AC43, AC47)', () => {
       '0003_reference_seed.sql',
       '0004_cache_quota_ledger.sql',
       '0005_demo_protection_gaps.sql',
+      '0006_variance.sql',
     ]);
   });
 
-  test('exactly the 20 designed tables exist (9 + 8 + 3)', async () => {
+  test('exactly the 21 designed tables exist (9 + 8 + 3 + 1 variance)', async () => {
     const r = await env.DB.prepare(
       "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' AND name <> 'd1_migrations' ORDER BY name",
     ).all<{ name: string }>();
@@ -61,6 +63,7 @@ describe('migrations (AC42, AC43, AC47)', () => {
       'firm_rule',
       'rule_evidence',
       'audit_event',
+      'regression_check',
     ]) {
       const row = await env.DB.prepare('SELECT sql FROM sqlite_master WHERE name = ?1')
         .bind(t)
@@ -98,7 +101,36 @@ describe('migrations (AC42, AC43, AC47)', () => {
       'ix_audit_ws_time',
       'ix_cache_exp',
       'ix_ws_expiry',
+      'ix_regression_check_scope',
     ])
       expect(by[i], i).toBeDefined();
+  });
+
+  test('0006 adds the nullable variance columns and the regression_check FKs', async () => {
+    const cols = async (t: string) =>
+      (await env.DB.prepare(`PRAGMA table_info(${t})`).all<{ name: string; notnull: number }>())
+        .results;
+    for (const [t, names] of [
+      ['counsel_question', ['owner', 'owner_source']],
+      ['counsel_answer', ['intent', 'scope']],
+      ['decision', ['intent', 'scope']],
+    ] as const) {
+      const c = await cols(t);
+      for (const n of names) expect(c.find((x) => x.name === n)?.notnull, `${t}.${n}`).toBe(0);
+    }
+    const fks = (
+      await env.DB.prepare('PRAGMA foreign_key_list(regression_check)').all<{
+        table: string;
+        from: string;
+      }>()
+    ).results;
+    expect(
+      fks
+        .filter((f) => f.table === 'counsel_answer')
+        .map((f) => f.from)
+        .sort(),
+    ).toEqual(['source_answer_id', 'workspace_id']);
+    expect(fks.some((f) => f.table === 'law_firm' && f.from === 'law_firm_id')).toBe(true);
+    expect(fks.some((f) => f.table === 'workspace' && f.from === 'workspace_id')).toBe(true);
   });
 });

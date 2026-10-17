@@ -36,4 +36,20 @@ describe('firm-list-parity (AC41)', () => {
     }>();
     expect(r.results.map((x) => x.code)).toEqual([...ISSUE_CLASSES]);
   });
+
+  test('variance 0006: six firms; Sutter Lane & Abernathy is deliberately absent', async () => {
+    const r = await env.DB.prepare('SELECT id FROM law_firm ORDER BY id').all<{ id: string }>();
+    expect(r.results.map((x) => x.id)).toEqual([
+      'calder-reyes',
+      'firm-x',
+      'firm-y',
+      'hartwell-crane',
+      'ostrander-pell',
+      'partners-group',
+    ]);
+    const sutter = await env.DB.prepare(
+      "SELECT 1 AS x FROM law_firm_alias WHERE alias_norm LIKE 'sutter%'",
+    ).first();
+    expect(sutter).toBeNull();
+  });
 });

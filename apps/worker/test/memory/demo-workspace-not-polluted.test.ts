@@ -122,6 +122,12 @@ describe('demo-workspace-not-polluted (AC57)', () => {
     for (const t of ['review_run', 'counsel_answer', 'fund', 'document', 'analyst'])
       expect(names.has(`demo_ro_${t}_update`), t).toBe(true);
     for (const t of DELETE_TABLES) expect(names.has(`demo_ro_${t}_delete`), t).toBe(true);
+    for (const n of [
+      'demo_ro_regression_check',
+      'demo_ro_regression_check_update',
+      'demo_ro_regression_check_delete',
+    ])
+      expect(names.has(n), n).toBe(true);
   });
 
   test('L3: seeded ws_demo rows cannot be updated or deleted outside seed mode', async () => {
@@ -189,6 +195,16 @@ describe('demo-workspace-not-polluted (AC57)', () => {
         .first<{ n: number }>();
       if (t !== 'firm_rule' && t !== 'rule_evidence') expect(n?.n, t).toBeGreaterThan(0);
     }
+    const ans = await env.DB.prepare('SELECT id FROM counsel_answer WHERE workspace_id = ?1')
+      .bind(ws)
+      .first<{ id: string }>();
+    const rcInsert = (id: string) =>
+      env.DB.prepare(
+        "INSERT INTO regression_check (workspace_id, id, law_firm_id, source_answer_id, source_fund_name, assertion_kind, assertion_key, statement_text, created_at) VALUES (?1, ?2, 'firm-x', ?3, 'Fund I', 'scope_exists', 'appendix c', 'Appendix C must exist', 1)",
+      )
+        .bind(ws, id, ans!.id)
+        .run();
+    expect(await errorOf(rcInsert('rc_demo_1'))).toBe('');
     await env.DB.prepare("UPDATE workspace SET kind = 'demo', expires_at = NULL WHERE id = ?1")
       .bind(ws)
       .run();
@@ -219,6 +235,24 @@ describe('demo-workspace-not-polluted (AC57)', () => {
         await errorOf(env.DB.prepare(`DELETE FROM ${t} WHERE workspace_id = ?1`).bind(ws).run()),
         `delete ${t}`,
       ).toContain('demo_read_only');
+    // Variance 0006: regression_check is protected like its peers (insert, status flip, delete).
+    expect(await errorOf(rcInsert('rc_demo_2')), 'insert regression_check').toContain(
+      'demo_read_only',
+    );
+    expect(
+      await errorOf(
+        env.DB.prepare("UPDATE regression_check SET status = 'revoked' WHERE workspace_id = ?1")
+          .bind(ws)
+          .run(),
+      ),
+      'update regression_check',
+    ).toContain('demo_read_only');
+    expect(
+      await errorOf(
+        env.DB.prepare('DELETE FROM regression_check WHERE workspace_id = ?1').bind(ws).run(),
+      ),
+      'delete regression_check',
+    ).toContain('demo_read_only');
   });
 });
 

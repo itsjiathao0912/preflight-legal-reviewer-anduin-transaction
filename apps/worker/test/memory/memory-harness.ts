@@ -241,6 +241,7 @@ export async function dumpWorkspace(db: D1Database, ws: string): Promise<string>
     'firm_rule',
     'rule_evidence',
     'audit_event',
+    'regression_check',
   ];
   const out: Record<string, unknown[]> = {};
   for (const t of tables) {

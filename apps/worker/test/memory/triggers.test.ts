@@ -2,6 +2,8 @@
 import { env } from 'cloudflare:test';
 import { describe, expect, test } from 'vitest';
 import { decisionRow, errorOf, insertDecision, mkWorkspace, uid } from './db-fixtures';
+import { makeMem, session } from './memory-harness';
+import { answer, askQuestion, withAssertion } from './variance-harness';
 
 const db = env.DB;
 const upd = (ws: string, id: string, set: string) =>
@@ -147,5 +149,105 @@ describe('triggers (AC42, AC6, AC55)', () => {
           .run(),
       ),
     ).toContain('rule_immutable');
+  });
+
+  test('variance 0006: regression_check allows only the active -> revoked flip; every column is immutable', async () => {
+    const h = makeMem();
+    const s = await session(h);
+    const q = await askQuestion(h, s, { firm: 'hartwell-crane' });
+    expect((await answer(h, s, q, withAssertion())).status).toBe(200);
+    const ws = s.workspaceId;
+    const rc = await db
+      .prepare('SELECT id FROM regression_check WHERE workspace_id = ?1')
+      .bind(ws)
+      .first<{ id: string }>();
+    const updRc = (set: string) =>
+      errorOf(
+        db
+          .prepare(`UPDATE regression_check SET ${set} WHERE workspace_id = ?1 AND id = ?2`)
+          .bind(ws, rc!.id)
+          .run(),
+      );
+    for (const set of [
+      "law_firm_id = 'firm-x'",
+      "source_answer_id = 'x'",
+      "source_fund_name = 'X'",
+      "assertion_key = 'appendix d'",
+      "statement_text = 'X'",
+      'created_at = 1',
+      "status = 'active'",
+    ])
+      expect(await updRc(set), set).toContain('regression_check_immutable');
+    expect(
+      await errorOf(
+        db.prepare('DELETE FROM regression_check WHERE workspace_id = ?1').bind(ws).run(),
+      ),
+    ).toContain('regression_check_append_only');
+    expect(await updRc("status = 'revoked'")).toBe('');
+    expect(await updRc("status = 'active'")).toContain('regression_check_immutable');
+    // CHECKs: kind enum, key length 1..80, statement length 1..300
+    const ans = await db
+      .prepare('SELECT id FROM counsel_answer WHERE workspace_id = ?1')
+      .bind(ws)
+      .first<{ id: string }>();
+    const ins = (kind: string, key: string, stmt: string) =>
+      errorOf(
+        db
+          .prepare(
+            "INSERT INTO regression_check (workspace_id, id, law_firm_id, source_answer_id, source_fund_name, assertion_kind, assertion_key, statement_text, created_at) VALUES (?1, ?2, 'hartwell-crane', ?3, 'F', ?4, ?5, ?6, 1)",
+          )
+          .bind(ws, uid('rc_'), ans!.id, kind, key, stmt)
+          .run(),
+      );
+    expect(await ins('scope_missing', 'appendix c', 'S')).toContain('CHECK constraint failed');
+    expect(await ins('scope_exists', '', 'S')).toContain('CHECK constraint failed');
+    expect(await ins('scope_exists', 'k'.repeat(81), 'S')).toContain('CHECK constraint failed');
+    expect(await ins('scope_exists', 'k', 's'.repeat(301))).toContain('CHECK constraint failed');
+  });
+
+  test('variance 0006: regression_check delete is blocked outside purging and allowed while purging', async () => {
+    const h = makeMem();
+    const s = await session(h);
+    const q = await askQuestion(h, s, { firm: 'hartwell-crane' });
+    expect((await answer(h, s, q, withAssertion())).status).toBe(200);
+    const ws = s.workspaceId;
+    const del = () =>
+      errorOf(db.prepare('DELETE FROM regression_check WHERE workspace_id = ?1').bind(ws).run());
+    expect(await del()).toContain('regression_check_append_only');
+    await db.prepare("UPDATE workspace SET status = 'purging' WHERE id = ?1").bind(ws).run();
+    expect(await del()).toBe('');
+    const n = await db
+      .prepare('SELECT COUNT(*) AS n FROM regression_check WHERE workspace_id = ?1')
+      .bind(ws)
+      .first<{ n: number }>();
+    expect(n?.n).toBe(0);
+  });
+
+  test('variance 0006: owner/scope/intent CHECK lists and question_owner_immutable', async () => {
+    const h = makeMem();
+    const s = await session(h);
+    const q = await askQuestion(h, s, { extra: { owner: 'gp' } });
+    const ws = s.workspaceId;
+    expect(
+      await errorOf(
+        db
+          .prepare(
+            "UPDATE counsel_question SET owner = 'counsel' WHERE workspace_id = ?1 AND id = ?2",
+          )
+          .bind(ws, q.questionId)
+          .run(),
+      ),
+    ).toContain('question_owner_immutable');
+    const sql = async (t: string) =>
+      (await db
+        .prepare('SELECT sql FROM sqlite_master WHERE name = ?1')
+        .bind(t)
+        .first<{ sql: string }>())!.sql;
+    expect(await sql('counsel_question')).toMatch(/owner IN \('counsel','gp','fund_admin'\)/);
+    expect(await sql('counsel_question')).toMatch(/owner_source IN \('suggested','override'\)/);
+    for (const t of ['counsel_answer', 'decision']) {
+      expect(await sql(t), t).toMatch(/scope IN \('fund','firm_template'\)/);
+      expect(await sql(t), t).toMatch(/length\(intent\) <= 500/);
+    }
   });
 });

@@ -5,6 +5,7 @@ import { errorStatus } from '@aduin/core';
 import { describe, expect, test } from 'vitest';
 import { MEMORY_ROUTES } from '../../src/routes/memory/index';
 import { call, makeMem, session } from './memory-harness';
+import { answerBody, askQuestion } from './variance-harness';
 
 const POSTS = MEMORY_ROUTES.filter((r) => r.startsWith('POST ')).map((r) =>
   r.slice(5).replace(':id', 'x1'),
@@ -123,5 +124,29 @@ describe('memory-guards-matrix (AC39)', () => {
       { cookie: s.cookie },
     );
     expect(tooMany.status).toBe(400);
+  });
+
+  test('variance: forged scope / assertion shapes on counsel answers are 400 invalid_request', async () => {
+    const h = makeMem();
+    const s = await session(h);
+    const q = await askQuestion(h, s, { firm: 'hartwell-crane' });
+    for (const extra of [
+      { scope: 'firm_template' },
+      { assertion: { kind: 'scope_exists', label: 'Appendix C' } },
+      { scope: 'firm_template', intent: 'x', assertion: { kind: 'scope_exists' } },
+      {
+        scope: 'firm_template',
+        intent: 'x',
+        assertion: { kind: 'scope_exists', label: 'L'.repeat(81) },
+      },
+      { scope: 'firm_template', intent: 'x', assertion: 'Appendix C' },
+    ]) {
+      const r = await call(h, 'POST', '/api/counsel/answers', answerBody(q, extra), {
+        cookie: s.cookie,
+      });
+      expect(r.status, JSON.stringify(extra)).toBe(400);
+      expect(r.body.error.code).toBe('invalid_request');
+      expectHeaders(r.res);
+    }
   });
 });

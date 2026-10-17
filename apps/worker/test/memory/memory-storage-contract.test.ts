@@ -14,6 +14,7 @@ import {
   session,
   wireFinding,
 } from './memory-harness';
+import { answer, askQuestion, withAssertion } from './variance-harness';
 
 const CANARY_FACT = 'CANARY-FACT-zq81';
 const CANARY_EXPL = 'CANARY-EXPLANATION-zq82';
@@ -199,5 +200,27 @@ describe('memory-storage-contract (AC58, R1)', () => {
       m: number;
     }>();
     expect(all!.m).toBeLessThanOrEqual(300);
+  });
+
+  test('variance: intent and the assertion label are masked before persistence and audit', async () => {
+    const h = makeMem();
+    const s = await session(h);
+    const q = await askQuestion(h, s, { firm: 'hartwell-crane' });
+    const r = await answer(
+      h,
+      s,
+      q,
+      withAssertion(`Appendix C ${NUM}`, `Standard per memo ${NUM}.`),
+    );
+    expect(r.status).toBe(200);
+    const dump = await dumpWorkspace(env.DB, s.workspaceId);
+    expect(dump).not.toContain(NUM);
+    expect(dump).toContain('Standard per memo #7654.');
+    const audit = await env.DB.prepare(
+      "SELECT detail_json FROM audit_event WHERE workspace_id = ?1 AND action IN ('answer_recorded','regression_check_created')",
+    )
+      .bind(s.workspaceId)
+      .all<{ detail_json: string }>();
+    for (const a of audit.results) expect(a.detail_json).not.toContain('Standard per memo');
   });
 });

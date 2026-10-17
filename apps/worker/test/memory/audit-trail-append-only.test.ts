@@ -4,6 +4,7 @@ import { env } from 'cloudflare:test';
 import { describe, expect, test } from 'vitest';
 import { errorOf } from './db-fixtures';
 import { call, decide, makeMem, newRun, op, session } from './memory-harness';
+import { answer, askQuestion, withAssertion } from './variance-harness';
 
 async function own(ws: string) {
   return (
@@ -132,5 +133,32 @@ describe('audit-trail-append-only (AC55)', () => {
       (await call(h, 'GET', '/api/audit?limit=1&cursor=%%%', undefined, { cookie: s.cookie }))
         .status,
     ).toBe(400);
+  });
+
+  test('variance: a created check has its own regression_check_created audit row (ids and enums only)', async () => {
+    const h = makeMem();
+    const s = await session(h);
+    const q = await askQuestion(h, s, { firm: 'hartwell-crane' });
+    const r = await answer(h, s, q, withAssertion());
+    expect(r.status).toBe(200);
+    const page = await call(h, 'GET', '/api/audit?limit=5', undefined, { cookie: s.cookie });
+    const ev = page.body.events.find(
+      (e: { action: string }) => e.action === 'regression_check_created',
+    );
+    expect(ev).toMatchObject({
+      action: 'regression_check_created',
+      law_firm_id: 'hartwell-crane',
+      entity_type: 'regression_check',
+      detail: { assertion_kind: 'scope_exists', source_answer_id: r.body.answer_id },
+    });
+    expect(
+      await errorOf(
+        env.DB.prepare(
+          "DELETE FROM audit_event WHERE workspace_id = ?1 AND action = 'regression_check_created'",
+        )
+          .bind(s.workspaceId)
+          .run(),
+      ),
+    ).toContain('audit_append_only');
   });
 });

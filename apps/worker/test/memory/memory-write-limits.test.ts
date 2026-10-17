@@ -27,6 +27,7 @@ import {
   T0,
   type Session,
 } from './memory-harness';
+import { answer, askQuestion, withAssertion } from './variance-harness';
 
 async function setCounter(ws: string, kind: 'req' | 'run' | 'fnd', nowMs: number, n: number) {
   const k = writeKey(ws, kind, nowMs);
@@ -65,6 +66,8 @@ describe('memory write limits (review M1)', () => {
       decision: 32,
       run: 12,
       counselAnswer: 18,
+      // Variance Phase 03: measured 18 rows (plain answer 13, +5 for the check) -> 18 + 5
+      counselAnswerWithAssertion: 23,
       findingsBase: 5,
       other: 10,
     });
@@ -316,6 +319,20 @@ describe('global weighted daily write-row budget (fix cycle 2, N1/M1)', () => {
     expect((await storeFindings(h, s, run, findings(7, 'w'))).status).toBe(200);
     expect(await budgetUsed(h.clock.now)).toBe(
       b0 + MEMORY_WRITE_WEIGHTS.run + MEMORY_WRITE_WEIGHTS.decision + 7 + 5,
+    );
+  });
+
+  test('variance: a counsel answer claims 18 units; with an assertion it claims 23', async () => {
+    const h = makeMem();
+    const s = await session(h);
+    const q1 = await askQuestion(h, s, { firm: 'hartwell-crane' });
+    const q2 = await askQuestion(h, s, { firm: 'hartwell-crane' });
+    const b0 = await budgetUsed(h.clock.now);
+    expect((await answer(h, s, q1)).status).toBe(200);
+    expect(await budgetUsed(h.clock.now)).toBe(b0 + MEMORY_WRITE_WEIGHTS.counselAnswer);
+    expect((await answer(h, s, q2, withAssertion())).status).toBe(200);
+    expect(await budgetUsed(h.clock.now)).toBe(
+      b0 + MEMORY_WRITE_WEIGHTS.counselAnswer + MEMORY_WRITE_WEIGHTS.counselAnswerWithAssertion,
     );
   });
 

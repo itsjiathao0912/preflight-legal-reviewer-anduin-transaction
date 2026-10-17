@@ -6,6 +6,7 @@ import { ConflictBodySchema } from '@aduin/core';
 import { describe, expect, test } from 'vitest';
 import { decisionRow, insertDecisionStmt } from './db-fixtures';
 import { call, decide, decisionBody, fpOf, makeMem, newRun, op, session } from './memory-harness';
+import { answerBody, askQuestion, withAssertion } from './variance-harness';
 
 const count = async (sql: string, ...b: unknown[]) =>
   (await env.DB.prepare(sql)
@@ -104,5 +105,44 @@ describe('idempotent-replay (AC42, AC55)', () => {
     ).toBe(0);
     // a later decision on the same fingerprint supersedes the winner normally
     expect((await decide(h, s, { runId: run, quote, reason: 'other' })).status).toBe(200);
+  });
+
+  test('variance: a replayed answer with an assertion returns the original body and creates no second check', async () => {
+    const h = makeMem();
+    const s = await session(h);
+    const q = await askQuestion(h, s, { firm: 'hartwell-crane' });
+    const body = answerBody(q, withAssertion());
+    const first = await call(h, 'POST', '/api/counsel/answers', body, { cookie: s.cookie });
+    expect(first.status).toBe(200);
+    const again = await call(h, 'POST', '/api/counsel/answers', body, { cookie: s.cookie });
+    expect(again.status).toBe(200);
+    expect(again.body).toEqual(first.body);
+    expect(
+      await count(
+        'SELECT COUNT(*) AS n FROM regression_check WHERE workspace_id = ?1',
+        s.workspaceId,
+      ),
+    ).toBe(1);
+    expect(
+      await count(
+        'SELECT COUNT(*) AS n FROM audit_event WHERE workspace_id = ?1 AND client_op_id = ?2',
+        s.workspaceId,
+        `${body['client_op_id']}#rc`,
+      ),
+    ).toBe(1);
+    // the same op id reused by an answer with an assertion for another action is refused
+    const run = await newRun(h, s);
+    const dec = decisionBody({ runId: run, quote: 'Op reuse source.' });
+    expect((await call(h, 'POST', '/api/decisions', dec, { cookie: s.cookie })).status).toBe(200);
+    const q2 = await askQuestion(h, s, { firm: 'hartwell-crane' });
+    const reused = await call(
+      h,
+      'POST',
+      '/api/counsel/answers',
+      { ...answerBody(q2, withAssertion('Appendix D')), client_op_id: dec['client_op_id'] },
+      { cookie: s.cookie },
+    );
+    expect(reused.status).toBe(400);
+    expect(reused.body.error.reason).toBe('op_reused');
   });
 });

@@ -10,7 +10,7 @@ const CAPS: Record<string, number> = {
   session: 20,
   runs: 9, // +1 each write: N8 0-row budget pre-check (fix cycle 3)
   findings_25: 9,
-  lookup_200: 2,
+  lookup_200: 3, // + ONE bounded regression_check SELECT (Variance Phase 03)
   decision_dismiss_with_proposal: 12,
   decision_supersede: 13,
   revoke: 8,
@@ -37,7 +37,8 @@ describe('query-budget (AC40 interim)', () => {
         .map(([, v]) => v.queries),
     );
     expect(worst).toBeLessThanOrEqual(20);
-    expect(m['lookup_200']!.queries).toBe(2); // ctx liveness + ONE lookup query for 200 fingerprints
+    // ctx liveness + ONE lookup query for 200 fingerprints + ONE regression-check SELECT (Variance)
+    expect(m['lookup_200']!.queries).toBe(3);
   });
 
   test('the AI worst path (incl. breaker read) uses well under the shared 50 budget', async () => {
