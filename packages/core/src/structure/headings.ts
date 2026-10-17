@@ -29,6 +29,14 @@ export interface PartCandidate {
 }
 
 const SECTION_RE = /^\s*(\d{1,2}[A-Z]?)\.(?:\s+(.*))?$/;
+/**
+ * Keyword-led section headings (intake T14): `Section 4. Title`, `SECTION 4`, `Article 4.`,
+ * `ARTICLE 4 TITLE`, `Article IV. Title`. Number grammar: `\d{1,2}[A-Z]?` or UPPERCASE roman
+ * (Article only). The dot after the number must be followed by whitespace or end of line, so
+ * dotted decimals (`Section 1.1`), cites (`Section 3(42)`) and `Section N:` lines never match.
+ */
+export const KEYWORD_SECTION_RE =
+  /^\s*([Ss]ection|SECTION|[Aa]rticle|ARTICLE)\s{1,4}(\d{1,2}[A-Z]?|[IVXL]{1,6})(?:\.(?=\s|$))?(?:\s+(\S.{0,200}))?\s*$/;
 const PART_RE = /^\s*Part\s+([A-Z])\b\s*(?:[–—:-]\s*)?(.*)$/i;
 
 /** Title minus parenthetical groups and a trailing "*" (for the caps test). */
@@ -61,9 +69,52 @@ function titleIsHeading(title: string, line: Line): boolean {
   return line.cue.bold || isCaps(stripped || t);
 }
 
+/** Strict UPPERCASE roman numeral I..L to an integer; null if not canonical. */
+export function romanToInt(s: string): number | null {
+  if (!/^L?X{0,3}(?:IX|IV|V?I{0,3})$/.test(s) || s.length === 0) return null;
+  const v: Record<string, number> = { I: 1, V: 5, X: 10, L: 50 };
+  let n = 0;
+  for (let i = 0; i < s.length; i++) {
+    const a = v[s[i]!]!;
+    const b = i + 1 < s.length ? v[s[i + 1]!]! : 0;
+    n += a < b ? -a : a;
+  }
+  return n > 0 ? n : null;
+}
+
+/**
+ * Keyword-led heading candidate. Qualifies on the keyword, the number grammar and a bounded
+ * title only (no bold/caps requirement): line at most 120 chars, no sentence-final period,
+ * title not lowercase-led. Roman numbers convert to the arabic `number` string.
+ */
+export function keywordSectionCandidate(line: Line): SectionCandidate | null {
+  const text = line.text;
+  if (text.trim().length > HEADING_LIMITS.maxTitleChars) return null;
+  const m = KEYWORD_SECTION_RE.exec(text);
+  if (!m) return null;
+  const head = m[1]!.toLowerCase();
+  let raw = m[2]!;
+  let num: number;
+  if (/^\d/.test(raw)) num = Number.parseInt(raw, 10);
+  else {
+    if (head !== 'article') return null;
+    const r = romanToInt(raw);
+    if (r === null) return null;
+    num = r;
+    raw = String(r);
+  }
+  const title = (m[3] ?? '').trim();
+  if (title) {
+    if (!/^[A-Z0-9("“'‘]/.test(title)) return null;
+    if (/[.]\s*$/.test(title) && !/\b(No|Inc|Ltd|Co|Corp)\.$/.test(title)) return null;
+    if (/[:;]\s*$/.test(title)) return null;
+  }
+  return { kind: 'section', number: raw, num, title, titleOk: true };
+}
+
 export function sectionCandidate(line: Line): SectionCandidate | null {
   const m = SECTION_RE.exec(line.text);
-  if (!m) return null;
+  if (!m) return keywordSectionCandidate(line);
   const number = m[1]!;
   const title = (m[2] ?? '').trim();
   return {

@@ -5,7 +5,7 @@ import type { Conditional } from './types';
 /**
  * Conditionals (whitelist). Linear-time: text is cut into clauses (on . or ;,
  * max CLAUSE_MAX chars); in each clause we look for a trigger word, then the
- * first action verb within VERB_WINDOW chars, then the first Section/Part
+ * first action verb within VERB_WINDOW chars, then the first Section/Part/Annex/Question
  * target within TARGET_WINDOW chars. No nested or unbounded quantifiers.
  * Role-routing table rows ("Custodial account Please complete Part A of Section 2") are role conditionals.
  * Negative gate: "do not complete", "need not complete", "skip".
@@ -16,9 +16,17 @@ export const TARGET_WINDOW = 80;
 export const TRIGGER_RE = /\b(?:if|unless|only if|in the case of|for)\b/i;
 export const VERB_RE =
   /\b(do not complete|need not complete|complete|skip|proceed to|go to|provide|see)\b/i;
-export const TARGET_RE = /\b(Sections?|Parts?)\s+(\d{1,2}[A-Z]?|[A-Z])\b/;
+export const TARGET_RE = /\b(Sections?|Parts?|Annex(?:es)?|Questions?)\s+(\d{1,2}[A-Z]?|[A-Z])\b/;
 export const MORE_TARGETS_RE =
-  /^\s*(?:,|and|or|&|and\/or)\s*(?:Sections?\s+)?(\d{1,2}[A-Z]?|[A-Z])\b/;
+  /^\s*(?:,|and|or|&|and\/or)\s*(?:(?:Sections?|Annex(?:es)?|Questions?)\s+)?(\d{1,2}[A-Z]?|[A-Z])\b/;
+
+/** Target head word ("Sections" -> "Section", "Annexes" -> "Annex", "Questions" -> "Question"). */
+function headOf(word: string): string {
+  if (/^Part/i.test(word)) return 'Part';
+  if (/^Annex/i.test(word)) return 'Annex';
+  if (/^Question/i.test(word)) return 'Question';
+  return 'Section';
+}
 export const ROLE_ROW_RE = /^([A-Z][A-Za-z/ ,'-]{2,60}?)\s+Please\s+(complete|skip)\s/;
 export const ROW_TARGET_RE =
   /\b(Parts?\s+[A-Z](?:\s*(?:&|and|or)\s*[A-Z]){0,3}\s+of\s+Section\s+\d{1,2}|Section\s+\d{1,2}[A-Z]?)/g;
@@ -60,7 +68,7 @@ function conditionalsInClause(
   const tWin = c.text.slice(afterVerb, afterVerb + TARGET_WINDOW);
   const target = TARGET_RE.exec(tWin);
   if (!target) return null;
-  const head = /^Part/i.test(target[1]!) ? 'Part' : 'Section';
+  const head = headOf(target[1]!);
   const targets = [`${head} ${target[2]}`];
   let rest = tWin.slice(target.index + target[0].length);
   for (let k = 0; k < 8; k++) {
