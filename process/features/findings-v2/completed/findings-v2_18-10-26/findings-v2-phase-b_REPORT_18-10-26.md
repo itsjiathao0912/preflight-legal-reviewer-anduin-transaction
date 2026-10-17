@@ -202,3 +202,22 @@ Gates: web vitest 73 files / 544 tests; typecheck clean; findings-v2 e2e 11/11; 
 - `deploy:preflight`: 13/13 PASS (site key compiled in, no e2e hook marker, `_headers` with CSP, no routes/zone keys).
 - Live checks: `/api/health` 200 `{ok:true}` with `cache-control: no-store`; title and brand "Preflight"; sample #1 (Franklin Lexington) opened from the picker shows 18 findings in about 3 s with no Turnstile wait; `findings-column` and sticky `action-counsel` present; document zoom controls present (- / 90% / + / Fit width); 0 console errors; only API call was `GET /api/quota` (0 AI, 0 OCR, $0).
 - Rollback: not needed.
+
+## Design polish deploy (18-10-26)
+
+- Commit deployed: `2df83fe` (main). Static assets only; no migration, no route, no custom domain, workers.dev only.
+- New live version: `d6f88c56-cbc8-42b6-96cc-f054ba0d0a83` (100%, CF API deployments list).
+- Rollback target: `7db9e602-a688-4559-ae2d-d69892c873be` (re-checked live right before deploy); deeper `d9aaddd9`; never `8a82ead2` (schema 6).
+- Pre-deploy: port 4317 freed, `pnpm guard:cf` OK, `pnpm secrets:scan` OK, site key read from the live bundle (exactly 1 distinct match, never printed), plain web bundle made right before deploy.
+- `deploy:preflight`: 13/13 PASS.
+- Live checks: `/api/health` 200 `{ok:true}` `cache-control: no-store`; title "Preflight"; sample #1 from the picker: 18 findings in about 0.85 s with no Turnstile wait; `findings-column` + `action-counsel` present; 5 zoom controls; reading toolbar label "From HTML" on one line (label 19.5 px, bar 42 px); 0 console errors; only API call `GET /api/quota` (0 AI, 0 OCR). Same at 1440x900 and 1024x768.
+- Screenshots (Fit width default, first finding opened): `design-probe/live-1440.png`, `design-probe/live-1024.png`.
+- Rollback: not needed.
+
+### Design polish (commit 2df83fe, 18-10-26)
+- Toolbar one line; source-only label (From HTML/PDF/DOCX/scan); Jump to section icon-only below 1100px (aria-label + title).
+- Zoom overflow: scrollIntoView shifted the doc area sideways; new scrollIntoViewVertically keeps scrollLeft (3 call sites). Fit width still default.
+- Previously handled: last group inside the scrolling list; hidden when 0; only the action bar is sticky.
+- Segment hugs its buttons (2px), 28px = chip height. Expected/Found + Details: fv2-kv grid (80px muted label). Row: f.loc right-aligned, ellipsis max 140px; replaces the §N tag; min-width:0 fixes row overflow.
+- Tests: +5 e2e, +1 unit; a11y-smoke repaired; design-probe output -> completed/. Gates (EVL): vitest 545, typecheck 0, preview e2e 258 + 1 skip, stack-memory 12.
+- Residual: location shows the engine's section heading, not "Section N".

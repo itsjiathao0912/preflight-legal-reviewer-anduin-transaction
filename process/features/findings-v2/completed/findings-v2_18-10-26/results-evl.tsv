@@ -2,3 +2,4 @@ cycle	phase	domain	gate	fails	concerns	loop_status	note
 0	A	tests	PASS	0	0	HALTED_SUCCESS	EVL confirmation: 20 tokens, typecheck, full web 71/515, boundary B1-B3 green
 0	B	tests	PASS	0	0	HALTED_SUCCESS	EVL confirmation: 21 tokens, typecheck, vitest 531, e2e findings-v2 10, layout 5, full preview 252+1 skip, stack-memory 12, action-accept grep empty, boundary within E-B6
 1	B	tests	PASS	0	0	HALTED_SUCCESS	EVL re-run after review fixes 4c39a5a: vitest 544, e2e findings-v2 11, full preview 253+1 skip, stack-memory 12
+2	B	tests	PASS	0	0	HALTED_SUCCESS	EVL after design polish 2df83fe: vitest 545, e2e findings-v2 16, preview 258+1 skip, stack-memory 12
