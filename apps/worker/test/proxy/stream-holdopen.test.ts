@@ -4,6 +4,8 @@ import { createApp } from '../../src/app';
 import { okAi } from '../fakes/openrouter-stub';
 import { baseEnv, bodyText, makeHarness, req, T0, type Harness } from '../fakes/harness';
 import { keys } from '../../src/limits/policy';
+import { UPSTREAM_TIMEOUT_MS } from '../../src/proxy/pipeline';
+import { HEARTBEAT_MS } from '../../src/proxy/stream';
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
 const run = (h: Harness) => h.app.fetch(req(), h.env as never, h.ctx);
@@ -17,12 +19,12 @@ describe('stream-holdopen (AC26)', () => {
     expect(res.headers.get('cache-control')).toBe('no-store');
     const text = bodyText(res);
     await flush();
-    h.timers!.advance(120_000); // reaches the 120 s upstream timeout
+    h.timers!.advance(UPSTREAM_TIMEOUT_MS); // reaches the upstream timeout
     const body = await text;
     const lines = body.split('\n').filter(Boolean);
     for (const l of lines) parseFrameLine(l); // every emitted line is a valid frame
     const { heartbeats, terminal } = parseFrameStream(body); // exactly one terminal, last
-    expect(heartbeats).toBe(1 + 12); // at open + every 10 s through 120 s (hb is due just before the timeout)
+    expect(heartbeats).toBe(1 + UPSTREAM_TIMEOUT_MS / HEARTBEAT_MS); // at open + every interval through the timeout (hb is due just before the timeout)
     expect(terminal).toMatchObject({ t: 'error', code: 'upstream_failed', reason: 'timeout' });
     expect(h.or.aborted).toBe(1);
     expect(h.waitUntilCalls).toBe(0);

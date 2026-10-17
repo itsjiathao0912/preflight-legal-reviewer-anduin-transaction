@@ -78,7 +78,7 @@ function rulesEcho(r: { hash8: string; applied: number; total: number }): RulesE
     : { rules_hash8: r.hash8, rules_applied: r.applied, rules_total: r.total };
 }
 
-export const UPSTREAM_TIMEOUT_MS = 120_000;
+export const UPSTREAM_TIMEOUT_MS = 240_000;
 export const CACHE_TTL_S = 7 * 86_400;
 const DOC_HEADER = 'x-aduin-doc';
 
@@ -432,7 +432,11 @@ export async function handleProxy(
   }
 }
 
-/** Abortable upstream call with the 120 s timeout. */
+/**
+ * Abortable upstream call with the 240 s timeout. Workers Free has no wall-clock cap for a
+ * connected streaming response (time waiting on fetch is not CPU), and the heartbeats keep the
+ * NDJSON stream open. nemotron-3-super:free full reasoning was measured at 100-157 s.
+ */
 async function once(
   fwd: Forward,
   models: readonly string[],

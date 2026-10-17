@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { okAi } from '../fakes/openrouter-stub';
 import { bodyText, frames, makeHarness, send, T0 } from '../fakes/harness';
 import { FakePlatform } from '../fakes/platform';
+import { UPSTREAM_TIMEOUT_MS } from '../../src/proxy/pipeline';
 import { Claims, claimAi, claimOcr, keys, usageKeys } from '../../src/limits/policy';
 
 function heldUnits(h: ReturnType<typeof makeHarness>): number {
@@ -119,13 +120,13 @@ describe('llm-failure-injection-matrix (AC26)', () => {
     });
   }
 
-  test('timeout (120 s) aborts upstream and keeps ALL claims (review M2, no visitor refund)', async () => {
+  test('upstream timeout aborts upstream and keeps ALL claims (review M2, no visitor refund)', async () => {
     const h = makeHarness({ fakeTimers: true });
     h.or.reply({ hang: true });
     const res = await send(h);
     const text = bodyText(res);
     await new Promise((r) => setTimeout(r, 0));
-    h.timers!.advance(120_000);
+    h.timers!.advance(UPSTREAM_TIMEOUT_MS);
     const { terminal } = await (async () => {
       const { parseFrameStream } = await import('@aduin/core');
       return parseFrameStream(await text);

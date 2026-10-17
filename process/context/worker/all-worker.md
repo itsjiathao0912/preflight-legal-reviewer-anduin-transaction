@@ -41,7 +41,7 @@ Source map (`apps/worker/src`): `app.ts` (createApp + AppDeps seams), `config.ts
 7. Cache read. A HIT costs zero claims, zero writes, zero upstream calls (a HIT with firm rules still costs the one rules read).
 8. Turnstile (token in header `x-aduin-turnstile`; fails closed with 401 `invalid_session`).
 9. Ordered claims: visitor (req, fresh-doc v + IP, OCR pages) then global provider counter (always claimed last) then spend reservation.
-10. OpenRouter call (`redirect: 'error'`, 120 s timeout, free models only) streamed as hold-open NDJSON (`{t:'hb'}` every 10 s, then one terminal `result` or `error` frame).
+10. OpenRouter call (`redirect: 'error'`, 240 s timeout, free models only) streamed as hold-open NDJSON (`{t:'hb'}` every 10 s, then one terminal `result` or `error` frame).
 11. Classify (task-aware: `parseContent` for prose/fences, then `task.validate` is the only validation; `finish_reason: 'length'` = malformed, claims kept, nothing cached), cache write, ledger write, terminal frame.
 
 Pre-stream refusals are HTTP via `errorStatus(code)` with body `{error:{code,message,reason?,retry_after_s?}}`; failures after the stream opens are terminal `error` frames with the same fields. Clients must handle both. Budget: at most 13 port calls per AI request (`proxy-budget`: workspace + firm MISS 9, workspace + firm HIT 2 = rules read + cache get, no-firm HIT 1, a rules read failure 1).
