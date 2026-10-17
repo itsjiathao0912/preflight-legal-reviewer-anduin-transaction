@@ -1,0 +1,20 @@
+{
+  "task": "subdoc-qa-mvp phase 10 deploy-final: real D1 + Turnstile + CSP go-live, render-first fix, review fixes, live probes",
+  "planPath": "process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-10-deploy-final_PLAN_17-10-26.md",
+  "riskLevel": "high",
+  "riskClasses": [
+    "deploy/runtime/container/proxy/gateway changes",
+    "permission, secret, or trust-boundary logic",
+    "schema/data migration or destructive data mutation",
+    "public API contract changes"
+  ],
+  "riskDetail": [
+    "deploy: real Worker version rollout on workers.dev (4325e4e4 -> 67c796ff -> 23612b12); account-level resources created (D1 aduin-transaction-db, Turnstile widget aduin-transaction-web); CSP and security headers enforced via _headers",
+    "trust boundary: Turnstile-gated session bootstrap, TURNSTILE_SECRET set via wrangler secret put, cookie-signed sessions, Cloudflare API allow-list in live scripts (never the zone itsjiathao.com)",
+    "data: remote D1 migrations 0001-0005 applied and demo seed (80 rows) written to the real database",
+    "contract: /api/health now no-store; client token flow gained an interactive/background request option (web-only)"
+  ],
+  "mustStopBeforeFinalize": true,
+  "humanApprovalRequired": false,
+  "why": "Phase 10 is the first phase that mutates real Cloudflare account state and ships the trust boundary (Turnstile, signed sessions, CSP) to the public demo. A mis-scoped script call could touch the protected zone, a bad deploy could break the live demo, and a render path gated on Turnstile could hide findings (this actually happened and was fixed in af59da6). Spend cap respected: AI 0/6, OCR 0/6, 0 USD."
+}

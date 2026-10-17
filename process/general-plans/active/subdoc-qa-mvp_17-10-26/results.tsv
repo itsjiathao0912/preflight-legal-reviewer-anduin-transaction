@@ -81,3 +81,5 @@ iteration	timestamp	gaps_found	fail_count	concern_count	applied	saturation_statu
 79	2026-10-17	11	0	11	11	ACTIVE	CONTINUE	phase=10 pvl cycle 1 first-pass CONDITIONAL (0 FAIL/11 CONCERN G1-G11) supplement applied; re-validate (iteration-001 report)
 80	2026-10-17	8	0	8	8	ACTIVE	CONTINUE	phase=10 pvl cycle 2 CONDITIONAL (0 FAIL/8 CONCERN G12-G19; G1-G11 verified closed) supplement applied; re-validate (iteration-002 report)
 81	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	phase=10 pvl cycle 3 Gate PASS (0 FAIL/0 CONCERN; G1-G19 closed; E24-E26 added; residuals R1-R4 known) (iteration-003 report)
+82	2026-10-17	1	0	1	1	ACTIVE	CONTINUE	phase=10 evl confirmation after go-live (38a3b2f) found live render-blocking bug (firm docs gated on Turnstile bootstrap); fix af59da6 (iteration-001 report)
+83	2026-10-17	0	0	0	1	SATURATED	HALTED_SUCCESS	phase=10 evl confirmation at f0d924b all green (core 2914, worker 525, web 223, scripts 150, preview 173+1 skip, stack-memory 10); evidence pack harness/phase-10 written and validated 0 failures (iteration-002 report)

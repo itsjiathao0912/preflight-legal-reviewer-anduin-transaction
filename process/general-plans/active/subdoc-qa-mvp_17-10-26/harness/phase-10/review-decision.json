@@ -1,0 +1,25 @@
+{
+  "task": "subdoc-qa-mvp phase 10 deploy-final: real D1 + Turnstile + CSP go-live, render-first fix, review fixes, live probes",
+  "reviewer": "automated vc-code-reviewer security-reviewer (sonnet), independent of the implementing execute-agent; EVL confirmation by spawned vc-tester",
+  "decision": "approved-with-concerns",
+  "reviewDecision": "APPROVE_WITH_FIXES",
+  "date": "2026-10-17",
+  "timestamp": "2026-10-17",
+  "blockingFindings": [],
+  "pendingFixes": [],
+  "resolvedFindings": [
+    {"id": "M1", "severity": "Major", "fix": "stopReason reads both HTTP error and streamed error frame shapes; stops on budget_cap, breaker, rate_limited, closed global quota and non-:free model frames", "tests": ["scripts/test/live/live-guards.test.ts (real frame shapes)"]},
+    {"id": "M2", "severity": "Major", "fix": "Cloudflare REST is an explicit allow-list; raw path rejects encoded dots, slashes, backslash, query, zone in any case", "tests": ["live-guards: encoded %2e%2e, %7aones, %2f, backslash, workers/domains, pages domains, d1 query"]},
+    {"id": "m1-m6, m8, NIT", "severity": "Minor", "fix": "Fixed in 8e89991 (ledger lock, GraphQL error handling, preflight marker, DEPLOY.md accuracy, sax attribution, realpath compare)", "tests": ["scripts unit tests per finding"]},
+    {"id": "EVL-live-bug", "severity": "High", "fix": "af59da6 render-first: firm documents no longer wait on the Turnstile-gated session bootstrap; cached bootstrap failure; no background interactive challenge", "tests": ["web test/turnstile-no-block.test.ts (9)", "e2e turnstile-no-block.spec.ts (2)", "live check: findings about 1 s, no overlay, no /api/session"]}
+  ],
+  "nonBlockingFindings": [
+    "m7 (open): a fresh Turnstile challenge is requested per AI call; accepted for the demo, noted for later.",
+    "R-CSP-STYLE: style-src 'unsafe-inline' remains for Radix react-style-singleton style tags; script-src has no unsafe-inline or unsafe-eval.",
+    "R4: the Turnstile iframe's own CSP messages are Cloudflare-side; no evidence that our connect-src needs a change.",
+    "p99 Worker CPU 16 ms is above the 10 ms Free limit on 116 requests; observation only, backlog stub phase10-worker-cpu-p99."
+  ],
+  "mustStopBeforeFinalize": false,
+  "autoStopCleared": true,
+  "notes": "Approved with concerns: the deploy and trust-boundary work is verified; the live AI/OCR sweep, AC51 echo and D4 burst remain operator-run residuals (R2)."
+}

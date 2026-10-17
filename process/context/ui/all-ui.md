@@ -12,7 +12,7 @@ metadata:
 
 # aduin-transaction - UI/UX Context
 
-Last updated: 2026-10-17 (Phase 08 UPDATE PROCESS; HEAD eb53541 plus the process commit)
+Last updated: 2026-10-17 (Phase 10 UPDATE PROCESS; code HEAD f0d924b plus the process commit)
 
 Entrypoint for the `ui/` context group. `vc-ui-ux-designer` MUST read this before any design or frontend work.
 
@@ -157,12 +157,21 @@ Authoritative list: the `Published data-testid` bullet group in `subdoc-qa-mvp_P
 - **Testids:** `memory-view`, `memory-meta`, `memory-tabs`, `memory-tab-{decisions,rules,audit}`, `memory-info`, `memory-kept`, `memory-no-firm`, `memory-loading`, `memory-unavailable`, `memory-retry`, `memory-read-only`; Decisions `memory-decisions`, `memory-filter-class`, `memory-filter-status` (`data-value`), `memory-decisions-shown`, `memory-decision` (`data-decision-id`, `data-status` active|reopened, `data-class`), `memory-reopen`, `memory-decisions-empty`, `memory-decisions-truncated`; Rules `memory-rules`, `memory-suggested`, `memory-suggestion` (`data-rule-id`), `memory-suggestion-matching`, `memory-review`, `memory-no-suggestions`, `memory-active-rules`, `memory-rule` (`data-rule-id`), `memory-deactivate`, `memory-add-rule`, `memory-no-rules`, `memory-ai-info`, `memory-rejected`, `memory-rejected-rule`; dialogs `memory-dialog` (`data-kind`), `memory-dialog-{reason,text,error,submit,cancel,close}`, `memory-approve`, `memory-reject`, `memory-matching`, `memory-matching-{item,count,none}`, `memory-reject-note`, `memory-review-read-only`, `memory-review-text`; Audit `memory-audit`, `memory-audit-group`, `memory-audit-shown`, `memory-audit-note` plus Phase 08 `audit-list`, `audit-event`, `audit-more`.
 - **Open polish (backlog P8b-1 to P8b-4):** quiet refetch drops loaded older audit pages; "Reopened" includes undo/restore revokes; a failed quiet refetch hides valid data; aria-labels expose raw ids. See `process/general-plans/backlog/core-followups_17-10-26/core-followups_REF_17-10-26.md`.
 
+## Turnstile, Memory State and Banners (Phase 10)
+
+- **Render-first:** deterministic findings render as soon as the engine result is ready. Memory labels start as New, then the AI precomputed lookup, session bootstrap plus outbox flush and the memory lookup run in the background and apply only while the load is current. Never block rendering on Turnstile or the session.
+- **`data-memory-state` on the findings column** (`FindingsScreen.tsx`): `pending` (firm doc, background steps running), `ready`, `unavailable` (bootstrap failed or no token; the "Memory unavailable" banner shows with a Retry, testid `memory-unavailable-retry`), `none` (no firm). E2E fixtures wait for it to leave `pending`.
+- **Turnstile overlay** (`features/ai/turnstile-widget.ts`, `turnstile.ts`): managed widget, hidden by default. It is revealed only when the user just acted (`markUserIntent()`, 15 s window: AI Run/Retry, memory writes, analyst-name edit, Firm memory page load/Retry, banner Retry). Background requests settle null at once on `before-interactive-callback` and never show the overlay. Copy: "Verify you are human to use AI and memory features". Unset site key means no provider and no script load (preview/e2e builds). A failed unauthorized bootstrap is cached 60 s so no repeated challenges.
+- **a11y fixes (Phase 10):** `.docsw` aria-label starts with the visible text ("{name} {firm}, switch document"); the document scroller is `role=region`, `tabIndex=0`, `aria-label="Document text"`.
+- **CSP implications for UI code:** no inline scripts, no eval (Zod runs jitless via `src/zod-jitless.ts`, imported first in `main.tsx`), fonts are files not data: URIs, `style-src` keeps `'unsafe-inline'` only for Radix scroll-lock styles (residual R-CSP-STYLE).
+- **Open (operator):** screenshots `13-memory` and `14-audit` need a Turnstile-verified session; manual keyboard pass not recorded.
+
 ## UI Test Conventions
 
 - Two Playwright projects (`apps/web/playwright.config.ts`): `preview` (`vite preview` of a `--mode e2e` build, stub memory API, no Worker; runs every Phase 03 spec) and `stack` (built SPA + Worker; only `slice.spec.ts`; select with `--project=stack`; `SLICE_BASE_URL` points it at a deployed https `*.workers.dev` Worker). Details and commands: `process/context/tests/all-tests.md`.
 - Derive layout and tokens from `design/mockups/app.html` at test time through `apps/web/test/support/mockupCss.ts` (`rootVars`, `fontSizes`, `radii`, `shellWidths`, `railMaxWidth`, `sevTable`, `reasonsList`, `findingsCss`); never hard-code mockup numbers in specs. Later UI phases add their own section slicer beside `findingsCss` (Phase 07 added `compareCss()`).
 - E2E hook `window.__aduinE2E` exists only in `--mode e2e` builds (`no-e2e-hook-in-dist` guards production, including `useRealMemory`). Fixtures: `e2e/fixtures/{app,seedMemory,memory-stub-rules}.ts`.
-- A11y: `@axe-core/playwright` is installed as a dev-only dependency (MPL-2.0 decision D-8 recorded in `THIRD_PARTY_NOTICES.md`); gate = zero critical violations; serious items are listed, not gate-failing, and close in Phase 10.
+- A11y: `@axe-core/playwright` is installed as a dev-only dependency (MPL-2.0 decision D-8 recorded in `THIRD_PARTY_NOTICES.md`); gate = zero critical violations; the two serious items closed in Phase 10 (specs `a11y-keyboard`, `perf-budget`, `csp-headers`, `turnstile-no-block`).
 - Known UI follow-ups U1-U4 (locator chip shipped in Phase 05, contrast measurement, keyboard-focus screenshot, notes underline): `process/general-plans/backlog/core-followups_17-10-26/core-followups_REF_17-10-26.md`. AC6 edit-text/severity: backlog B-EDIT.
 
 ## Source Paths

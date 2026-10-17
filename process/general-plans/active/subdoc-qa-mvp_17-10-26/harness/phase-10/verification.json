@@ -1,0 +1,31 @@
+{
+  "task": "subdoc-qa-mvp phase 10 deploy-final: real D1 + Turnstile + CSP go-live, render-first fix, review fixes, live probes",
+  "commands": [
+    {"command": "pnpm --filter @aduin/core test", "result": "PASS", "notes": "2914 tests (EVL at f0d924b)"},
+    {"command": "pnpm --filter @aduin/worker test", "result": "PASS", "notes": "525 tests incl. health no-store"},
+    {"command": "pnpm --filter @aduin/web test", "result": "PASS", "notes": "223 tests incl. turnstile-no-block (9), headers-file (4)"},
+    {"command": "pnpm --filter @aduin/scripts test", "result": "PASS", "notes": "150 tests incl. live-guards allow-list/ledger/stopReason, deploy-preflight 13, conformance-free-plan, probe-session"},
+    {"command": "pnpm --filter @aduin/web test:e2e (preview project, single invocation)", "result": "PASS", "notes": "173 passed, 1 opt-in design-probe skipped; includes csp-headers, a11y-keyboard, perf-budget, fund-two, turnstile-widget, turnstile-no-block"},
+    {"command": "pnpm --filter @aduin/web test:e2e:stack-memory", "result": "PASS", "notes": "10 passed (run after preview, not concurrently)"},
+    {"command": "pnpm slice:check", "result": "PASS", "notes": "full"},
+    {"command": "pnpm typecheck", "result": "PASS", "notes": "core, web, worker, scripts"},
+    {"command": "pnpm lint", "result": "PASS", "notes": "eslint + prettier clean"},
+    {"command": "pnpm guard:cf", "result": "PASS", "notes": "OK; no zone itsjiathao.com reference"},
+    {"command": "pnpm secrets:scan", "result": "PASS", "notes": "OK"},
+    {"command": "pnpm seed:check && pnpm fixtures:check && pnpm record:author --check && pnpm precompute:ai --check", "result": "PASS", "notes": "all OK"},
+    {"command": "grep -r P10:FILL README.md docs", "result": "PASS", "notes": "empty"},
+    {"command": "pnpm --filter @aduin/scripts deploy:preflight", "result": "PASS", "notes": "13/13 on both plain builds (67c796ff and 23612b12)"},
+    {"command": "curl -sI https://aduin-transaction-web.giathaowork.workers.dev/", "result": "PASS", "notes": "CSP, nosniff, referrer-policy, permissions-policy, COOP present"},
+    {"command": "GET /api/health and /api/memory/health on live", "result": "PASS", "notes": "health 200 no-store; memory schema_version 5, seed_version 1"},
+    {"command": "SLICE_BASE_URL=<live> pnpm --filter @aduin/web exec playwright test --project=stack", "result": "PASS", "notes": "1 passed on 23612b12; zero upstream AI/OCR calls (AC34 live)"},
+    {"command": "pnpm --filter @aduin/scripts conformance:free-plan (AC39 matrix + AC40 limits)", "result": "PASS", "notes": "7/7 rejected before claim; one safe 429 rate_limited after 30 requests; quota unchanged"}
+  ],
+  "manualChecks": [
+    {"check": "Live render-first after redeploy: findings visible with no Turnstile overlay and no /api/session call", "result": "PASS", "notes": "samples #5/#3/#1 first finding row about 1 s; memory state unavailable banner on firm docs"},
+    {"check": "Workers CPU via GraphQL workerCpu (116 requests)", "result": "PASS", "notes": "p50 1.6 ms, p99 16 ms, 0 errors; p99 above the 10 ms Free limit is recorded as an observation with a backlog stub"},
+    {"check": "Before/after account resource diff", "result": "PASS", "notes": "only +D1 aduin-transaction-db, +widget aduin-transaction-web, new Worker versions; no /zones path used"},
+    {"check": "Live AI/OCR sweep, AC51 echo, AI timing at max_tokens 10000, D4 rows_written burst", "result": "SKIPPED", "notes": "Residual R2: automated Chromium gets no Turnstile token; deferred to a human-operator run (backlog stubs). AI 0/6, OCR 0/6, 0 USD"},
+    {"check": "Manual keyboard pass; screenshots 13-memory and 14-audit", "result": "SKIPPED", "notes": "Needs a human and a Turnstile-verified session; recorded as open items"}
+  ],
+  "result": "PASS_WITH_GAPS"
+}

@@ -5,12 +5,12 @@ status: COMPLETE_WITH_GAPS
 feature: subdoc-qa-mvp
 plan: process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-10-deploy-final_PLAN_17-10-26.md
 name: report:subdoc-qa-mvp-phase-10-deploy-final
-description: "Phase 10 EXECUTE report (in progress): step AE serialized Playwright first-green for Wave A owners A1, A2, A3, A5 — all green; Waves B-D pending"
+description: "Phase 10 report: Wave A-D execute results, live go-live (D1, Turnstile, CSP), render-first fix, redeploy 23612b12, and the UPDATE PROCESS closeout with SPEC achievement and known gaps"
 ---
 
 # Phase 10 deploy-final — EXECUTE report
 
-Status above is for the phase so far: step AE is complete; Waves B, C and D have not run yet.
+Status: COMPLETE_WITH_GAPS. The sections below are in execution order (AE, review fixes, Wave C, Wave D, EVL fix, redeploy); the final section is the UPDATE PROCESS closeout.
 
 ## AE results
 
@@ -75,7 +75,7 @@ After the fixes, both the report-only run and the enforced run had 0 violations 
 - D3: the plan says A5 runs the slice spec in the "preview project", but `playwright.config.ts` ignores `slice.spec.ts` in preview. It was run with `--project=stack` locally (wrangler dev, SLICE_BASE_URL unset) as E21 says ("A5 slice locally"). No live calls were made.
 
 ## What Was Skipped or Deferred
-- Waves B, C and D are not started (out of AE scope).
+- (AE-time note, superseded) Waves B, C and D ran later; see the sections below and the Closeout.
 
 ## Test Infra Gaps Found
 - The `stack` project's webServer runs a plain web build into the shared output directory. Any later preview run rebuilds with `--mode e2e` (observed), so there is no stale-bundle risk. Keep the runs serialized.
@@ -215,3 +215,77 @@ Session ledger: smoke 1, probe:live-session 2 claimed. No real `POST /api/sessio
 - Capture manually: `13-memory`, `14-audit` (need a Turnstile-verified session).
 - Doc updates: storyboard capture status, slides findings slide now shows `img/03-findings.png`, README hero image + screenshot line, live version id in README, DEPLOY.md, slides.html, script.md.
 - Method: scratchpad Playwright spec (not `shots-live.ts`; that script and its test are unchanged).
+
+## Closeout (UPDATE PROCESS, 17-10-26)
+
+**Answer first:** Phase 10 is done with known gaps. The app is live at version 23612b12 with real D1, Turnstile, CSP and no-store health, and every automated gate is green. AC51 (rules echo, live) is unmet and the live AI/OCR sweep never ran, because automated Chromium cannot get a Turnstile token. Those are operator-run items in backlog. Spend: $0.
+
+### Closeout packet
+1. Selected plan: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-10-deploy-final_PLAN_17-10-26.md`
+2. Classification: Keep in active/testing for the phase plan (archival gate: AC51 rests on a Known-Gap residual, so not archivable). The program is COMPLETE for its scoped goal; see umbrella.
+3. Finished: Waves A-D; real D1 `aduin-transaction-db` (5f0d76d8) with migrations 0001-0005 and demo seed; Turnstile widget plus secret; enforced CSP and security headers; `/api/health` no-store; a11y fixes; perf and fund-two specs; live scripts with allow-list and ledger; deliverables (README, DEPLOY, demo script, storyboard, slides) with live values; render-first fix after an EVL-found live bug; redeploy.
+4. Verified: see Test Gate Outcomes below. Unverified: live AI/OCR, AC51 echo, AI timing at `max_tokens` 10000, D4 burst, Turnstile iframe CSP with a human-solved challenge (R4), manual keyboard pass, screenshots 13 and 14.
+4b. Validate-contract: present, Gate PASS after 3 PVL cycles (E1-E26 binding).
+5. Cleanup done: context docs, umbrella state, registry, evidence pack, backlog stubs. Still needed: operator run, manual screenshots.
+6. Next valid state: operator-run session (backlog `phase10-live-ai-sweep-operator_NOTE_17-10-26.md`); no further phase.
+7. Commit checkpoint: source commits already made (9825007, bdc42cc, 8e89991, 38a3b2f, 0b18162, af59da6, f0d924b); this process commit follows.
+8. Regression status: all earlier phase surfaces re-run in the preview e2e (173 + 1 skip), core, worker, web unit, stack-memory, slice:check: PASS.
+
+### Test Gate Outcomes (EVL at f0d924b)
+| Gate | Result |
+|---|---|
+| core / worker / web unit / scripts | 2914 / 525 / 223 / 150 pass |
+| preview e2e | 173 pass, 1 opt-in design-probe skip |
+| stack-memory | 10 pass |
+| slice:check, typecheck, lint, guard:cf, secrets:scan, seed:check, fixtures:check, record:author --check, precompute:ai --check | all pass |
+| `P10:FILL` grep | empty |
+| Live: headers/CSP, health no-store, memory health schema 5, stack smoke | pass on 23612b12 |
+| Evidence pack `harness/phase-10` | 0 failures, 0 warnings (written at UPDATE PROCESS; the EVL's only FAIL) |
+
+### SPEC Achievement
+| AC | Score | Evidence |
+|---|---|---|
+| AC25 no-LLM mode over corpus | met | `no-llm-corpus.spec.ts` green in preview e2e |
+| AC29 perf budget | met | 169 ms (budget 5 s) on the 379 KB sample; 104 ms (budget 2 s) on the 50 KB sample; scan progress covered by the Phase 06 spec |
+| AC30 a11y and keyboard | met for the automated part; manual keyboard pass not recorded (Hybrid, Known-Gap) | `a11y-keyboard` 3/3, axe on main screens, two serious items fixed |
+| AC31 live demo end to end, README, nothing in the protected zone | met | live stack smoke 1 passed; deliverables filled; before/after resource diff shows only the D1, widget and Worker version; `guard:cf` OK. Video itself is not part of the repo |
+| AC34 samples open with zero AI/OCR calls | met | `sample-zero-calls` plus live quota 0/3 before and after the smoke |
+| AC39 abuse protection | met | live matrix 7/7 rejected before claim |
+| AC40 Free-plan limits | met for limits and safe failure (429 after 30 requests; CPU p50 1.6 ms); p99 16 ms observation and AI timing at `max_tokens` 10000 unmeasured | unmet portion: AI-call timing (R2) and p99 over 10 ms, backlog `phase10-worker-cpu-p99` |
+| AC51 firm rules are context, never a filter (live echo) | **unmet live** | Hybrid, residual R2; browser echo not run; backlog `phase10-live-ai-sweep-operator` (also `memory-ui-ai-rules-echo-browser`) |
+| AC59 Fund II at least 50% fewer findings needing action | met | 62.5% (8 findings, 5 handled) |
+| AC60 Fund II zero hidden, zero repeat | met | `fund-two` 4/4 |
+
+## SPEC Gaps
+- AC51 live echo: unmet (backlog `phase10-live-ai-sweep-operator_NOTE_17-10-26.md`).
+- AC40 AI-call CPU/duration at `max_tokens` 10000: unmeasured; D4 rows_written burst not run (`phase10-d4-rows-written-burst`, `phase10-worker-cpu-p99`).
+- AC30 manual keyboard pass: not recorded.
+
+### Known Gaps and residuals
+- R2: automated Chromium gets no Turnstile token (no evasion attempted). Affects AC51, live AI/OCR sweep, AI timing, D4 burst.
+- R4: Turnstile iframe CSP with a human-solved challenge is unevidenced.
+- R-CSP-STYLE: `style-src 'unsafe-inline'` for Radix scroll-lock styles.
+- Review m7 open (fresh challenge per AI call).
+- Screenshots 13-memory and 14-audit need a manual capture on a Turnstile-verified session.
+- HEAD `/api/health` returns 404 (GET-only route); observation only.
+
+### Live usage
+AI 0 of 6, OCR 0 of 6, spend $0. D1 rowsWritten 238 today (migrations and seed). Session ledger: smoke runs and 2 diagnostic probe claims; no real session created.
+
+### Deviations (summary)
+D1/D2 (A2 CSP fixes in `vite.config.ts` and new `zod-jitless.ts`), D3 (slice spec run under `--project=stack`), Wave C scripts fixes (conformance headers; probe opens #3 first), the render-first fix af59da6 (EVL-found), `deploy` retry after CF API 10500. No plan checklist item was dropped silently; C6 and C8 are marked partial.
+
+### What Was Skipped/Deferred
+AI/OCR sweep, AC51 echo, D4 burst, AI timing, manual screenshots 13/14, manual keyboard pass, m7: all in backlog or listed above.
+
+### Test Infra Gaps Found
+- The e2e suite had no Turnstile site key, so it could not see the render-blocking bug; the `data-memory-state` wait and `turnstile-no-block` specs now cover it. A keyed live check remains manual.
+- Automated browsers cannot pass Turnstile; live AI/OCR coverage needs a human operator.
+
+### Forward Preview
+- Test Infra Found: `turnstile-no-block`, `csp-headers`, `a11y-keyboard`, `perf-budget`, `fund-two`, `headers-file`; live scripts `conformance:free-plan`, `probe:live-session`, `probe:live-ai`, `shots:live`, `deploy:preflight` with ledger.
+- Blast Radius Changes: added `apps/web/src/zod-jitless.ts`, `features/ai/turnstile*.ts` changes, `vite.config.ts` font inlining; real D1 id in `wrangler.jsonc`.
+- Commands to Stay Green: `pnpm --filter @aduin/web test:e2e`, `pnpm --filter @aduin/web test:e2e:stack-memory` (serial), `pnpm --filter @aduin/core test`, `pnpm --filter @aduin/worker test`, `pnpm --filter @aduin/scripts test`, `pnpm slice:check`, `pnpm guard:cf`, `pnpm secrets:scan`.
+- Dependency Changes: none.
+
+Drift score: HIGH. Strongly recommend UPDATE PROCESS -- harness/protocol files touched. (Done in this session.)

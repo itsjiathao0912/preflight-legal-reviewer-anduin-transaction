@@ -10,7 +10,7 @@ metadata:
 
 # aduin-transaction - All Tests
 
-Last updated: 2026-10-17 (Phase 08 UPDATE PROCESS; HEAD eb53541 plus the process commit)
+Last updated: 2026-10-17 (Phase 10 UPDATE PROCESS; code HEAD f0d924b plus the process commit)
 
 Attach this file first when the task involves testing, verification, or test debugging.
 
@@ -265,6 +265,24 @@ Whole suites, serial EVL: web unit 27 files / 196, preview e2e 157 passed plus 1
 - Preview spec tokens are named `memory-ui-*` so the Playwright filter regex cannot also match the `stack-memory-*` specs.
 - Residual: a browser-driven AI run echoing `meta.rules_hash8` is not covered (backlog `memory-ui-ai-rules-echo-browser_NOTE_17-10-26.md`, Phase 10 live probe).
 
+## Phase 10 gate tokens, live scripts and ledgers (counts at HEAD f0d924b)
+
+Whole suites, serial EVL: core 2914, worker 525, web unit 223 (29+ files), scripts 150, preview e2e 173 passed plus 1 opt-in skip, `stack-memory` 10 passed, plus `slice:check`, typecheck, lint, `guard:cf`, `secrets:scan`, `seed:check`, `fixtures:check`, `record:author --check`, `precompute:ai --check`. One token per call, no `--`.
+
+| Surface | Tokens |
+|---|---|
+| web unit | `turnstile-widget`, `turnstile-no-block` (9: render-first, no background interactive challenge, cached bootstrap failure), `headers-file` (4: CSP rules in `public/_headers`, no script unsafe-inline/unsafe-eval), `download-blob` |
+| web e2e (preview) | `turnstile-widget` (2), `turnstile-no-block` (2: findings in under 5 s, no `/api/session`, no dialog), `csp-headers` (report-only trial and enforced, zero violations), `a11y-keyboard` (3, axe + keyboard), `perf-budget` (169 ms on the 379 KB sample, 104 ms on the 50 KB sample), `fund-two` (4: AC59 62.5%, AC60), `no-llm-corpus`, `sample-zero-calls` |
+| worker | `health` (no-store) |
+| scripts (offline) | `live-guards` (53: https workers.dev allow-list, CF REST allow-list, stop reasons, O_EXCL ledger), `deploy-preflight` (13), `conformance-free-plan` (9), `probe-session`, `probe-ai`, `shots-live` |
+
+- **Live scripts** (`pnpm --filter @aduin/scripts <key>`; need `CLOUDFLARE_*` env for the GraphQL reads): `conformance:free-plan` (AC39 matrix, AC40 limits, D4 burst), `probe:live-session` (headless then headed Chromium; opens firm sample #3 first because `#memory` alone makes no call), `probe:live-ai` (AC51 echo; counts against the APPROVED-LIVE AI cap), `shots:live` (read-only screenshots), `deploy:preflight`. Each keeps a call ledger (a cap, stop on cost > 0, non-free model, 429 or an open breaker). The ledger counts script runs only, not manual sessions. Sessions are capped at 5 per IP per UTC day, so run `probe:live-session` before burst cases.
+- **`data-memory-state` wait:** the findings column carries `data-memory-state` (`pending`, `ready`, `unavailable`, `none`). The e2e fixtures `openSample` and `openFund` wait until it is no longer `pending`; without that wait the `stack-memory` specs raced the new background bootstrap (1-2 of 10 failed).
+- **Live smoke:** `SLICE_BASE_URL=https://aduin-transaction-web.giathaowork.workers.dev pnpm --filter @aduin/web exec playwright test --project=stack`. With the site key compiled in, a token-less browser must make no failing `POST /api/session`.
+- **Blind spot closed by hand:** preview/e2e builds have no Turnstile site key, so only a keyed live check can reveal a render path gated on Turnstile (it did once). Keep the render-first rule (`process/context/worker/all-worker.md`).
+- **Automated Chromium cannot obtain a Turnstile token** (residual R2). Anything needing a real session (AC51 echo, live AI/OCR sweep, AI timing, D4 burst) is an operator run; stubs `phase10-*_NOTE_17-10-26.md` in `process/general-plans/backlog/`.
+- **Evidence pack:** `node .claude/skills/vc-risk-evidence-pack/scripts/validate-risk-artifacts.mjs process/general-plans/active/subdoc-qa-mvp_17-10-26/harness/phase-10` (0 failures).
+
 ## Debugging Quick Reference
 
 - **Worker tests fail to find bindings:** bindings come from `apps/worker/wrangler.jsonc`; the plugin config points at it.
@@ -276,11 +294,11 @@ Whole suites, serial EVL: web unit 27 files / 196, preview e2e 157 passed plus 1
 
 ## Known Gaps
 
-- a11y: zero critical axe violations is the gate; two serious items (nav label-content-name mismatch, findings scroller focusable) and manual keyboard/contrast checks close in Phase 10.
-- AC40 real workerd CPU/hold-open (at `max_tokens` 10000) and OpenRouter accounting of aborted/4xx requests are Agent-Probe residuals for the Phase 10 live probe; CI uses recorded responses only.
-- AC28/AC51 are Hybrid: automated gates pass on recordings, but live-model quality is not gated (sample #3 had 2 of 4 quotes unlocatable, counsel drafts echo clause text); Phase 10 live-quality sweep.
+- a11y: automated gate green (zero critical axe, the two serious items fixed in Phase 10); the manual keyboard pass is not recorded (Hybrid Known-Gap).
+- AC40 real workerd CPU/hold-open at `max_tokens` 10000 and OpenRouter accounting of aborted/4xx requests stay unmeasured (Phase 10 live AI run blocked by R2); measured live instead: CPU p50 1.6 ms / p99 16 ms, 429 after 30 requests. CI uses recorded responses only.
+- AC28/AC51 are Hybrid: automated gates pass on recordings, but live-model quality and the browser `rules_hash8` echo are not gated (sample #3 had 2 of 4 quotes unlocatable, counsel drafts echo clause text); the Phase 10 sweep did not run (R2), operator stub `phase10-live-ai-sweep-operator`.
 - The `rules_changed` banner has no automated test (stub rules are static per run).
-- Each one-token e2e call rebuilds the preview; the main bundle is 568 kB (code-splitting candidate for Phase 10).
+- Each one-token e2e call rebuilds the preview; the main bundle is 568 kB (code-splitting not done; fonts are emitted as files for CSP).
 - Remote spikes were not re-run in EVL; Worker deletion is trusted from the spike REF.
 - OpenRouter free-tier numeric limits are unconfirmed; read `GET /api/v1/key` at runtime (Phase 10).
 - S5/S8/S9/S10 ran in Phase 04b (S9/S10 remotely on throwaway resources); `rows_written` on the DEPLOYED memory paths is unmeasured and is a Phase 10 re-measure (D1 Free 100k/day, accepted risk N11). Phase 06: S3 skipped (1 page per request adopted), S4 VIABLE (row-level bbox on page 1).

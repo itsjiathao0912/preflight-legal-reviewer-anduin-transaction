@@ -13,7 +13,7 @@ metadata:
 
 **Date**: 17-10-26
 **Complexity**: COMPLEX
-**Status**: ✅ PVL PASS (cycle 2 re-validate, 17-10-26); ready for EXECUTE
+**Status**: ✅ DONE with known gaps (17-10-26): live at version 23612b12; AC51, live AI/OCR sweep and D4 burst are operator-run residuals in backlog
 **Program:** subdoc-qa-mvp
 **Umbrella plan:** process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp-umbrella_PLAN_17-10-26.md
 **Phase status:** ⏳ PVL PASS (cycle 2); EXECUTE next
@@ -292,9 +292,9 @@ Orchestrator reads this before deciding which subagent to spawn next. The canoni
 - [x] 2. INNOVATE — innovate-agent: approach decided; Decision Summary written (17-10-26: D1-D7 adopted, see Decisions Adopted)
 - [x] 3. PLAN-SUPPLEMENT — plan-agent: existing phase plan updated; Inner Loop Refresh Note written (17-10-26: body rewritten, see Inner Loop Refresh Note)
 - [x] 4. PVL — vc-validate-agent: full V1-V7; validate-contract written per `.claude/skills/vc-validate-findings/references/example-validate-output.md` (include the APPROVED-LIVE cap block above)
-- [ ] 5. EXECUTE — all checklist items done; per-section test gates run and green (or gaps documented)
-- [ ] 6. EVL — all EVL gates green; follow-up stubs registered; EVL HANDOFF SUMMARY written
-- [ ] 7. UPDATE PROCESS — phase report written, umbrella state updated, commit done
+- [x] 5. EXECUTE — all checklist items done; per-section test gates run and green (or gaps documented) (17-10-26: Waves A-D done; C6/C8 partial under residual R2, see report)
+- [x] 6. EVL — all EVL gates green; follow-up stubs registered; EVL HANDOFF SUMMARY written (17-10-26: 2 cycles; cycle 1 found live render bug, fixed af59da6; cycle 2 green at f0d924b; evidence pack validated)
+- [x] 7. UPDATE PROCESS — phase report written, umbrella state updated, commit done (17-10-26: closeout in REPORT; plan kept in active/ because AC51 and live AI sweep are unmet, see report Closeout)
 
 **Validate-contract required before execute.** If step 4 (PVL) is unchecked or `## Validate Contract` reads "(placeholder — vc-validate-agent writes this section before EXECUTE)", orchestrator must spawn vc-validate-agent first. A partial contract missing Plan updates applied / Execute-agent instructions / Test gates sections is treated as a placeholder.
 

@@ -1,0 +1,16 @@
+{
+  "task": "subdoc-qa-mvp phase 10 deploy-final: real D1 + Turnstile + CSP go-live, render-first fix, review fixes, live probes",
+  "snippets": [
+    {"file": "scripts/src/live/common.ts", "lines": "stopReason, Cloudflare REST allow-list, assertOutsideRepo, Ledger.claim", "description": "M1: stopReason reads both HTTP and streamed error frame shapes; M2: explicit CF REST allow-list (rejects encoded path bypass, zone, query, broad POST); m3: O_EXCL ledger lock; NIT: realpath comparison"},
+    {"file": "scripts/src/conformance/free-plan.ts", "lines": "makeHttp, AC39 matrix, sumRowsWritten", "description": "Matrix sends x-aduin-client and same-origin Origin so rejects are real guard rejections; m4: GraphQL errors or empty accounts throw"},
+    {"file": "apps/web/public/_headers", "lines": "/* CSP + security headers", "description": "Enforced CSP: script-src self + challenges.cloudflare.com, no unsafe-eval, no script unsafe-inline; style-src unsafe-inline is the named residual R-CSP-STYLE (Radix react-style-singleton); frame-ancestors none"},
+    {"file": "apps/web/src/zod-jitless.ts", "lines": "whole file", "description": "Pre-seeds Zod jitless so no eval probe runs; lets CSP omit unsafe-eval"},
+    {"file": "apps/web/src/state/review.ts", "lines": "openDocument (phase ready before background steps), retryMemory", "description": "Render-first: deterministic findings render right after the engine result; AI lookup, session+outbox flush and memory lookup run in the background and never gate rendering"},
+    {"file": "apps/web/src/features/ai/turnstile.ts", "lines": "TokenOptions.interactive, markUserIntent (15 s window)", "description": "Background token requests never show the overlay; interactive only right after a user action"},
+    {"file": "apps/web/src/features/ai/turnstile-widget.ts", "lines": "before-interactive-callback handling", "description": "Background request settles null at once; no background interactive challenge"},
+    {"file": "apps/web/src/api/realMemoryApi.ts", "lines": "BOOT_FAILURE_TTL_MS, clearBootFailure, ensureSessionWithin", "description": "Unauthorized bootstrap cached 60 s so no repeated challenges; memory writes wait at most 4 s then queue in the outbox"},
+    {"file": "apps/worker/src/app.ts", "lines": "/api/health route, jsonNoStore import", "description": "Health response carries cache-control: no-store"},
+    {"file": "apps/worker/wrangler.jsonc", "lines": "d1_databases entry", "description": "Real D1 id 5f0d76d8-ad88-4a0b-80eb-cff716c10eca replaces the placeholder; no routes, workers.dev only"},
+    {"file": "scripts/src/deploy/preflight.ts", "lines": "marker list, checks", "description": "13 checks on the plain web build: _headers present, site key compiled in, no e2e hook marker, no routes or zone keys"}
+  ]
+}

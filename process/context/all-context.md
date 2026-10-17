@@ -1,6 +1,6 @@
 # aduin-transaction - All Context
 
-Last updated: 2026-10-17 (Phase 08b UPDATE PROCESS; code HEAD 2de6749)
+Last updated: 2026-10-17 (Phase 10 UPDATE PROCESS; code HEAD f0d924b)
 
 This file is the root context entrypoint for the repo.
 
@@ -24,7 +24,7 @@ Target user: Anduin's Digitization Service Analyst. Deliverables: live demo, REA
 
 Domain knowledge, defect taxonomy, competitors and product decisions: `process/context/product-domain.md`.
 
-**Live demo (Milestone 1, redeployed 17-10-26):** https://aduin-transaction-web.giathaowork.workers.dev (Worker `aduin-transaction-web`, version `4325e4e4-9aca-4ae8-8985-cc0b73097c3e`, code 2de6749 (Phase 08b), ocr2 deployed; previous version `2a3e0f34-6e01-4cff-b2ed-27cd62a6deb7` = eb53541). The Findings screen runs real engine findings on bundled samples. The deployed version predates Phases 04b and 05; AI stays fail-closed on the live site until Phase 10 deploys D1 and the Turnstile widget. Deploy rules and the redeploy recipe: `process/context/worker/all-worker.md`.
+**Live demo (program COMPLETE, 17-10-26):** https://aduin-transaction-web.giathaowork.workers.dev (Worker `aduin-transaction-web`, version `23612b12-51c7-4d75-a324-f4f2f6392ba8`, code af59da6 plus docs f0d924b; rollback `67c796ff`). Real D1 `aduin-transaction-db` (migrations 0001-0005, demo seed), Turnstile widget live, enforced CSP and security headers, `/api/health` no-store. Findings render in about 1 s without waiting for Turnstile. AI and OCR need a Turnstile token (human in a real browser); automated Chromium gets none, so the live AI/OCR sweep, AC51 echo and D4 burst are operator-run residuals in backlog. Live AI/OCR spend so far: $0. Deploy rules and recipe: `process/context/worker/all-worker.md`.
 
 ---
 
@@ -192,7 +192,7 @@ When durable project knowledge changes:
 
 ## Repository Structure
 
-pnpm monorepo scaffold exists (Phase 00 of the subdoc-qa-mvp program, commit 7d9955b); Phase 01 (6d12628) added the core engine in `packages/core` (see `process/context/engine/all-engine.md`); Phase 03 (833161b) added the web shell and Findings screen; Phase 04a (729e7fd) added the Worker AI/OCR proxy; Phase 07 (f3f533f, 99c9cee, dca6a45) added version diff, Compare and the AI drift narrative; Phase 09 (feb0acc) added the JSON logic outline export; Milestone 1 closed at 70d320b; Phase 02 (7a7f421 + 1f5dade) added detectors, investor paths, the structure view and fixtures; Phase 04b (7a7f421 + bb83e04 + fb3064f + 59d9831) added the D1 schema, platform ports and the memory API; Phase 05 (2ac1917 + e9c90d9 + 9c9f3b5 + a9732a6 + f0f476c) added the LLM task framework (`packages/core/src/llm`), firm-rules injection in the Worker, the AI lane in the web app and LLM recordings/scripts; Phase 06 (027a450 + 2d198f4 + 6473186 + b9767ac + 69bddd5 + 5c1c25d + 73599b5) added the PDF/DOCX/OCR adapters, scan viewer, OCR queue and precompute for sample #9; Phase 08 (1d45fa2 .. eb53541) added the counsel sheet, gate, DOCX export, real memory client with outbox, session bootstrap, L5 rules echo and the `stack-memory` e2e project (deployed (version 2a3e0f34-6e01-4cff-b2ed-27cd62a6deb7); Phase 08b deployed in 4325e4e4-9aca-4ae8-8985-cc0b73097c3e); Phase 08b (54ddaae + 2de6749) added the `#memory` firm memory screen (Decisions, Rules, Audit trail) in `apps/web/src/features/memory`. Current layout:
+pnpm monorepo scaffold exists (Phase 00 of the subdoc-qa-mvp program, commit 7d9955b); Phase 01 (6d12628) added the core engine in `packages/core` (see `process/context/engine/all-engine.md`); Phase 03 (833161b) added the web shell and Findings screen; Phase 04a (729e7fd) added the Worker AI/OCR proxy; Phase 07 (f3f533f, 99c9cee, dca6a45) added version diff, Compare and the AI drift narrative; Phase 09 (feb0acc) added the JSON logic outline export; Milestone 1 closed at 70d320b; Phase 02 (7a7f421 + 1f5dade) added detectors, investor paths, the structure view and fixtures; Phase 04b (7a7f421 + bb83e04 + fb3064f + 59d9831) added the D1 schema, platform ports and the memory API; Phase 05 (2ac1917 + e9c90d9 + 9c9f3b5 + a9732a6 + f0f476c) added the LLM task framework (`packages/core/src/llm`), firm-rules injection in the Worker, the AI lane in the web app and LLM recordings/scripts; Phase 06 (027a450 + 2d198f4 + 6473186 + b9767ac + 69bddd5 + 5c1c25d + 73599b5) added the PDF/DOCX/OCR adapters, scan viewer, OCR queue and precompute for sample #9; Phase 08 (1d45fa2 .. eb53541) added the counsel sheet, gate, DOCX export, real memory client with outbox, session bootstrap, L5 rules echo and the `stack-memory` e2e project (deployed (version 2a3e0f34-6e01-4cff-b2ed-27cd62a6deb7); Phase 08b deployed in 4325e4e4-9aca-4ae8-8985-cc0b73097c3e); Phase 08b (54ddaae + 2de6749) added the `#memory` firm memory screen (Decisions, Rules, Audit trail) in `apps/web/src/features/memory`; Phase 10 (9825007 .. f0d924b) added the real D1, Turnstile widget, CSP headers, a11y/perf/fund-two specs, live/ops scripts, deliverables (README, `docs/DEPLOY.md`, `docs/demo/`) and the render-first fix (deployed, version 23612b12). Current layout:
 
 ```
 aduin-transaction/
@@ -201,9 +201,9 @@ aduin-transaction/
   package.json, pnpm-workspace.yaml, pnpm-lock.yaml -- root scripts, workspaces (packages/*, apps/*, scripts), pnpm@11.13.1
   tsconfig.base.json, eslint.config.js, THIRD_PARTY_NOTICES.md
   packages/core/            -- @aduin/core: parser/graph/detector engine + `src/llm/` LLM task framework + Phase 06 adapters (format-detect, pdf-text, docx via subpath `@aduin/core/docx`, ocr, page-noise, sup-segments) (src/index.ts seam; test/{unit,golden,property,seeded,recorded,security})
-  apps/web/                 -- @aduin/web: React 19 + Vite 8 + Tailwind 4 SPA. src/{styles,shell,features,components,state,engine,storage,api,memory}; engine runs in a Comlink Web Worker; e2e/ = 17 Playwright specs + fixtures; test/ = 9 Vitest gates + support/mockupCss.ts; public/samples and firms.json are generated (gitignored). See process/context/ui/all-ui.md
+  apps/web/                 -- @aduin/web: React 19 + Vite 8 + Tailwind 4 SPA. src/{styles,shell,features,components,state,engine,storage,api,memory}; engine runs in a Comlink Web Worker; e2e/ = Playwright specs (173 pass + 1 opt-in skip in preview, plus stack-memory 10) + fixtures; test/ = Vitest gates (223 tests) + support/mockupCss.ts; public/samples and firms.json are generated (gitignored). See process/context/ui/all-ui.md
   apps/worker/              -- @aduin/worker: Cloudflare Worker, wrangler.jsonc. src/{config,proxy,limits,upstream,identity,routes/proxy}: POST /api/ai, POST /api/ocr, GET /api/quota (NDJSON hold-open proxy to OpenRouter, quotas, spend cap, Turnstile, breaker); routes/memory, memory/, platform/, migrations/0001-0005 and seed/ are the Phase 04b D1 memory API. See process/context/worker/all-worker.md
-  scripts/                  -- @aduin/scripts: guards (guard:cf, secrets:scan), build-samples.ts, slice-check.ts (M1 check), spike runners and spike worker scripts (spikes/s01-s02)
+  scripts/                  -- @aduin/scripts: guards (guard:cf, secrets:scan), build-samples.ts, slice-check.ts (M1 check), spike runners, and Phase 10 live/ops scripts (conformance:free-plan, probe:live-session, probe:live-ai, shots:live, deploy:preflight; allow-listed, ledgered)
   fixtures/                 -- fixture dirs (fingerprint vectors and memory seeds land in Phases 01/02)
   design/                   -- approved mockups and design assets
   docs/research/            -- reusable-repos.md (open-source candidates + licenses)
@@ -248,22 +248,22 @@ Secrets live outside the repo (see `CLAUDE.md` credentials table). Env var names
 
 - Cloudflare: `CLOUDFLARE_EMAIL`, `CLOUDFLARE_API_KEY`, `CLOUDFLARE_ACCOUNT_ID` (`~/.config/cloudflare/credentials.env`)
 - OpenRouter: `OPENROUTER_API_KEY`, `OPENROUTER_BASE_URL` (`~/.config/openrouter/credentials.env`)
-- App runtime: Workers secrets via `wrangler secret put` (live: `COOKIE_SIGNING_KEYS`, `COOKIE_SIGNING_KID`, `OPENROUTER_API_KEY`; `TURNSTILE_SECRET` not yet); plain vars in `apps/worker/wrangler.jsonc`; full list in `process/context/worker/all-worker.md`. Local dev in gitignored `.dev.vars` / `.env`.
+- App runtime: Workers secrets via `wrangler secret put` (live: `COOKIE_SIGNING_KEYS`, `COOKIE_SIGNING_KID`, `OPENROUTER_API_KEY`, `TURNSTILE_SECRET`); the public Turnstile site key is the build-time `VITE_TURNSTILE_SITE_KEY`; plain vars in `apps/worker/wrangler.jsonc`; full list in `process/context/worker/all-worker.md`. Local dev in gitignored `.dev.vars` / `.env`.
 - Tests: `SLICE_BASE_URL` (https `*.workers.dev` only) points the Playwright `stack` project at a deployed Worker; `DESIGN_PROBE` enables the opt-in design-probe spec.
 
 ## Open Questions and Outstanding Work
 
-- Does Docxodus WASM run on Cloudflare Workers? (spike needed before relying on it for DOCX diff)
-- Which free OpenRouter vision model is good enough for OCR on `samples/sub-docs/raw/09-rw-holdings-scans/`?
-  The paid fallback is chosen against the ~$10 cap.
-- Persistence for counsel-query tracking (D1 vs KV) and whether the demo needs auth.
-- OpenRouter credits not yet topped up by the user; paid fallback unavailable until then.
-- Next step: Phase 10 (the missing-target cross-reference detector P6-1 is DEFERRED, feasibility INCONCLUSIVE: `process/general-plans/backlog/missing-target-xref_17-10-26/`); see the umbrella `## Current Execution State`. Phases 00-07, 08, 08b and 09 are DONE; Milestone 1 is closed and live (the live build is the 2de6749 preview, version 4325e4e4-9aca-4ae8-8985-cc0b73097c3e; previous 2a3e0f34-6e01-4cff-b2ed-27cd62a6deb7). Phase 08 review notes N1-N4 and Phase 08b memory-page polish P8b-1 to P8b-6 are in the backlog; the browser `rules_hash8` echo (AC51 residual) is a backlog stub for the Phase 10 live probe. Phase 10 also owns CSP and security headers (F10), deploying the Worker before the web bundle (F12; the live Worker still runs the ocr1 OCR contract) and re-seeding the remote demo D1. Phase 10 owns creating and migrating the real D1 (placeholder id in `apps/worker/wrangler.jsonc` stays until then), remote migrations 0001-0005, the Turnstile widget plus `TURNSTILE_SECRET`, the live-model quality sweep/precompute spread over UTC days, the workerd timing probe at `max_tokens` 10000, and the remote D1 rows_written re-measure (`process/context/worker/all-worker.md`).
-- Open backlog: AC6 edit text/severity (B-EDIT), UI notes U2-U4 (U1 done), core follow-ups incl. Phase 06 rows (F4, F6-F8, N6-N8, live OCR bbox row-level, concurrent e2e port flake), `/api/health` no-store (`process/general-plans/backlog/`).
+Resolved: persistence is D1 (real `aduin-transaction-db`, live); Turnstile is live; the demo needs no account (read-only sandbox plus a sandbox copy per session).
+
+- **Program status:** all phases are DONE (00-07, 08, 08b, 09, 10); Milestone 1 closed and live. No further phase is planned.
+- **Operator run (residual R2, backlog `process/general-plans/backlog/phase10-*_NOTE_17-10-26.md`):** with a human in a real browser, run the AC51 `rules_hash8` echo, the live AI/OCR sweep (max 3 AI per UTC day), AI timing at `max_tokens` 10000, and the D4 `rows_written` burst. Also capture demo screenshots 13-memory and 14-audit and record a manual keyboard pass. Residual R4: Turnstile iframe CSP with a human-solved challenge is unevidenced. Residual R-CSP-STYLE: `style-src 'unsafe-inline'` for Radix. Worker CPU p99 16 ms is above the 10 ms Free limit (observation).
+- **Open questions:** does Docxodus WASM run on Cloudflare Workers (not needed for the shipped DOCX path)? Which free OpenRouter vision model is good enough for live OCR (unproven, R2)? OpenRouter credits are not topped up; the paid fallback is unavailable.
+- **Deferred:** the missing-target cross-reference detector (feasibility INCONCLUSIVE, `process/general-plans/backlog/missing-target-xref_17-10-26/`).
+- **Open backlog:** AC6 edit text/severity (B-EDIT), UI notes U2-U4, core follow-ups (F4, F6-F8, N6-N8, live OCR bbox row-level, concurrent e2e port flake), Phase 08 review notes N1-N4, review m7 (fresh challenge per AI call), diff-only version drift questions (`process/general-plans/backlog/`).
 
 ## Scan Metadata
 
 - Generated: 2026-10-17
-- HEAD: 2de6749 (code), process commit follows
-- Mode: delta update after Phase 08b (firm memory UI); earlier deltas: Phase 08 (counsel, gate, memory client), Phases 02, 04b, 05, 06, 07, 09
+- HEAD: f0d924b (code), process commit follows
+- Mode: delta update after Phase 10 (deploy-final); earlier deltas: Phases 02, 04b, 05, 06, 07, 08, 08b, 09
 - Package manager: pnpm 11.13.1 (workspaces: packages/*, apps/*, scripts)
