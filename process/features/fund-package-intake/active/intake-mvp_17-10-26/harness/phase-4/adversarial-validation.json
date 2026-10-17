@@ -1,0 +1,30 @@
+{
+  "task": "intake-mvp phase 4 closeout + deploy: full serial regression, base-AC re-runs, plain web bundle, preflight, redeploy of Worker aduin-transaction-web (assets), live package smoke",
+  "scenarios": [
+    {
+      "scenario": "zone/route/custom-domain attachment",
+      "ruled_out": true,
+      "rationale": "preflight no-routes check + guard:cf PASS; wrangler output shows only workers.dev URL and cron trigger"
+    },
+    {
+      "scenario": "secret exposure",
+      "ruled_out": true,
+      "rationale": "credentials loaded by the APPROVED line only; secrets:scan PASS; no secret put; site key path stripped from smoke logs/result (0 matches)"
+    },
+    {
+      "scenario": "e2e hook shipped to production",
+      "ruled_out": true,
+      "rationale": "preflight e2e marker check PASS; plain bundle made after the last local Playwright run"
+    },
+    {
+      "scenario": "AI/OCR spend during smoke",
+      "ruled_out": true,
+      "rationale": "abort-and-count: 0 aborted, 0 fulfilled"
+    },
+    {
+      "scenario": "document text leaving the browser",
+      "ruled_out": true,
+      "rationale": "stack-memory-package-privacy: no sentinel/member text in any URL or body; only session/memory/quota API calls"
+    }
+  ]
+}

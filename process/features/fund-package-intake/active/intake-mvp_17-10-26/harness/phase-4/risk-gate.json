@@ -1,0 +1,17 @@
+{
+  "task": "intake-mvp phase 4 closeout + deploy: full serial regression, base-AC re-runs, plain web bundle, preflight, redeploy of Worker aduin-transaction-web (assets), live package smoke",
+  "planPath": "process/features/fund-package-intake/active/intake-mvp_17-10-26/intake-mvp_PHASE-4-closeout-deploy_PLAN_17-10-26.md",
+  "riskLevel": "high",
+  "riskClasses": [
+    "deploy/runtime/container/proxy/gateway changes",
+    "permission, secret, or trust-boundary logic"
+  ],
+  "riskDetail": [
+    "deploy: Worker aduin-transaction-web version cde74507-7b92-4e43-99fa-754de2c5cf3b -> 3d2c7301-a4a5-487c-bd7d-2f2c0800be6f on workers.dev only; 29 new/changed static assets; Worker code identical to the live commit 994ea54 (git diff --quiet 994ea54 HEAD -- apps/worker = 0)",
+    "trust boundary: public Turnstile site key read from the live bundle into a mode-600 scratchpad file, used by one build and one preflight process, deleted after F; Cloudflare credentials loaded only via the APPROVED line in the same Bash call"
+  ],
+  "rollbackTarget": "cde74507-7b92-4e43-99fa-754de2c5cf3b",
+  "mustStopBeforeFinalize": true,
+  "humanApprovalRequired": false,
+  "why": "Outward-facing deploy authorized by the program standing autonomy (auto-deploy to the workers.dev Worker only). No route, custom domain, zone, D1, migration or secret action."
+}

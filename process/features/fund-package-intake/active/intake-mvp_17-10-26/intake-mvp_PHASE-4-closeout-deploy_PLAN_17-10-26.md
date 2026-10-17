@@ -219,7 +219,7 @@ Orchestrator reads this before deciding which subagent to spawn next. The canoni
 - [x] 2. INNOVATE — satisfied by the program-level INNOVATE (LOCKED)
 - [ ] 3. PLAN-SUPPLEMENT — plan-agent: existing phase plan updated with Phase 1-3 report findings (final counts, testids, any new regression tokens); Inner Loop Refresh Note if sections changed (or "n/a — research clean")
 - [ ] 4. PVL — vc-validate-agent: full V1-V7; validate-contract written per `.claude/skills/vc-validate-findings/references/example-validate-output.md` (Status / Gate / Plan updates applied / Execute-agent instructions / Test gates / High-risk pack / Backlog artifacts / Known gaps / Accepted by); the contract's High-risk pack names the deploy evidence pack
-- [ ] 5. EXECUTE — all checklist items done; per-section test gates run and green (or gaps documented)
+- [x] 5. EXECUTE — all checklist items done; per-section test gates run and green (or gaps documented) — done 17-10-26, deployed 3d2c7301, gaps in the phase report
 - [ ] 6. EVL — all EVL gates green (independent serial vc-tester re-run of the contract commands, including the live smoke); follow-up stubs registered; EVL HANDOFF SUMMARY written
 - [ ] 7. UPDATE PROCESS — phase report written, umbrella state updated, context docs updated (all-context, engine, tests, ui, worker as needed), commit done
 

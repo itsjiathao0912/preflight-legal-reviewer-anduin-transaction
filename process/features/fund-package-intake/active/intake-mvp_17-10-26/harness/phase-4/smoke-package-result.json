@@ -1,0 +1,185 @@
+{
+  "base": "https://aduin-transaction-web.giathaowork.workers.dev",
+  "package": "northgate-iii",
+  "checks": {
+    "app-shell": true,
+    "package-confirm-and-run": true,
+    "findings-within-5s": true,
+    "coverage-line": true,
+    "structure-package-tab": true,
+    "counsel-gp-group": true,
+    "gp-request-docx": true,
+    "sample-03-no-package-ui": true
+  },
+  "notes": [],
+  "failingPosts": [],
+  "consoleErrors": [
+    "%c%d font-size:0;color:transparent NaN [from https://challenges.cloudflare.com]",
+    "%c%d font-size:0;color:transparent NaN [from https://challenges.cloudflare.com]",
+    "Connecting to 'data:,' violates the following Content Security Policy directive: \"connect-src 'self' https://hagen.challenges.cloudflare.com https://brunhild.challenges.cloudflare.com https://valid.alg13.dnstest.challenges.cloudflare.com https://invalid.alg13.dnstest.challenges.cloudflare.com https:",
+    "Connecting to 'data:,' violates the following Content Security Policy directive: \"connect-src 'self' https://hagen.challenges.cloudflare.com https://brunhild.challenges.cloudflare.com https://valid.alg13.dnstest.challenges.cloudflare.com https://invalid.alg13.dnstest.challenges.cloudflare.com https:",
+    "Connecting to 'data:,' violates the following Content Security Policy directive: \"connect-src 'self' https://hagen.challenges.cloudflare.com https://brunhild.challenges.cloudflare.com https://valid.alg13.dnstest.challenges.cloudflare.com https://invalid.alg13.dnstest.challenges.cloudflare.com https:",
+    "Fetch API cannot load data:,. Refused to connect because it violates the document's Content Security Policy. [from https://challenges.cloudflare.com]"
+  ],
+  "abortedAiOcr": 0,
+  "fulfilledAiOcr": 0,
+  "requests": [
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/assets/index-8oOHOdWt.js",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/assets/index-CwXJvQES.css",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/api/quota",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/assets/newsreader-latin-500-normal-B66TYsaK.woff2",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/assets/geist-latin-500-normal-CTWBw9NS.woff2",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/assets/geist-latin-400-normal-B40WzpMT.woff2",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/assets/geist-latin-600-normal-CSETrqM2.woff2",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/samples/manifest.json",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/firms.json",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/samples/packages.json",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/samples/packages/northgate-iii/01-NG3-Subscription-Agreement.docx",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/samples/packages/northgate-iii/02-NG3-LPA-Definitions-and-Key-Terms.docx",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/samples/packages/northgate-iii/03-NG3-PPM-Summary-of-Terms.docx",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/samples/packages/northgate-iii/04-NG2-Subscription-Agreement-2024.docx",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/samples/packages/northgate-iii/05-Meridale-AML-KYC-Requirements.docx",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/samples/packages/northgate-iii/06-GP-Email-Requirements-Note.docx",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/assets/engine.worker-DsI5QbnH.js",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/assets/docx-GNkwiNl9.js",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/precomputed/acd2389264500fd7150090b82a436af302ccea300607a83f3dc51aa5bdb57520.none.json",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/assets/newsreader-latin-400-normal-BFBkh4jY.woff2",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/assets/newsreader-latin-600-normal-30OJ_TG_.woff2",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://challenges.cloudflare.com",
+      "status": 302
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/assets/dist-CzOHATpY.js",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://challenges.cloudflare.com",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://challenges.cloudflare.com",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "url": "https://challenges.cloudflare.com",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://aduin-transaction-web.giathaowork.workers.dev/samples/03-partners-group-pe-master-2019.htm",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://challenges.cloudflare.com",
+      "status": 401
+    },
+    {
+      "method": "GET",
+      "url": "https://brunhild.challenges.cloudflare.com"
+    },
+    {
+      "method": "GET",
+      "url": "https://challenges.cloudflare.com",
+      "status": 200
+    }
+  ],
+  "runToFindingsMs": 228,
+  "coverageText": "Coverage: partial - 3 terms unverified, 18 references not in the package",
+  "outcome": "fail"
+}

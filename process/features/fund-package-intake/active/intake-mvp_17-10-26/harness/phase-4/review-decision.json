@@ -1,0 +1,14 @@
+{
+  "task": "intake-mvp phase 4 closeout + deploy: full serial regression, base-AC re-runs, plain web bundle, preflight, redeploy of Worker aduin-transaction-web (assets), live package smoke",
+  "reviewer": "vc-execute-agent self-review (opus); independent sonnet vc-code-reviewer pass pending at EVL",
+  "decision": "approved-with-concerns",
+  "timestamp": "2026-10-17",
+  "blockingFindings": [],
+  "nonBlockingFindings": [
+    "smoke:live-package exits 1 only on Turnstile iframe console errors (third party); Intake checks all pass",
+    "C6 literal gate exits 1 due to already-live commits a0f4961/994ea54",
+    "main bundle 837.67 kB vs 568 kB base (+270 kB)",
+    "dialog Escape returns focus to body, not the trigger (pre-existing)"
+  ],
+  "notes": "No rollback: the failure is not Intake behavior and the Turnstile widget/CSP equal the previous live version."
+}

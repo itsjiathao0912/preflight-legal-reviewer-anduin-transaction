@@ -1,0 +1,25 @@
+{
+  "task": "intake-mvp phase 4 closeout + deploy: full serial regression, base-AC re-runs, plain web bundle, preflight, redeploy of Worker aduin-transaction-web (assets), live package smoke",
+  "snippets": [
+    {
+      "file": "apps/worker/wrangler.jsonc",
+      "lines": "2-9",
+      "description": "name aduin-transaction-web, workers_dev true, no routes (guard:cf rules)"
+    },
+    {
+      "file": "scripts/src/deploy/preflight.ts",
+      "lines": "75, 149",
+      "description": "e2e hook marker check; no routes / custom_domain / zone keys check"
+    },
+    {
+      "file": "scripts/src/live/common.ts",
+      "lines": "38-58",
+      "description": "LIVE_HOST allow-list and assertLiveBase (https, aduin-transaction-*.giathaowork.workers.dev, origin only)"
+    },
+    {
+      "file": "scripts/src/live/smoke-package.ts",
+      "lines": "mustAbort, RequestRecorder, classify, frameOrigin",
+      "description": "aborts and counts /api/ai and /api/ocr; records method+URL only; third-party URLs reduced to origin; fails on any failing POST, console error or fulfilled AI/OCR"
+    }
+  ]
+}

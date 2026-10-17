@@ -1,0 +1,102 @@
+{
+  "task": "intake-mvp phase 4 closeout + deploy: full serial regression, base-AC re-runs, plain web bundle, preflight, redeploy of Worker aduin-transaction-web (assets), live package smoke",
+  "commands": [
+    {
+      "command": "pnpm install --frozen-lockfile",
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm --filter @aduin/core test",
+      "result": "PASS",
+      "notes": "3084 passed, 3 skipped"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test",
+      "result": "PASS",
+      "notes": "526 passed"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test",
+      "result": "PASS",
+      "notes": "298 passed"
+    },
+    {
+      "command": "pnpm --filter @aduin/scripts test",
+      "result": "PASS",
+      "notes": "161 passed at C2 (smoke-package tests later 6, +1)"
+    },
+    {
+      "command": "pnpm typecheck / lint / guard:cf / secrets:scan / fixtures:check / seed:check / record:author --check / precompute:ai --from-recordings --check / slice:check / git diff --check",
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test:e2e",
+      "result": "PASS",
+      "notes": "217 passed, 1 skipped"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test:e2e:stack-memory",
+      "result": "PASS",
+      "notes": "11 passed incl. stack-memory-package-privacy"
+    },
+    {
+      "command": "C6 git diff --quiet P1_BASE -- apps/worker packages/core/src/{contracts,detectors,counsel} (T14 excludes)",
+      "result": "FAIL (explained)",
+      "notes": "extra files only from a0f4961/994ea54 (other session, already live); git diff --quiet 994ea54 HEAD -- apps/worker = 0; core contracts test 34 passed"
+    },
+    {
+      "command": "C7 named re-runs (30 tokens incl. test:a11y)",
+      "result": "PASS"
+    },
+    {
+      "command": "deploy:preflight (scratchpad wrapper)",
+      "result": "PASS",
+      "notes": "13/13 + OK"
+    },
+    {
+      "command": "wrangler deploy",
+      "result": "PASS",
+      "notes": "Current Version ID 3d2c7301-a4a5-487c-bd7d-2f2c0800be6f"
+    },
+    {
+      "command": "curl /api/health (GET)",
+      "result": "PASS",
+      "notes": "{\"ok\":true}, cache-control: no-store"
+    },
+    {
+      "command": "curl -I / headers vs apps/web/public/_headers",
+      "result": "PASS",
+      "notes": "CSP byte-identical; COOP, Permissions-Policy, Referrer-Policy, nosniff present"
+    },
+    {
+      "command": "SLICE_BASE_URL=<live> playwright test --project=stack",
+      "result": "PASS",
+      "notes": "1 passed, global_ok=true"
+    },
+    {
+      "command": "pnpm --filter @aduin/scripts smoke:live-package",
+      "result": "FAIL (third-party only)",
+      "notes": "8/8 Intake checks true, run->findings 219-228 ms, 0 failing POST, 0 aborted/fulfilled AI/OCR; 6 console errors all from https://challenges.cloudflare.com (Turnstile iframe internal CSP/log noise)"
+    },
+    {
+      "command": "boundary: unmatched token / host allow-list refusal / exit codes",
+      "result": "PASS",
+      "notes": "scripts smoke-package unit test 6 passed"
+    }
+  ],
+  "manualChecks": [
+    {
+      "check": "rollback readiness: rollback target cde74507 recorded at entry and re-confirmed immediately before deploy",
+      "result": "PASS"
+    },
+    {
+      "check": "site key file deleted after F",
+      "result": "PASS"
+    },
+    {
+      "check": "no route/custom domain/zone/D1/secret action in wrangler output",
+      "result": "PASS"
+    }
+  ],
+  "result": "PASS_WITH_CONCERNS"
+}
