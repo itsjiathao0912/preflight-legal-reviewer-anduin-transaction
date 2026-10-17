@@ -116,8 +116,14 @@ nav.snav ul{list-style:none;margin:0;padding:0;display:grid;gap:2px}
 .docbar{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:0 24px 8px;color:var(--ink-3);font-size:13px;white-space:nowrap}
 .docbar span:first-child{overflow:hidden;text-overflow:ellipsis}
 .scroll{overflow:auto;min-height:0}
-.docscroll{padding:0 24px 80px}
-.paper{background:var(--paper);max-width:700px;margin:0 auto;padding:48px 56px 64px;border-radius:var(--r);font:400 16px/1.72 var(--serif);color:#1b1e21}
+.docscroll{padding:0 32px 80px}
+.docbar .dl{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.zc{display:flex;gap:4px;align-items:center;flex:none}
+.zc .btn{min-height:32px}
+.zc .btn[aria-pressed=true]{background:var(--ink);color:#fff}
+.work.pc{grid-template-columns:minmax(0,1fr) 0 0!important}
+.work.pc>.grip,.work.pc>.fp{display:none}
+.paper{background:var(--paper);width:var(--doc-w,700px);zoom:var(--doc-scale,1);margin:0 auto;padding:48px 56px 64px;border-radius:var(--r);font:400 16px/1.72 var(--serif);color:#1b1e21}
 .paper h1{font:500 28px/1.15 var(--serif);letter-spacing:-.02em;margin:0 0 4px}
 .paper .sub{color:var(--ink-3);margin:0 0 32px;font-size:16px}
 .paper h2{font:600 17px/1.3 var(--serif);margin:32px 0 8px;scroll-margin-top:24px}
@@ -329,11 +335,9 @@ kbd{font:500 13px var(--sans);background:var(--step);border-radius:3px;padding:0
 
 @media (max-width:1279px){
   .dhead,.tabs{padding-left:16px;padding-right:16px}
-  .docscroll{padding:0 16px 80px}.docbar{padding:0 16px 8px}
-  .paper{padding:32px 24px 48px}
+  .docbar{padding:0 16px 8px}
   .pagehead{padding:16px 16px 8px}.strip{padding:0 16px 8px}
   .lr .rf{display:none}
-  .docbar span:last-child{display:none}
   .dscroll{padding:16px}.dact{padding:16px}
 }
 @media (max-width:1100px){.pagehead .meta{display:none}}
@@ -373,6 +377,9 @@ kbd{font:500 13px var(--sans);background:var(--step);border-radius:3px;padding:0
   <symbol id="edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.100 2.100 0 00-3-3L5 17z"/><path d="M14 8l3 3"/></symbol>
   <symbol id="filter" viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.200"/><circle cx="8" cy="17" r="2.200"/></symbol>
   <symbol id="chevd" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="dash" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="panel" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M14.500 4.500v15"/></symbol>
   <symbol id="minus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></symbol>
 </svg>
 
@@ -431,7 +438,15 @@ kbd{font:500 13px var(--sans);background:var(--step);border-radius:3px;padding:0
     </div>
     <div class="work" id="work">
       <section class="docpane" aria-label="Document">
-        <div class="docbar"><span>Reading view · text extracted from HTML</span><span><kbd>J</kbd> <kbd>K</kbd> next / previous finding</span></div>
+        <div class="docbar"><span class="dl">Reading view · text extracted from HTML</span>
+          <div class="zc" role="group" aria-label="Document zoom">
+            <button class="btn sm ghost" type="button" id="zOut" aria-label="Zoom out" title="Zoom out (Ctrl/Cmd −)"><svg class="i" aria-hidden="true"><use href="#dash"/></svg></button>
+            <button class="btn sm" type="button" id="zSel" aria-haspopup="menu" aria-expanded="false" aria-label="Zoom level" title="Zoom level"><span id="zPct">100%</span><svg class="i" aria-hidden="true"><use href="#chevd"/></svg></button>
+            <button class="btn sm ghost" type="button" id="zIn" aria-label="Zoom in" title="Zoom in (Ctrl/Cmd +)"><svg class="i" aria-hidden="true"><use href="#plus"/></svg></button>
+            <button class="btn sm" type="button" id="zFit" aria-pressed="true" title="Fit width (Ctrl/Cmd 0)">Fit width</button>
+            <button class="btn sm ghost" type="button" id="pcol" aria-pressed="false" aria-label="Hide findings panel" title="Hide findings panel"><svg class="i" aria-hidden="true"><use href="#panel"/></svg></button>
+          </div>
+        </div>
         <div class="scroll docscroll" tabindex="0" role="region" aria-label="Document text" id="docscroll">
           <article class="paper" id="paper"></article>
         </div>
@@ -835,7 +850,7 @@ function closeModal(saved){$('modalHost').innerHTML='';if(saved!==true&&modalOpe
 /* ---------- popovers ---------- */
 var popFor=null;
 function closePop(rf){
-  $('popHost').innerHTML='';['scCov','scMem','scStage','gate','filtBtn'].forEach(function(i){if($(i))$(i).setAttribute('aria-expanded','false')});
+  $('popHost').innerHTML='';['scCov','scMem','scStage','gate','filtBtn','zSel'].forEach(function(i){if($(i))$(i).setAttribute('aria-expanded','false')});
   var was=popFor;popFor=null;if(rf&&was&&$(was))$(was).focus();
 }
 function openPop(anchorId,html,above,cls){
@@ -992,6 +1007,53 @@ document.addEventListener('keydown',function(e){
   }
 });
 
+/* ---------- document zoom / fit width (Google Docs style: the whole page scales) ---------- */
+var Z={mode:'fit',pct:100};
+(function(){var v=sget('ui:v1:doczoom');if(v){try{var o=JSON.parse(v);if(o&&(o.mode==='fit'||o.mode==='manual')){Z.mode=o.mode;if(o.pct>=75&&o.pct<=200)Z.pct=o.pct}}catch(e){}}})();
+var BASE=700,curScale=1;
+function applyZoom(){
+  var ds=$('docscroll'),paper=$('paper');if(!ds)return;
+  var scale,w=BASE;
+  if(Z.mode==='fit'){
+    var avail=ds.clientWidth-64;
+    scale=Math.max(.9,Math.min(1.75,avail/BASE));scale=Math.round(scale*100)/100;
+    w=Math.round(avail/scale);
+  }else scale=Z.pct/100;
+  curScale=scale;
+  paper.style.setProperty('--doc-scale',scale);paper.style.setProperty('--doc-w',w+'px');
+  $('zPct').textContent=Math.round(scale*100)+'%';
+  $('zFit').setAttribute('aria-pressed',Z.mode==='fit');
+}
+function saveZoom(){sset('ui:v1:doczoom',JSON.stringify({mode:Z.mode,pct:Z.pct}))}
+function setManual(pct){Z.mode='manual';Z.pct=Math.max(75,Math.min(200,Math.round(pct)));applyZoom();saveZoom()}
+function setFit(){Z.mode='fit';applyZoom();saveZoom()}
+function stepZoom(d){var cur=Math.round(curScale*100);setManual(Math.round((cur+d)/10)*10)}
+function popZoom(){
+  closePop();
+  var h='<div role="menu" aria-label="Zoom presets" style="display:grid;gap:4px">'+[75,90,100,125,150].map(function(n){return '<button class="firmopt" role="menuitem" type="button" data-zp="'+n+'"><span>'+n+'%</span></button>'}).join('')+'<button class="firmopt" role="menuitem" type="button" data-zp="fit"><span>Fit width</span></button></div>';
+  $('popHost').innerHTML='<div class="pop" style="width:160px;padding:8px" tabindex="-1" id="popEl">'+h+'</div>';
+  var r=$('zSel').getBoundingClientRect(),pop=$('popEl');
+  pop.style.top=(r.bottom+8)+'px';pop.style.left=Math.max(8,Math.min(r.left,window.innerWidth-pop.offsetWidth-12))+'px';
+  $('zSel').setAttribute('aria-expanded','true');popFor='zSel';pop.querySelector('button').focus();
+}
+document.addEventListener('click',function(e){
+  var t=e.target,el;
+  if(t.closest('#zOut')){e.stopPropagation();stepZoom(-10);return}
+  if(t.closest('#zIn')){e.stopPropagation();stepZoom(10);return}
+  if(t.closest('#zFit')){e.stopPropagation();if(Z.mode==='fit')setManual(Math.round(curScale*100));else setFit();return}
+  if(t.closest('#zSel')){e.stopPropagation();popFor==='zSel'?closePop(true):popZoom();return}
+  if((el=t.closest('[data-zp]'))){e.stopPropagation();var v=el.getAttribute('data-zp');closePop(true);if(v==='fit')setFit();else setManual(+v);return}
+  if(t.closest('#pcol')){e.stopPropagation();var c=$('work').classList.toggle('pc');var b=$('pcol');b.setAttribute('aria-pressed',c);b.setAttribute('aria-label',c?'Show findings panel':'Hide findings panel');b.title=c?'Show findings panel':'Hide findings panel';applyZoom();return}
+},true);
+document.addEventListener('keydown',function(e){
+  if(!(e.metaKey||e.ctrlKey)||e.altKey)return;
+  if(e.key==='='||e.key==='+'){e.preventDefault();stepZoom(10)}
+  else if(e.key==='-'||e.key==='_'){e.preventDefault();stepZoom(-10)}
+  else if(e.key==='0'){e.preventDefault();setFit()}
+},true);
+if(window.ResizeObserver)new ResizeObserver(function(){if(Z.mode==='fit')applyZoom()}).observe($('docscroll'));
+window.addEventListener('resize',function(){if(Z.mode==='fit')applyZoom()});
+
 /* ---------- panel width splitter (40-65%) ---------- */
 (function(){
   var g=$('grip'),w=$('work');
@@ -1007,6 +1069,7 @@ document.addEventListener('keydown',function(e){
 })();
 
 buildDoc();
+applyZoom();
 applyFirm();
 S.sel='f1';
 render();

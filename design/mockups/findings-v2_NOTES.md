@@ -43,6 +43,7 @@ Design-only mockup: [findings-v2.html](findings-v2.html). The user approved it o
 | D12 | **Outcome toast with Undo:** e.g. "Sent to counsel · Counsel questions now 1 · Gate still blocked (1)". | A generic success toast. |
 | D13 | **Selection menu in the document:** "Flag this passage" (manual finding) and "Suggest wording" (proposed fix shown in the counsel question). | Rich-text editing (analysts never edit counsel's document). |
 | D14 | **Shortcuts:** J/K move, C = Ask counsel, X = Close issue. | — |
+| D15 | **Document zoom, Google Docs style:** the whole page scales (font, page width and padding together; 700px page at 100%). Controls on the right of the reading-view toolbar: [−] [100% ▾] [+] [Fit width]; presets 75/90/100/125/150; manual range 75–200% in 10% steps. **Fit width is the default:** the page fills the document area minus a 32px gutter each side, clamped to 90–175%, recomputed on window resize, panel resize and panel collapse. Any manual change turns Fit width off. Cmd/Ctrl = / − / 0 (0 = back to Fit width). Saved per viewer in `ui:v1:doczoom`. Scroll-to-finding works at every zoom; above the fit width the document area scrolls horizontally inside itself. Added 18-10-26. | Widening the text column without scaling (at 1900px that gives ~200-character lines); a fixed narrow centered page (wastes the screen). |
 
 ## 5. Mapping: new control → same underlying call
 
