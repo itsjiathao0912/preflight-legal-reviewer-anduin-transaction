@@ -7,7 +7,7 @@ that blocks digitization until the critical items are answered.
 
 [Live demo](https://aduin-transaction-web.giathaowork.workers.dev) · [Docs](docs/README.md) · [Architecture](docs/architecture/README.md) · [Decisions](docs/architecture/decisions.md)
 
-![tests 3,997](https://img.shields.io/badge/tests-3%2C997_passing-brightgreen)
+![tests 4,018](https://img.shields.io/badge/tests-4%2C018_passing-brightgreen)
 ![detectors 13](https://img.shields.io/badge/detectors-13-blue)
 ![issue classes 15](https://img.shields.io/badge/issue_classes-15-blue)
 ![deploy Cloudflare Workers](https://img.shields.io/badge/deploy-Cloudflare_Workers-F38020)
@@ -16,7 +16,7 @@ that blocks digitization until the critical items are answered.
 
 ![Findings screen of the live app: the document on the left, findings with cited evidence on the right](docs/demo/img/03-findings.png)
 
-Live version 47d98295-c583-4dc0-9f96-f9e161c8cf35 (code 0a67dc4) · status: D1 `aduin-transaction-db` is live (schema v5, demo seed: Partners Group workspace with 7 decisions and 1 proposed rule), the Turnstile managed widget is live, and CSP is enforced (`style-src` keeps `unsafe-inline` for Radix). The zero-upstream smoke run passed.
+Live version 328ca295-d5da-487e-a063-843b0c7c86db (code 1f5cfa5) · status: D1 `aduin-transaction-db` is live (schema v5, demo seed: Partners Group workspace with 7 decisions and 1 proposed rule), the Turnstile managed widget is live, and CSP is enforced (`style-src` keeps `unsafe-inline` for Radix). The zero-upstream smoke run passed.
 
 ## At a glance
 

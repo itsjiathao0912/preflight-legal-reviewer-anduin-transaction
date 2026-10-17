@@ -20,14 +20,13 @@ Each package folder contains:
 
 | Package | Seeded | Caught today | Waits for intake / variance / AI |
 |---|---|---|---|
-| 01 Northgate III | 10 | 6 (D1, D2, D3, D4, D5, D10) | D6 Annex F target, D7 term defined nowhere, D8 LPA-only terms, D9 cross-document minimum |
+| 01 Northgate III | 10 | 7 (D1, D2, D3, D4, D5, D6, D10) | D7 term defined nowhere, D8 LPA-only terms, D9 cross-document minimum |
 | 02 Lotus Bay II | 9 | predicted 2 (E8, E9); not run | LPA-deferred terms, Annex C, contradiction, ambiguity, typo, currency |
 | 03 Redwood Ridge I | 10 | 4 (F7, F8, F10 ×2) | Question-target dead end, footnote row, xref coherence, LPA terms, option overlap, ambiguity |
 
-## Known engine gap these samples expose
+## Known engine gap these samples exposed (fixed in core)
 
-- **The cause:** the structurer recognises section headings written as `4. Title`, but **not** `Section 4. Title`, and probably not `Article I.` either.
-- **Package 01** uses the `4. Title` form, so the engine sees its sections.
-- **Packages 02 and 03** use `Section N.` headings, as many real agreements do, so the engine may find no sections in them. That would weaken reference and investor-path checks.
-- **Intake will need this anyway**, because LPAs use `Article` headings.
-- This is reported to the build session as a fix to make before intake.
+- **The cause:** the structurer recognised section headings written as `4. Title`, but not `Section 4. Title` or `Article I.`, and conditional targets such as `Annex F` or `Question 3` were not resolved.
+- **Package 01** uses the `4. Title` form, so it was never affected by the heading gap; its D6 (Annex F) is now caught by the conditional-target fix (commit 28fe3d4).
+- **Packages 02 and 03** use `Section N.` headings. Both gaps are fixed in core (Intake Phase 1, live version 328ca295, commit 1f5cfa5), so they likely catch more now, but this is unmeasured: **re-measure pending**. The 02 and 03 rows above are the earlier numbers.
+- The fix is in core only; the intake UI is not wired yet.

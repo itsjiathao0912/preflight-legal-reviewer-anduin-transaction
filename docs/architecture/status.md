@@ -1,6 +1,6 @@
 # Status
 
-As of 17 Oct 2026 (live version `47d98295-c583-4dc0-9f96-f9e161c8cf35`, code `0a67dc4`, rollback `23612b12`): Phases 00-10 are done and the site is live with its real database, Turnstile and an enforced CSP. Demo-readiness fixes are live (see below). A human-operator live AI sweep, the AC51 echo and the D4 burst are still pending.
+As of 17 Oct 2026 (live version `328ca295-d5da-487e-a063-843b0c7c86db`, code `1f5cfa5`, previous `47d98295`): Phases 00-10 are done and the site is live with its real database, Turnstile and an enforced CSP. Demo-readiness fixes and later fixes are live (see below). Live AI now reaches OpenRouter but the free model currently times out at about 120 s (worker fix in progress); demo with No AI. A human-operator live AI sweep, the AC51 echo and the D4 burst are still pending.
 
 Status key: **Built / Partial / Planned / Not live yet**. Live in the table means built and running on the deployed Worker.
 
@@ -24,14 +24,14 @@ Status key: **Built / Partial / Planned / Not live yet**. Live in the table mean
 | AI/OCR proxy, limits, spend ledger | Built | Live with D1 quotas and cache |
 | Turnstile | Built | Managed widget live; automated browsers cannot pass it |
 | CSP and security headers | Built | Enforced; `style-src 'unsafe-inline'` residual |
-| Fund Package Intake | Planned | 4 phases, not live yet. [process/features/fund-package-intake/](../../process/features/fund-package-intake/); fictional demo packages in [samples/packages/](../../samples/packages/) |
+| Fund Package Intake | Partial | 4 phases. Phase 1 core is merged and live in the engine (heading and conditional-target fixes) but its UI is not wired; phases 2-4 not live. [process/features/fund-package-intake/](../../process/features/fund-package-intake/); fictional demo packages in [samples/packages/](../../samples/packages/) |
 | Variance management | Planned | 5 phases, EXECUTE after intake, not live yet. [process/features/variance-management/](../../process/features/variance-management/) |
 | CI pipeline | Planned | None today; every gate runs locally |
 | Deploy guide, README, demo script and slides | Built | [DEPLOY.md](../DEPLOY.md), root README, [demo](../demo/); 13-memory and 14-audit screenshots need manual capture |
 
 ## Live deployment
 
-URL: `https://aduin-transaction-web.giathaowork.workers.dev` (Worker `aduin-transaction-web`, `*.workers.dev` only). Version `47d98295-c583-4dc0-9f96-f9e161c8cf35`, code `0a67dc4` (rollback `23612b12`).
+URL: `https://aduin-transaction-web.giathaowork.workers.dev` (Worker `aduin-transaction-web`, `*.workers.dev` only). Version `328ca295-d5da-487e-a063-843b0c7c86db`, code `1f5cfa5` (previous `47d98295`, `23612b12`). Deployed by the session "Test nhiều loop và debug" from a clean worktree.
 
 A live probe on 17 Oct 2026: `/` returns 200, `/api/health` returns 200, and `/api/quota` with the `x-aduin-client` header returns `global_ok:true`. Response headers include `content-security-policy` with `script-src 'self' https://challenges.cloudflare.com` and a `style-src 'unsafe-inline'` residual, plus `referrer-policy: no-referrer`.
 
@@ -57,7 +57,15 @@ Plan: [Phase 10](../../process/general-plans/active/subdoc-qa-mvp_17-10-26/subdo
 | Documents | Findings waited on memory | Findings first, memory and AI in the background |
 | Deliverables | Planned | Root README, DEPLOY.md, demo materials |
 
-## Demo-readiness fixes (live in `47d98295`, code `0a67dc4`)
+## What version 328ca295 adds (code `1f5cfa5`)
+
+- Worker AI redirect fix: live AI now reaches OpenRouter, but the free model currently times out at about 120 s; a worker fix is in progress.
+- `ref-label-coherence` label-window fix.
+- Phone 375 px layout, dialog outside-click and upload-error fixes.
+- No-text documents are never "Ready to digitize"; the last document is restored after reload.
+- Intake Phase 1 core: "Section N." and "Article" headings are detected, and Annex X / Question N conditional targets are resolved (this also makes package 01 D6 caught, commit 28fe3d4). Core only; the UI is not wired yet.
+
+## Demo-readiness fixes (live since `47d98295`, code `0a67dc4`)
 
 - Severity: broken cross-references (`ref-label-coherence`, `ref-this-section`) are critical ("Blocks digitization") when the reference sits in a routing context (the instructions scope, an answer option, or a block holding a conditional); otherwise high. The 4 swapped "Part B" references on samples #3 and #5 are critical; "this Section 11" on #1 stays high. AI findings never gate. Opened without memory, #5 shows "Blocked · 2" (verified live).
 - Live seed: `ws_demo` is Partners Group with 7 decisions and rule `sr01` (proposed). The old Firm X / Firm Y data was removed from `ws_demo` only. The seed holds counsel answer A on the two swapped refs (`sd06`, `sd07`), so in a memory-enabled session #3 and #5 show them as "Already answered" and the gate is Ready. To demo Blocked, open #5 without memory, or Reopen `sd06`/`sd07` in Firm memory with a reason; they return as New and block.
@@ -83,21 +91,22 @@ Plan: [Phase 10](../../process/general-plans/active/subdoc-qa-mvp_17-10-26/subdo
 | Live quality of AI counsel drafts and drift summaries untested | `process/general-plans/backlog/drift-narrative-live-quality_NOTE_17-10-26.md` |
 | Investor-path detectors lack a human-checked ground truth | `process/general-plans/backlog/investor-path-ground-truth_NOTE_17-10-26.md` |
 | Memory page polish items (P8b-1 to P8b-6) | `process/general-plans/backlog/core-followups_17-10-26/` |
-| Headings such as "Section N." / "Article I." and Annex / Question conditional targets are not resolved | Planned in Fund Package Intake Phase 1 |
+| Headings such as "Section N." / "Article I." and Annex / Question conditional targets | Fixed in core (Intake P1, live 328ca295); UI not wired; re-measure on packages 02/03 pending |
+| Live AI times out: the free model takes about 120 s | Worker fix in progress |
 | No CI; gates run locally | Planned |
 
 ## Test counts
 
-Source: the demo-readiness build session (17 Oct 2026). Not re-run for this document. Total 3,997 plus 1 opt-in skip.
+Source: the build session worktree for commit `1f5cfa5` ("Test nhiều loop và debug", 17 Oct 2026), as reported to this session; not re-run for this document. Total of the four suites below: 4,018. Scripts and stack-memory counts were not reported for this build (earlier: 152 and 10).
 
 | Suite | Count |
 |---|---|
-| Core (Vitest) | 2,914 |
-| Worker (Vitest, local D1) | 525 |
-| Web unit (Vitest) | 226 |
-| Scripts | 152 |
-| Playwright end-to-end (preview project) | 175, plus 1 opt-in skipped |
-| Stack-memory e2e (Worker plus local D1) | 10 |
+| Core (Vitest) | 3,077 |
+| Worker (Vitest, local D1) | 526 |
+| Web unit (Vitest) | 233 |
+| Scripts | not reported |
+| Playwright end-to-end | 182 |
+| Stack-memory e2e (Worker plus local D1) | not reported |
 
 Performance: largest sample 169 ms, a ~50 KB sample 104 ms. There is no CI workflow; run the gates with the root scripts in [package.json](../../package.json).
 
