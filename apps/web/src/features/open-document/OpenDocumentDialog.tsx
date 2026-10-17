@@ -145,8 +145,11 @@ export function OpenDocumentDialog() {
               data-testid="upload-input"
               accept={ACCEPT}
               onChange={(e) => {
-                setFile(e.target.files?.[0] ?? null);
-                setError('');
+                const f = e.target.files?.[0] ?? null;
+                setFile(f);
+                // Reject an unsupported, empty or oversized file as soon as it is picked.
+                const check = f ? checkUpload(f.name, f.size) : null;
+                setError(check && !check.ok ? check.message : '');
               }}
             />
           </label>
@@ -221,7 +224,12 @@ export function OpenDocumentDialog() {
               I have read the privacy notice
             </label>
           </div>
-          <div className="err on" role="alert" data-testid="upload-error" hidden={!error}>
+          <div
+            className={error ? 'err on' : 'err'}
+            role="alert"
+            data-testid="upload-error"
+            hidden={!error}
+          >
             {error ? <Icon name="warn" /> : null}
             {error}
           </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Icon } from '../components/ui/icon';
 import { Popover } from '../components/ui/popover';
 import { reopenRecent } from '../features/open-document/open-actions';
@@ -7,6 +7,9 @@ import { isRail, useShell } from '../state/shell';
 
 export function DocSwitcher() {
   const [open, setOpen] = useState(false);
+  // Open the dialog only after the popover has fully closed: opening it while the popover layer is
+  // still mounted leaves two Radix dismissable layers racing, and the dialog's outside click is lost.
+  const openDocAfterClose = useRef(false);
   const doc = useReview((s) => s.doc);
   const recent = useReview((s) => s.recent);
   const rail = useShell(isRail);
@@ -23,6 +26,12 @@ export function DocSwitcher() {
         testId="doc-menu"
         side={rail ? 'right' : 'bottom'}
         align="start"
+        onCloseAutoFocus={(e) => {
+          if (!openDocAfterClose.current) return;
+          openDocAfterClose.current = false;
+          e.preventDefault();
+          setOpenDoc(true);
+        }}
         trigger={
           <button
             className="docsw"
@@ -62,8 +71,8 @@ export function DocSwitcher() {
           type="button"
           data-testid="open-another"
           onClick={() => {
+            openDocAfterClose.current = true;
             setOpen(false);
-            setOpenDoc(true);
           }}
         >
           <span>Open another document…</span>

@@ -1705,3 +1705,52 @@ input[type='date'] {
     display: none;
   }
 }
+
+/* phone (<768): no fixed desktop width. The icon rail stays (it already carries the AI switch and
+   the analyst badge); the stage scrolls vertically with the findings column stacked above the
+   document so the list and the "Open a document" call to action come first. */
+@media (max-width: 767px) {
+  .app {
+    min-width: 0;
+  }
+  aside.side {
+    overflow-y: auto;
+  }
+  .stagearea {
+    overflow-y: auto;
+  }
+  .view > .work {
+    flex: none;
+  }
+  .work {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+  }
+  .work > * {
+    height: 80dvh;
+  }
+  .work > .fp {
+    order: -1;
+  }
+  .fhead {
+    flex-wrap: wrap;
+  }
+  .fp .tag {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .app.rail .me button.me-edit {
+    display: inline-flex;
+    margin-left: 0;
+  }
+  .app.rail .me {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .pagehead {
+    flex-wrap: wrap;
+  }
+  .paper {
+    padding: 24px 16px 40px;
+  }
+}

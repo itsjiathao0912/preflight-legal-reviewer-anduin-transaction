@@ -15,6 +15,7 @@ export function Popover({
   testId,
   side = 'bottom',
   align = 'end',
+  onCloseAutoFocus,
 }: {
   trigger: ReactElement;
   children: ReactNode;
@@ -25,6 +26,8 @@ export function Popover({
   testId: string;
   side?: 'top' | 'right' | 'bottom' | 'left';
   align?: 'start' | 'center' | 'end';
+  /** Runs once the content has unmounted (Radix FocusScope); preventDefault skips focus return. */
+  onCloseAutoFocus?: (e: Event) => void;
 }) {
   return (
     <RxPopover.Root open={open} onOpenChange={onOpenChange}>
@@ -39,6 +42,7 @@ export function Popover({
           align={align}
           sideOffset={side === 'right' ? 8 : 6}
           collisionPadding={8}
+          {...(onCloseAutoFocus ? { onCloseAutoFocus } : {})}
         >
           {children}
         </RxPopover.Content>
