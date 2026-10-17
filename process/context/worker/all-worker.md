@@ -12,7 +12,7 @@ metadata:
 
 # aduin-transaction - Worker Context
 
-Last updated: 2026-10-17 (Phase 10 UPDATE PROCESS; code HEAD f0d924b plus the process commit)
+Last updated: 2026-10-18 (ai-review-stream-dedup EXECUTE: streamed upstream + timeout refund, code HEAD 685574d; earlier: Phase 10 UPDATE PROCESS, f0d924b)
 
 Entrypoint for the `worker/` context group (one doc for now). Read this before touching `apps/worker`, `/api/*`, limits, or a deploy.
 
@@ -41,8 +41,8 @@ Source map (`apps/worker/src`): `app.ts` (createApp + AppDeps seams), `config.ts
 7. Cache read. A HIT costs zero claims, zero writes, zero upstream calls (a HIT with firm rules still costs the one rules read).
 8. Turnstile (token in header `x-aduin-turnstile`; fails closed with 401 `invalid_session`).
 9. Ordered claims: visitor (req, fresh-doc v + IP, OCR pages) then global provider counter (always claimed last) then spend reservation.
-10. OpenRouter call (`redirect: 'error'`, 240 s timeout, free models only) streamed as hold-open NDJSON (`{t:'hb'}` every 10 s, then one terminal `result` or `error` frame).
-11. Classify (task-aware: `parseContent` for prose/fences, then `task.validate` is the only validation; `finish_reason: 'length'` = malformed, claims kept, nothing cached), cache write, ledger write, terminal frame.
+10. OpenRouter call (`redirect: 'error'`, free models only, body ends with `"stream":true` and `accept: text/event-stream`, so the upstream reply is SSE). AI: idle timeout `UPSTREAM_IDLE_MS` 60 s (any upstream bytes, including `:` comments and reasoning deltas, count as activity; one re-checking timer, a timestamp write per read) plus a hard ceiling `UPSTREAM_TIMEOUT_MS` 420 s. OCR: no idle timer, ceiling `UPSTREAM_OCR_TIMEOUT_MS` 240 s. The browser side is unchanged: hold-open NDJSON (`{t:'hb'}` every 10 s, then one terminal `result` or `error` frame).
+11. SSE assembly (`upstream/sse.ts` `readSse`: streaming decode, only `choices[0]`, `delta.content` appended, cheap prefilter so reasoning-only lines are never `JSON.parse`d; content cap 2 MiB, raw cap 8 MiB -> `malformed`), then classify (same `finish()` tail as the JSON path; task-aware: `parseContent` for prose/fences, then `task.validate` is the only validation; `finish_reason: 'length'` = malformed, claims kept, nothing cached), cache write, ledger write, terminal frame.
 
 Pre-stream refusals are HTTP via `errorStatus(code)` with body `{error:{code,message,reason?,retry_after_s?}}`; failures after the stream opens are terminal `error` frames with the same fields. Clients must handle both. Budget: at most 13 port calls per AI request (`proxy-budget`: workspace + firm MISS 9, workspace + firm HIT 2 = rules read + cache get, no-firm HIT 1, a rules read failure 1).
 
@@ -53,12 +53,16 @@ Pre-stream refusals are HTTP via `errorStatus(code)` with body `{error:{code,mes
 | refusal before dispatch, pre-dispatch abort, non-consuming 4xx (400/401/403/413/415/422) | refunded | refunded |
 | client abort after dispatch | kept | kept |
 | provider fault after dispatch (network, 5xx, 429, 402) | refunded | kept |
-| upstream timeout (review M2: the call may still have consumed provider budget) | kept | kept |
+| upstream timeout (idle 60 s or ceiling; provider fault since 18-10-26) | refunded | kept |
+| SSE ends without `finish_reason` (`stream_truncated`) | refunded | kept |
+| mid-stream error chunk / `finish_reason: "error"` (`provider_error`, visitor-inducible) | kept | kept |
 | malformed output, 200-with-error body | kept | kept |
 
 ## Limits And Config
 
 Defaults live in `packages/core/src/config/limits.ts` (the single source); env vars override. Per visitor per UTC day: 3 fresh-AI documents (D-4), 8 AI requests, 6 OCR pages. Global cap = min(`globalProviderReqsPerDay`, `PROVIDER_ALLOWANCE_PER_DAY` default 50). Spend cap `SPEND_CAP_MICRO_USD` (paid path disabled; `PAID_FALLBACK_ENABLED=false`). Body caps: AI 128 KiB, OCR 700 KiB, other 64 KiB. AI output budget: one `AI_MAX_TOKENS = 10000` in core `packages/core/src/llm/wire.ts`, used by the Worker `MAX_TOKENS.ai` and by the scripts request builder (live sample #3 used 5783 output tokens, so 6000 was too tight). Firm rules in the prompt: at most 20 rules, 500 code points each, 4096 bytes total (core `llm/rules.ts`). Active rules per firm per workspace: the rules read is `LIMIT 101` and creating or approving the 101st active rule is refused with 429 `quota_exhausted` / reason `active_rule_cap` (cap is 100). Windows reset at UTC midnight.
+
+Upstream timers and caps (`proxy/pipeline.ts`, `upstream/classify.ts`; constants, not env vars): `UPSTREAM_IDLE_MS` 60 000 (AI only), `UPSTREAM_TIMEOUT_MS` 420 000 (AI ceiling), `UPSTREAM_OCR_TIMEOUT_MS` 240 000; SSE content cap 2 MiB (`MAX_UPSTREAM_BYTES`), raw stream cap 8 MiB (`MAX_UPSTREAM_STREAM_BYTES`). Tests override via `ProxyDeps.upstreamIdleMs` / `upstreamOcrTimeoutMs`.
 
 Plain vars in `wrangler.jsonc`: `PAID_FALLBACK_ENABLED`, `OPENROUTER_BASE_URL` (must be https `openrouter.ai`), `AI_TEXT_MODELS` (a single free text model, `nvidia/nemotron-3-super-120b-a12b:free`), `AI_RESPONSE_MODE` (`json_schema` default; only `json_schema` or `json_object` allowed, anything else is a `ConfigError`), `AI_VISION_MODELS` (every id must end in `:free`; `openrouter/*` router ids rejected), `AI_UPLOADS_ENABLED` (exact string `true`). Other optional vars: `AI_PAID_MODELS`, `VISITOR_AI_DOCS_PER_DAY`, `VISITOR_AI_REQS_PER_DAY`, `VISITOR_OCR_PAGES_PER_DAY`, `PAID_MAX_COST_MICRO_USD`, `VISITOR_COOKIE_TTL_S`, `TURNSTILE_PASS_TTL_MS`, `TURNSTILE_SITE_KEY`. Invalid config throws `ConfigError` and the proxy degrades without any upstream call.
 
@@ -100,6 +104,7 @@ Set on the live Worker: `COOKIE_SIGNING_KEYS` (JSON map kid to key), `COOKIE_SIG
 
 ## Known Gaps
 
+- Streaming upstream (18-10-26, not yet deployed): live workerd CPU with a long reasoning stream is unmeasured (local proxy: `sse-cheap-parse` 6000 reasoning lines + 300 content deltas -> at most 302 `JSON.parse` calls); OCR streaming is stub-covered only, the vision-model silent gap is unprobed (backlog `ocr-streaming-live-proof`).
 - Real workerd CPU and hold-open timing at `max_tokens` 10000 and OpenRouter accounting of aborted/4xx requests are still unproven: the Phase 10 live AI sweep did not run (R2, backlog `phase10-live-ai-sweep-operator_NOTE_17-10-26.md`). Measured instead: Worker CPU p50 1.6 ms / p99 16 ms over 116 requests, 0 errors (p99 above the 10 ms Free limit, backlog `phase10-worker-cpu-p99`); AC39 matrix 7/7 rejected; 429 after 30 requests (AC40). AI 0 of 6, OCR 0 of 6 live calls used in Phase 10, $0. The served-model string was observed in Phase 05: `nvidia/nemotron-3-super-120b-a12b:free`, `json_schema` accepted (3 of 8 live calls used, $0).
 - Phase 05 follow-ups in the backlog: the L5 echo is DONE (Phase 08); live-model quality (2 of 4 quotes unlocatable on sample #3; counsel drafts echo clause text) is a Phase 10 sweep.
 - `x-aduin-doc` is client-attested (04a F4) and stays untrusted. 04a F5 (claim throws on storage errors) and F14 (breaker persisted) are done in 04b.

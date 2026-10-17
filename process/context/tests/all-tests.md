@@ -10,7 +10,7 @@ metadata:
 
 # aduin-transaction - All Tests
 
-Last updated: 2026-10-17 (Phase 10 UPDATE PROCESS; code HEAD f0d924b plus the process commit)
+Last updated: 2026-10-18 (ai-review-stream-dedup EXECUTE, HEAD 685574d; earlier: Phase 10 UPDATE PROCESS, f0d924b)
 
 Attach this file first when the task involves testing, verification, or test debugging.
 
@@ -311,6 +311,14 @@ Whole suites after Variance Phase 03, independent EVL (local D1 only): core 3165
 - **Stack project:** `pnpm --filter @aduin/web test:e2e:stack-memory` now applies migrations 0001-0006 locally and runs 12 specs, adding `stack-memory-variance-regression-no-cross-firm`. Stack specs mint a session with `POST /api/session` explicitly. Run the preview regression tokens (`intake-firm-tagging`, `intake-baseline-role-same-firm`) first and never together with the stack project (port 4317 vs 8788).
 - **Never run `pnpm seed:gen` without `REFERENCE_0003_FIRM_IDS`** (now pinned in `scripts/src/seed/gen-demo-seed.ts`), or 0003 stops being byte-identical. `schema_version` is pinned in five places that move together with a migration: `scripts/src/dev-seed.ts`, `memory/health.ts`, `memory-endpoint-contract.test.ts`, `stack-memory-smoke.spec.ts`, `stack-memory-package-privacy.spec.ts`.
 - **Known gaps:** remote apply of 0006 and the deployed `rows_written` burst (Phase 05 / operator R2); no revoke path (20-check ceiling); the client label ignores fund scope until Phase 04 wires `fundName`.
+
+## ai-review-stream-dedup gate tokens (HEAD 685574d, 18-10-26)
+
+Whole suites, serial: core 3190 (+3 skip; `size-cap` and `diff-determinism` hit their 5 s timeouts under the full parallel run and pass in isolation), worker 76 files / 603, web unit 42 files / 314, scripts 20 files / 176, preview e2e 219 passed plus 1 opt-in skip. `typecheck`, `lint`, `guard:cf`, `secrets:scan`, `record:author --check` (12 cases), `precompute:ai --from-recordings --check`, `fixtures:check` green. One token per call, no `--`.
+
+- **Worker tokens:** `sse-assemble`, `sse-failure-shapes`, `sse-cheap-parse` (6000 reasoning lines + 300 content deltas -> at most 302 `JSON.parse` calls), `upstream-timeouts` (AI idle 60 s, re-arm, 420 s ceiling, stalled `read()`, OCR 240 s and no idle), `timeout-refund`; updated `stream-holdopen`, `llm-failure-injection-matrix`, `record-body-parity` (body ends `,"stream":true}`), `rules-injection-delimited-hostile` (`stream` key).
+- **Stub SSE modes (`apps/worker/test/fakes/openrouter-stub.ts`):** a request with `"stream":true` and a `json` reply whose `choices[0].message.content` is a string is auto-converted to SSE (role chunk, 64-char deltas, finish chunk, usage chunk, `[DONE]`); a `text` reply forces the JSON path. Raw variants: `{ sse: { chunks } }`, `{ sseStall: { chunks } }` (never closes, errors on abort, `aborted++`), `{ sseLive: (ctl) => void }` (`push`/`close`/`error` interleaved with `FakeTimers.advance()`); helper `sseLines(opts)`. Harness opt `upstreamIdleMs`; harness `now` follows the fake timers.
+- **Core / scripts / web tokens:** core `ai-candidates-skip-rule-sentences`, `ai-dedupe-rule-overlap`, `ai-verify-suppresses-rule-duplicates`; scripts `derive-live-recordings`, `ocr-live-guard` (parity with the Worker body minus the trailing `"stream":true`); web e2e `ai-no-duplicates` (preview, port 4317).
 
 ## Debugging Quick Reference
 
