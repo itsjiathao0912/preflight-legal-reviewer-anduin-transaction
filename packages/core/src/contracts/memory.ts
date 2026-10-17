@@ -186,17 +186,18 @@ export type CounselQuestionRequest = z.infer<typeof CounselQuestionRequestSchema
 export type CounselQuestionResponse = z.infer<typeof CounselQuestionResponseSchema>;
 
 /** POST /api/counsel/answers */
-export const CounselAnswerRequestSchema = z.object({
-  client_op_id: ClientOpId,
-  question_id: Id,
-  option: CounselOptionSchema,
-  note: z.string().max(1000).optional(),
-  quote_text: z.string().min(1).max(limits.quoteMaxChars),
-  fingerprint: HEX64,
-  intent: z.string().max(limits.intentMaxChars).optional(),
-  scope: AnswerScopeSchema.optional(),
-  assertion: AnswerAssertionSchema.optional(),
-})
+export const CounselAnswerRequestSchema = z
+  .object({
+    client_op_id: ClientOpId,
+    question_id: Id,
+    option: CounselOptionSchema,
+    note: z.string().max(1000).optional(),
+    quote_text: z.string().min(1).max(limits.quoteMaxChars),
+    fingerprint: HEX64,
+    intent: z.string().max(limits.intentMaxChars).optional(),
+    scope: AnswerScopeSchema.optional(),
+    assertion: AnswerAssertionSchema.optional(),
+  })
   .refine((a) => a.scope !== 'firm_template' || (a.intent ?? '').trim().length > 0, {
     message: 'firm_template requires a non-blank intent',
     path: ['intent'],
