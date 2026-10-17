@@ -201,7 +201,10 @@ describe('ocr-live-guard', () => {
       ocrMessages({ mime: 'image/jpeg', pages: [{ index: 4, data_b64: b64 }] } as never),
     );
     expect(ocrResponseFormatJson()).toBe(ocrResponseFormat());
-    expect(ocrUpstreamBody(4, b64)).toBe(worker);
+    // The Worker streams its upstream call (`"stream":true` appended last); the offline
+    // OCR script reads a plain JSON reply, so parity holds on everything before that key.
+    expect(worker.endsWith(',"stream":true}')).toBe(true);
+    expect(ocrUpstreamBody(4, b64)).toBe(worker.slice(0, -',"stream":true}'.length) + '}');
     expect(OCR_MAX_TOKENS).toBe(MAX_TOKENS.ocr);
     expect(OCR_PROMPT_VER).toBe(PROMPT_VER.ocr);
     expect(OCR_SCHEMA_VER).toBe(SCHEMA_VER);
