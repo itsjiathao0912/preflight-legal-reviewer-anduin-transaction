@@ -119,6 +119,11 @@ describe('conformance:free-plan burst (D4)', () => {
       },
     };
     expect(sumRowsWritten(resp)).toBe(42);
-    expect(sumRowsWritten({})).toBe(0);
+    expect(() => sumRowsWritten({})).toThrow(/no account/);
+    expect(() => sumRowsWritten({ data: { viewer: { accounts: [] } } })).toThrow(/no account/);
+    expect(() =>
+      sumRowsWritten({ errors: [{ message: 'denied' }], data: { viewer: { accounts: [{}] } } }),
+    ).toThrow(/1 error/);
+    expect(sumRowsWritten({ errors: [], data: { viewer: { accounts: [{}] } } })).toBe(0);
   });
 });

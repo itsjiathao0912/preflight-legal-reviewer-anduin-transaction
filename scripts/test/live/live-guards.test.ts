@@ -1,4 +1,14 @@
-import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -79,8 +89,34 @@ describe('cloudflare allow-list', () => {
     '/client/v4/user',
     '/client/v4/accounts',
     `/client/v4/accounts/${ACCT}/zone-settings`,
+    `/client/v4/accounts/${ACCT}/%2e%2e/%2e%2e/x`,
+    `/client/v4/accounts/${ACCT}/%2E%2E/x`,
+    `/client/v4/accounts/${ACCT}/%7aones`,
+    `/client/v4/accounts/${ACCT}/%7Aones`,
+    `/client/v4/accounts/${ACCT}/workers%2fscripts`,
+    `/client/v4/accounts/${ACCT}/workers\\scripts`,
+    `/client/v4/accounts/${ACCT}\\..\\x`,
+    `/client/v4/accounts/${ACCT}/ZONES`,
+    `/client/v4/accounts/${ACCT}/workers/domains`,
+    `/client/v4/accounts/${ACCT}/workers/domains/records`,
+    `/client/v4/accounts/${ACCT}/pages/projects/aduin-transaction-web/domains`,
+    `/client/v4/accounts/${ACCT}/d1/database/abc/query`,
+    `/client/v4/accounts/${ACCT}/workers/scripts/aduin-transaction-web/routes`,
+    `/client/v4/accounts/${ACCT}/workers/scripts?per_page=1`,
+    `/client/v4/accounts/${ACCT.toUpperCase()}/workers/scripts`,
+    `/client/v4/accounts/${ACCT}/./workers/scripts`,
   ])('rejects %s', (path) => {
     expect(() => assertCfRequest({ method: 'GET', path })).toThrow();
+  });
+  it('allows only the explicit listing GETs and the widget POST', () => {
+    for (const tail of ['workers/scripts', 'd1/database', 'challenges/widgets'])
+      expect(() =>
+        assertCfRequest({ method: 'GET', path: `/client/v4/accounts/${ACCT}/${tail}` }),
+      ).not.toThrow();
+    for (const tail of ['workers/scripts', 'd1/database'])
+      expect(() =>
+        assertCfRequest({ method: 'POST', path: `/client/v4/accounts/${ACCT}/${tail}`, body: {} }),
+      ).toThrow(/allow-list/);
   });
   it('allows only the accountTag-only templates on graphql', () => {
     for (const q of Object.values(ANALYTICS_TEMPLATES)) {
@@ -195,25 +231,72 @@ describe('APPROVED-LIVE ledger', () => {
     expect(new Ledger(d, () => now).counts('session')).toEqual({ phase: 4, today: 4 });
     expect(() => new Ledger(join(ROOT, 'tmp-ledger'))).toThrow(/outside the repository/);
   });
+  it('re-reads the file under an exclusive lock so two instances cannot double-claim', () => {
+    const d = scratch();
+    const a = new Ledger(d, () => now);
+    const b = new Ledger(d, () => now); // both loaded an empty ledger
+    for (let i = 0; i < 2; i++) a.claim('session', `a${i}`);
+    for (let i = 0; i < 2; i++) b.claim('session', `b${i}`);
+    expect(() => a.claim('session', 'a-over')).toThrow(/stop at 4/);
+    expect(() => b.claim('session', 'b-over')).toThrow(/stop at 4/);
+    expect(new Ledger(d, () => now).counts('session').today).toBe(4);
+    expect(existsSync(`${a.file}.lock`)).toBe(false);
+  });
+  it('refuses while another script holds a fresh lock, and breaks a stale one', () => {
+    const d = scratch();
+    const l = new Ledger(d, () => now);
+    writeFileSync(`${l.file}.lock`, '');
+    expect(() => l.claim('session', 'x')).toThrow(/locked/);
+    const old = new Date(Date.now() - 60_000);
+    utimesSync(`${l.file}.lock`, old, old);
+    l.claim('session', 'y');
+    expect(l.counts('session').today).toBe(1);
+  }, 15_000);
 });
 
 describe('stop conditions', () => {
-  it('stops on cost > 0, any 429, breaker and closed global quota', () => {
-    expect(stopReason({ status: 200, body: [{ usage: { cost: 0 } }] })).toBeNull();
-    expect(stopReason({ status: 200, body: [{ type: 'x' }, { usage: { cost: 0.0001 } }] })).toMatch(
-      /cost/,
-    );
+  const free = { t: 'result', kind: 'ai', cache: 'miss', model: 'vendor/model:free', data: {} };
+  it('passes a heartbeat plus a free-model result', () => {
+    expect(stopReason({ status: 200, body: [{ t: 'hb' }, free] })).toBeNull();
+  });
+  it('stops on any 429 unless expected', () => {
     expect(stopReason({ status: 429, body: {} })).toMatch(/429/);
     expect(
-      stopReason({ status: 429, body: { error: { code: 'rate_limited' } } }, { expect429: true }),
+      stopReason(
+        { status: 429, body: { error: { code: 'rate_limited', message: 'slow down' } } },
+        { expect429: true },
+      ),
     ).toBeNull();
-    expect(stopReason({ status: 503, body: { error: { code: 'budget_cap' } } })).toMatch(/breaker/);
+  });
+  it('stops on HTTP error bodies {error:{code,reason}}', () => {
+    expect(
+      stopReason({ status: 503, body: { error: { code: 'budget_cap', message: 'm' } } }),
+    ).toMatch(/breaker/);
     expect(
       stopReason({
         status: 503,
-        body: { error: { code: 'upstream_failed', reason: 'breaker_open' } },
+        body: { error: { code: 'budget_cap', message: 'm', reason: 'circuit_breaker' } },
       }),
     ).toMatch(/breaker/);
+  });
+  it.each([
+    ['budget_cap', { t: 'error', code: 'budget_cap', message: 'm' }, /breaker/],
+    [
+      'breaker reason',
+      { t: 'error', code: 'upstream_failed', message: 'm', reason: 'circuit_breaker' },
+      /breaker/,
+    ],
+    ['rate_limited', { t: 'error', code: 'rate_limited', message: 'm' }, /rate_limited/],
+  ])('stops on a streamed %s error frame', (_n, frame, re) => {
+    expect(stopReason({ status: 200, body: [{ t: 'hb' }, frame] })).toMatch(re);
+  });
+  it('stops when a result frame was served by a non-free model', () => {
+    expect(
+      stopReason({ status: 200, body: [{ t: 'hb' }, { ...free, model: 'vendor/model' }] }),
+    ).toMatch(/not :free/);
+    expect(stopReason({ status: 200, body: [{ t: 'result', kind: 'ocr' }] })).toMatch(/not :free/);
+  });
+  it('stops on a closed global quota', () => {
     expect(stopReason({ status: 200, body: { ai: 1, ocr_pages: 1, global_ok: false } })).toMatch(
       /global/,
     );
@@ -236,5 +319,19 @@ describe('secret hygiene', () => {
     expect(readFileSync(f, 'utf8')).toContain(COOKIE_NAME);
     expect(() => writeCookieFile(join(ROOT, 'cookie.json'), 'v')).toThrow(/outside/);
     expect(() => assertOutsideRepo('relative/path')).toThrow(/absolute/);
+  });
+  it('assertOutsideRepo uses path segments, not string prefixes', () => {
+    const root = scratch();
+    const inside = join(root, 'repo');
+    mkdirSync(inside);
+    expect(() => assertOutsideRepo(join(inside, 'a', 'b'), inside)).toThrow(/outside/);
+    expect(() => assertOutsideRepo(inside, inside)).toThrow(/outside/);
+    // a sibling whose name starts with '..' is still inside
+    expect(() => assertOutsideRepo(join(inside, '..x'), inside)).toThrow(/outside/);
+    expect(assertOutsideRepo(join(root, 'repo-sibling'), inside)).toBe(join(root, 'repo-sibling'));
+    // a symlink inside the repo that points out is judged by its real path
+    const link = join(scratch(), 'link');
+    symlinkSync(inside, link);
+    expect(() => assertOutsideRepo(join(link, 'f'), inside)).toThrow(/outside/);
   });
 });

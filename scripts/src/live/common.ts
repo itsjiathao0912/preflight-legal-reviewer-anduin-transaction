@@ -6,15 +6,19 @@
 // through `assertLiveBase` / `assertCfRequest` first. Never log cookies, tokens or API keys.
 import {
   chmodSync,
+  closeSync,
   existsSync,
   mkdirSync,
+  openSync,
   readFileSync,
+  realpathSync,
   renameSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
@@ -109,13 +113,38 @@ export interface CfRequest {
   body?: { query: string; variables: Record<string, unknown> } | Record<string, unknown>;
 }
 
+/**
+ * Explicit REST allow-list: exactly what Wave C needs from scripts. D1 create/migrate/execute,
+ * secrets and deploy go through wrangler, never through these scripts. Anything else (routes,
+ * `workers/domains`, `pages/projects/<p>/domains`, `d1/<id>/query`, deletes) is rejected.
+ * Rollback of the widget (delete by id) is a manual, documented step.
+ */
+const CF_REST_ALLOW: ReadonlyArray<{ method: CfRequest['method']; tail: string }> = [
+  { method: 'GET', tail: '/workers/scripts' }, // C1/C6 before/after name diff
+  { method: 'GET', tail: '/d1/database' }, // C1/C6 before/after name diff
+  { method: 'GET', tail: '/challenges/widgets' }, // C1/C6 before/after name diff
+  { method: 'POST', tail: '/challenges/widgets' }, // C4 widget create
+];
+const CF_REST = /^\/client\/v4\/accounts\/([0-9a-f]{32})(\/[a-z0-9_/]+)$/;
+
 /** Throws unless the request is inside the Cloudflare allow-list. */
 export function assertCfRequest(req: CfRequest): void {
   const path = req.path;
-  if (!path.startsWith('/')) fail('cloudflare path must be absolute');
-  if (/\/zones(\/|$|\?)/i.test(path) || /zone/i.test(path))
-    fail('cloudflare zone paths are forbidden');
-  if (path.includes('..') || path.includes('//')) fail('cloudflare path is not normalized');
+  if (typeof path !== 'string' || !path.startsWith('/')) fail('cloudflare path must be absolute');
+  // Raw-path checks before any parsing: no encoding tricks, no backslashes, no query/fragment.
+  if (/[%\\]/.test(path)) fail('cloudflare path must not contain % or backslash');
+  if (/[?#]/.test(path)) fail('cloudflare path must not carry a query or fragment');
+  if (/zone/i.test(path)) fail('cloudflare zone paths are forbidden');
+  if (path.includes('..') || path.includes('//') || path.includes('/./'))
+    fail('cloudflare path is not normalized');
+  let parsed: URL;
+  try {
+    parsed = new URL(path, CF_API);
+  } catch {
+    fail('cloudflare path does not parse');
+  }
+  if (parsed.origin !== CF_API || parsed.pathname !== path)
+    fail('cloudflare path changes under URL parsing');
   if (path === CF_GRAPHQL_PATH) {
     if (req.method !== 'POST') fail('graphql must be POST');
     const body = req.body as { query?: unknown; variables?: unknown } | undefined;
@@ -131,8 +160,11 @@ export function assertCfRequest(req: CfRequest): void {
       fail('graphql accountTag missing or malformed');
     return;
   }
-  if (!/^\/client\/v4\/accounts\/[0-9a-f]{32}(\/|$|\?)/.test(path))
-    fail('cloudflare REST path must be under /client/v4/accounts/{account_id}');
+  const m = CF_REST.exec(path);
+  if (!m) fail('cloudflare REST path must be under /client/v4/accounts/{account_id}');
+  const tail = m[2];
+  if (!CF_REST_ALLOW.some((a) => a.method === req.method && a.tail === tail))
+    fail(`cloudflare REST ${req.method} ${tail} is not on the allow-list`);
 }
 
 /** Build the single allowed analytics request. */
@@ -267,12 +299,26 @@ export function defaultScratchDir(): string {
   return process.env['LIVE_SCRATCH_DIR'] ?? join(homedir(), '.cache', 'aduin-transaction-live');
 }
 
+/** realpath of the deepest existing ancestor, with the missing remainder re-appended. */
+function realish(p: string): string {
+  const abs = resolve(p);
+  let cur = abs;
+  const rest: string[] = [];
+  while (!existsSync(cur)) {
+    const parent = dirname(cur);
+    if (parent === cur) return abs;
+    rest.unshift(basename(cur));
+    cur = parent;
+  }
+  return join(realpathSync(cur), ...rest);
+}
+
 /** Refuse any scratch path inside the repository (cookies and ledgers never land in git). */
 export function assertOutsideRepo(path: string, root = ROOT): string {
   if (!isAbsolute(path)) fail('scratch path must be absolute');
-  const rel = relative(root, resolve(path));
-  if (rel === '' || (!rel.startsWith('..') && !isAbsolute(rel)))
-    fail('scratch path must be outside the repository');
+  const rel = relative(realish(root), realish(path));
+  const outside = rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel);
+  if (!outside) fail('scratch path must be outside the repository');
   return resolve(path);
 }
 
@@ -288,7 +334,56 @@ function writePrivate(file: string, text: string): void {
   renameSync(tmp, file);
 }
 
-/** File-backed ledger (mode 600, outside the repo). */
+const LOCK_STALE_MS = 30_000;
+const LOCK_WAIT_MS = 5_000;
+
+function sleepSync(ms: number): void {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+/** Exclusive lock file (O_EXCL create); retries briefly, breaks a lock older than 30 s. */
+function withLock<T>(file: string, fn: () => T): T {
+  const lock = `${file}.lock`;
+  ensurePrivateDir(dirname(lock));
+  const deadline = Date.now() + LOCK_WAIT_MS;
+  for (;;) {
+    try {
+      closeSync(openSync(lock, 'wx', 0o600));
+      break;
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
+      try {
+        if (Date.now() - statSync(lock).mtimeMs > LOCK_STALE_MS) {
+          rmSync(lock, { force: true });
+          continue;
+        }
+      } catch {
+        continue; // lock vanished between open and stat
+      }
+      if (Date.now() > deadline) fail('ledger is locked by another script; retry shortly');
+      sleepSync(25);
+    }
+  }
+  try {
+    return fn();
+  } finally {
+    rmSync(lock, { force: true });
+  }
+}
+
+function readLedger(file: string): LedgerState {
+  const state = existsSync(file)
+    ? (JSON.parse(readFileSync(file, 'utf8')) as LedgerState)
+    : { version: 1 as const, entries: [] };
+  if (state.version !== 1 || !Array.isArray(state.entries)) fail('ledger file is malformed');
+  return state;
+}
+
+/**
+ * File-backed ledger (mode 600, outside the repo). It counts only runs of these scripts: app
+ * sessions opened by hand in a browser or by other tools are NOT recorded, so the operator must
+ * add those to the daily budget by judgement.
+ */
 export class Ledger {
   readonly file: string;
   private state: LedgerState;
@@ -298,11 +393,7 @@ export class Ledger {
     private readonly clock: () => Date = () => new Date(),
   ) {
     this.file = join(assertOutsideRepo(dir), 'live-ledger.json');
-    this.state = existsSync(this.file)
-      ? (JSON.parse(readFileSync(this.file, 'utf8')) as LedgerState)
-      : { version: 1, entries: [] };
-    if (this.state.version !== 1 || !Array.isArray(this.state.entries))
-      fail('ledger file is malformed');
+    this.state = readLedger(this.file);
   }
 
   snapshot(): LedgerState {
@@ -317,11 +408,15 @@ export class Ledger {
 
   /** Claim one unit or throw with the refusal reason. Claims are written before the call is made. */
   claim(kind: LedgerKind, label: string, opts: { allowFifthAi?: boolean } = {}): void {
-    const now = this.clock();
-    const refusal = capRefusal(this.state, kind, now, opts);
-    if (refusal) fail(refusal);
-    this.state.entries.push({ kind, day: utcDay(now), at: now.toISOString(), label });
-    writePrivate(this.file, JSON.stringify(this.state, null, 2));
+    withLock(this.file, () => {
+      // Re-read under the lock so a concurrent script's claims are counted.
+      this.state = readLedger(this.file);
+      const now = this.clock();
+      const refusal = capRefusal(this.state, kind, now, opts);
+      if (refusal) fail(refusal);
+      this.state.entries.push({ kind, day: utcDay(now), at: now.toISOString(), label });
+      writePrivate(this.file, JSON.stringify(this.state, null, 2));
+    });
   }
 }
 
@@ -342,18 +437,29 @@ function get(o: unknown, ...path: string[]): unknown {
   return cur;
 }
 
-/** Returns a stop reason (cost > 0, any 429, breaker/budget open) or null. */
+/**
+ * Returns a stop reason or null. Stops on: any 429 (unless expected), a `budget_cap` code or a
+ * breaker reason, a `rate_limited` code (unless a 429 is expected), a closed global quota, and a
+ * result frame whose served `model` is not a `:free` model. Error details come in two shapes:
+ * HTTP bodies `{error:{code,reason}}` and streamed frames `{t:'error',code,reason}` (frames.ts).
+ * Frames carry no cost field; the `:free` model check is the spend guard.
+ */
 export function stopReason(obs: Observation, opts: { expect429?: boolean } = {}): string | null {
   if (obs.status === 429 && !opts.expect429) return 'HTTP 429 received';
   const frames = Array.isArray(obs.body) ? obs.body : [obs.body];
   for (const f of frames) {
-    const cost = get(f, 'usage', 'cost') ?? get(f, 'meta', 'usage', 'cost');
-    if (typeof cost === 'number' && cost > 0) return `usage.cost ${cost} > 0`;
-    const code = get(f, 'error', 'code');
-    const reason = get(f, 'error', 'reason');
+    const streamed = get(f, 't') === 'error';
+    const code = streamed ? get(f, 'code') : get(f, 'error', 'code');
+    const reason = streamed ? get(f, 'reason') : get(f, 'error', 'reason');
     if (code === 'budget_cap') return 'budget cap / breaker open';
     if (typeof reason === 'string' && /breaker/i.test(reason)) return 'breaker open';
+    if (code === 'rate_limited' && !opts.expect429) return 'rate_limited received';
     if (get(f, 'global_ok') === false) return 'global quota closed (breaker or global cap)';
+    if (get(f, 't') === 'result') {
+      const model = get(f, 'model');
+      if (typeof model !== 'string' || !model.endsWith(':free'))
+        return `served model ${typeof model === 'string' ? model : '(missing)'} is not :free`;
+    }
   }
   return null;
 }

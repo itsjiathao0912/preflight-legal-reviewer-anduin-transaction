@@ -6,6 +6,7 @@ import {
   checkWebOutput,
   checkWranglerConfig,
   E2E_MARKER,
+  E2E_SITE_KEY_MARKER,
   preflight,
 } from '../../src/deploy/preflight';
 
@@ -43,6 +44,13 @@ describe('deploy:preflight web output', () => {
   it('fails on an e2e build (hook marker present)', () => {
     expect(
       failed(checkWebOutput(out({ ...good, 'assets/e.js': `window.${E2E_MARKER}={}` }), SITE)),
+    ).toEqual(['no e2e hook marker (plain, non-e2e build)']);
+  });
+  it('fails when the e2e Turnstile site-key global is in the output', () => {
+    expect(
+      failed(
+        checkWebOutput(out({ ...good, 'assets/k.js': `window.${E2E_SITE_KEY_MARKER}` }), SITE),
+      ),
     ).toEqual(['no e2e hook marker (plain, non-e2e build)']);
   });
   it('fails when the site key is absent or not compiled in, without printing it', () => {

@@ -93,3 +93,20 @@ After the fixes, both the report-only run and the enforced run had 0 violations 
 - `pnpm --filter @aduin/web test:e2e csp-headers`, `pnpm --filter @aduin/web test headers-file`, `env -u SLICE_BASE_URL pnpm --filter @aduin/web exec playwright test --project=stack`.
 ### Dependency Changes
 - None.
+
+## Review fixes (scripts/docs)
+
+Supplement fix of the Wave A review findings on commit bdc42cc, scripts and docs file set only (apps/web untouched).
+
+| Finding | Fix | File(s) |
+|---|---|---|
+| M1 | `stopReason` reads both error shapes: HTTP `{error:{code,reason}}` and streamed `{t:'error',code,reason}`; stops on `budget_cap`, a breaker reason (`circuit_breaker`), `rate_limited` (unless a 429 is expected), closed global quota, and a `t:'result'` frame whose `model` does not end in `:free`. The `usage.cost` check was dropped (frames carry no cost). Fixtures now use real shapes. | `scripts/src/live/common.ts`, `scripts/test/live/live-guards.test.ts` |
+| M2 | Cloudflare REST is an explicit allow-list: GET `workers/scripts`, `d1/database`, `challenges/widgets` and POST `challenges/widgets` only. Raw path rejects `%`, backslash, query/fragment, `zone` (any case), `..`, `//`, `/./`, and any change under URL parsing. Wrangler does D1, secrets and deploy; widget delete for rollback stays a manual step. | `common.ts`, tests (encoded `%2e%2e`/`%2E%2E`, `%7aones`/`%7Aones`, `%2f`, backslash, uppercase account id, `workers/domains`, `pages/.../domains`, `d1/<id>/query`, script routes, query string) |
+| m3 | `Ledger.claim` takes an O_EXCL lock file (5 s wait, 30 s stale break), re-reads the file under the lock, then writes. Doc comment: the ledger counts only script runs, not manual/app sessions. Tests: two instances cannot over-claim; a fresh lock refuses, a stale lock is broken. | `common.ts`, tests |
+| m4 | `sumRowsWritten` throws on non-empty GraphQL `errors` or an empty/missing `accounts` list. | `scripts/src/conformance/free-plan.ts`, `conformance-free-plan.test.ts` |
+| m5 (scripts) | Preflight marker list adds `__aduinTurnstileSiteKey`. | `scripts/src/deploy/preflight.ts`, `deploy-preflight.test.ts` |
+| m6 | DEPLOY.md: `VITE_TURNSTILE_SITE_KEY` named as the build-time var on the plain build command; `deploy:preflight` added to pre-flight and the deploy step; Worker `TURNSTILE_SITE_KEY` stated accurately (optional in config, not set, unused); warning that secret-set + no compiled key makes memory/AI fail closed. | `docs/DEPLOY.md` |
+| m8 | sax row attributed to `docx (via xml-js)` (lockfile: `xml-js@1.6.11 -> sax 1.6.1`; mammoth's `xmlbuilder@10.1.1` has no deps). | `THIRD_PARTY_NOTICES.md` |
+| NIT | `assertOutsideRepo` compares realpaths (deepest existing ancestor) and uses a segment check (`rel === '..'`, `..` + sep, or absolute). Tests: `..x` child, symlink into the repo. | `common.ts`, tests |
+
+Gates: `pnpm --filter @aduin/scripts test` per token: live-guards 53, deploy-preflight 13, conformance-free-plan 9, probe-session 5, probe-ai 3, shots-live 2 (all pass). Scripts typecheck pass. Scoped eslint and prettier on changed files pass. `pnpm guard:cf` OK, `pnpm secrets:scan` OK. Repo-wide `pnpm lint` fails only on Playwright trace files under `apps/web/test-results/` (generated artifacts from the concurrent web e2e run, not in this file set); Wave B should rerun lint after that directory is cleaned or confirm it is ignored.

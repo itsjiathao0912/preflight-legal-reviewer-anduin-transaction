@@ -70,6 +70,13 @@ async function installCsp(page: Page): Promise<{ console: string[] }> {
   page.on('console', (m) => {
     if (/Content Security Policy/i.test(m.text())) consoleCsp.push(m.text());
   });
+  // Dedicated workers (engine, pdf.js) report CSP violations only to their own console.
+  page.on('worker', (w) => {
+    w.on('console', (m) => {
+      if (/Content Security Policy|unsafe-eval/i.test(m.text()))
+        consoleCsp.push(`[worker ${w.url()}] ${m.text()}`);
+    });
+  });
   await page.addInitScript(() => {
     const w = window as unknown as { __cspViolations: unknown[] };
     w.__cspViolations = [];

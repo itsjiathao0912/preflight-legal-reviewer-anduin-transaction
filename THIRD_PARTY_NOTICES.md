@@ -70,12 +70,12 @@ and are self-hosted from @fontsource (upstream notices kept in the font packages
 Transitive packages that need a stated election or a non-MIT/BSD/Apache/ISC license. All are
 permissive and none are copied into this repository; they arrive through `pnpm install`.
 
-| Package                                       | Version                       | License as published    | Election / note                                                                             | Pulled in by             |
-| --------------------------------------------- | ----------------------------- | ----------------------- | ------------------------------------------------------------------------------------------- | ------------------------ |
-| sax                                           | 1.6.1                         | BlueOak-1.0.0           | Permissive, OSI-approved. Used as published; the BlueOak license text ships in the package. | mammoth (via xmlbuilder) |
-| pako                                          | 1.0.11                        | MIT AND Zlib            | Both licenses are permissive; both notices stay in the package.                             | jszip (via mammoth)      |
-| jszip                                         | 3.10.2                        | MIT OR GPL-3.0-or-later | **Elected: MIT.** The GPL option is not used.                                               | mammoth                  |
-| lie, immediate, setimmediate, readable-stream | 3.3.0 / 3.0.6 / 1.0.5 / 2.3.8 | MIT                     | Transitive of jszip; no election needed.                                                    | jszip                    |
+| Package                                       | Version                       | License as published    | Election / note                                                                             | Pulled in by        |
+| --------------------------------------------- | ----------------------------- | ----------------------- | ------------------------------------------------------------------------------------------- | ------------------- |
+| sax                                           | 1.6.1                         | BlueOak-1.0.0           | Permissive, OSI-approved. Used as published; the BlueOak license text ships in the package. | docx (via xml-js)   |
+| pako                                          | 1.0.11                        | MIT AND Zlib            | Both licenses are permissive; both notices stay in the package.                             | jszip (via mammoth) |
+| jszip                                         | 3.10.2                        | MIT OR GPL-3.0-or-later | **Elected: MIT.** The GPL option is not used.                                               | mammoth             |
+| lie, immediate, setimmediate, readable-stream | 3.3.0 / 3.0.6 / 1.0.5 / 2.3.8 | MIT                     | Transitive of jszip; no election needed.                                                    | jszip               |
 
 Elections follow the project rule (MIT / BSD / Apache-2.0 / ISC / BlueOak, fonts OFL). The one
 exception that is not in that list is the dev-only MPL-2.0 `axe-core` (decision D-8, above); it is

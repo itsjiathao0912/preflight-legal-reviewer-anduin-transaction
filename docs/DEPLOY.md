@@ -11,7 +11,8 @@ Target: one Cloudflare Worker `aduin-transaction-web` on `*.workers.dev`, Worker
 | D1 database | `aduin-transaction-db` | binding `DB`, migrations `apps/worker/migrations/0001-0005` |
 | Cron | `17 3 * * *` | daily retention purge |
 | Secrets | `COOKIE_SIGNING_KEYS`, `COOKIE_SIGNING_KID`, `OPENROUTER_API_KEY`, `TURNSTILE_SECRET` | values never in the repo |
-| Plain vars | in `wrangler.jsonc` | `AI_TEXT_MODELS`, `AI_VISION_MODELS`, `AI_RESPONSE_MODE`, `PAID_FALLBACK_ENABLED=false`, `AI_UPLOADS_ENABLED`, `TURNSTILE_SITE_KEY` |
+| Plain vars | in `wrangler.jsonc` | `AI_TEXT_MODELS`, `AI_VISION_MODELS`, `AI_RESPONSE_MODE`, `PAID_FALLBACK_ENABLED=false`, `AI_UPLOADS_ENABLED`. The Worker config also reads an optional `TURNSTILE_SITE_KEY`; it is not set and nothing needs it, because the browser uses the key compiled into the web bundle |
+| Web build var | `VITE_TURNSTILE_SITE_KEY` | public Turnstile site key, read at web build time; not a secret |
 
 Live URL: https://aduin-transaction-web.giathaowork.workers.dev
 <!-- P10:FILL deploy-version: final Worker version id and date -->
@@ -32,9 +33,11 @@ pnpm secrets:scan
 pnpm typecheck
 pnpm --filter @aduin/worker test
 pnpm --filter @aduin/web test
+pnpm --filter @aduin/scripts deploy:preflight   # after the plain web build (step 4), before wrangler deploy
 ```
 
-All must pass before any deploy.
+All must pass before any deploy. `deploy:preflight` checks the web output: `_headers` with a CSP, no e2e hook markers
+(`__aduinE2E`, `__aduinTurnstileSiteKey`) and the Turnstile site key compiled in.
 
 ## 2. Create and migrate D1 (first deploy only)
 
@@ -64,8 +67,11 @@ pnpm exec wrangler secret put OPENROUTER_API_KEY
 pnpm exec wrangler secret put TURNSTILE_SECRET        # from the Turnstile widget created for the workers.dev host
 ```
 
-The Turnstile site key is public and goes in the web build env (see `apps/web` env example). Create the widget for the
-`*.workers.dev` hostname only.
+The Turnstile site key is public and goes in the web build env as `VITE_TURNSTILE_SITE_KEY` (names only in the
+`apps/web` env example file). Create the widget for the `*.workers.dev` hostname only.
+
+Warning: if `TURNSTILE_SECRET` is set on the Worker but the bundle was built without `VITE_TURNSTILE_SITE_KEY`, the
+browser never sends a token, so session bootstrap (memory) and AI/OCR calls fail closed. Always build with the key.
 
 ## 4. Build and deploy
 
@@ -73,7 +79,8 @@ Deploy the Worker before the web bundle matters only when the OCR or API contrac
 because the Worker serves the bundle.
 
 ```bash
-pnpm --filter @aduin/web build          # plain build, not build:e2e
+VITE_TURNSTILE_SITE_KEY=<public site key> pnpm --filter @aduin/web build   # fresh plain build, not build:e2e
+pnpm --filter @aduin/scripts deploy:preflight
 cd apps/worker
 pnpm exec wrangler deploy
 ```

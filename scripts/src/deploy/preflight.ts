@@ -18,6 +18,9 @@ import { LiveGuardError, parseFlags, ROOT } from '../live/common';
 
 /** Same marker as apps/web/test/no-e2e-hook-in-dist.test.ts. */
 export const E2E_MARKER = '__aduinE2E';
+/** e2e-only Turnstile site-key window global (apps/web turnstile-widget, IS_E2E branch). */
+export const E2E_SITE_KEY_MARKER = '__aduinTurnstileSiteKey';
+export const E2E_MARKERS: readonly string[] = [E2E_MARKER, E2E_SITE_KEY_MARKER];
 const PREFIX = 'aduin-transaction-';
 // The vite outDir name is assembled so no shell command or hook pattern needs the literal.
 export const DEFAULT_WEB_OUT = join(ROOT, 'apps', 'web', ['d', 'i', 's', 't'].join(''));
@@ -62,7 +65,12 @@ export function checkWebOutput(dir: string, siteKey: string | undefined): Check[
   });
 
   const textFiles = files.filter((f) => TEXT_EXT.test(rel(f)));
-  const withMarker = textFiles.filter((f) => readFileSync(f, 'utf8').includes(E2E_MARKER)).map(rel);
+  const withMarker = textFiles
+    .filter((f) => {
+      const text = readFileSync(f, 'utf8');
+      return E2E_MARKERS.some((m) => text.includes(m));
+    })
+    .map(rel);
   checks.push({
     name: 'no e2e hook marker (plain, non-e2e build)',
     ok: withMarker.length === 0,

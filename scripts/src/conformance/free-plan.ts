@@ -230,9 +230,17 @@ export async function runBurst(
   return { failures: [], ok };
 }
 
+/** Sum rowsWritten; throws when GraphQL reports errors or returns no account (never a silent 0). */
 export function sumRowsWritten(resp: unknown): number {
-  const accts =
-    (resp as { data?: { viewer?: { accounts?: unknown[] } } })?.data?.viewer?.accounts ?? [];
+  const r = resp as {
+    errors?: unknown;
+    data?: { viewer?: { accounts?: unknown } } | null;
+  } | null;
+  if (Array.isArray(r?.errors) && r.errors.length > 0)
+    throw new LiveGuardError(`analytics GraphQL returned ${r.errors.length} error(s)`);
+  const accts = r?.data?.viewer?.accounts;
+  if (!Array.isArray(accts) || accts.length === 0)
+    throw new LiveGuardError('analytics GraphQL returned no account data');
   let total = 0;
   for (const a of accts as Array<{
     d1AnalyticsAdaptiveGroups?: Array<{ sum?: { rowsWritten?: number } }>;

@@ -24,7 +24,7 @@ async function stubTurnstile(page: Page, outcome: 'token' | 'error') {
         const log = (window.__tsLog = { renders: [], executes: 0, resets: 0 });
         let opts = null;
         window.turnstile = {
-          render(el, o) { opts = o; log.renders.push({ sitekey: o.sitekey, execution: o.execution, hidden: el.getAttribute('aria-hidden') }); return 'w1'; },
+          render(el, o) { opts = o; log.renders.push({ sitekey: o.sitekey, execution: o.execution, hidden: el.closest('[aria-hidden]')?.getAttribute('aria-hidden') ?? null }); return 'w1'; },
           execute() {
             log.executes++;
             setTimeout(() => ${outcome === 'token' ? "opts.callback('e2e-token-' + log.executes)" : "opts['error-callback']('110200')"}, 10);

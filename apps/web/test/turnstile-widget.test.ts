@@ -154,3 +154,94 @@ describe('RealMemoryApi session token (E24)', () => {
     expect(fake.calls[0]!.headers['x-aduin-turnstile']).toBeUndefined();
   });
 });
+
+describe('turnstile-widget interactive challenge (m1)', () => {
+  /** Stub whose execute asks for interaction; the test drives the remaining callbacks. */
+  function interactiveApi() {
+    let opts: Opts = {};
+    const api = {
+      render: vi.fn((_el: HTMLElement, o: Record<string, unknown>) => {
+        opts = o as Opts;
+        return 'w1';
+      }),
+      execute: vi.fn(() => queueMicrotask(() => opts['before-interactive-callback']!())),
+      reset: vi.fn(),
+    } satisfies TurnstileApi;
+    return { api, opts: () => opts };
+  }
+  const overlay = () => document.getElementById('aduin-turnstile')!;
+
+  beforeEach(() => document.getElementById('aduin-turnstile')?.remove());
+  afterEach(() => vi.useRealTimers());
+
+  it('reveals a labelled, interactive overlay and hides it after the challenge', async () => {
+    const { api, opts } = interactiveApi();
+    const btn = document.body.appendChild(document.createElement('button'));
+    btn.focus();
+    const p = createTurnstileProvider('site-key', { loadApi: async () => api });
+    const tok = p();
+    await vi.waitFor(() => expect(overlay().getAttribute('role')).toBe('dialog'));
+    const el = overlay();
+    expect(el.hasAttribute('aria-hidden')).toBe(false);
+    expect(el.style.pointerEvents).toBe('auto');
+    expect(el.style.opacity).toBe('1');
+    expect(document.getElementById(el.getAttribute('aria-labelledby')!)?.textContent).toBe(
+      'Verify you are human to use AI features',
+    );
+    expect(document.activeElement).toBe(el);
+    opts()['after-interactive-callback']!();
+    opts()['callback']!('tok-human');
+    expect(await tok).toBe('tok-human');
+    expect(el.getAttribute('aria-hidden')).toBe('true');
+    expect(el.hasAttribute('role')).toBe(false);
+    expect(el.style.pointerEvents).toBe('none');
+    expect(document.activeElement).toBe(btn);
+    btn.remove();
+  });
+
+  it('extends the time budget once interaction is requested', async () => {
+    vi.useFakeTimers();
+    const { api, opts } = interactiveApi();
+    const p = createTurnstileProvider('site-key', {
+      loadApi: async () => api,
+      timeoutMs: 1_000,
+      interactiveTimeoutMs: 10_000,
+    });
+    const tok = p();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(overlay().getAttribute('role')).toBe('dialog');
+    await vi.advanceTimersByTimeAsync(5_000); // past the base timeout, still waiting
+    opts()['callback']!('late-tok');
+    expect(await tok).toBe('late-tok');
+    expect(overlay().getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('times out the interactive challenge, hides the overlay and resolves null', async () => {
+    vi.useFakeTimers();
+    const { api } = interactiveApi();
+    const p = createTurnstileProvider('site-key', {
+      loadApi: async () => api,
+      timeoutMs: 1_000,
+      interactiveTimeoutMs: 3_000,
+    });
+    const tok = p();
+    await vi.advanceTimersByTimeAsync(3_001);
+    expect(await tok).toBeNull();
+    expect(overlay().getAttribute('aria-hidden')).toBe('true');
+    expect(api.reset).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves null when the browser is unsupported', async () => {
+    let opts: Opts = {};
+    const api = {
+      render: vi.fn((_el: HTMLElement, o: Record<string, unknown>) => {
+        opts = o as Opts;
+        return 'w1';
+      }),
+      execute: vi.fn(() => queueMicrotask(() => opts['unsupported-callback']!())),
+      reset: vi.fn(),
+    } satisfies TurnstileApi;
+    const p = createTurnstileProvider('site-key', { loadApi: async () => api, container: host });
+    expect(await p()).toBeNull();
+  });
+});

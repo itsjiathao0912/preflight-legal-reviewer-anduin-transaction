@@ -40,6 +40,8 @@ describe('no-e2e-hook-in-dist', () => {
     expect(prod.includes('forceInvalidOutline')).toBe(false);
     // Phase 08b: the real-memory opt-in must not ship either
     expect(prod.includes('useRealMemory')).toBe(false);
+    // Phase 10: the e2e Turnstile site-key override must not ship either
+    expect(prod.includes('__aduinTurnstileSiteKey')).toBe(false);
   }, 180_000);
 
   it('positive control: the e2e build does contain the hook marker', async () => {
@@ -47,5 +49,6 @@ describe('no-e2e-hook-in-dist', () => {
     expect(e2e.includes(MARKER)).toBe(true);
     expect(e2e.includes('forceInvalidOutline')).toBe(true);
     expect(e2e.includes('useRealMemory')).toBe(true);
+    expect(e2e.includes('__aduinTurnstileSiteKey')).toBe(true);
   }, 180_000);
 });

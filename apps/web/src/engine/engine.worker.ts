@@ -4,6 +4,7 @@
  * from @aduin/core (import-graph test). Settings carry no firm id; findings return with quote_hash
  * and no fingerprint (Phase 01 Contracts v1).
  */
+import '../zod-jitless'; // first: disables zod's Function() probe in the worker scope (CSP)
 import * as Comlink from 'comlink';
 import {
   buildAiCandidatesWithSites,

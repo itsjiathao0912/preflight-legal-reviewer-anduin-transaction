@@ -28,7 +28,7 @@ export function DocSwitcher() {
             className="docsw"
             type="button"
             data-testid="doc-switcher"
-            aria-label={`${name} ${firm}, switch document`}
+            aria-label={`${[name, firm].filter(Boolean).join(' ')}, switch document`}
             title={rail ? `Switch document: ${name}` : undefined}
           >
             <Icon name="doc" />

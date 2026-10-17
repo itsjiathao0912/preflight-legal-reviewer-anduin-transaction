@@ -6,7 +6,8 @@ import { setTurnstileProvider, type TurnstileProvider } from './turnstile';
  * `VITE_TURNSTILE_SITE_KEY`; when it is unset no provider is registered and no script is loaded
  * (requests go out without a token, exactly as before). With a key, the Turnstile script is loaded
  * lazily on the first token request, one managed widget is rendered in a small hidden container
- * with `execution: 'execute'`, every request runs `execute`, and the widget is reset after use so
+ * with `execution: 'execute'` (revealed as a labelled overlay only while Turnstile needs an
+ * interactive challenge, with a longer time budget), every request runs `execute`, and the widget is reset after use so
  * the next request gets a fresh single-use token. The token is never logged.
  *
  * E2E only (stripped from production by the IS_E2E define): the `--mode e2e` bundle has no site
@@ -20,6 +21,15 @@ const CONTAINER_ID = 'aduin-turnstile';
 const SITE_KEY_RE = /^[A-Za-z0-9_-]{1,100}$/;
 /** Upper bound for one challenge (script load + execute); after it the request goes out tokenless. */
 export const TURNSTILE_TIMEOUT_MS = 30_000;
+/** Once Turnstile asks for an interactive challenge, a human gets this long (from that moment). */
+export const TURNSTILE_INTERACTIVE_TIMEOUT_MS = 120_000;
+export const TURNSTILE_PROMPT = 'Verify you are human to use AI features';
+const HIDDEN_CSS =
+  'position:fixed;right:0;bottom:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;';
+const VISIBLE_CSS =
+  'position:fixed;right:16px;bottom:16px;z-index:1000;width:min(340px,calc(100vw - 32px));' +
+  'padding:12px;background:var(--card);color:var(--ink);border:1px solid var(--step);' +
+  'border-radius:var(--r);font:13px/1.4 var(--sans);pointer-events:auto;opacity:1;';
 
 /** The subset of the Turnstile client API this module uses. */
 export interface TurnstileApi {
@@ -31,9 +41,14 @@ export interface TurnstileApi {
 export interface TurnstileWidgetDeps {
   /** Resolves the global Turnstile API (default: inject the script once, wait for `window.turnstile`). */
   loadApi?: () => Promise<TurnstileApi>;
-  /** Hidden host element for the widget (default: a fixed, invisible div appended to body). */
+  /**
+   * Host element the widget renders into (default: a slot inside a fixed, invisible overlay
+   * appended to body). When the slot's parent is the overlay, the overlay is revealed instead.
+   */
   container?: () => HTMLElement;
   timeoutMs?: number;
+  /** Total budget once an interactive challenge is shown (default TURNSTILE_INTERACTIVE_TIMEOUT_MS). */
+  interactiveTimeoutMs?: number;
 }
 
 /** The compiled-in site key (or the e2e window global under IS_E2E); null when unset or malformed. */
@@ -89,17 +104,65 @@ function loadTurnstileScript(timeoutMs: number): Promise<TurnstileApi> {
   return scriptLoad;
 }
 
+/** The invisible overlay with a label and a widget slot; returns the slot. */
 function hiddenContainer(): HTMLElement {
   let el = document.getElementById(CONTAINER_ID);
   if (!el) {
     el = document.createElement('div');
     el.id = CONTAINER_ID;
     el.setAttribute('aria-hidden', 'true');
-    el.style.cssText =
-      'position:fixed;right:0;bottom:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;';
+    el.style.cssText = HIDDEN_CSS;
+    const label = document.createElement('p');
+    label.id = `${CONTAINER_ID}-label`;
+    label.textContent = TURNSTILE_PROMPT;
+    label.style.cssText = 'margin:0 0 8px;font-weight:500;';
+    const slot = document.createElement('div');
+    el.append(label, slot);
     document.body.appendChild(el);
   }
-  return el;
+  return el.lastElementChild as HTMLElement;
+}
+
+/** The element to reveal for an interactive challenge: the overlay when present, else the host. */
+function overlayOf(host: HTMLElement): HTMLElement {
+  return host.parentElement?.id === CONTAINER_ID ? host.parentElement : host;
+}
+
+let restoreFocus: HTMLElement | null = null;
+
+/** Shows the challenge as a small labelled, focusable dialog the user can interact with. */
+function reveal(host: HTMLElement): void {
+  const el = overlayOf(host);
+  if (el.dataset['interactive'] === 'true') return;
+  el.dataset['interactive'] = 'true';
+  el.removeAttribute('aria-hidden');
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-modal', 'false');
+  const label = el.querySelector<HTMLElement>(`#${CONTAINER_ID}-label`);
+  if (label) el.setAttribute('aria-labelledby', label.id);
+  else el.setAttribute('aria-label', TURNSTILE_PROMPT);
+  el.tabIndex = -1;
+  el.style.cssText = VISIBLE_CSS;
+  const active = document.activeElement;
+  restoreFocus = active instanceof HTMLElement && active !== document.body ? active : null;
+  el.focus({ preventScroll: true });
+}
+
+/** Hides the overlay again and returns focus to where the user was. */
+function conceal(host: HTMLElement): void {
+  const el = overlayOf(host);
+  if (el.dataset['interactive'] !== 'true') return;
+  delete el.dataset['interactive'];
+  el.setAttribute('aria-hidden', 'true');
+  el.removeAttribute('role');
+  el.removeAttribute('aria-modal');
+  el.removeAttribute('aria-labelledby');
+  el.removeAttribute('aria-label');
+  el.removeAttribute('tabindex');
+  el.style.cssText = HIDDEN_CSS;
+  const back = restoreFocus;
+  restoreFocus = null;
+  if (back && el.contains(document.activeElement) && back.isConnected) back.focus();
 }
 
 /**
@@ -111,23 +174,35 @@ export function createTurnstileProvider(
   deps: TurnstileWidgetDeps = {},
 ): TurnstileProvider {
   const timeoutMs = deps.timeoutMs ?? TURNSTILE_TIMEOUT_MS;
+  const interactiveMs = deps.interactiveTimeoutMs ?? TURNSTILE_INTERACTIVE_TIMEOUT_MS;
   const loadApi = deps.loadApi ?? (() => loadTurnstileScript(timeoutMs));
   const container = deps.container ?? hiddenContainer;
   let api: TurnstileApi | null = null;
   let widgetId: string | null = null;
+  let host: HTMLElement | null = null;
   let pending: ((token: string | null) => void) | null = null;
+  let timer: ReturnType<typeof setTimeout> | undefined;
   let queue: Promise<unknown> = Promise.resolve();
 
   const settle = (token: string | null) => {
     const p = pending;
     pending = null;
+    if (host) conceal(host);
     p?.(token);
+  };
+
+  const onInteractive = () => {
+    if (!pending || !host) return;
+    reveal(host);
+    clearTimeout(timer);
+    timer = setTimeout(() => settle(null), interactiveMs);
   };
 
   const ensureWidget = async (): Promise<{ api: TurnstileApi; id: string }> => {
     if (!api) api = await loadApi();
     if (widgetId === null) {
-      const id = api.render(container(), {
+      host = container();
+      const id = api.render(host, {
         sitekey: siteKey,
         execution: 'execute',
         appearance: 'interaction-only',
@@ -139,6 +214,11 @@ export function createTurnstileProvider(
         },
         'expired-callback': () => settle(null),
         'timeout-callback': () => settle(null),
+        'unsupported-callback': () => settle(null),
+        'before-interactive-callback': onInteractive,
+        'after-interactive-callback': () => {
+          if (host) conceal(host);
+        },
       });
       if (typeof id !== 'string' || id === '') throw new Error('turnstile render failed');
       widgetId = id;
@@ -153,7 +233,6 @@ export function createTurnstileProvider(
     } catch {
       return null;
     }
-    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       return await new Promise<string | null>((resolve) => {
         pending = resolve;
@@ -167,6 +246,7 @@ export function createTurnstileProvider(
     } finally {
       clearTimeout(timer);
       pending = null;
+      if (host) conceal(host);
       try {
         w.api.reset(w.id); // single-use token: fresh challenge next time
       } catch {
