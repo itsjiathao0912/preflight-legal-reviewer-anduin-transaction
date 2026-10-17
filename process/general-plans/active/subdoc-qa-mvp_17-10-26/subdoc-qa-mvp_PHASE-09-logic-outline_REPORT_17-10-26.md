@@ -75,3 +75,43 @@ These are also recorded in the plan's `## Deviations`. All are inside the blast 
 
 ### Dependency Changes
 - None (zod 4.6 already pinned).
+
+## UPDATE PROCESS closeout (17-10-26)
+
+Phase 09 is committed (feb0acc) and closed. Status COMPLETE. The line "Nothing is committed yet" above describes the state at EXECUTE time.
+
+### EVL outcome
+
+Independent serial run at HEAD dca6a45, all green: core 501, web unit 76, web e2e 114 (+1 opt-in skip; `logic-outline-export` 3/3), scripts 63, typecheck, lint, `guard:cf`, `secrets:scan`. The `layout-vs-mockup` failure seen at EXECUTE did not recur serially. Iteration report: `subdoc-qa-mvp-phase09-evl-iteration-001_REPORT_17-10-26.md`. No live calls.
+
+### SPEC Achievement
+
+| AC | Result | Evidence |
+|---|---|---|
+| AC63 (JSON logic outline export, P1) | MET | core `logic-outline-export-contents` 11, `outline-schema-snapshot` 2, web `download-blob` 3, e2e `logic-outline-export` 3, `no-e2e-hook-in-d` 2 |
+
+Named residuals (not proving strategies, so AC63 stays met for projection fidelity): R1 investor-path ground truth, R2 OCR confidence calibration, R3 `downloadBlob` real-browser revoke. Backlog stubs written:
+- `process/general-plans/backlog/investor-path-ground-truth_NOTE_17-10-26.md` (R1)
+- `process/general-plans/backlog/ocr-confidence-calibration_NOTE_17-10-26.md` (R2)
+- `process/general-plans/backlog/downloadblob-revoke-real-browser_NOTE_17-10-26.md` (R3)
+
+### Plan deviations
+
+As listed above (extra `.outline-export` CSS block, deep-equal snapshot compare, internal-then-external `references[]` order, `.gitkeep` removed). None changed the blast radius.
+
+### Closeout Packet
+
+1. Selected plan: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-09-logic-outline_PLAN_17-10-26.md`.
+2. Classification: Ready for UPDATE PROCESS archival at program end.
+3. Finished: 09-A, 09-B, 09-C.
+4. Verified: all gates. Unverified: R1 to R3 (backlog).
+4b. Validate-contract: present, PASS.
+5. Cleanup: registry DONE, Phase Loop 6 and 7 ticked, stubs written, context updated.
+6. Next: Phase 08 EXECUTE (reuses `apps/web/src/lib/download.ts` unchanged).
+7. Commit: execution commit feb0acc; process commit `process: close out phases 07 and 09`.
+8. Regression: full suites green at dca6a45.
+9. SPEC achievement: AC63 met.
+
+Drift score: MEDIUM (new shared lib, e2e-hook field, 3 backlog stubs). Recommend UPDATE PROCESS -- significant changes detected.
+
+PHASE_COMPLETE: UPDATE PROCESS (Phase 09)

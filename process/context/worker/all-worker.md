@@ -86,7 +86,7 @@ Set on the live Worker: `COOKIE_SIGNING_KEYS` (JSON map kid to key), `COOKIE_SIG
 
 ## Deploy Rules And Redeploy Recipe
 
-- Live: https://aduin-transaction-web.giathaowork.workers.dev (workers.dev subdomain `giathaowork`; active version `9dcf2f75-d8ac-419f-b33b-5a2525847ae7`). The deployed version predates Phases 04b and 05 (the Phase 05 pipeline is on main, not yet deployed). AI is fail-closed until the D1 platform is deployed (Phase 10) and the Turnstile widget lands (Phase 10).
+- Live: https://aduin-transaction-web.giathaowork.workers.dev (workers.dev subdomain `giathaowork`; active version `a258f588-85d5-4970-affa-0ffb1eb938bb`, preview redeploy of code dca6a45 plus the Phase 06 closeout, i.e. HEAD e5fd10e, on 17-10-26; live smoke: `/` 200, `/api/health` ok, image-magic 415 on `/api/ocr`, stack slice 1/1, zero upstream `/api/ai` and `/api/ocr` calls). Phases 04b, 05 and 06 Worker code is now deployed. AI is fail-closed until the D1 platform is deployed (Phase 10) and the Turnstile widget lands (Phase 10).
 - Hard rules: only `aduin-transaction-*` names on workers.dev/pages.dev; never touch zone `itsjiathao.com`; no route or custom domain; Workers Free only; `git push` needs user OK. Run `pnpm guard:cf && pnpm secrets:scan` before every deploy.
 - Recipe until Phase 10: (1) `pnpm --filter @aduin/web build` (a plain build, not `build:e2e`; `no-e2e-hook-in-dist` proves it); (2) the committed `wrangler.jsonc` binds D1 with a placeholder all-zero id that `wrangler deploy` cannot resolve, so generate a temporary config that is the committed file minus `d1_databases` and `$schema`, with `main` and `assets.directory` paths rebased, under the gitignored `apps/worker/.wrangler/`; assert it has no routes/custom_domain/zone keys and the name starts with `aduin-transaction-`; (3) `wrangler deploy -c <that file>`; (4) delete the temporary file. Phase 10 creates the real D1 and replaces the placeholder id, after which plain `wrangler deploy` works.
 - Verify: `SLICE_BASE_URL=https://aduin-transaction-web.giathaowork.workers.dev pnpm --filter @aduin/web exec playwright test --project=stack` (https `*.workers.dev` only).
@@ -98,7 +98,7 @@ Set on the live Worker: `COOKIE_SIGNING_KEYS` (JSON map kid to key), `COOKIE_SIG
 - `x-aduin-doc` is client-attested (04a F4) and stays untrusted. 04a F5 (claim throws on storage errors) and F14 (breaker persisted) are done in 04b.
 - D1 daily-rows risk N11 (accepted until Turnstile is live) and N12 (AI refusals write 6-12 rows): see the Memory API section and `process/general-plans/backlog/core-followups_17-10-26/`.
 - `GET /api/health` lacks `cache-control: no-store`.
-- Deployed Worker still runs the `ocr1` prompt/schema until the Phase 10 redeploy; the Worker must be deployed before the web bundle (F12), otherwise the new web client talks to the old OCR contract. OCR live usage so far: 27 of 30 APPROVED-LIVE free requests at $0 (precompute only; the Worker path was not exercised live).
+- The deployed Worker now runs the `ocr2` prompt/schema (redeployed 17-10-26, version `a258f588-85d5-4970-affa-0ffb1eb938bb`). Rule kept for later redeploys: deploy the Worker before the web bundle (F12), otherwise a new web client talks to an old OCR contract. OCR live usage so far: 27 of 30 APPROVED-LIVE free requests at $0 (precompute only; the Worker path was not exercised live).
 
 ## Source Paths
 

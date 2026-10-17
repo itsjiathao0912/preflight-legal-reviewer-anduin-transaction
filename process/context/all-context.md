@@ -1,6 +1,6 @@
 # aduin-transaction - All Context
 
-Last updated: 2026-10-17 (Phase 06 UPDATE PROCESS; code HEAD feb0acc plus the process commit)
+Last updated: 2026-10-17 (Phase 07 + 09 UPDATE PROCESS; code HEAD dca6a45)
 
 This file is the root context entrypoint for the repo.
 
@@ -24,7 +24,7 @@ Target user: Anduin's Digitization Service Analyst. Deliverables: live demo, REA
 
 Domain knowledge, defect taxonomy, competitors and product decisions: `process/context/product-domain.md`.
 
-**Live demo (Milestone 1, 17-10-26):** https://aduin-transaction-web.giathaowork.workers.dev (Worker `aduin-transaction-web`, version `9dcf2f75-d8ac-419f-b33b-5a2525847ae7`). The Findings screen runs real engine findings on bundled samples. The deployed version predates Phases 04b and 05; AI stays fail-closed on the live site until Phase 10 deploys D1 and the Turnstile widget. Deploy rules and the redeploy recipe: `process/context/worker/all-worker.md`.
+**Live demo (Milestone 1, redeployed 17-10-26):** https://aduin-transaction-web.giathaowork.workers.dev (Worker `aduin-transaction-web`, version `a258f588-85d5-4970-affa-0ffb1eb938bb`, code dca6a45 plus Phase 06 closeout, ocr2 deployed). The Findings screen runs real engine findings on bundled samples. The deployed version predates Phases 04b and 05; AI stays fail-closed on the live site until Phase 10 deploys D1 and the Turnstile widget. Deploy rules and the redeploy recipe: `process/context/worker/all-worker.md`.
 
 ---
 
@@ -192,7 +192,7 @@ When durable project knowledge changes:
 
 ## Repository Structure
 
-pnpm monorepo scaffold exists (Phase 00 of the subdoc-qa-mvp program, commit 7d9955b); Phase 01 (6d12628) added the core engine in `packages/core` (see `process/context/engine/all-engine.md`); Phase 03 (833161b) added the web shell and Findings screen; Phase 04a (729e7fd) added the Worker AI/OCR proxy; Milestone 1 closed at 70d320b; Phase 02 (7a7f421 + 1f5dade) added detectors, investor paths, the structure view and fixtures; Phase 04b (7a7f421 + bb83e04 + fb3064f + 59d9831) added the D1 schema, platform ports and the memory API; Phase 05 (2ac1917 + e9c90d9 + 9c9f3b5 + a9732a6 + f0f476c) added the LLM task framework (`packages/core/src/llm`), firm-rules injection in the Worker, the AI lane in the web app and LLM recordings/scripts; Phase 06 (027a450 + 2d198f4 + 6473186 + b9767ac + 69bddd5 + 5c1c25d + 73599b5) added the PDF/DOCX/OCR adapters, scan viewer, OCR queue and precompute for sample #9. Current layout:
+pnpm monorepo scaffold exists (Phase 00 of the subdoc-qa-mvp program, commit 7d9955b); Phase 01 (6d12628) added the core engine in `packages/core` (see `process/context/engine/all-engine.md`); Phase 03 (833161b) added the web shell and Findings screen; Phase 04a (729e7fd) added the Worker AI/OCR proxy; Phase 07 (f3f533f, 99c9cee, dca6a45) added version diff, Compare and the AI drift narrative; Phase 09 (feb0acc) added the JSON logic outline export; Milestone 1 closed at 70d320b; Phase 02 (7a7f421 + 1f5dade) added detectors, investor paths, the structure view and fixtures; Phase 04b (7a7f421 + bb83e04 + fb3064f + 59d9831) added the D1 schema, platform ports and the memory API; Phase 05 (2ac1917 + e9c90d9 + 9c9f3b5 + a9732a6 + f0f476c) added the LLM task framework (`packages/core/src/llm`), firm-rules injection in the Worker, the AI lane in the web app and LLM recordings/scripts; Phase 06 (027a450 + 2d198f4 + 6473186 + b9767ac + 69bddd5 + 5c1c25d + 73599b5) added the PDF/DOCX/OCR adapters, scan viewer, OCR queue and precompute for sample #9. Current layout:
 
 ```
 aduin-transaction/
@@ -258,12 +258,12 @@ Secrets live outside the repo (see `CLAUDE.md` credentials table). Env var names
   The paid fallback is chosen against the ~$10 cap.
 - Persistence for counsel-query tracking (D1 vs KV) and whether the demo needs auth.
 - OpenRouter credits not yet topped up by the user; paid fallback unavailable until then.
-- Next step: Phase 07c is in progress (another session), Phase 09 is committed (feb0acc) awaiting EVL, then 08 and 08b EXECUTE (PVL PASS), then a missing-target cross-reference detector (P1, corpus check required), then 10; see the umbrella `## Current Execution State`. Phases 00-06 (incl. 02, 04a, 04b) are DONE; Milestone 1 is closed and live (the deployed version predates 04b and 05). Phase 08 preconditions (backlog L4/L5/L6/I1): `computeGate` excludes AI findings, mask and clamp draft text, rules-isolation re-verify. Phase 10 also owns CSP and security headers (F10), deploying the Worker before the web bundle (F12; the live Worker still runs the ocr1 OCR contract) and re-seeding the remote demo D1. Phase 10 owns creating and migrating the real D1 (placeholder id in `apps/worker/wrangler.jsonc` stays until then), remote migrations 0001-0005, the Turnstile widget plus `TURNSTILE_SECRET`, the live-model quality sweep/precompute spread over UTC days, the workerd timing probe at `max_tokens` 10000, and the remote D1 rows_written re-measure (`process/context/worker/all-worker.md`).
+- Next step: Phase 08 EXECUTE (counsel sheet, gate, memory; inputs include backlog `phase08-version-drift-questions`), then 08b, then a missing-target cross-reference detector (P1, corpus check required), then 10; see the umbrella `## Current Execution State`. Phases 00-07 and 09 are DONE; Milestone 1 is closed and live (redeployed with Phase 07 and 09 code). Phase 08 preconditions (backlog L4/L5/L6/I1): `computeGate` excludes AI findings, mask and clamp draft text, rules-isolation re-verify. Phase 10 also owns CSP and security headers (F10), deploying the Worker before the web bundle (F12; the live Worker still runs the ocr1 OCR contract) and re-seeding the remote demo D1. Phase 10 owns creating and migrating the real D1 (placeholder id in `apps/worker/wrangler.jsonc` stays until then), remote migrations 0001-0005, the Turnstile widget plus `TURNSTILE_SECRET`, the live-model quality sweep/precompute spread over UTC days, the workerd timing probe at `max_tokens` 10000, and the remote D1 rows_written re-measure (`process/context/worker/all-worker.md`).
 - Open backlog: AC6 edit text/severity (B-EDIT), UI notes U2-U4 (U1 done), core follow-ups incl. Phase 06 rows (F4, F6-F8, N6-N8, live OCR bbox row-level, concurrent e2e port flake), `/api/health` no-store (`process/general-plans/backlog/`).
 
 ## Scan Metadata
 
 - Generated: 2026-10-17
-- HEAD: feb0acc (code), process commit follows
-- Mode: delta update after Phase 06 (PDF/DOCX/OCR, scan viewer, precompute); earlier deltas: Phases 02, 04b, 05
+- HEAD: dca6a45 (code), process commit follows
+- Mode: delta update after Phase 07 (version diff, Compare, drift narrative) and Phase 09 (logic outline export); earlier deltas: Phases 02, 04b, 05, 06
 - Package manager: pnpm 11.13.1 (workspaces: packages/*, apps/*, scripts)

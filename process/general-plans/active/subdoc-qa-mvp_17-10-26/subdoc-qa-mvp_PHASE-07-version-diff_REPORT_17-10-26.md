@@ -186,3 +186,55 @@ CONTEXT_PARTIAL: none.
 - Blast radius changes: files above; `fixtures/llm-recordings/drift-narrative/5685e20db8f250a9.json` (live) and `7252bfe74de14154.json` (authored hostile).
 - Commands to stay green: the gates above, plus `record:author --check` after any diff-engine change (candidate quotes move the inputHash; re-record or re-author).
 - Dependency changes: none.
+
+## UPDATE PROCESS closeout (17-10-26)
+
+Phase 07 is closed: 07a f3f533f, 07b 99c9cee, 07c dca6a45. Status COMPLETE_WITH_GAPS (one CONDITIONAL criterion part, see below). The sections above that say "nothing committed" or "07b/07c not started" describe the state at the time they were written.
+
+### EVL outcome
+
+Independent serial run at HEAD dca6a45, all green: core 501, worker 521, web unit 76, web e2e 114 (+1 opt-in skip), scripts 63; `fixtures:check`, typecheck, lint, `guard:cf`, `secrets:scan`, `seed:check`, `slice:check` OK. Iteration report: `subdoc-qa-mvp-phase07-evl-iteration-001_REPORT_17-10-26.md`. Live use: 1 of 3 approved free calls ($0), for `drift-narrative`.
+
+### Pinned numbers (for Phase 08 and 10)
+
+- Pinned #5 to #6 goldens are in the 07a table above (sections, findings delta, renames, fees, thresholds). Perf: Node 187 ms warm, browser 343 ms (AC29 budget 3 s).
+- Frozen-contract note: Phase 07c made one additive change, `AI_TASK_IDS` += `'drift-narrative'` (`AiRequestSchema.task` enum 2 values to 3). The contracts snapshot was regenerated and only that enum moved. Worker needs no code change.
+
+### SPEC Achievement
+
+| AC | Result | Evidence |
+|---|---|---|
+| AC15 (version diff #5 to #6, rename narrative) | Deterministic part MET; AI-narrative part CONDITIONAL (unmet as a live-quality claim) | Goldens `golden-05-06-drift` and e2e `diff-pairs` green; narrative proven only by recorded + hostile-authored recording (Hybrid). Live quality is a Known-Gap: backlog `drift-narrative-live-quality_NOTE_17-10-26.md` |
+| AC16 (LLC Agreement leftover) | MET | `golden-06-llc-agreement-lowconf`: 11 occurrences, "Possible leftover" only, confidence 0.31, severity low |
+| AC19 (Compare view, HTML / PDF text / DOCX) | MET | e2e `diff-pairs` 10, `sibling-clauses`, `compare-ai-summary` 4 |
+| AC29 (diff under 3 s) | MET | Node 187 ms, browser 343 ms |
+
+Known-Gap is not counted as met. The archival gate keeps the plan files in `active/` with the program folder because Phase 07 is part of the still-running umbrella task folder (the whole folder archives at program end).
+
+### Known gaps and follow-ups
+
+- Compare excludes scanned / OCR documents: `process/general-plans/backlog/compare-ocr-documents_NOTE_17-10-26.md`.
+- Diff-only rows cannot create counsel questions: `process/general-plans/backlog/phase08-version-drift-questions_NOTE_17-10-26.md` (Phase 08 input).
+- Live narrative quality: `process/general-plans/backlog/drift-narrative-live-quality_NOTE_17-10-26.md`.
+- Test infra: the `contracts` snapshot test uses a hard-coded module list; the shared preview port 4317 serializes e2e runs, so run the suite serially (one agent at a time).
+
+### Plan deviations
+
+See the 07a, 07b and 07c deviation lists above and the plan `## Deviations` section. None changed the blast radius beyond the registry revision.
+
+### Closeout Packet
+
+1. Selected plan: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-07-version-diff_PLAN_17-10-26.md`.
+2. Classification: Ready for UPDATE PROCESS archival at program end; AC15 AI part keeps a CONDITIONAL backlog stub.
+3. Finished: 07a, 07b, 07c, Step G repairs.
+4. Verified: all gates above. Unverified: live narrative quality, OCR documents in Compare.
+4b. Validate-contract: present, PASS.
+5. Cleanup: registry DONE, Phase Loop 6 and 7 ticked, context docs updated. Remaining: none for this phase.
+6. Next: Phase 08 EXECUTE.
+7. Commit: execution commits already made; process commit `process: close out phases 07 and 09`.
+8. Regression: web e2e 114, worker 521, core 501 all green at dca6a45.
+9. SPEC achievement: see table above.
+
+Drift score: HIGH (files touched 10+, 2 backlog notes and 3 stubs, contract change). Strongly recommend UPDATE PROCESS -- harness/protocol files touched.
+
+PHASE_COMPLETE: UPDATE PROCESS (Phase 07)

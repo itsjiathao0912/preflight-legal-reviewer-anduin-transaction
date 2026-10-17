@@ -213,6 +213,23 @@ pnpm test -- path/to/file.test.ts  # single file
 **Green baseline (to keep green, every phase exit):**
 `pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm test && pnpm guard:cf && pnpm secrets:scan`; from Milestone 1 on also `pnpm slice:check`. Live check after a deploy: `SLICE_BASE_URL=https://aduin-transaction-web.giathaowork.workers.dev pnpm --filter @aduin/web exec playwright test --project=stack`. Worker test helpers (reuse in Phases 04b/05/06): `apps/worker/test/fakes/{harness,platform,openrouter-stub,turnstile-stub}.ts`; inject `fetch`, never `fetchMock`; read NDJSON bodies via `arrayBuffer()` + `TextDecoder`.
 
+## Phase 07 and 09 gate tokens (counts at HEAD dca6a45)
+
+Whole suites, independent serial EVL: core 73 files / 501 tests (golden 67), worker 64 files / 521, web unit 18 files / 76, web e2e 114 passed plus 1 opt-in skip, scripts 9 files / 63. One token per call, no `--`.
+
+| Package | Tokens |
+|---|---|
+| core | `golden-05-06-drift`, `golden-06-llc-agreement-lowconf`, `diff-pairs`, `diff-determinism`, `diff-input-failure`, `diff-perf`, `sibling-clause-common-vs-differing`, `diff-contract`, `drift-narrative`, `llm-task-registry`, `llm-schema`, `contracts`, `logic-outline-export-contents`, `outline-schema-snapshot` |
+| worker | `record-body-parity` (plus the full suite; the `drift-narrative` task needs no worker code) |
+| scripts | `fixtures:check`, `record:author --check` (11 cases), `precompute-ai` |
+| web unit | `import-graph` (allow-list gained `buildDriftNarrativeCandidates`, `readDriftNarrative`, `OutlineSchema`, `outlineFilename`, `maskOutlineName`), `download-blob`, `no-e2e-hook-in-d` (also checks `forceInvalidOutline` absent from production and present in the e2e build) |
+| web e2e | `diff-pairs` (10), `sibling-clauses`, `compare-ai-summary` (4), `logic-outline-export` (3), `layout-vs-mockup`, `a11y-smoke`, `provenance`, `sample-zero-calls` |
+
+- **Run the full e2e suite serially, one agent at a time.** The preview project shares port 4317 and `test-results`; a concurrent run (or another agent editing the same app) caused one-off failures in `provenance` and `layout-vs-mockup` that did not recur serially. Full core runs under heavy machine load showed timing-only timeouts in `diff-determinism` and `size-cap` that pass in isolation.
+- Perf evidence (not a gate): `diff-perf` Node 187 ms warm; browser diff 343 ms (budget 3 s).
+- After any diff-engine change run `record:author --check` (candidate quotes move the inputHash; re-author or re-record).
+- Known gaps: live drift-narrative quality (backlog `drift-narrative-live-quality`), Compare excludes OCR documents, outline R1 (investor-path ground truth), R2 (OCR confidence calibration), R3 (`downloadBlob` real-browser revoke).
+
 ## Debugging Quick Reference
 
 - **Worker tests fail to find bindings:** bindings come from `apps/worker/wrangler.jsonc`; the plugin config points at it.

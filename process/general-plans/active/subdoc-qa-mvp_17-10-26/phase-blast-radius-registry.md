@@ -58,6 +58,7 @@ status: DONE (17-10-26, commits 027a450 + 2d198f4 + 6473186 + b9767ac + 69bddd5 
 ## Phase 07
 Owns: `packages/core/src/diff/**`, `packages/core/src/llm/tasks/drift-narrative.v1.ts`, `fixtures/diff`, `fixtures/llm-recordings/drift-narrative`, `apps/web/src/features/diff/**`, `design/mockups/diff.html`.
 Revision 2026-10-17 (PVL): also touches `apps/web/e2e/{placeholder-routes,layout-vs-mockup,a11y-smoke}.spec.ts` and `apps/web/src/smoke.test.tsx` (narrow repair edits, Phase 03 owned); `scripts/src/fixtures/{build-seeded.ts,check.ts}` (additive, Phase 02 owned; stray-file scan extended to `fixtures/diff`); `apps/web/src/engine/{engine.worker.ts,client.ts,types.ts}` (prepare helper + `diffDocuments`, after Phase 06); `apps/web/src/features/{compare/**,registry.ts}`; `apps/web/test/support/mockupCss.ts`; `packages/core/src/index.ts` (append).
+status: DONE (17-10-26, commits f3f533f + 99c9cee + dca6a45, EVL core 501 / worker 521 / web 76 / e2e 114 / scripts 63 green at dca6a45; AC15 AI-narrative part CONDITIONAL)
 
 ## Phase 08
 Owns: `packages/core/src/counsel/**`, `apps/web/src/{features/{counsel,gate,metrics,audit},api (extension)}`, `scripts/src/dev-seed.ts`, `design/mockups/counsel-sheet.html`.
@@ -70,6 +71,7 @@ Revision 2026-10-17 (PVL, replaces the stale `design/mockups/firm-memory.html` a
 ## Phase 09
 Owns: `packages/core/src/outline/**`, `fixtures/outline`, `apps/web/src/features/outline/**`.
 Revision 2026-10-17 (PVL): replaces the earlier claim with the plan Touchpoints file set. Removes `registry.ts` and the "registry slot" wording. Adds `apps/web/src/lib/download.ts` (create-or-reuse with Phase 08, same signature `downloadBlob(filename: string, data: string | Blob, mime: string): void`), `apps/web/src/engine/{types,engine.worker}.ts`, `StructureScreen.tsx` (header), `apps/web/test/import-graph.test.ts`, `apps/web/test/download-blob.test.ts`, and `apps/web/src/e2e-hook.ts` (narrow-edit claim on a Phase 05-owned seam: one `HookState` field plus installer entry for the IS_E2E force-invalid-outline hook; not append-only). Ordering: Phase 09 EXECUTE follows Phase 07 engine-trio edits; parallel-safe with 08/08b.
+status: DONE (17-10-26, commit feb0acc, EVL green at dca6a45, residuals R1-R3 in backlog)
 
 ## Phase 10
 Owns: `scripts/src/{deploy,conformance,precompute/precompute-all.ts}`, final `apps/web/public/precomputed/**`, `apps/worker/seed/demo.sql` (regenerated), `README.md`, `docs/{demo,DEPLOY.md}`, `apps/web/e2e/{perf-budget,a11y-keyboard,deployed-smoke,fund-two,free-plan-limits}.spec.ts`; edits `apps/worker/wrangler.jsonc` (D1 id only).
