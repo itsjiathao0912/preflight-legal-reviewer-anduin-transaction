@@ -1,0 +1,104 @@
+{
+  "task": "Variance MVP Phase 03 memory backend: migration 0006, additive memory contracts, regression checks, scope rule, three reference firms",
+  "commands": [
+    {
+      "command": "for t in contracts variance-label-scope-rule firms-and-rules; do pnpm --filter @aduin/core test \"$t\"; done",
+      "result": "PASS",
+      "notes": "34 / 5 / 8 tests"
+    },
+    {
+      "command": "pnpm --filter @aduin/scripts test",
+      "result": "PASS",
+      "notes": "19 files, 165 tests (incl. reference-firms-pin)"
+    },
+    {
+      "command": "pnpm seed:check",
+      "result": "PASS",
+      "notes": "0003 byte-identical with six firms in the JSON"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test <21 contract tokens>",
+      "result": "PASS",
+      "notes": "migrations 6, triggers 8, firm-list-parity 4, demo-workspace-not-polluted 7, variance-answer-intent-rule 4, variance-owner-persisted 4, variance-answer-append-only 3, variance-regression-no-cross-firm 9, variance-finding-wire-size 3, variance-label-call-sites 3, rows-written 7, memory-write-limits 18, memory-guards-matrix 46, memory-storage-contract 4, query-budget 2, memory-label-parity 2, idempotent-replay 3, memory-retention-purge-test 4, cron-purge 4, audit-trail-append-only 4, memory-endpoint-contract 5"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test <api-contract outbox stub-memory-api realMemoryApi import-graph>",
+      "result": "PASS",
+      "notes": "38 / 23 / 8 / 35 / 4"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test:e2e:stack-memory",
+      "result": "PASS",
+      "notes": "12 passed (local wrangler dev --local on 8788, local D1 only)"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test:e2e:stack-memory stack-memory-variance-regression-no-cross-firm (+5 more tokens)",
+      "result": "PASS",
+      "notes": "each token 1-3 passed"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test (full)",
+      "result": "PASS",
+      "notes": "71 files, 566 tests (was 526)"
+    },
+    {
+      "command": "pnpm --filter @aduin/core test (full)",
+      "result": "PASS",
+      "notes": "3165 passed, 3 skipped"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test (full)",
+      "result": "PASS",
+      "notes": "42 files, 313 tests (was 298)"
+    },
+    {
+      "command": "pnpm guard:cf && pnpm secrets:scan && pnpm lint && pnpm typecheck",
+      "result": "PASS",
+      "notes": "all exit 0"
+    },
+    {
+      "command": "node .claude/skills/vc-risk-evidence-pack/scripts/validate-risk-artifacts.mjs process/features/variance-management/active/variance-mvp_17-10-26/harness/phase-03",
+      "result": "PASS",
+      "notes": "0 failures, 0 warnings"
+    }
+  ],
+  "manualChecks": [
+    {
+      "check": "git diff --stat 0ee9fca HEAD -- apps/worker/migrations shows only 0006_variance.sql",
+      "result": "PASS"
+    },
+    {
+      "check": "No wrangler --remote, no deploy, no Cloudflare API call, no SLICE_BASE_URL, 0 LLM calls in this phase",
+      "result": "PASS"
+    },
+    {
+      "check": "rows_written arithmetic (local D1, rows-written variance test): plain answer 13 rows, answer + assertion 18 rows, delta +5; weight 18 + 5 = 23; question with owner = plain question rows (0 extra)",
+      "result": "PASS"
+    },
+    {
+      "check": "Wire size (variance-finding-wire-size): worst-case finding 82,236 B; single body 82,333 B <= 131,072; 25-chunk 2,056,021 B > cap, so the web client splits by bytes (realMemoryApi test: every body <= 131,072, all findings delivered once)",
+      "result": "PASS"
+    },
+    {
+      "check": "Trigger matrix: decision old columns + intent/scope -> decision_immutable; answer old columns + intent/scope -> answer_immutable; owner/owner_source -> question_owner_immutable; regression_check every column -> regression_check_immutable, only active->revoked allowed; delete -> regression_check_append_only outside purging, allowed while purging; demo insert/update/delete -> demo_read_only",
+      "result": "PASS"
+    },
+    {
+      "check": "Isolation (worker + stack): lookup for same workspace+firm returns the check; other firm in same workspace, same firm in another workspace and unknown firm return none; composite FK refuses a check bound to another workspace's answer",
+      "result": "PASS"
+    },
+    {
+      "check": "Independent EVL (vc-tester) re-ran the Test Gates block and regression block: first pass green, 0 fix cycles (results-evl.tsv HALTED_SUCCESS)",
+      "result": "PASS"
+    },
+    {
+      "check": "vc-code-reviewer: PASS WITH NOTES; M1 fund-scope supersede (backlog NOTE), M2 fundName wiring (P04 carry-over); no blocking finding",
+      "result": "PASS"
+    }
+  ],
+  "result": "PASS",
+  "snapshot": {
+    "sha256Before": "50e1b2d03374ac93c25459da5cbb67a1dc6c8647bb3c3e8e93637d875c69444e",
+    "sha256After": "6903cde117fd7b8fb8847a1245653a3c510f2b0b7139c12f10d50b96d010cf60"
+  }
+}

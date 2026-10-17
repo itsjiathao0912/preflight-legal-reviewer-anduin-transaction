@@ -203,6 +203,17 @@ Failing stubs: each Fully-automated row starts as `test("should <scenario>", ...
 - V3 answer or lookup contract changed shape after the V3 report (re-sync in Step 0 should catch it).
 - `import-graph` would need more than the three symbols listed (stop and replan).
 
+## Phase 03 Carry-overs (UPDATE PROCESS, 2026-10-18 00:05 local; plan body only, the Validate Contract was not touched)
+
+Step-0 carry-over items from the Phase 03 closeout (review PASS WITH NOTES). Handle at RESEARCH/Step 0; the inner PVL must pick them up.
+
+- **M2 (required):** `apps/web/src/state/review.ts` must pass the active fund name to `fingerprintFindings(..., fundName)` (the optional parameter exists and is tested; P03 left the caller alone). Until wired, the client label ignores fund scope while the Worker applies it. Add a client/Worker label parity test for a `scope = fund` decision recorded in another fund (the Worker side is `variance-label-call-sites`; the client side needs its own case).
+- **Consume `lookupWithChecks`** (new `MemoryApi` method) for regression checks, and `AnswerInput.intent/scope/assertion`, `QuestionItem.owner/owner_source`. Fake Worker: `apps/web/test/support/fakeMemoryFetch.ts` now stores answered decisions and checks.
+- **Minor, check `storeFindings`:** `finding_too_large` (a single finding over 131,072 B) must be non-fatal for the caller; memory never blocks the review.
+- **Minor:** intent `''` is stored as `''` (edge); decide at Step 0 whether the UI sends `undefined` instead.
+- **Known limitation M1 (do not fix here):** one active decision per (workspace, firm, fingerprint); a fund-scoped answer in fund B supersedes fund A's (ping-pong), including a `firm_template` decision. Backlog NOTE `variance-fund-scope-supersede_NOTE_17-10-26.md`. Do not build UI that assumes both funds keep separate active decisions.
+- **Ceiling D5c:** no revoke path; 20 active checks per firm per sandbox is a hard ceiling. Backlog NOTE `variance-regression-check-revoke_NOTE_17-10-26.md`.
+
 ## Phase Loop Progress
 
 - [x] 0. PRECONDITION - Intake feature closed; Step 0 re-sync done (Questions overlap reconciled from landed code); Inner Loop Refresh Note written (2026-10-17)

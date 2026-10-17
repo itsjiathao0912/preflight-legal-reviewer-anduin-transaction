@@ -92,3 +92,14 @@ Appended by the Step 0 PLAN-SUPPLEMENT; basis `variance-mvp_STEP0-RESYNC_17-10-2
 - Read-only inputs (Variance never edits): `fixtures/package/design/northgate-iii/*.docx` (P01 H4 reads), `fixtures/package/hartwell/**`, `samples/packages/**` (design-owned, committed c1c5fe0), `.playwright-mcp/` and `.DS_Store` (untracked, not Variance's; never touch or commit, D-S0-9).
 - Phase claims added: Phase 1 also owns `packages/core/test/unit/variance-package-01-northgate.test.ts`. Phase 2 also owns `apps/web/test/package-member-source.test.ts` and edits `apps/web/src/state/package.ts` (additive accessor). Phase 3 adds regression tokens only (`intake-firm-tagging`, `intake-baseline-role-same-firm`, `package-confirm-table`, `package-baseline-eligibility`). Phase 5 also edits `fixtures/package/demo-packages.json` (one field).
 status: planned
+
+## Phase 2 revision (UPDATE PROCESS after Phase 03, 2026-10-18)
+Appended by the Phase 03 UPDATE PROCESS. Plan text governs over earlier entries.
+- Phase 02 V2 adds ONE additive export to `apps/web/src/state/package.ts` (`readPackageMemberSource`, D-S0-1) and edits `apps/web/src/e2e-hook.ts` and `apps/web/test/no-e2e-hook-in-dist.test.ts` (hook surface must keep the no-hook-in-dist test green; P04 and P05 add no new hook exports). Earlier Phase 2 "NOT touched" lists do not cover these files.
+
+## Phase 3 result (UPDATE PROCESS, 2026-10-18)
+status: DONE (2026-10-18; EVL green, 0 fix cycles; commits f93fd9a b5b5f84 1882dbf ef11874 f68fe32 b6fe91b 84577e4; append-only, earlier `status: planned` kept for history)
+- Migration allocated and applied locally only: `apps/worker/migrations/0006_variance.sql` (`schema_version` 5 to 6). It also recreates the two `demo_ro_*_update` triggers after the guards (SQLite fires the newest trigger first). Not idempotent; remote apply is Phase 05 under a Time Travel bookmark.
+- Files touched beyond the Phase 3 claim: `apps/worker/src/memory/http.ts` and `apps/worker/src/db/tx.ts` (new trigger texts map to 400 `invalid_request`), new `apps/worker/src/memory/repo/regression.ts`, `apps/worker/test/memory/variance-harness.ts`, `scripts/test/reference-firms-pin.test.ts`, `apps/web/test/support/fakeMemoryFetch.ts`, `apps/web/test/import-graph.test.ts` ALLOWED (+3 names), `scripts/src/seed/gen-demo-seed.ts` (pin `REFERENCE_0003_FIRM_IDS`), five `schema_version` pin sites. `apps/web/src/state/review.ts` NOT touched (P04 wires `fundName`).
+- Six firms in `law-firms.json` (added `hartwell-crane`, `ostrander-pell`, `calder-reyes`); package 03 stays untagged.
+- Seam for later phases: `seed-copy.ts` copies decisions without `intent`/`scope`; P04 owns the `fundName` wiring and client/Worker label parity test.

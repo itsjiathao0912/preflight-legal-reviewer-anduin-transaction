@@ -1,0 +1,77 @@
+{
+  "task": "Variance MVP Phase 03 memory backend: migration 0006, additive memory contracts, regression checks, scope rule, three reference firms",
+  "scenarios": [
+    {
+      "id": "N1",
+      "scenario": "Replay of an already-recorded answer (with assertion) when the firm is at the cap returns regression_check_cap instead of the original success",
+      "ruled_out": true,
+      "test": "pnpm --filter @aduin/worker test variance-regression-no-cross-firm (should refuse over the cap, and answer a replay at the cap with the stored result)",
+      "output": "9 passed; replay -> 200 with the original body, active checks stay 20",
+      "rationale": "replayResponse runs before the cap pre-check; the audit UNIQUE key blocks a second check/#rc row"
+    },
+    {
+      "id": "N4",
+      "scenario": "A forged client op id X:rc or X#rc collides with or pre-empts the derived audit id X#rc of answer X",
+      "ruled_out": true,
+      "test": "pnpm --filter @aduin/worker test variance-regression-no-cross-firm (forged X:rc is an ordinary id and X#rc is refused)",
+      "output": "X:rc accepted as ordinary id (its own row X:rc#rc), X#rc refused 400 invalid_request (id_charset), X's derived row X#rc present; 2 checks",
+      "rationale": "'#' is outside ID_RE and parseWith enforces ID_RE on client_op_id; derived ids are server-built"
+    },
+    {
+      "id": "N5",
+      "scenario": "An assertion sent with scope fund or without scope creates a regression check",
+      "ruled_out": true,
+      "test": "pnpm --filter @aduin/worker test variance-answer-intent-rule; variance-regression-no-cross-firm (a check is never created without firm_template)",
+      "output": "400 invalid_request, 0 checks",
+      "rationale": "schema refinement plus route re-check (assertion_scope)"
+    },
+    {
+      "id": "ISO-FIRM",
+      "scenario": "Lookup for firm B in workspace A returns firm A checks",
+      "ruled_out": true,
+      "test": "variance-regression-no-cross-firm; stack-memory-variance-regression-no-cross-firm",
+      "output": "[] for firm-x and ostrander-pell",
+      "rationale": "SELECT binds law_firm_id from the request firm and workspace_id from the cookie"
+    },
+    {
+      "id": "ISO-WS",
+      "scenario": "Lookup in workspace B returns workspace A checks, or a check binds to another workspace's answer",
+      "ruled_out": true,
+      "test": "variance-regression-no-cross-firm (both axes + composite FK)",
+      "output": "[] in workspace B; FOREIGN KEY constraint failed",
+      "rationale": "workspace_id from the cookie only; composite FK (workspace_id, source_answer_id)"
+    },
+    {
+      "id": "TAMPER",
+      "scenario": "Client sets statement_text, law_firm_id or source_fund_name, or an unnormalized/sensitive label",
+      "ruled_out": true,
+      "test": "variance-answer-intent-rule, memory-storage-contract",
+      "output": "statement built server-side; label masked then normalized; no digit run stored",
+      "rationale": "none of these are request fields; firm from the question row, fund from the run"
+    },
+    {
+      "id": "DOS",
+      "scenario": "Unbounded checks or unbounded lookup cost",
+      "ruled_out": true,
+      "test": "variance-regression-no-cross-firm (cap + trigger backstop + parity), query-budget (lookup 3)",
+      "output": "cap 20 per firm per workspace; one bounded SELECT",
+      "rationale": "route pre-check + trigger backstop with three-way literal parity"
+    },
+    {
+      "id": "PURGE",
+      "scenario": "A sandbox holding a regression_check aborts the hourly purge batch",
+      "ruled_out": true,
+      "test": "memory-retention-purge-test, cron-purge",
+      "output": "workspace and check gone; younger workspace's check kept",
+      "rationale": "purging exemption + PURGE_CHILD_TABLES order"
+    },
+    {
+      "id": "DEMO",
+      "scenario": "Writes to the demo workspace through the new table",
+      "ruled_out": true,
+      "test": "demo-workspace-not-polluted",
+      "output": "insert/update/delete -> demo_read_only",
+      "rationale": "demo_ro_regression_check* triggers"
+    }
+  ]
+}

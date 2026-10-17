@@ -278,6 +278,18 @@ Failing stubs: the two new e2e specs start as `test("should <scenario>", ...)` t
 - Live smoke fails and rollback is needed: phase is CODE DONE with a blocker; do not retry blindly.
 - Any step would require touching the protected zone, a custom domain, a paid model call or a destructive SQL: hard stop.
 
+## Phase 03 Carry-overs (UPDATE PROCESS, 2026-10-18 00:05 local; plan body only, the Validate Contract was not touched)
+
+Step-0 carry-over items from the Phase 03 closeout.
+
+- **Remote apply of 0006 (deploy note):** migration `0006_variance.sql` is NOT idempotent (ALTER TABLE ADD COLUMN, trigger recreation, new table); a partially applied remote run cannot simply be re-run. Record the read-only Time Travel bookmark BEFORE applying, `migrations list --remote` first, and rehearse on a populated local D1 (F2b). Restoring is never run by an agent.
+- **Rollback rule:** never roll back the Worker alone after the new web bundle ships. An older Worker silently drops `assertion`, `scope` and `intent` fields (zod strips unknown keys), so the web would believe it recorded checks that were never stored. Roll back only as a pair, or hold the web bundle.
+- **Weights and burst:** `MEMORY_WRITE_WEIGHTS.counselAnswerWithAssertion` is 23 (plain answer 13 rows, with assertion 18 rows measured locally); `query-budget` `lookup_200` is now 3. The deployed `rows_written` burst stays operator residual R2.
+- **Demo seed copy (E9):** `apps/worker/src/memory/repo/seed-copy.ts` copies decisions without `intent` or `scope`. Extend it only if the demo ever seeds scoped decisions.
+- **Retag:** Northgate demo package to `hartwell-crane`, Lotus Bay (package 02) to `ostrander-pell`, package 03 untagged (the six reference firms are already in 0006 and `law-firms.json`).
+- **Health:** `schema_version` is now `'6'` (five pin sites already moved); the live smoke and `health.ts` expectations must read 6 after the apply.
+- **Known limitation M1 and D5c** (fund-scope supersede, no revoke path): see the two P03 backlog NOTEs; surface in the final README/handoff notes, not as fixes.
+
 ## Phase Loop Progress
 
 - [x] 0. PRECONDITION - Intake feature closed and deployed; Step 0 re-sync done; rollback target recorded (3d2c7301; re-read read-only at EXECUTE entry); Inner Loop Refresh Note written (2026-10-17)

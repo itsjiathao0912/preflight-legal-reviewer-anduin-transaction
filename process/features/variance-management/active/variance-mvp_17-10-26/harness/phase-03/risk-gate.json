@@ -1,0 +1,17 @@
+{
+  "task": "Variance MVP Phase 03 memory backend: migration 0006, additive memory contracts, regression checks, scope rule, three reference firms",
+  "planPath": "process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-03-memory-backend_PLAN_17-10-26.md",
+  "riskLevel": "high",
+  "riskClasses": [
+    "schema/data migration",
+    "public API or external contract changes",
+    "permission, secret, or trust-boundary logic"
+  ],
+  "riskClass": "schema/data migration; public API contract; trust boundary (cross-firm and cross-workspace isolation, append-only guards)",
+  "workDescription": "Forward-only additive D1 migration 0006 (nullable columns, recreated guard triggers, append-only regression_check table, firm rows), additive optional memory contract fields, regression checks returned inside the existing lookup response.",
+  "approver": "vc-execute-agent (autopilot, standing EXECUTE consent); independent EVL vc-tester and sonnet code/security review pending",
+  "mustStopBeforeFinalize": true,
+  "humanApprovalRequired": false,
+  "why": "Migration changes the live D1 schema in Phase 05 (irreversible data shape); new contract fields reach clients; the regression check lookup is a cross-firm/cross-workspace trust boundary.",
+  "rollback": "Forward-only. Every new column is nullable and every new contract field optional, so a code rollback (wrangler rollback) keeps working on the 0006 schema. The remote D1 is NOT touched in Phase 03; Phase 05 applies 0006 under its Time Travel bookmark procedure. Landed 0001-0005 are unchanged (git diff shows only the new file)."
+}

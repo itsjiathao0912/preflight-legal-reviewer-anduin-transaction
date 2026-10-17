@@ -1,0 +1,55 @@
+{
+  "task": "Variance MVP Phase 03 memory backend: migration 0006, additive memory contracts, regression checks, scope rule, three reference firms",
+  "snippets": [
+    {
+      "file": "apps/worker/migrations/0006_variance.sql",
+      "lines": "7-18",
+      "description": "nullable ADD COLUMN with CHECKs (owner, owner_source, intent, scope)"
+    },
+    {
+      "file": "apps/worker/migrations/0006_variance.sql",
+      "lines": "20-69",
+      "description": "decision_guard_update and answer_guard_update recreated (0002 text + intent, scope); demo_ro_decision_update and demo_ro_counsel_answer_update recreated verbatim to keep firing precedence"
+    },
+    {
+      "file": "apps/worker/migrations/0006_variance.sql",
+      "lines": "71-124",
+      "description": "question_owner_immutable; regression_check WITHOUT ROWID, composite FK (workspace_id, source_answer_id) -> counsel_answer, no_delete with purging exemption, guard_update (only active->revoked), cap trigger >= 20, demo_ro_* triggers"
+    },
+    {
+      "file": "apps/worker/migrations/0006_variance.sql",
+      "lines": "126-137",
+      "description": "INSERT OR IGNORE firm and alias rows; schema_version '6' as the last statement"
+    },
+    {
+      "file": "apps/worker/src/routes/memory/counsel.ts",
+      "lines": "answer handler",
+      "description": "replay check before the cap pre-check (N1); intent masked and non-blank after masking; assertion only with firm_template (N5); label masked then normalizeAssertionLabel; statement from describeAssertion; check + `<op>#rc` audit row in the same batch (N4)"
+    },
+    {
+      "file": "apps/worker/src/memory/repo/regression.ts",
+      "lines": "1-80",
+      "description": "every statement binds workspace_id (cookie) AND law_firm_id (question row); active SELECT bounded by the cap"
+    },
+    {
+      "file": "apps/worker/src/routes/memory/lookup.ts",
+      "lines": "1-40",
+      "description": "regression_checks returned only for a known firm, keyed by the caller workspace and the looked-up firm"
+    },
+    {
+      "file": "apps/worker/src/db/tx.ts",
+      "lines": "TRIGGER_TEXTS, TRIGGER_INVALID_REQUEST",
+      "description": "new trigger texts mapped to typed 400 invalid_request, never 503"
+    },
+    {
+      "file": "apps/worker/src/memory/repo/purge.ts",
+      "lines": "PURGE_CHILD_TABLES",
+      "description": "regression_check deleted before counsel_answer"
+    },
+    {
+      "file": "apps/worker/src/platform/index.ts",
+      "lines": "MEMORY_WRITE_WEIGHTS, counselAnswerWeight",
+      "description": "answer-with-assertion weight 23 from the measured 18 rows"
+    }
+  ]
+}

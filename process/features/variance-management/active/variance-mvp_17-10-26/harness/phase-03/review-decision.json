@@ -1,0 +1,16 @@
+{
+  "task": "Variance MVP Phase 03 memory backend: migration 0006, additive memory contracts, regression checks, scope rule, three reference firms",
+  "reviewer": "vc-execute-agent self-review (independent EVL vc-tester and sonnet code/security review still to run)",
+  "decision": "approved-with-concerns",
+  "blockingFindings": [],
+  "nonBlockingFindings": [
+    "No revoke path in the MVP (D5c): the per-firm cap of 20 active checks is a hard ceiling per sandbox; backlog NOTE variance-regression-check-revoke to be written at UPDATE PROCESS (process/** edits reserved for that agent this session).",
+    "Remote D1 apply of 0006 is not done here (Phase 05, Time Travel bookmark procedure).",
+    "Deployed rows_written burst stays operator residual R2.",
+    "state/review.ts does not yet pass the active fund name to fingerprintFindings (state/** is V2/V4 scope); until then the client label ignores the fund scope while the Worker applies it.",
+    "SQLite fires the newest trigger first: question_owner_immutable is newer than demo_ro_counsel_question_update, so a direct-SQL owner UPDATE on a demo row reports question_owner_immutable (still refused; no app path)."
+  ],
+  "notes": "All Test Gates and the regression block green on local D1. Adversarial N1, N4, N5 proven by named worker tests.",
+  "rationale": "Additive, forward-only schema with matrix-tested guards; isolation keyed server-side by workspace and firm on both axes; replay and op-id collision paths covered.",
+  "timestamp": "2026-10-17"
+}
