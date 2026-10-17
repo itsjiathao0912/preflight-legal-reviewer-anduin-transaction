@@ -1,0 +1,14 @@
+{
+  "task": "Variance MVP Phase 05 leg 2: remote D1 migration 0006 and one Worker deploy (18-10-26)",
+  "scenarios": [
+    { "scenario": "Another session deploys between the checks and the apply/deploy, so this deploy overwrites its live fixes", "ruled_out": true, "rationale": "deployments list read three times (start, right before apply, right before deploy); each showed 8a82ead2-07ed-4b06-ad60-226d3f4734c8; deploy commit 0c6312e contains d7b7756 (merged on main)." },
+    { "scenario": "Migration applied twice or partially (non-idempotent 0006)", "ruled_out": true, "rationale": "migrations list showed exactly 0006 pending; one apply, 34 commands, success; after it migrations list says nothing to apply; counts law_firm 3->6, alias 6->12, all others unchanged, regression_check 0 rows." },
+    { "scenario": "Guard triggers lost while dropped and recreated (append-only and demo read-only protections gone)", "ruled_out": true, "rationale": "trigger count 40 -> 47; all 11 F3b-named triggers present; every pre-existing trigger name still present." },
+    { "scenario": "Unrecoverable data loss if the apply corrupted data", "ruled_out": true, "rationale": "Time Travel bookmark 0000003e-00000000-00005107-13e12919a05a2c9178a343de17daef4e and an 82,122-byte export (mode 600, scratchpad, never committed) were taken before the apply. Restore is user-run only." },
+    { "scenario": "Deploy creates a route, custom domain, new resource or touches the protected zone", "ruled_out": true, "rationale": "deploy:preflight 13/13 (no routes/custom_domain/zone keys, name prefix aduin-transaction-); wrangler.jsonc diff empty; deploy output listed only workers.dev and the existing cron trigger; guard:cf OK before and after." },
+    { "scenario": "Secret or Turnstile key leak in logs or bundle", "ruled_out": true, "rationale": "Only the public site key was read (from the live bundle) and never printed; secrets:scan OK; no secret was set or changed." },
+    { "scenario": "Rolling back to the old Worker is harmless because the new columns are nullable", "ruled_out": false, "rationale": "FALSE for writes. The old Worker (8a82ead2, code d7b7756) pins EXPECTED_SCHEMA_VERSION '5' in apps/worker/src/memory/health.ts and refuses memory writes (503 memory_unavailable) when schema_version is '6'. After the rollback /api/memory/health returns ok:false. Live memory writes are down until the Variance Worker is live again or the user restores D1." },
+    { "scenario": "A live AI or OCR call is billed during the smoke", "ruled_out": true, "rationale": "Stack smoke and probe make no /api/ai or /api/ocr call (probe aborts both); 0 live AI calls." }
+  ],
+  "date": "2026-10-18"
+}

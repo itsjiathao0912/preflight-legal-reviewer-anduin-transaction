@@ -1,26 +1,163 @@
 {
-  "task": "Variance MVP Phase 05 leg 1 (local only; HEAD 07db58b)",
+  "task": "Variance MVP Phase 05 leg 1 (local only; HEAD 07db58b); leg 2 remote (18-10-26, deploy commit 0c6312e)",
   "commands": [
-    { "command": "pnpm install --frozen-lockfile; pnpm typecheck; pnpm lint", "result": "PASS", "notes": "all green at 07db58b" },
-    { "command": "pnpm --filter @aduin/core test", "result": "PASS", "notes": "3190 passed + 3 skip (first run under full-suite load: size-cap and diff-determinism timed out at 5 s, the documented load-timing pair; both pass alone and the full re-run is green)" },
-    { "command": "pnpm --filter @aduin/worker test", "result": "PASS", "notes": "77 files / 608" },
-    { "command": "pnpm --filter @aduin/web test", "result": "PASS", "notes": "55 files / 375" },
-    { "command": "pnpm --filter @aduin/scripts test", "result": "PASS", "notes": "22 files / 183 (+2 files, +7 tests: probe-variance 6, counts-wording 1)" },
-    { "command": "pnpm --filter @aduin/scripts fixtures:check; test package-fixtures", "result": "PASS", "notes": "117 files match a fresh build; package-fixtures 4. package:fixtures ran once after B3b; diff = firmId of northgate-iii and lotus-bay-asia-ii in demo-packages.json and expected.json only (the regenerated hartwell LPA DOCX differed in zip bytes and was put back to HEAD bytes; fixtures:check passes)" },
-    { "command": "pnpm --filter @aduin/web test:e2e <token> for variance-demo-214-to-7 variance-demo-gate-walk variance-package-samples perf-budget a11y-keyboard sample-picker-smoke intake-package-lens intake-missing-docs-request-export", "result": "PASS", "notes": "1 / 1 / 1 / 4 / 5 / 2 / 3 / 2. perf: variance Fund III vs Fund II checks done 16 ms, 7 changes 108-143 ms (budget 5000); 02 219 ms, 11 121 ms unchanged cases. perf-budget onward first hit a port-4317 teardown race in the runner and were re-run serially: all green" },
-    { "command": "pnpm --filter @aduin/web test:a11y", "result": "PASS", "notes": "1 passed (0 critical)" },
-    { "command": "core variance-demo-count, variance-determinism-repeat-run; worker rows-written; scripts conformance-free-plan", "result": "PASS", "notes": "all green" },
-    { "command": "pnpm --filter @aduin/web test:e2e", "result": "PASS", "notes": "241 passed + 1 opt-in skip + 1 flaky: intake-demo-packages (documented load-sensitive) failed in the full run and passed alone (twice)" },
-    { "command": "pnpm --filter @aduin/web test:e2e:stack-memory", "result": "PASS", "notes": "12 passed (includes stack-memory-variance-regression-no-cross-firm)" },
-    { "command": "pnpm slice:check; guard:cf; secrets:scan; seed:check; record:author --check; precompute:ai --from-recordings --check", "result": "PASS", "notes": "no diff in seed, recordings or precomputed results" },
-    { "command": "20 regression e2e tokens (variance-baseline-from-package ... intake-reload-restores-package) and unit package-gate-ui, gate-pill", "result": "PASS", "notes": "one token per call, all exit 0" },
-    { "command": "grep -n \"13 deterministic detectors\\|13 detectors\" README.md docs/architecture/status.md; git diff --check", "result": "PASS", "notes": "README lines 28, 111; status.md line 13" },
-    { "command": "F2b local populated-DB rehearsal (wrangler d1 execute --local --persist-to <scratchpad>; 0001-0005, seed/demo.sql, sandbox copy rows, then 0006)", "result": "PASS", "notes": "before law_firm 3 alias 6 ws 2 decision 14 question 1 answer 1 run 1 audit 16 rules 2; after law_firm 6 (+3) alias 12 (+6), all others unchanged; schema_version 5 -> 6; regression_check 0 rows; 47 triggers incl. all 11 named in F3b; guards hold: decision quote/decision/intent/scope -> decision_immutable, active->revoked allowed, answer option/intent -> answer_immutable, question owner -> question_owner_immutable, demo decision -> demo_read_only, audit update -> audit_append_only, decision delete -> decision_append_only; re-running the INSERT OR IGNORE lines is a no-op (6 / 12). Never --remote." }
+    {
+      "command": "pnpm install --frozen-lockfile; pnpm typecheck; pnpm lint",
+      "result": "PASS",
+      "notes": "all green at 07db58b"
+    },
+    {
+      "command": "pnpm --filter @aduin/core test",
+      "result": "PASS",
+      "notes": "3190 passed + 3 skip (first run under full-suite load: size-cap and diff-determinism timed out at 5 s, the documented load-timing pair; both pass alone and the full re-run is green)"
+    },
+    {
+      "command": "pnpm --filter @aduin/worker test",
+      "result": "PASS",
+      "notes": "77 files / 608"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test",
+      "result": "PASS",
+      "notes": "55 files / 375"
+    },
+    {
+      "command": "pnpm --filter @aduin/scripts test",
+      "result": "PASS",
+      "notes": "22 files / 183 (+2 files, +7 tests: probe-variance 6, counts-wording 1)"
+    },
+    {
+      "command": "pnpm --filter @aduin/scripts fixtures:check; test package-fixtures",
+      "result": "PASS",
+      "notes": "117 files match a fresh build; package-fixtures 4. package:fixtures ran once after B3b; diff = firmId of northgate-iii and lotus-bay-asia-ii in demo-packages.json and expected.json only (the regenerated hartwell LPA DOCX differed in zip bytes and was put back to HEAD bytes; fixtures:check passes)"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test:e2e <token> for variance-demo-214-to-7 variance-demo-gate-walk variance-package-samples perf-budget a11y-keyboard sample-picker-smoke intake-package-lens intake-missing-docs-request-export",
+      "result": "PASS",
+      "notes": "1 / 1 / 1 / 4 / 5 / 2 / 3 / 2. perf: variance Fund III vs Fund II checks done 16 ms, 7 changes 108-143 ms (budget 5000); 02 219 ms, 11 121 ms unchanged cases. perf-budget onward first hit a port-4317 teardown race in the runner and were re-run serially: all green"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test:a11y",
+      "result": "PASS",
+      "notes": "1 passed (0 critical)"
+    },
+    {
+      "command": "core variance-demo-count, variance-determinism-repeat-run; worker rows-written; scripts conformance-free-plan",
+      "result": "PASS",
+      "notes": "all green"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test:e2e",
+      "result": "PASS",
+      "notes": "241 passed + 1 opt-in skip + 1 flaky: intake-demo-packages (documented load-sensitive) failed in the full run and passed alone (twice)"
+    },
+    {
+      "command": "pnpm --filter @aduin/web test:e2e:stack-memory",
+      "result": "PASS",
+      "notes": "12 passed (includes stack-memory-variance-regression-no-cross-firm)"
+    },
+    {
+      "command": "pnpm slice:check; guard:cf; secrets:scan; seed:check; record:author --check; precompute:ai --from-recordings --check",
+      "result": "PASS",
+      "notes": "no diff in seed, recordings or precomputed results"
+    },
+    {
+      "command": "20 regression e2e tokens (variance-baseline-from-package ... intake-reload-restores-package) and unit package-gate-ui, gate-pill",
+      "result": "PASS",
+      "notes": "one token per call, all exit 0"
+    },
+    {
+      "command": "grep -n \"13 deterministic detectors\\|13 detectors\" README.md docs/architecture/status.md; git diff --check",
+      "result": "PASS",
+      "notes": "README lines 28, 111; status.md line 13"
+    },
+    {
+      "command": "F2b local populated-DB rehearsal (wrangler d1 execute --local --persist-to <scratchpad>; 0001-0005, seed/demo.sql, sandbox copy rows, then 0006)",
+      "result": "PASS",
+      "notes": "before law_firm 3 alias 6 ws 2 decision 14 question 1 answer 1 run 1 audit 16 rules 2; after law_firm 6 (+3) alias 12 (+6), all others unchanged; schema_version 5 -> 6; regression_check 0 rows; 47 triggers incl. all 11 named in F3b; guards hold: decision quote/decision/intent/scope -> decision_immutable, active->revoked allowed, answer option/intent -> answer_immutable, question owner -> question_owner_immutable, demo decision -> demo_read_only, audit update -> audit_append_only, decision delete -> decision_append_only; re-running the INSERT OR IGNORE lines is a no-op (6 / 12). Never --remote."
+    },
+    {
+      "command": "pnpm guard:cf; pnpm secrets:scan (worktree at 0c6312e, porcelain empty)",
+      "result": "PASS",
+      "notes": "both OK, before and after the deploy"
+    },
+    {
+      "command": "wrangler deployments list (x3: start, before apply, before deploy)",
+      "result": "PASS",
+      "notes": "live 8a82ead2-07ed-4b06-ad60-226d3f4734c8 each time = rollback target"
+    },
+    {
+      "command": "wrangler d1 migrations list aduin-transaction-db --remote",
+      "result": "PASS",
+      "notes": "before: only 0006_variance.sql pending; after: no migrations to apply"
+    },
+    {
+      "command": "wrangler d1 time-travel info; wrangler d1 export --remote --output <scratchpad>/aduin-transaction-db-pre-0006.sql",
+      "result": "PASS",
+      "notes": "bookmark 0000003e-00000000-00005107-13e12919a05a2c9178a343de17daef4e; export 82122 bytes, mode 600, sha256 prefix d0306d6408bbd7ac, not committed"
+    },
+    {
+      "command": "F2c before-state SELECTs",
+      "result": "PASS",
+      "notes": "schema_version 5, seed_mode 0; law_firm 3, alias 6, workspace 3, decision 21, question 0, answer 0, finding 0, review_run 0, audit 26; 40 triggers"
+    },
+    {
+      "command": "wrangler d1 migrations apply aduin-transaction-db --remote",
+      "result": "PASS",
+      "notes": "one run, 34 commands, 0006 success"
+    },
+    {
+      "command": "F3b after-state SELECTs + pragma_table_info",
+      "result": "PASS",
+      "notes": "schema_version 6; law_firm 6 (+3, adds calder-reyes hartwell-crane ostrander-pell), alias 12 (+6), all others unchanged; regression_check 0; 47 triggers, all 11 named present; counsel_question owner/owner_source, counsel_answer and decision intent/scope present"
+    },
+    {
+      "command": "VITE_TURNSTILE_SITE_KEY=<live bundle key> pnpm --filter @aduin/web build; deploy:preflight",
+      "result": "PASS",
+      "notes": "13/13 (first preflight run 12/13 because the env var was only passed to the build; re-run with it set)"
+    },
+    {
+      "command": "cd apps/worker && pnpm exec wrangler deploy",
+      "result": "PASS",
+      "notes": "new version d9aaddd9-a62f-4850-8ff2-89889c8ef652; workers.dev only; bindings and cron unchanged"
+    },
+    {
+      "command": "curl /api/health; /api/memory/health; curl -sI /",
+      "result": "PASS",
+      "notes": "{ok:true} no-store; ok:true schema 6 expected 6 seed_mode 0; 200 with CSP, nosniff, referrer and permissions policy"
+    },
+    {
+      "command": "SLICE_BASE_URL=<live> playwright --project=stack",
+      "result": "PASS",
+      "notes": "first run failed (transient), retry 1 passed"
+    },
+    {
+      "command": "pnpm --filter @aduin/scripts probe:live-variance",
+      "result": "FAIL",
+      "notes": "2 runs fail at firm-combobox fill (element detached) on the second upload; 3rd run refused by ledger (4 of 5). Firm input showed 'Hartwell & Crane LLP' (firm present live). Local repro in the preview project: the probe checks open-document-dialog isVisible while the Fund II dialog is still closing, skips reopening, then acts on inputs being removed. Classification: harness-drift (probe lacks the toBeHidden wait the e2e uploadOne helper has), not product breakage."
+    },
+    {
+      "command": "wrangler rollback 8a82ead2-07ed-4b06-ad60-226d3f4734c8",
+      "result": "PASS",
+      "notes": "per the leg-2 rule on a failed post-deploy check; live = 8a82ead2; /api/health ok; /api/memory/health ok:false (old Worker expects schema 5): memory WRITES refused on live until roll-forward or D1 restore"
+    }
   ],
   "manualChecks": [
-    { "check": "D3 agent probe: keyboard walk and visual compare with design/mockups/app-variance.html at 1440 and 1024 (scratch script; the design-probe spec was not run because it overwrites tracked PNGs of another program)", "result": "PASS with a finding", "notes": "Tab order doc-switcher, nav, gate, baseline control, stage, jump, doc pane, segment, severity chips, filter, first change row; no horizontal overflow; 0 console errors. Finding: the New/Logic chip overlaps the row title (backlog variance-change-chip-overlap_NOTE_18-10-26.md)." },
-    { "check": "rows_written arithmetic (base AC40)", "result": "PASS", "notes": "0006 apply writes about 10 data rows (3 law_firm, 6 alias, 1 app_meta) plus their index entries and schema DDL: well under 100 rows. One demo gate walk (2 decisions x 32, 6 questions, 6 answers x 18, one answer with assertion 23) is about 300 weighted rows: D1 Free 100k rows/day allows hundreds of walks. Deployed burst stays operator residual R2." },
-    { "check": "Remote steps", "result": "SKIP", "notes": "Leg 2 only, after the F0 user confirmation. No wrangler call to Cloudflare, no Cloudflare API, no live curl in leg 1." }
+    {
+      "check": "D3 agent probe: keyboard walk and visual compare with design/mockups/app-variance.html at 1440 and 1024 (scratch script; the design-probe spec was not run because it overwrites tracked PNGs of another program)",
+      "result": "PASS with a finding",
+      "notes": "Tab order doc-switcher, nav, gate, baseline control, stage, jump, doc pane, segment, severity chips, filter, first change row; no horizontal overflow; 0 console errors. Finding: the New/Logic chip overlaps the row title (backlog variance-change-chip-overlap_NOTE_18-10-26.md)."
+    },
+    {
+      "check": "rows_written arithmetic (base AC40)",
+      "result": "PASS",
+      "notes": "0006 apply writes about 10 data rows (3 law_firm, 6 alias, 1 app_meta) plus their index entries and schema DDL: well under 100 rows. One demo gate walk (2 decisions x 32, 6 questions, 6 answers x 18, one answer with assertion 23) is about 300 weighted rows: D1 Free 100k rows/day allows hundreds of walks. Deployed burst stays operator residual R2."
+    },
+    {
+      "check": "Remote steps",
+      "result": "SKIP",
+      "notes": "Leg 2 only, after the F0 user confirmation. No wrangler call to Cloudflare, no Cloudflare API, no live curl in leg 1."
+    }
   ],
-  "result": "leg 1 PASS (all local gates green); leg 2 pending user confirmation"
+  "result": "leg 1 PASS; leg 2: migration 0006 applied and verified; deploy d9aaddd9 succeeded then rolled back to 8a82ead2 after probe:live-variance failed (probe race); live memory writes degraded (schema 6 vs old Worker expecting 5)"
 }
