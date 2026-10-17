@@ -30,6 +30,24 @@ const REASON_MAX = 200;
 /** Masked + clamped display of a file name or detection reason (validate E4). */
 export const shown = (s: string, max: number) => maskAndClamp(s, max);
 
+/** One plain line per readiness problem, so a disabled Run checks always says why. */
+function problemLine(
+  p: { code: string; docId?: string },
+  rows: readonly PackageDocument[],
+  noSub: boolean,
+): string | null {
+  if (p.code === 'multiple_to_digitize') {
+    const n = rows.filter((r) => r.role === 'to_digitize').length;
+    return `${n} files are set to To digitize. Keep one and set the others to Reference or Baseline, or remove them.`;
+  }
+  if (p.code === 'no_to_digitize')
+    return noSub
+      ? null
+      : 'No file is set to To digitize. Set the subscription agreement to To digitize.';
+  const row = rows.find((r) => r.id === p.docId);
+  return row ? `Confirm or fix ${shown(row.name, NAME_MAX)} before running checks.` : null;
+}
+
 function Row({ d }: { d: PackageDocument }) {
   const setField = usePackage((s) => s.setDraftField);
   const confirm = usePackage((s) => s.confirmDraftRow);
@@ -172,6 +190,21 @@ export function PackageConfirmTable({ onRun, onBack }: { onRun: () => void; onBa
         {draft.status === 'ready' && ready.versionMissing ? (
           <p className="pkg-held">Enter the version label before running checks.</p>
         ) : null}
+        {draft.status === 'ready'
+          ? ready.problems.map((p) => {
+              const line = problemLine(p, draft.rows, ready.noSubAgreement);
+              return line ? (
+                <p
+                  key={`${p.code}:${p.docId ?? ''}`}
+                  className="pkg-held"
+                  data-testid="package-problem"
+                  data-code={p.code}
+                >
+                  {line}
+                </p>
+              ) : null;
+            })
+          : null}
       </div>
       <div>
         <p className="od-h">Earlier documents of this firm (this browser, newest 5)</p>

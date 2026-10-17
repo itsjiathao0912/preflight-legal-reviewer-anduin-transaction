@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { PackageDocument } from '@aduin/core';
-import { usePackage } from '../../state/package';
+import { NO_SUB_LINE, usePackage } from '../../state/package';
 import { render } from '../../test-utils';
 import { PackageConfirmTable } from './PackageConfirmTable';
 
@@ -90,5 +90,47 @@ describe('package-confirm-table', () => {
     expect(run().disabled).toBe(true);
     act(() => usePackage.getState().confirmDraftRow('b'.repeat(64)));
     expect(run().disabled).toBe(false);
+  });
+
+  it('names each readiness problem in the notice (masked file names)', () => {
+    const el = render(<PackageConfirmTable onRun={() => undefined} onBack={() => undefined} />);
+    const ps = el.querySelectorAll('[data-testid="package-problem"]');
+    expect(ps).toHaveLength(1);
+    expect(ps[0]!.getAttribute('data-code')).toBe('low_confidence_unconfirmed');
+    expect(ps[0]!.textContent).toContain('Confirm or fix scan');
+    expect(ps[0]!.textContent).not.toContain(SSN);
+  });
+
+  it('says when two files are set to To digitize', () => {
+    act(() =>
+      usePackage.setState((s) => ({
+        draft: { ...s.draft!, rows: [row({}), row({ id: 'c'.repeat(64), name: 'b.html' })] },
+      })),
+    );
+    const el = render(<PackageConfirmTable onRun={() => undefined} onBack={() => undefined} />);
+    const ps = el.querySelectorAll('[data-testid="package-problem"]');
+    expect(ps).toHaveLength(1);
+    expect(ps[0]!.getAttribute('data-code')).toBe('multiple_to_digitize');
+    expect(ps[0]!.textContent).toContain('2 files are set to To digitize');
+    expect(el.querySelector<HTMLButtonElement>('[data-testid="package-run"]')!.disabled).toBe(true);
+  });
+
+  it('says when no file is To digitize, unless there is no sub agreement at all', () => {
+    act(() =>
+      usePackage.setState((s) => ({ draft: { ...s.draft!, rows: [row({ role: 'reference' })] } })),
+    );
+    const el = render(<PackageConfirmTable onRun={() => undefined} onBack={() => undefined} />);
+    const codes = () =>
+      [...el.querySelectorAll('[data-testid="package-problem"]')].map((n) =>
+        n.getAttribute('data-code'),
+      );
+    expect(codes()).toEqual(['no_to_digitize']);
+    act(() =>
+      usePackage.setState((s) => ({
+        draft: { ...s.draft!, rows: [row({ type: 'other', role: 'reference' })] },
+      })),
+    );
+    expect(codes()).toEqual([]);
+    expect(el.querySelector('[data-testid="package-notice"]')!.textContent).toContain(NO_SUB_LINE);
   });
 });
