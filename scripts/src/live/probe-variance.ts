@@ -162,6 +162,9 @@ async function probe(base: string, timeoutMs: number, exp: DemoExpectation) {
       await page.getByTestId('privacy-ack').check();
       const t0 = Date.now();
       await page.getByTestId('open-submit').click();
+      // Wait for the Open dialog to close before the caller reads state; the
+      // previous document's state otherwise satisfies the next assertion early.
+      await expect(page.getByTestId('open-document-dialog')).toBeHidden({ timeout: timeoutMs });
       return t0;
     };
 
