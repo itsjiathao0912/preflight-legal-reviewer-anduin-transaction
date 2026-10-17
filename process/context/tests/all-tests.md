@@ -302,6 +302,15 @@ Whole suites after Variance Phase 01, independent EVL: core 3158 (+3 skip; 118 f
 - **Precision is asserted strictly:** `variance-precision-measure` counts page-label rows still shown as logic (limit 10%); measured 2.9% overall, 6.7% on #5 -> #6. Measured pins: demo 214 / 7 / 207, package 01 64 / 9, real #5 -> #6 163 raw / 15 shown.
 - **Reading printed measurements:** `pnpm --filter @aduin/core test <token>` hides vitest `console.log` lines; run `npx vitest run <file> --reporter=verbose --silent=false` inside `packages/core` to see recall/precision output.
 
+## Variance Phase 04 gate tokens (owners and answers, HEAD a6ccd1b)
+
+Whole suites after Variance Phase 04, independent EVL (local only, 0 model calls): web unit 374, worker 571, full preview e2e 235 tests (234 passed + 1 opt-in skip), `stack-memory` 12, typecheck and lint green. `intake-demo-packages` is load-sensitive: run it alone. One token per call, no `--`; free port 4317 before each e2e call.
+
+- **Web unit tokens:** `variance-counts-owner-selector`, `variance-question-ids`, `variance-owner-sheet-model`, `variance-counsel-export-contents`, `variance-intent-human-only-static`, `variance-assertion-preview`, `variance-regression-doc-not-retained`, `variance-memory-wiring` (8, includes owner revoke), `outbox` (23), `api-contract` (38), `stub-memory-api`, `review-sync` (13).
+- **Worker tokens:** `variance-question-key-composite` (5, includes `owner_key_mismatch`), `variance-owner-persisted`, `variance-label-call-sites`, `variance-answer-append-only`, `memory-label-parity`.
+- **E2E tokens:** `variance-owner-override`, `variance-two-owner-two-questions`, `variance-questions-by-owner-export`, `variance-answer-record-intent-scope`, `variance-intent-human-only`, `variance-regression-r01` (held and other-firm cases use a fixed 2 s wait), `variance-gate-two-states`. Helpers: `apps/web/e2e/fixtures/variance-owners.ts`; fake Worker `installFakeWorker(page, { regressionChecks })`.
+- **Known gaps:** manual keyboard pass, live Worker regression path, live D1 persistence, `DESIGN_PROBE` not run.
+
 ## Variance Phase 03 gate tokens (memory backend, HEAD 84577e4)
 
 Whole suites after Variance Phase 03, independent EVL (local D1 only): core 3165 (+3 skip), worker 71 files / 566, web unit 42 files / 313, scripts 165, `stack-memory` 12. `seed:check`, `guard:cf`, `secrets:scan`, `lint`, `typecheck` green. One token per call, no `--`.

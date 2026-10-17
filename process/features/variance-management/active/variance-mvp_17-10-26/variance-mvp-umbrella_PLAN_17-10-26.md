@@ -447,28 +447,33 @@ Plan artifact validators (run at PLAN end and again after any supplement): `node
 
 ## Current Execution State
 
-Last updated: 18-10-26 (Phase 02 UPDATE PROCESS)
-Current phase: 3 of 5 VERIFIED (Phases 01, 02, 03); Phase 04 inner PVL in progress, then EXECUTE
+Last updated: 18-10-26 (Phase 04 UPDATE PROCESS)
+Current phase: 4 of 5 VERIFIED (Phases 01, 02, 03, 04); Phase 05 inner PVL PASS, EXECUTE next
 Phase 1 name: Core engine + corpus
 Phase 1 status: VERIFIED (commits 42b3ecb, 7f0f355, d954511, 789eb8f, 0ee9fca; 1 EVL fix cycle)
 Phase 1 EVL: PASS (core 3158 + 3 skip, scripts 162, test:golden 98 + 3 skip, test:corpus 13)
 Phase 1 report: `variance-mvp-phase-01-core-engine_REPORT_17-10-26.md`
 Phase 2 name: Web Findings (variance in the existing Findings screen)
-Phase 2 status: VERIFIED (commits 8f4e6a4, 60a5507, 15aa796; local only, no push, no deploy; 0 model calls; 0 EVL fix cycles)
-Phase 2 EVL: PASS (results-evl.tsv HALTED_SUCCESS; web unit 338, 13 contract gates, 23-token preview regression block, full preview e2e 228 + 1 skip, typecheck and lint green; `variance-ai-never-gates` is Hybrid, stubbed AI only)
+Phase 2 status: VERIFIED (commits 8f4e6a4, 60a5507, 15aa796; local only; 0 model calls; 0 EVL fix cycles)
+Phase 2 EVL: PASS (web unit 338, full preview e2e 228 + 1 skip; `variance-ai-never-gates` is Hybrid, stubbed AI only)
 Phase 2 report: `variance-mvp-phase-02-web-findings_REPORT_17-10-26.md`
 Phase 3 name: Memory backend
-Phase 3 status: VERIFIED (commits f93fd9a, b5b5f84, 1882dbf, ef11874, f68fe32, b6fe91b, 84577e4; local D1 only; nothing pushed; 0 EVL fix cycles)
-Phase 3 EVL: PASS (results-evl.tsv HALTED_SUCCESS; worker 566, core 3165 + 3 skip, web unit 313, scripts 165, stack-memory 12; seed:check, guard:cf, secrets:scan, lint, typecheck green; risk validator 0 failures; review PASS WITH NOTES M1, M2)
+Phase 3 status: VERIFIED (commits f93fd9a, b5b5f84, 1882dbf, ef11874, f68fe32, b6fe91b, 84577e4; local D1 only; 0 EVL fix cycles)
+Phase 3 EVL: PASS (worker 566, core 3165 + 3 skip, web unit 313, scripts 165, stack-memory 12)
 Phase 3 report: `variance-mvp-phase-03-memory-backend_REPORT_17-10-26.md`
-Next phase: Phase 04 - `variance-mvp-phase-04-owners-answers_PLAN_17-10-26.md` (inner PVL by vc-validate-agent in progress; then EXECUTE; carry-overs M2 and minors are in its body); then Phase 05 demo and deploy
-Current loop step: Phase 04 4-validate (inner PVL in progress; EXECUTE next after Gate PASS)
-Validate-contract status: Phases 01, 02, 03 executed and closed; Phase 04 inner contract being written; Phase 05 outer contract invalidated by the Step 0 Refresh Note (inner PVL before its EXECUTE)
+Phase 4 name: Owners, Questions tabs, answer intent and scope, regression UI
+Phase 4 status: VERIFIED (commits 838ca1e, a31dff0, f42f56d, a6ccd1b; local only, no push, no deploy; 0 model calls; 1 EVL fix cycle: owner revoke re-blocks the gate, Worker `owner_key_mismatch`, terminal scrub of interpretations)
+Phase 4 EVL: PASS (results-evl.tsv HALTED_SUCCESS; web unit 374, worker 571, preview e2e 234 + 1 skip (235 tests; `intake-demo-packages` is a load-sensitive flake, passes alone), stack-memory 12, typecheck and lint green; code review PASS WITH NOTES)
+Phase 4 report: `variance-mvp-phase-04-owners-answers_REPORT_17-10-26.md`
+Next phase: Phase 05 - `variance-mvp-phase-05-demo-deploy_PLAN_17-10-26.md` (demo and deploy; inner PVL PASS, validate-contract written 18-10-26; remote apply of 0006 under a Time Travel bookmark, then Worker, then web)
+Current loop step: Phase 05 5-execute (EXECUTE next; the orchestrator spawns vc-execute-agent with that one plan path)
+Validate-contract status: Phases 01-04 executed and closed; Phase 05 inner-pvl contract written and PASS (18-10-26)
 Program Net Gate: PENDING
-Measured facts carried forward: demo pin 214 / 7 (3 new, 4 logic) / 207 cosmetic in 5 groups; package 01 (Northgate) 64 raw / 9 shown (2 new + 7 logic), recall 7/7; real #5 -> #6 163 raw / 15 shown; AC-V6 strict precision 2.9% overall, 6.7% on #5 -> #6. Phase 02 web: samples never become a firm-pointer baseline (only uploaded firm documents do); change-row triage reuses `triage:{docId}`; NGI 2024/2026 pair (15 changes, 78 cosmetic hunks, 8 groups) drives the cosmetic and diff e2e; same-firm two-upload specs now get change rows (count error rows with `:not([data-kind="change"])`).
-Migration: `0006_variance.sql` allocated and landed LOCALLY (`schema_version` 5 to 6; six reference firms; `regression_check` table; guard triggers recreated; not idempotent). Remote apply and Worker deploy are Phase 05 only (Time Travel bookmark first; never roll the Worker back alone after the web ships). Measured write weight: plain answer 13 rows, with assertion 18 rows, `counselAnswerWithAssertion` weight 23; worst-case finding 82,236 B, web splits findings bodies by bytes (cap 131,072).
-Known limitations (backlog): fund-scoped answer supersedes across funds (`variance-fund-scope-supersede_NOTE_17-10-26.md`); no revoke path for regression checks, 20 per firm hard ceiling (`variance-regression-check-revoke_NOTE_17-10-26.md`); human keyboard pass (`variance-web-manual-keyboard-pass_NOTE_17-10-26.md`); live Turnstile render-first path (`variance-render-first-live-turnstile_NOTE_17-10-26.md`).
-Latest validator run: 18-10-26 Phase 02 EVL and UPDATE PROCESS (see the phase report)
+Push rule: the user now allows a single orchestrator push after the feature closes (agents still never run git push). `.playwright-mcp/`, `.DS_Store` and `.claude/launch.json` are never committed.
+Measured facts carried forward: demo pin 214 / 7 (3 new, 4 logic) / 207 cosmetic in 5 groups; package 01 (Northgate) 64 raw / 9 shown, recall 7/7; real #5 -> #6 163 raw / 15 shown; AC-V6 strict precision 2.9% overall, 6.7% on #5 -> #6. Phase 02 web: samples never become a firm-pointer baseline; change-row triage reuses `triage:{docId}`. Phase 04: question key is `<findingId>@<owner>` (composite accepted only on the question route); error findings keep the plain id; per-owner export uses the existing ExportDialog; gate popover groups You, Counsel, GP, Fund admin, Earlier funds sum to `gate.reasons.length`.
+Migration: `0006_variance.sql` landed LOCALLY (`schema_version` 5 to 6; not idempotent). Remote apply and Worker deploy are Phase 05 only (Time Travel bookmark first; never roll the Worker back alone after the web ships). Measured write weight: plain answer 13 rows, with assertion 18 rows.
+Known limitations (backlog): fund-scoped answer supersedes across funds (`variance-fund-scope-supersede_NOTE_17-10-26.md`); no revoke path for regression checks, 20 per firm ceiling (`variance-regression-check-revoke_NOTE_17-10-26.md`); human keyboard pass (`variance-web-manual-keyboard-pass_NOTE_17-10-26.md`, `variance-manual-keyboard-pass_NOTE_17-10-26.md`); live Turnstile render-first path (`variance-render-first-live-turnstile_NOTE_17-10-26.md`); Phase 04 review minors (`variance-p04-review-minors_NOTE_18-10-26.md`); live Worker regression path and live D1 persistence unproven until Phase 05 or operator run.
+Latest validator run: 18-10-26 Phase 04 UPDATE PROCESS (see the phase report)
 
 Loop step values: RESEARCH | INNOVATE | PLAN-SUPPLEMENT | PVL | EXECUTE | EVL | UPDATE-PROCESS
 Orchestrator rule: read "Current loop step" and "validate-contract status" before spawning any subagent. Never spawn execute-agent when loop step is RESEARCH, INNOVATE, PLAN-SUPPLEMENT, or PVL (the Intake feature is closed; that precondition is satisfied).

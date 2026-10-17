@@ -189,6 +189,18 @@ Source of truth: `process/features/variance-management/active/variance-mvp_17-10
 - **Pending pill:** "Checking changes" (`data-variance-pending`) on the gate pill while the pass runs; never Ready while pending; render-first holds (findings never wait; failure or the 20 s `VARIANCE_PENDING_TIMEOUT_MS` ends pending). Change rows gate only when a baseline resolved and the pass is ready (`computeGate(rows, policy)`).
 - **Known gaps:** human keyboard and screen-reader pass not run (backlog `variance-web-manual-keyboard-pass_NOTE_17-10-26.md`); live Turnstile render-first path unproven.
 
+## Variance owners, Questions and answers (Variance Phase 04, no new screens; `apps/web/src/features/{variance,counsel,gate}`)
+
+Source of truth: `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-04-owners-answers_REPORT_17-10-26.md`.
+
+- **Owner chips:** each change row shows an owner chip and a "Suggested owner" select with the routing reason. The override is saved in `uiState` (`variance:owner:{docId}`) and sent as `owner_source: 'override'`. The select is read-only once the question is asked. "You" is local-only (Ask owner is disabled until the owner changes).
+- **Questions screen (h1 and effective registry label "Questions"; route hash unchanged):** with change questions it shows tabs `All · Counsel n · GP n · Fund admin n` (`questions-tab-<k>`, `data-count`), owner sections, and "Export for <owner> (DOCX)" through the existing ExportDialog (owner in title and filename). Error-only documents keep the flat Phase 08 list. Intake's `GpRequestGroup` stays above the list on every tab. Question rows carry `data-key`, `data-owner`, `data-kind`.
+- **One question per (finding, owner):** key `<findingId>@<owner>` for change findings; error findings keep the plain id. One selector feeds tabs, gate popover and sidebar badge so counts agree.
+- **Answer dialog:** change questions get option A marked Default, "Why is it written this way? (intent)", scope "This fund only / Firm template", and one assertion preview line (`AssertionPreview`, from `describeAssertion`, or "No automatic check for this item."). Firm template needs a non-blank intent after masking. Intent is human-only; change questions never get an AI draft.
+- **Regression finding:** a prior firm-template assertion that no longer holds appears as a finding in the group "Earlier funds" (background `regression-client`; silent skip when nothing is retained).
+- **Gate pairs:** the popover groups reasons You, Counsel, GP, Fund admin, Earlier funds (`[data-testid=gate-group][data-group]`, `data-count`; sizes sum to `gate.reasons.length`). A revoked owner answer sets that owner back to asked, so the gate re-blocks. `GateButton.tsx` is unchanged.
+- **Known gaps:** human keyboard and screen-reader pass for owners and answers not run (backlog `variance-manual-keyboard-pass_NOTE_17-10-26.md`); review minors in `variance-p04-review-minors_NOTE_18-10-26.md`.
+
 ## UI Test Conventions
 
 - Two Playwright projects (`apps/web/playwright.config.ts`): `preview` (`vite preview` of a `--mode e2e` build, stub memory API, no Worker; runs every Phase 03 spec) and `stack` (built SPA + Worker; only `slice.spec.ts`; select with `--project=stack`; `SLICE_BASE_URL` points it at a deployed https `*.workers.dev` Worker). Details and commands: `process/context/tests/all-tests.md`.
