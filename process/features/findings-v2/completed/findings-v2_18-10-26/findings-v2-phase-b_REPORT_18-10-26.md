@@ -221,3 +221,12 @@ Gates: web vitest 73 files / 544 tests; typecheck clean; findings-v2 e2e 11/11; 
 - Segment hugs its buttons (2px), 28px = chip height. Expected/Found + Details: fv2-kv grid (80px muted label). Row: f.loc right-aligned, ellipsis max 140px; replaces the §N tag; min-width:0 fixes row overflow.
 - Tests: +5 e2e, +1 unit; a11y-smoke repaired; design-probe output -> completed/. Gates (EVL): vitest 545, typecheck 0, preview e2e 258 + 1 skip, stack-memory 12.
 - Residual: location shows the engine's section heading, not "Section N".
+
+### Fit width fix (D15 amendment, 18-10-26)
+- D15 amendment (design, 18-10-26): Fit width clamp 60-175%; if 60% still overflows, the area scrolls horizontally from the left edge; never clip under the panel. Manual range is now 60-200 in 10% steps (one floor for fit and manual, so - from a 60% fit is a no-op and + goes to 70; presets unchanged 75/90/100/125/150).
+- Bug: at Fit width the page sat at 90% and its right side was cut at the panel's left edge (1024 text stopped mid-line; 1440 page border missing).
+- Root cause: the 90% lower clamp. A 90% page (630 px + 64 px gutter) is wider than the reading area at 1024 (about 370 px) and at 1440 (about 600 px), so the page overflowed and the reading area clipped it exactly where the panel starts, which looked like the page running under the panel. Nothing paints beneath the panel: `.docscroll` is a scroll container (its automatic min width is 0), and new e2e checks (`elementFromPoint` at the panel edge, reading-area right <= panel left) pass with both the old and the new clamp. Belt-and-braces CSS: `.docpane` gets an explicit `minmax(0, 1fr)` column and `.docscroll` `min-width: 0`.
+- Result: 1440 default fits at 77% with both page borders visible; 1024 default (55% panel) goes to 60%, still about 50 px too wide, so it scrolls horizontally from the page's left edge.
+- Tests: zoom-math unit (fit floor 60, manual floor 60, - no-op at 60, + to 70); findings-v2 e2e +3 (1440x900 and 1024x768 fit, 1024 with the panel at 65%), D15 test floor updated; design-probe now also captures `design-probe/app-1440-fit.png` and `app-1024-fit.png`.
+- Gates: vitest 545 (73 files), typecheck 0, findings-v2 19, layout-vs-mockup 5, finding-highlight 4, perf-budget 4, full preview 261 + 1 skip, design-probe 1. Not deployed.
+- Residual: at 1024 with the default panel, Fit width cannot fit the whole page (needs ~44%); the header banners take about 130 px (backlog `findings-v2-header-status-chips_NOTE_18-10-26.md`).

@@ -28,6 +28,7 @@ TL;DR: Findings v2 shipped and is live (Worker version 7db9e602, assets only). P
 
 - Phase C dedupe hookup (dropped, P-16).
 - Review items R11, R15, R16, R19, R20, the cleanup list and residual visual diffs: `process/features/findings-v2/backlog/findings-v2-review-followups_NOTE_18-10-26.md`.
+- D15 amendment (design, 18-10-26): Fit width clamp 60-175%; if 60% still overflows, the area scrolls horizontally from the left edge; never clip under the panel. Manual range is now 60-200 in 10% steps (one floor for fit and manual, so - from a 60% fit is a no-op and + goes to 70; presets unchanged 75/90/100/125/150).
 - Accepted as designed: R4 (dismissed hidden from Closed under the default filter, P-7), R7 (Cmd/Ctrl zoom keys per D15).
 
 ## Test Gate Outcomes (EVL re-run at 4c39a5a, all green)
