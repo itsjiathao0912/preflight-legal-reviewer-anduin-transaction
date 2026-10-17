@@ -6,3 +6,6 @@ cycle	phase	domain	gate	failing	loop_status	note
 0	P02	tests	PASS	none	HALTED_SUCCESS	EVL first run green; preview e2e 228+1skip; web unit 338
 0	P04	tests	PASS	none	CONTINUE	EVL green (e2e 235+1, stack 12, web 372, worker 570); review major M1 Reopen not re-blocking -> fix cycle 1
 1	P04	tests	PASS	none	HALTED_SUCCESS	re-run after review fixes green; web 374, worker 571, e2e 234+1skip (+1 known load flake intake-demo-packages passed alone), stack 12
+0	P05	tests	LEG1-DONE	?	BASELINE	leg1 green at 07db58b; HEAD moved to 9e866f2 (findings-v2) -> EVL + deploy from clean worktree pinned at 07db58b
+1	P05	tests	PASS	none	HALTED_SUCCESS	EVL leg1 green at 07db58b in clean worktree (core 3190, worker 608, web 375, scripts 183, e2e 241+1skip, stack 12); DOCX timestamp drift from package:fixtures -> restore in worktree + backlog
+2	P05	tests	BLOCKED	leg2 F3a	CONTINUE	live 8a82ead2 not in 07db58b; owner merged to main 566416e; re-run EVL on 566416e
