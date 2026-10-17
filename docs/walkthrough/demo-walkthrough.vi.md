@@ -1,7 +1,7 @@
 # Hướng dẫn demo Sub-doc QA (bản live hiện tại)
 
 > Viết ngày 17/10/2026, dựa trên code ở `main` (commit `1f5cfa5`) và bản live
-> https://aduin-transaction-web.giathaowork.workers.dev (version `328ca295-d5da-487e-a063-843b0c7c86db`; bản trước: `47d98295`, `23612b12`).
+> https://aduin-transaction-web.giathaowork.workers.dev (version `cde74507-7b92-4e43-99fa-754de2c5cf3b`; bản trước: `328ca295`, `47d98295`, `23612b12`).
 > Tên nút, nhãn và câu thông báo được giữ **nguyên tiếng Anh như trên màn hình**, để bạn đối chiếu khi demo.
 > Đường dẫn code là đường dẫn tương đối từ gốc repo.
 
@@ -17,7 +17,7 @@
 | 4 | **Màn "Documents" vẫn là placeholder**: chỉ có chữ "Recent documents, samples and uploads: coming in a later build." | Đừng bấm vào khi demo. | Mở tài liệu qua **ô chọn tài liệu** ở đầu menu (doc switcher). |
 | 5 | **Hạn mức AI free:** mỗi visitor được 3 tài liệu AI mới mỗi ngày, toàn hệ thống 35 request mỗi ngày. Mở sample không tốn lượt nào. | "Run AI on this sample", "Summarize changes", "AI draft" và upload khi AI đang bật đều tiêu lượt. | Tập dượt với **"No AI"**. Chỉ bật AI cho đúng một cảnh cần show. |
 | 6 | **Deep link `#memory` không dùng được**: app luôn mở vào `#findings`. | Gõ URL `/#memory` sẽ rơi về Findings. | Vào Memory bằng mục trong menu dọc. |
-| 7 | **AI live hiện có thể bị timeout.** AI đã tới được OpenRouter nhưng model free đang mất khoảng 120 s rồi timeout (đang sửa ở worker). | "Run AI", "Summarize changes", "AI draft" có thể treo hoặc báo lỗi. | Demo bằng **"No AI"**. Tải lại trang sẽ mở lại tài liệu cuối cùng (restore on reload), và layout điện thoại 375px đã được sửa nên có thể show nhanh trên màn hẹp. |
+| 7 | **AI live chạy được nhưng chậm.** Timeout worker đã nâng từ 120 s lên 240 s; một review AI mới cho ra 4 finding AI sau khoảng 199 s (khoảng 3-4 phút mỗi lần). Mỗi lần tốn 1 trong 3 tài liệu AI mới mỗi ngày. | "Run AI", "Summarize changes", "AI draft" phải chờ vài phút. | Demo live nên chọn **"No AI"** hoặc các sample đã tính sẵn; chỉ chạy AI mới nếu còn thời gian. Tải lại trang sẽ mở lại tài liệu cuối cùng (restore on reload), và layout điện thoại 375px đã được sửa nên có thể show nhanh trên màn hẹp. |
 
 ---
 
@@ -342,9 +342,9 @@ Kết quả #5 → #6 (khóa bằng golden test): **removed 1** (Appendix C), **
 | 8 | Memory và AI cần qua Turnstile; trình duyệt tự động không qua được | toàn app | Trung bình: phải dùng trình duyệt thường |
 | 9 | Finding footnote 2 trên #9 chưa xác minh trên bản live | `footnote-requirement` | Trung bình |
 | 10 | `setCounselAnswer` trong `state/review.ts` có vẻ là code thừa | — | Không ảnh hưởng |
-| 11 | Heading dạng "Section N." / "Article I." chưa được nhận là section; đích của điều kiện kiểu Annex / Question chưa được phân giải | structurer, detector điều kiện | **Đã sửa ở core** (Intake Phase 1, live `328ca295`); phần UI của intake chưa nối. Cần đo lại trên các package 02/03. |
+| 11 | Heading dạng "Section N." / "Article I." chưa được nhận là section; đích của điều kiện kiểu Annex / Question chưa được phân giải | structurer, detector điều kiện | **Đã sửa ở core** (Intake Phase 1, live từ `328ca295`, vẫn có trong `cde74507`); phần UI của intake chưa nối. Cần đo lại trên các package 02/03. |
 
-Mục 1, 2, 3, 5 và 6 đã được sửa và live từ version `47d98295`; mục 11 đã sửa ở core và live ở `328ca295-d5da-487e-a063-843b0c7c86db` (code `1f5cfa5`). Các mục còn lại là gap đã biết, không cần sửa trước khi nộp.
+Mục 1, 2, 3, 5 và 6 đã được sửa và live từ version `47d98295`; mục 11 đã sửa ở core và live từ `328ca295` và vẫn có trong version hiện tại `cde74507` (code `1f5cfa5`). Các mục còn lại là gap đã biết, không cần sửa trước khi nộp.
 
 ---
 

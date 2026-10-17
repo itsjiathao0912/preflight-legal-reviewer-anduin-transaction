@@ -16,7 +16,7 @@ that blocks digitization until the critical items are answered.
 
 ![Findings screen of the live app: the document on the left, findings with cited evidence on the right](docs/demo/img/03-findings.png)
 
-Live version 328ca295-d5da-487e-a063-843b0c7c86db (code 1f5cfa5) · status: D1 `aduin-transaction-db` is live (schema v5, demo seed: Partners Group workspace with 7 decisions and 1 proposed rule), the Turnstile managed widget is live, and CSP is enforced (`style-src` keeps `unsafe-inline` for Radix). The zero-upstream smoke run passed.
+Live version cde74507-7b92-4e43-99fa-754de2c5cf3b (code 1f5cfa5 plus 994ea54: worker AI timeout raised to 240 s; a live AI review now works, about 3-4 minutes) · status: D1 `aduin-transaction-db` is live (schema v5, demo seed: Partners Group workspace with 7 decisions and 1 proposed rule), the Turnstile managed widget is live, and CSP is enforced (`style-src` keeps `unsafe-inline` for Radix). The zero-upstream smoke run passed.
 
 ## At a glance
 

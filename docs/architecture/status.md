@@ -1,6 +1,6 @@
 # Status
 
-As of 17 Oct 2026 (live version `328ca295-d5da-487e-a063-843b0c7c86db`, code `1f5cfa5`, previous `47d98295`): Phases 00-10 are done and the site is live with its real database, Turnstile and an enforced CSP. Demo-readiness fixes and later fixes are live (see below). Live AI now reaches OpenRouter but the free model currently times out at about 120 s (worker fix in progress); demo with No AI. A human-operator live AI sweep, the AC51 echo and the D4 burst are still pending.
+As of 17 Oct 2026 (live version `cde74507-7b92-4e43-99fa-754de2c5cf3b`, code `1f5cfa5` plus cherry-pick of `994ea54`, previous `328ca295`): Phases 00-10 are done and the site is live with its real database, Turnstile and an enforced CSP. Demo-readiness fixes and later fixes are live (see below). Live AI review works end to end (4 AI findings in about 199 s) since the worker AI upstream timeout was raised from 120 s to 240 s; it is slow, so demo with No AI or precomputed samples. A human-operator live AI sweep, the AC51 echo and the D4 burst are still pending.
 
 Status key: **Built / Partial / Planned / Not live yet**. Live in the table means built and running on the deployed Worker.
 
@@ -31,7 +31,7 @@ Status key: **Built / Partial / Planned / Not live yet**. Live in the table mean
 
 ## Live deployment
 
-URL: `https://aduin-transaction-web.giathaowork.workers.dev` (Worker `aduin-transaction-web`, `*.workers.dev` only). Version `328ca295-d5da-487e-a063-843b0c7c86db`, code `1f5cfa5` (previous `47d98295`, `23612b12`). Deployed by the session "Test nhiều loop và debug" from a clean worktree.
+URL: `https://aduin-transaction-web.giathaowork.workers.dev` (Worker `aduin-transaction-web`, `*.workers.dev` only). Version `cde74507-7b92-4e43-99fa-754de2c5cf3b`, code `1f5cfa5` plus cherry-pick of `994ea54` (previous `328ca295`, `47d98295`, `23612b12`). Deployed by the session "Test nhiều loop và debug" from a clean worktree.
 
 A live probe on 17 Oct 2026: `/` returns 200, `/api/health` returns 200, and `/api/quota` with the `x-aduin-client` header returns `global_ok:true`. Response headers include `content-security-policy` with `script-src 'self' https://challenges.cloudflare.com` and a `style-src 'unsafe-inline'` residual, plus `referrer-policy: no-referrer`.
 
@@ -57,9 +57,10 @@ Plan: [Phase 10](../../process/general-plans/active/subdoc-qa-mvp_17-10-26/subdo
 | Documents | Findings waited on memory | Findings first, memory and AI in the background |
 | Deliverables | Planned | Root README, DEPLOY.md, demo materials |
 
-## What version 328ca295 adds (code `1f5cfa5`)
+## What version cde74507 adds (code `1f5cfa5` + `994ea54`)
 
-- Worker AI redirect fix: live AI now reaches OpenRouter, but the free model currently times out at about 120 s; a worker fix is in progress.
+- Worker AI upstream timeout raised from 120 s to 240 s (`994ea54`): a live AI review now works end to end (4 AI findings in about 199 s). No Intake commits are live.
+- Carried from 328ca295 (code `1f5cfa5`): worker AI redirect fix, so live AI reaches OpenRouter.
 - `ref-label-coherence` label-window fix.
 - Phone 375 px layout, dialog outside-click and upload-error fixes.
 - No-text documents are never "Ready to digitize"; the last document is restored after reload.
@@ -92,7 +93,7 @@ Plan: [Phase 10](../../process/general-plans/active/subdoc-qa-mvp_17-10-26/subdo
 | Investor-path detectors lack a human-checked ground truth | `process/general-plans/backlog/investor-path-ground-truth_NOTE_17-10-26.md` |
 | Memory page polish items (P8b-1 to P8b-6) | `process/general-plans/backlog/core-followups_17-10-26/` |
 | Headings such as "Section N." / "Article I." and Annex / Question conditional targets | Fixed in core (Intake P1, live 328ca295); UI not wired; re-measure on packages 02/03 pending |
-| Live AI times out: the free model takes about 120 s | Worker fix in progress |
+| Live AI is slow: a fresh review takes about 3-4 minutes (free model, 100-157 s of reasoning) | Known; timeout raised to 240 s, so it completes |
 | No CI; gates run locally | Planned |
 
 ## Test counts
