@@ -1,6 +1,6 @@
 # Status
 
-As of 17 Oct 2026 (live version `3d2c7301-a4a5-487c-bd7d-2f2c0800be6f`, deployed from `main` at `a4d7a34`, closeout commit `8a9398c`; previous `cde74507`): Phases 00-10 and Fund Package Intake are done and the site is live with its real database, Turnstile and an enforced CSP. Demo-readiness fixes and later fixes are live (see below). Variance management is planned next, with EXECUTE in another session. Live AI review works end to end (4 AI findings in about 199 s) since the worker AI upstream timeout was raised from 120 s to 240 s; it is slow, so demo with No AI or precomputed samples. A human-operator live AI sweep, the AC51 echo and the D4 burst are still pending.
+As of 18 Oct 2026 (live version `d9aaddd9-a62f-4850-8ff2-89889c8ef652`, built from `main` at `0c6312e`; previous `8a82ead2`): Phases 00-10, Fund Package Intake and Variance Management are done and the site is live with its real database (schema 6), Turnstile and an enforced CSP. Variance lives inside the existing Findings and Questions screens; no new screen. Live AI review works end to end but is slow (about 3-4 minutes), so demo with No AI or precomputed samples. A human-operator live AI sweep, the AC51 echo, the D4 burst and the live Variance write path are still pending. The Findings v2 redesign is in progress and not live.
 
 Status key: **Built / Partial / Planned / Not live yet**. Live in the table means built and running on the deployed Worker.
 
@@ -14,26 +14,29 @@ Status key: **Built / Partial / Planned / Not live yet**. Live in the table mean
 | Review and triage (W2) | Built | Edit of finding text or severity not built (backlog B-EDIT) |
 | Open a document or package (W1) | Partial | Upload takes many files (12 files, 40 MB, 10 MB each) and shows a type and role confirmation table; interim open dialog built; full `#documents` screen is still a placeholder route |
 | AI lane (W3) | Built | Live on the Worker; live AI sweep pending a human-operator run |
-| Counsel sheet, gate, DOCX export (W4) | Built | Live AI draft quality not measured |
+| Questions (was Counsel questions), gate, DOCX export (W4) | Built | Owner tabs Counsel / GP / Fund admin with per-owner export; answers carry intent and scope; live AI draft quality not measured |
 | Compare versions (W5) | Built | No compare for scanned documents; diff-only rows cannot become counsel questions |
 | Structure and investor types (W6) | Built | |
 | Logic outline JSON export | Built | |
 | Firm memory UI, rules, audit (W7) | Built | Live on D1 |
 | Demo sandbox (W8) | Built | Live. `ws_demo` is Partners Group: 7 decisions plus rule `sr01` (proposed); includes counsel answer A on the two swapped refs (`sd06`, `sd07`) |
-| Memory API (19 routes) and D1 schema | Built | Live: real D1 `aduin-transaction-db`, schema 5 |
+| Memory API (19 routes) and D1 schema | Built | Live: real D1 `aduin-transaction-db`, schema 6 (migration 0006) |
 | AI/OCR proxy, limits, spend ledger | Built | Live with D1 quotas and cache |
 | Turnstile | Built | Managed widget live; automated browsers cannot pass it |
 | CSP and security headers | Built | Enforced; `style-src 'unsafe-inline'` residual |
 | Fund Package Intake | Built; live | 4 phases, 20 of 20 acceptance criteria met by passing automated gates (3 with a gap note). Multi-file upload with confirmation table, Package lens in Structure, coverage line in the Findings header and gate popover, "For the GP" group plus request DOCX, browser-only storage (24 h, restored on reload). No new screens, no new Worker route, no D1 change, no LLM task (0 live model calls, $0). Gaps: see Known gaps. [process/features/fund-package-intake/](../../process/features/fund-package-intake/); demo inputs in [samples/packages/](../../samples/packages/) |
-| Variance management | Planned | 5 phases, EXECUTE comes next in another session; not live. [process/features/variance-management/](../../process/features/variance-management/) |
+| Variance management | Built; live | 5 phases, all acceptance criteria AC-V1 to AC-V20 met by passing automated gates; live write path of AC-V14/V16 is an operator residual. Changes segment in Findings (baseline from the same firm only, cosmetic changes hidden and grouped, impact lines from the logic graph, owner chip), owner tabs in Questions, answer intent and scope, R-01 regression check, gate counts changes. 13 detectors and 15 issue classes unchanged (uses `version_drift`). 0 LLM calls. [process/features/variance-management/](../../process/features/variance-management/) |
+| Findings v2 redesign | In progress, not live | Mockup [design/mockups/findings-v2.html](../../design/mockups/findings-v2.html). Phase A done as unmounted new files; Phase B (mount and browser proof) is next. |
 | CI pipeline | Planned | None today; every gate runs locally |
 | Deploy guide, README, demo script and slides | Built | [DEPLOY.md](../DEPLOY.md), root README, [demo](../demo/); 13-memory and 14-audit screenshots need manual capture |
 
 ## Live deployment
 
-URL: `https://aduin-transaction-web.giathaowork.workers.dev` (Worker `aduin-transaction-web`, `*.workers.dev` only). Version `3d2c7301-a4a5-487c-bd7d-2f2c0800be6f`, deployed from `main` at `a4d7a34`. It is a static-assets deploy: the Worker code is the same as `994ea54`. Rollback chain: `3d2c7301`, `cde74507`, `328ca295`, `09e7a579`, `47d98295`, `23612b12`.
+URL: `https://aduin-transaction-web.giathaowork.workers.dev` (Worker `aduin-transaction-web`, `*.workers.dev` only). Version `d9aaddd9-a62f-4850-8ff2-89889c8ef652`, built from `main` at `0c6312e`. D1 migration `0006_variance.sql` is applied (`schema_version` 6). It includes the AI review streaming, idle-timeout and no-duplicate-AI-findings fixes first shipped in `8a82ead2`, and a Preflight rename. Version chain: `d9aaddd9`, `8a82ead2`, `b04f1a8c`, `3d2c7301`, `cde74507`, `328ca295`, `09e7a579`, `47d98295`, `23612b12`.
 
-A live probe on 17 Oct 2026: `/` returns 200, `/api/health` returns 200, and `/api/quota` with the `x-aduin-client` header returns `global_ok:true`. Response headers include `content-security-policy` with `script-src 'self' https://challenges.cloudflare.com` and a `style-src 'unsafe-inline'` residual, plus `referrer-policy: no-referrer`.
+**Rollback caveat:** after migration 0006, `8a82ead2` refuses memory writes because it pins schema 5. A rollback therefore means rolling forward to a fixed build or restoring D1 (Time Travel); `b04f1a8c` and older have the same limit.
+
+A live probe on 17 Oct 2026 (before Variance): `/` returns 200, `/api/health` returns 200, and `/api/quota` with the `x-aduin-client` header returns `global_ok:true`. Response headers include `content-security-policy` with `script-src 'self' https://challenges.cloudflare.com` and a `style-src 'unsafe-inline'` residual, plus `referrer-policy: no-referrer`.
 
 Behavior on the live site:
 
@@ -49,7 +52,7 @@ Plan: [Phase 10](../../process/general-plans/active/subdoc-qa-mvp_17-10-26/subdo
 
 | Item | Before | Now |
 |---|---|---|
-| Database | No D1 binding, placeholder id | Real D1 `aduin-transaction-db`, schema 5, demo seed |
+| Database | No D1 binding, placeholder id | Real D1 `aduin-transaction-db`, schema 5, demo seed (schema 6 since Variance, 18 Oct) |
 | Turnstile | Worker verify only | Managed widget live |
 | Headers and CSP | None | CSP enforced, `referrer-policy: no-referrer` |
 | Memory and demo sandbox | `memory_unavailable` | Live |
@@ -57,13 +60,25 @@ Plan: [Phase 10](../../process/general-plans/active/subdoc-qa-mvp_17-10-26/subdo
 | Documents | Findings waited on memory | Findings first, memory and AI in the background |
 | Deliverables | Planned | Root README, DEPLOY.md, demo materials |
 
+## What version d9aaddd9 adds (Variance Management)
+
+All inside existing screens. No new screen, no new sidebar item.
+
+- **Firms:** the memory now has Hartwell & Crane LLP (aliases Hartwell & Crane, HC LLP, H&C), Ostrander Pell LLP and Calder Reyes. Sutter Lane & Abernathy is not seeded.
+- **Demo packages:** 01 Northgate is tagged Hartwell & Crane, 02 Lotus Bay is tagged Ostrander Pell, 03 Redwood Ridge has no firm (first review).
+- **Findings, Changes segment:** change rows and a "vs <baseline>" control limited to the same firm. Picker samples never act as a baseline. Cosmetic changes are hidden and grouped (demo: 214 raw changes shown as 7: 3 new + 4 logic). Impact lines come from the logic graph. Each row has an owner chip (Counsel, GP, Fund admin).
+- **Questions (renamed from Counsel questions):** owner tabs Counsel / GP / Fund admin with per-owner export. The answer dialog records intent and scope. A firm-template answer such as "Appendix C must exist" creates an R-01 regression check; a later fund without it shows "Regression: confirmed in Fund II".
+- **Gate:** still two-state (Blocked / Ready); it counts changes, regressions and unanswered owner questions.
+- **Cost:** Variance makes 0 LLM calls. Still 13 detectors and 15 issue classes; variance adds no class (it uses `version_drift`).
+- **Demo path:** upload Fund II, then Fund III, with firm Hartwell & Crane. Steps in the [Vietnamese walkthrough](../walkthrough/demo-walkthrough.vi.md).
+
 ## What version 3d2c7301 adds (Fund Package Intake)
 
 - Upload modal takes many files and shows a confirmation table (type, role, high or low confidence, reason). Run checks stays disabled until the low-confidence rows are confirmed. The baseline is chosen with the role select (same firm only).
 - A high-confidence subscription agreement uploaded alone opens as a one-document package with coverage. Bundled samples show no package UI.
 - Structure has a "Package" lens: documents, external references (Resolved, Not in package, Needs confirmation), cross-document terms ("Defined in LPA", "Unverified") and coverage per check group.
 - A coverage line appears in the Findings header and the gate popover. A missing subscription agreement blocks the gate; a missing LPA or PPM only warns (the policy is data).
-- Counsel questions has a "For the GP" group, one item per missing document with its quote, and one request DOCX.
+- Questions (then called Counsel questions) has a "For the GP" group, one item per missing document with its quote, and one request DOCX.
 - The structurer reads "Section N." and "Article I." headings; `broken-conditional` resolves Annex X and Question N targets. Redwood Ridge I now catches "skip to Question 15" (F1).
 - Live checks on the demo packages: Northgate III shows 7 GP items matching the expected list, and its document 01 has 7 findings. The live package smoke passes 8 of 8 checks and runs to findings in about 229 ms.
 - Counts wording: 13 detectors and 15 issue classes, plus package-level checks (references, cross-document terms, coverage).
@@ -112,10 +127,31 @@ Plan: [Phase 10](../../process/general-plans/active/subdoc-qa-mvp_17-10-26/subdo
 | Intake: the AI document-type suggester is a seam only (no model task ships) | same folder |
 | Intake: bundle grew by about 270 kB; Package lens has 1 serious contrast item and 4 label mismatches (axe) | same folder |
 | Intake operator residuals: live AI/OCR on packages, real-session memory writes, a manual keyboard pass | `intake-operator-live-sweep` stub; 12 backlog stubs in total |
+| Variance: live probe re-run deferred | Variance program report |
+| Variance: live R-01 write path is an operator run (needs a human Turnstile session) | Variance program report |
+| Variance: no manual keyboard pass | Variance program report |
+| Variance: package 01 shows 9 change rows (2 new + 7 logic), not the answer key's 3 + 4, because digit changes in operative text count as logic | Variance program report |
+| Variance: V7 trust-split change is owned by the GP (SPEC A9); the answer key says Counsel | Variance program report |
+| Variance: fund-scoped answers can supersede across funds | Variance program report |
+| Variance: the change chip overlaps the row title | UI note |
+| Rollback after 0006: `8a82ead2` refuses memory writes (pins schema 5); roll forward or restore D1 | Live deployment above |
 | Live AI is slow: a fresh review takes about 3-4 minutes (free model, 100-157 s of reasoning) | Known; timeout raised to 240 s, so it completes |
 | No CI; gates run locally | Planned |
 
-## Test counts
+## Test counts (Variance, at `0c6312e`)
+
+| Suite | After Variance |
+|---|---|
+| Core (Vitest) | 3,190 (plus 3 opt-in skips) |
+| Worker (Vitest, local D1) | 608 |
+| Web unit (Vitest) | 518 |
+| Playwright preview e2e | 242 (plus 1 opt-in skip) |
+| Stack-memory e2e | 12 |
+| Scripts | 183 |
+
+Total 4,753. Source: the Variance program report (`process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp_REPORT_17-10-26.md`). The table below is the earlier Fund Package Intake record.
+
+### Earlier counts (Fund Package Intake)
 
 Source: the Fund Package Intake program report (`process/features/fund-package-intake/active/intake-mvp_17-10-26/intake-mvp_REPORT_17-10-26.md`), as reported to this session; not re-run for this document. Total of the six suites below: 4,298.
 

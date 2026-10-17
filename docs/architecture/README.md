@@ -37,7 +37,7 @@ flowchart LR
     MA["Memory API: 19 routes"]
     CR["Daily purge cron"]
   end
-  D1[("D1: 20 tables")]
+  D1[("D1: 21 tables")]
   OR["OpenRouter free models"]
   UI -- "GET" --> AS
   UI -- "/api/ai, /api/ocr" --> PX
@@ -55,12 +55,12 @@ D1 (`aduin-transaction-db`) is bound and live on the deployed Worker (see [statu
 | Layer | Runs in | Owns | Never does |
 |---|---|---|---|
 | React app | Browser main thread | Screens, triage, gate display, DOCX export, PDF page rendering for OCR, memory outbox | Parse documents, call OpenRouter |
-| Engine Web Worker | Browser worker thread (Comlink) | Format adapters, structurer, logic graph, 13 detectors, light read of each package file (the package analysis itself is pure core code called from the app state), diff, counsel template drafts, quote verification | Network calls |
+| Engine Web Worker | Browser worker thread (Comlink) | Format adapters, structurer, logic graph, 13 detectors, variance against a same-firm baseline (cosmetic filter, impact lines, owner routing, no model calls), light read of each package file (the package analysis itself is pure core code called from the app state), diff, counsel template drafts, quote verification | Network calls |
 | IndexedDB (Dexie) | Browser | Uploaded bytes (24 h), packages (24 h), parsed models, drafts, UI state, decision outbox, daily allowance | Long-term storage |
 | Static assets | Cloudflare Worker (assets binding) | SPA bundle, 12 HTML samples, the 22-page scan set, precomputed AI/OCR JSON | Dynamic logic |
 | Proxy | Cloudflare Worker | Header and body guards, pre-limit, visitor cookie, quota claims, cache read/write, Turnstile, OpenRouter streaming, spend ledger | Parse a document, store a document |
-| Memory API | Cloudflare Worker + D1 | Sessions, lookup, runs, decisions, counsel Q&A, rules, audit, export (19 routes) | Fuzzy matching, store full text |
-| D1 | Cloudflare | 20 tables: firm memory, AI cache, quota counters, spend ledger | Hold uploaded files |
+| Memory API | Cloudflare Worker + D1 | Sessions, lookup, runs, decisions, counsel Q&A (with owner, intent and scope), regression checks, rules, audit, export (19 routes) | Fuzzy matching, store full text |
+| D1 | Cloudflare | 21 tables (schema 6): firm memory, AI cache, quota counters, spend ledger | Hold uploaded files |
 | Purge cron | Cloudflare Worker (03:17 UTC daily) | Delete expired sandboxes, old cache and quota rows | Touch the demo workspace |
 | OpenRouter | External | Free text and vision models (text: `nvidia/nemotron-3-super-120b-a12b:free`, vision: `nvidia/nemotron-3.5-super-vl:free`) | Receive PDFs or full documents |
 
@@ -70,7 +70,7 @@ Lookup order for AI results: static precomputed file, then D1 cache, then a live
 
 | Package | Role |
 |---|---|
-| [packages/core](../../packages/core/src/index.ts) | Pure TypeScript shared by browser and Worker: model, adapters, structurer, graph, detectors, diff, [package intake](../../packages/core/src/package/index.ts), memory fingerprints, counsel gate, LLM task registry, contracts (zod) |
+| [packages/core](../../packages/core/src/index.ts) | Pure TypeScript shared by browser and Worker: model, adapters, structurer, graph, detectors, diff, [package intake](../../packages/core/src/package/index.ts), [variance](../../packages/core/src/variance/index.ts), memory fingerprints, counsel gate, LLM task registry, contracts (zod) |
 | [apps/web](../../apps/web/src/main.tsx) | React 19 + Vite 8 + Tailwind 4 SPA, Zustand state, Dexie storage |
 | [apps/worker](../../apps/worker/src/index.ts) | Cloudflare Worker: hand-rolled route table, proxy pipeline, memory repo, D1 migrations |
 | [scripts](../../scripts/src/build-samples.ts) | Sample builder, seeded fixture builder, precompute and record tools, repo guards |

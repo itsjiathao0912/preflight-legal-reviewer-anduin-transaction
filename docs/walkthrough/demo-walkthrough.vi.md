@@ -1,8 +1,9 @@
 # Hướng dẫn demo Sub-doc QA (bản live hiện tại)
 
-> Viết ngày 17/10/2026, dựa trên code ở `main` (commit `a4d7a34`, đóng chương trình ở `8a9398c`) và bản live
-> https://aduin-transaction-web.giathaowork.workers.dev (version `3d2c7301-a4a5-487c-bd7d-2f2c0800be6f`, Fund Package Intake; chuỗi rollback: `cde74507`, `328ca295`, `09e7a579`, `47d98295`, `23612b12`).
-> Bản `3d2c7301` chỉ đổi static assets; code Worker giữ nguyên như `994ea54`.
+> Cập nhật ngày 18/10/2026, dựa trên code ở `main` (commit `0c6312e`) và bản live
+> https://aduin-transaction-web.giathaowork.workers.dev (version `d9aaddd9-a62f-4850-8ff2-89889c8ef652`, Variance Management; D1 schema 6; chuỗi version: `8a82ead2`, `b04f1a8c`, `3d2c7301`, `cde74507`, `328ca295`, `09e7a579`, `47d98295`, `23612b12`).
+> **Không rollback về `8a82ead2` hoặc cũ hơn:** sau migration 0006 các bản đó từ chối ghi memory (chúng ghim schema 5); muốn lùi phải roll forward hoặc restore D1.
+> Màn **Counsel questions** nay tên là **Questions** (có tab Counsel / GP / Fund admin). Các mục cũ trong tài liệu này viết "Counsel questions" là cùng một màn hình đó.
 > Tên nút, nhãn và câu thông báo được giữ **nguyên tiếng Anh như trên màn hình**, để bạn đối chiếu khi demo.
 > Đường dẫn code là đường dẫn tương đối từ gốc repo.
 
@@ -19,7 +20,7 @@
 | 5 | **Hạn mức AI free:** mỗi visitor được 3 tài liệu AI mới mỗi ngày, toàn hệ thống 35 request mỗi ngày. Mở sample không tốn lượt nào. | "Run AI on this sample", "Summarize changes", "AI draft" và upload khi AI đang bật đều tiêu lượt. | Tập dượt với **"No AI"**. Chỉ bật AI cho đúng một cảnh cần show. |
 | 6 | **Deep link `#memory` không dùng được**: app luôn mở vào `#findings`. | Gõ URL `/#memory` sẽ rơi về Findings. | Vào Memory bằng mục trong menu dọc. |
 | 7 | **AI live chạy được nhưng chậm.** Timeout worker đã nâng từ 120 s lên 240 s; một review AI mới cho ra 4 finding AI sau khoảng 199 s (khoảng 3-4 phút mỗi lần). Mỗi lần tốn 1 trong 3 tài liệu AI mới mỗi ngày. | "Run AI", "Summarize changes", "AI draft" phải chờ vài phút. | Demo live nên chọn **"No AI"** hoặc các sample đã tính sẵn; chỉ chạy AI mới nếu còn thời gian. Tải lại trang sẽ mở lại tài liệu cuối cùng (restore on reload), và layout điện thoại 375px đã được sửa nên có thể show nhanh trên màn hẹp. |
-| 8 | **Fund Package Intake đã live (không thêm màn hình mới).** Upload nhận nhiều file (tối đa 12 file / 40 MB, mỗi file 10 MB) và hiện bảng xác nhận; Structure có lens **Package**; Findings và popover của gate có dòng **Coverage**; Counsel questions có nhóm **For the GP**. Gói demo chính là `samples/packages/01-northgate-infrastructure-iii`. Không có LLM, không có route Worker mới, D1 không đổi; gói chỉ lưu trong trình duyệt 24 giờ. | Danh sách firm trong Upload chỉ có Partners Group, Firm X, Firm Y và "Other / no firm". **"Hartwell & Crane LLP" không có trong danh sách**, và gói demo Northgate cũng được khai báo "No firm". Vì không có firm nên memory không áp dụng cho gói, và baseline chỉ chọn trong chính gói. | Demo gói bằng "Other / no firm" (xem §3A). Đừng hứa memory hay baseline liên-gói trên gói này. Hai sub agreement trong một gói luôn cần analyst chọn role. |
+| 8 | **Fund Package Intake và Variance đã live (không thêm màn hình mới).** Upload nhận nhiều file (tối đa 12 file / 40 MB, mỗi file 10 MB) và hiện bảng xác nhận; Structure có lens **Package**; Findings và popover của gate có dòng **Coverage**; Questions có nhóm **For the GP**. Gói demo chính là `samples/packages/01-northgate-infrastructure-iii`. Intake không dùng LLM, không có route Worker mới; gói chỉ lưu trong trình duyệt 24 giờ. Variance (§3B) thêm migration 0006 cho D1. | Danh sách firm trong Upload nay có **Hartwell & Crane LLP**, Ostrander Pell LLP, Calder Reyes (cùng Partners Group); **Sutter Lane & Abernathy không có** trong danh sách. Nút Demo packages gắn sẵn firm: 01 Northgate = Hartwell & Crane, 02 Lotus Bay = Ostrander Pell, 03 Redwood Ridge = không firm (review lần đầu). Có firm thì memory chạy, nên cần phiên Turnstile của người thật (điều 1). | Demo gói và Variance bằng trình duyệt thường đã qua Turnstile. Baseline chỉ chọn trong cùng firm. Hai sub agreement trong một gói luôn cần analyst chọn role. |
 
 ---
 
@@ -148,7 +149,7 @@
 
 ## 3A. Demo Fund Package Intake (gói tài liệu của một quỹ)
 
-> Chuẩn bị: trình duyệt thường, menu đặt **No AI** (gói không dùng AI). Không cần Turnstile cho phần này, vì gói không có firm nên không gọi memory. Mọi thứ chạy trong trình duyệt, không gọi `/api/ai`, `/api/ocr`, và không có route Worker nào cho gói.
+> Chuẩn bị: trình duyệt thường, menu đặt **No AI** (gói không dùng AI). Gói 1 và 2 có firm nên app gọi memory: cần qua Turnstile một lần (điều 1); gói 3 không có firm nên không cần. Việc phân tích gói chạy trong trình duyệt, không gọi `/api/ai`, `/api/ocr`, và không có route Worker nào cho gói.
 >
 > Các chi tiết dưới đây lấy từ code (`apps/web/src/features/...`) và từ bộ test; chỗ nào chưa nhìn thấy trực tiếp trên bản live thì đánh dấu **(chưa xác minh trên live)**.
 
@@ -159,9 +160,9 @@
 | Bước | Thao tác | Màn hình hiện gì | Câu nói gợi ý |
 |---|---|---|---|
 | 1 | Doc switcher → **Open another document…** → mục **Upload** → ô **File**: chọn cả 6 file (kéo thả hoặc chọn nhiều file) | Dialog nhận nhiều file. Dưới ô File là các ô Law firm, Fund name, Version label. | "Một gói gồm sub agreement, LPA, PPM, bản trước và các tài liệu phụ." |
-| 2 | **Law firm**: chọn **Other / no firm**. Fund name: `Northgate Capital Fund III`. Tích "I have read the privacy notice". Bấm **Upload and open** | Dòng gợi ý "No firm: memory not applied for this document." Dialog chuyển sang bước "Confirm the package" (bảng xác nhận). **Lưu ý:** brief gốc nói firm Hartwell & Crane LLP, nhưng firm này **không có trong danh sách chọn**; dùng "Other / no firm" (cùng cách mà nút Demo packages đang dùng cho gói này). | "Tool đọc nhanh từng file để đoán loại và vai trò, chưa chạy kiểm tra." |
+| 2 | **Law firm**: chọn **Hartwell & Crane LLP**. Fund name: `Northgate Capital Fund III`. Tích "I have read the privacy notice". Bấm **Upload and open** | Dialog chuyển sang bước "Confirm the package" (bảng xác nhận). Firm này nay có trong danh sách và nút Demo packages cũng gắn sẵn nó cho gói Northgate, nên memory áp dụng cho gói. | "Tool đọc nhanh từng file để đoán loại và vai trò, chưa chạy kiểm tra." |
 | 3 | Đọc bảng **Confirm the package** (cột File, Type, Role, Confidence, Why, Confirm) | Trong lúc đọc có dòng "Reading the files…". Mỗi dòng có Type (Subscription agreement / LPA / PPM / Other…), Role (To digitize / Reference / Baseline (earlier version)), Confidence **High** hoặc **Low**, và lý do. Theo bộ test: 02 là LPA, 03 là PPM (High); hai file 01 và 04 đều là Subscription agreement nên **Low**, với lý do "Two subscription agreements in this package; choose which one to digitize."; 05 và 06 là Other. Dòng Low hiện "Needs your confirmation". | "Tool không bao giờ tự tin quá mức: hai sub agreement nên nó hỏi lại. Loại và vai trò do luật (rule), không do model." |
-| 4 | Dòng **01**: Role = **To digitize**. Dòng **04**: Role = **Baseline (earlier version)**. Tích **Confirmed** ở các dòng Low (01 và 04). Nhập **Version label** (ô bắt buộc với gói, ví dụ `v1`) | Nút **Run checks** đang tắt cho tới khi mọi dòng Low đã được xác nhận, có đúng một sub agreement "To digitize" và đã có version. Dòng ghi chú báo lý do còn bị giữ (ví dụ "Enter the version label before running checks."). Baseline chọn bằng ô Role; vì gói không có firm nên chỉ chọn được file trong chính gói này. | "Phải có người xác nhận phần chưa chắc thì mới chạy. Baseline chỉ được chọn trong cùng firm." |
+| 4 | Dòng **01**: Role = **To digitize**. Dòng **04**: Role = **Baseline (earlier version)**. Tích **Confirmed** ở các dòng Low (01 và 04). Nhập **Version label** (ô bắt buộc với gói, ví dụ `v1`) | Nút **Run checks** đang tắt cho tới khi mọi dòng Low đã được xác nhận, có đúng một sub agreement "To digitize" và đã có version. Dòng ghi chú báo lý do còn bị giữ (ví dụ "Enter the version label before running checks."). Baseline chọn bằng ô Role, chỉ trong cùng firm (ở đây là file 04 trong chính gói). | "Phải có người xác nhận phần chưa chắc thì mới chạy. Baseline chỉ được chọn trong cùng firm." |
 | 5 | Bấm **Run checks** | Dialog đóng; mở màn **Findings** cho tài liệu 01. Engine chạy như bình thường. **Header Findings có dòng Coverage** cạnh gate, dạng `Coverage: partial - …` (số lý do cụ thể cho Northgate **chưa xác minh trên live**; nó nêu các tham chiếu "not in the package" và/hoặc thuật ngữ unverified). Theo kết quả đo: doc 01 có **7 finding** (D1, D2, D3, D4, D5, D6, D10). | "Partial nghĩa là: có nhóm kiểm tra chưa làm đủ vì thiếu tài liệu. Tool không để một gói thiếu trông như đã kiểm tra đầy đủ." |
 | 6 | Bấm pill gate | Popover có cùng dòng Coverage. Vì có sub agreement nên gate **không** bị chặn vì thiếu tài liệu; mục "Warnings (they do not block digitization)" có thể liệt kê tài liệu thiếu mà sub agreement nhắc tới (side letter, tax form) **(chưa xác minh trên live)**. D6 (`If the Investor is a Benefit Plan Investor, complete Annex F.`) là lỗi critical nên pill nhiều khả năng hiện "Blocked · N" vì finding này, không phải vì gói **(chưa xác minh trên live)**. | "Thiếu LPA hoặc PPM chỉ cảnh báo; thiếu sub agreement mới chặn. Chính sách này là dữ liệu, không phải code cứng." |
 | 7 | Menu → **Structure** → lens **Package** (lens cuối, chỉ xuất hiện khi mở gói) | Dòng trạng thái ghi lại dòng Coverage. Trang có các phần: **Documents** (6 file, loại, vai trò); **External references** (mỗi tham chiếu có trích dẫn và vị trí): "Partnership Agreement" → **Resolved to** file 02 (LPA), "PPM" → file 03; **Annex F** và **Kestrel Side Letter** → **Not in package**; tham chiếu chưa chắc hiện **Needs confirmation** kèm ô chọn tài liệu; **Terms from other documents** (ghi rõ "They are not findings"): Capital Commitment, Capital Contribution, Closing Date, Defaulting Partner, Benefit Plan Investor đều **Defined in LPA**; **Check coverage**: bảng từng nhóm kiểm tra, trạng thái Full / Partial / Blocked, tài liệu còn thiếu và lý do. | "Thuật ngữ do LPA định nghĩa không bị báo là chưa định nghĩa. Còn Annex F và Kestrel side letter thì không có trong gói." |
@@ -174,7 +175,7 @@
 
 ### Gói 2: Lotus Bay Asia Growth II (gói thiếu, coverage partial)
 
-Mở bằng **Demo packages → Lotus Bay Asia II** (6 file: sub agreement v2, questionnaire, PPM, v1 làm baseline, side letter Sakura, W-8 guide). Cũng cần xác nhận như gói 1: hai sub agreement (01 và 04) đều Low, đặt 01 là To digitize, 04 là Baseline.
+Mở bằng **Demo packages → Lotus Bay Asia II** (gắn sẵn firm Ostrander Pell) (6 file: sub agreement v2, questionnaire, PPM, v1 làm baseline, side letter Sakura, W-8 guide). Cũng cần xác nhận như gói 1: hai sub agreement (01 và 04) đều Low, đặt 01 là To digitize, 04 là Baseline.
 
 | Bước | Màn hình hiện gì | Câu nói gợi ý |
 |---|---|---|
@@ -184,6 +185,26 @@ Mở bằng **Demo packages → Lotus Bay Asia II** (6 file: sub agreement v2, q
 | 4. Counsel questions → For the GP | **2 mục**: Partnership Agreement và Annex C. **Thiếu mục thứ ba** ("US Feeder Subscription Agreement"): tool chưa trích được, đã ghi ở §12. | "Đây là chỗ tool còn sót, tôi nói rõ để khỏi bị hỏi bất ngờ." |
 
 **Sót đã biết khi demo:** xem §12, các dòng 12 đến 19.
+
+---
+
+## 3B. Demo Variance Management (so với baseline cùng firm)
+
+> Chuẩn bị: trình duyệt thường đã qua Turnstile (Variance cần memory). Menu **No AI**: Variance không gọi LLM (0 lượt AI). Variance nằm trong các màn có sẵn (Findings, Questions), không có màn mới.
+
+| Bước | Thao tác | Màn hình hiện gì | Câu nói gợi ý |
+|---|---|---|---|
+| 1 | Upload **Fund II** trước (file `04-NG2-Subscription-Agreement-2024.docx`), Law firm = **Hartwell & Crane LLP**, version label ví dụ `Fund II` | Tài liệu mở ở Findings, được lưu cùng firm trong trình duyệt. | "Quỹ trước của cùng law firm sẽ là baseline." |
+| 2 | Upload **Fund III** (`01-NG3-Subscription-Agreement.docx`) với cùng firm **Hartwell & Crane LLP** (hoặc dùng gói Northgate qua Demo packages, đã gắn sẵn firm) | Findings của Fund III. Có điều khiển **vs <baseline>** và segment **Changes**. Baseline chỉ liệt kê tài liệu **cùng firm**; sample trong picker không bao giờ làm baseline. | "Tool chỉ so với tài liệu cùng firm, vì khác firm thì cách soạn khác nhau, diff vô nghĩa." |
+| 3 | Chọn baseline Fund II, mở segment **Changes** | Thay đổi vô nghĩa (cosmetic) bị ẩn và gom nhóm: demo có **214 thay đổi thô, hiện 7** (3 new + 4 logic). Mỗi dòng có **dòng tác động (impact)** tính từ logic graph và **chip owner** (Counsel / GP / Fund admin). Gói 01 hiện **9 dòng** (2 new + 7 logic), không phải 3 + 4 như answer key, vì thay đổi chữ số trong điều khoản vận hành tính là logic (gap đã biết). | "214 thay đổi thô, chỉ 7 cái đáng đọc; mỗi cái có người chịu trách nhiệm." |
+| 4 | Menu → **Questions** | Các tab **Counsel / GP / Fund admin**, mỗi tab có export riêng. Câu hỏi về thay đổi nằm ở tab owner tương ứng (thay đổi V7 về trust-split thuộc **GP** theo SPEC A9; answer key ghi Counsel). | "Mỗi người nhận đúng câu hỏi của mình." |
+| 5 | Ở một câu hỏi, **Record answer** → nhập intent (ví dụ "Appendix C must exist") → scope **Firm template** → **Save answer** | Câu trả lời lưu kèm intent và scope; với scope firm template, app tạo **R-01 regression check** cho firm. (Phần ghi live cần phiên Turnstile của người thật; chưa chạy tự động trên live.) | "Một câu trả lời của counsel trở thành luật kiểm tra cho các quỹ sau của firm." |
+| 6 | Mở một quỹ sau của cùng firm mà thiếu Appendix C | Finding hiện **"Regression: confirmed in Fund II"**. | "Lỗi cũ không được lặp lại ở quỹ mới." |
+| 7 | Bấm pill gate | Gate vẫn chỉ hai trạng thái **Blocked / Ready**, và đếm thay đổi, regression và câu hỏi owner chưa trả lời. | "Gate đơn giản, nhưng tính cả phần variance." |
+
+**Gói 02 (Lotus Bay)** gắn sẵn firm Ostrander Pell; baseline là bản nháp v1 cùng quỹ. **Gói 03 (Redwood Ridge)** không có firm: review lần đầu, không có baseline, nên không có segment Changes để so.
+
+**Sót đã biết của Variance:** probe live chưa chạy lại; đường ghi R-01 trên live là việc của operator (cần Turnstile thật); chưa kiểm tra bàn phím thủ công; câu trả lời scope fund có thể supersede sang quỹ khác; chip thay đổi đè lên tiêu đề dòng.
 
 ---
 
@@ -399,9 +420,11 @@ Kết quả #5 → #6 (khóa bằng golden test): **removed 1** (Appendix C), **
 | 16 | Bộ gợi ý loại tài liệu bằng AI mới là seam (chưa có task chạy thật); loại tài liệu chỉ do luật | `package/detect.ts` | Theo thiết kế (0 gọi model, $0) |
 | 17 | Bundle web tăng khoảng 270 kB; lens Package có 1 lỗi contrast mức serious và 4 label mismatch trong axe | `apps/web` | Thấp |
 | 18 | Chưa làm: live AI/OCR trên gói, ghi memory thật bằng phiên thật, và một lượt kiểm tra bàn phím thủ công (operator residuals) | stub `intake-operator-live-sweep` | Trung bình: không hứa các phần này |
-| 19 | Firm "Hartwell & Crane LLP" của brief không có trong danh sách firm của Upload; gói demo Northgate khai báo "No firm" | `firms.json`, `fixtures/package/demo-packages.json` | Thấp: dùng "Other / no firm" (§3A) |
+| 19 | (Đã xử lý ở Variance) Hartwell & Crane LLP nay có trong danh sách firm; gói 01 gắn sẵn firm này, gói 02 gắn Ostrander Pell, gói 03 không firm. Sutter Lane & Abernathy vẫn không được seed | `firms.json`, `fixtures/package/demo-packages.json` | Thấp |
+| 20 | Variance: probe live chưa chạy lại; đường ghi R-01 live cần Turnstile thật; chưa kiểm tra bàn phím thủ công; gói 01 hiện 9 dòng thay đổi (2 new + 7 logic) thay vì 3 + 4; owner của V7 là GP; answer scope fund có thể supersede giữa các quỹ; chip đè tiêu đề dòng | báo cáo chương trình Variance | Thấp đến trung bình |
+| 21 | Rollback: sau migration 0006, version `8a82ead2` từ chối ghi memory; chỉ roll forward hoặc restore D1 | `docs/DEPLOY.md` | Trung bình |
 
-Mục 1, 2, 3, 5 và 6 đã được sửa và live từ version `47d98295`; mục 11 đã sửa và live ở version hiện tại `3d2c7301`. Mục 12 đến 19 là các gap của Fund Package Intake (12 stub backlog nằm ở `process/features/fund-package-intake/backlog/`). Các mục còn lại là gap đã biết, không cần sửa trước khi nộp. Variance management đã được lên kế hoạch và sẽ được làm ở một phiên khác.
+Mục 1, 2, 3, 5 và 6 đã được sửa và live từ version `47d98295`; mục 11 đã sửa và live ở version hiện tại `3d2c7301`. Mục 12 đến 19 là các gap của Fund Package Intake (12 stub backlog nằm ở `process/features/fund-package-intake/backlog/`). Các mục còn lại là gap đã biết, không cần sửa trước khi nộp. Variance Management (mục 20 và 21) đã live ở version `d9aaddd9`. Findings v2 (thiết kế lại Findings) đang được làm, chưa live.
 
 ---
 
@@ -417,6 +440,8 @@ Mục 1, 2, 3, 5 và 6 đã được sửa và live từ version `47d98295`; m�
 | Approve / Reject / Add / Deactivate rule | firm_rule, audit_event |
 | AI chạy mới | ai_cache, quota_counter, spend_ledger |
 
-TL;DR (gói tài liệu): Upload nhiều file hoặc chọn Demo packages → xác nhận loại/vai trò (hàng Low) → Run checks → dòng Coverage ở header → Structure > Package → Counsel questions > For the GP (7 mục với gói Northgate) → Export request DOCX; rồi gói Lotus Bay để cho thấy coverage partial và thuật ngữ unverified. Dùng "Other / no firm" vì Hartwell & Crane không có trong danh sách.
+TL;DR (Variance): upload Fund II rồi Fund III cùng firm Hartwell & Crane → Findings → Changes (vs baseline, 214 thô → 7 hiện) → Questions theo tab owner → Record answer với scope Firm template (R-01) → quỹ sau hiện "Regression: confirmed in Fund II". 0 lượt LLM.
+
+TL;DR (gói tài liệu): Upload nhiều file hoặc chọn Demo packages → xác nhận loại/vai trò (hàng Low) → Run checks → dòng Coverage ở header → Structure > Package → Counsel questions > For the GP (7 mục với gói Northgate) → Export request DOCX; rồi gói Lotus Bay để cho thấy coverage partial và thuật ngữ unverified. Gói Northgate nay gắn sẵn firm Hartwell & Crane.
 
 TL;DR: Demo bằng trình duyệt thường đã qua Turnstile, để menu ở No AI. Đi theo thứ tự #1 (high, gate Ready) → #5 (Already answered từ seed) → Memory (Reopen sd06) → #5 (New, Blocked) → Counsel questions (Record answer A, Ready) → Compare #5→#6 → (#9). Gate chặn ở #3/#5, không chặn ở #1. Đừng bấm vào Documents.

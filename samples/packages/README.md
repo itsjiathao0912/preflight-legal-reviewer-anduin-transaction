@@ -26,6 +26,16 @@ Each package folder contains:
 
 Package-level items (D8 LPA-only terms, E1, F4, the missing documents and the coverage line) are now handled by Fund Package Intake, with the misses named above. Schedule and Exhibit targets and dash-style headings are not handled either.
 
+## Firm tags and variance in the live demo (version d9aaddd9)
+
+| Package | Firm tag on the Demo packages button | Variance in the live build |
+|---|---|---|
+| 01 Northgate III | Hartwell & Crane LLP | Baseline is Fund II (same firm). The Changes segment shows 9 rows (2 new + 7 logic) from 214 raw changes, not the answer key's 3 new + 4 logic, because digit changes in operative text count as logic. The V7 trust-split change is owned by the GP (SPEC A9); the answer key says Counsel. |
+| 02 Lotus Bay II | Ostrander Pell LLP | Baseline is the v1 draft of the same fund. |
+| 03 Redwood Ridge I | none (first review) | No baseline, so no Changes segment. Sutter Lane & Abernathy is not a seeded firm. |
+
+Memory-backed variance needs a human Turnstile session on the live site.
+
 ## Use them as demo inputs
 
 On the live site, open Upload and pick a package under "Demo packages" (Northgate Capital III, Lotus Bay Asia II, Redwood Ridge I), or drag the six files of a package's `docs/` folder into the Upload dialog. The demo copies live in `fixtures/package/design/`. Steps: [docs/walkthrough/demo-walkthrough.vi.md](../../docs/walkthrough/demo-walkthrough.vi.md) (Vietnamese). Package 01 is the primary demo: its "For the GP" group shows 7 items.

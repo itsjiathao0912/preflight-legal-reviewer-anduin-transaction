@@ -122,7 +122,7 @@ flowchart TD
 | 2. Type and role confirm | Table of file, type, role, confidence, reason; confirm low rows | [PackageConfirmTable.tsx](../../apps/web/src/features/open-document/PackageConfirmTable.tsx), [detect.ts](../../packages/core/src/package/detect.ts) |
 | 3. Package map | Structure > Package lens: documents, external references (Resolved, Not in package, Needs confirmation), cross-document terms ("Defined in LPA", "Unverified") | [PackageLens.tsx](../../apps/web/src/features/package/PackageLens.tsx), [references.ts](../../packages/core/src/package/references.ts), [terms.ts](../../packages/core/src/package/terms.ts) |
 | 4. Coverage | One coverage line in the Findings header and the gate popover; a table per check group in the lens; a missing sub agreement blocks, a missing LPA or PPM only warns | [coverage.ts](../../packages/core/src/package/coverage.ts), [policy.ts](../../packages/core/src/package/policy.ts), [CoverageLine.tsx](../../apps/web/src/features/gate/CoverageLine.tsx) |
-| 5. GP request | Counsel questions > "For the GP": one item per missing document with its quote, and one request DOCX | [request.ts](../../packages/core/src/package/request.ts), [GpRequestGroup.tsx](../../apps/web/src/features/counsel/GpRequestGroup.tsx), [exportRequestDocx.ts](../../apps/web/src/features/counsel/exportRequestDocx.ts) |
+| 5. GP request | Questions > "For the GP": one item per missing document with its quote, and one request DOCX | [request.ts](../../packages/core/src/package/request.ts), [GpRequestGroup.tsx](../../apps/web/src/features/counsel/GpRequestGroup.tsx), [exportRequestDocx.ts](../../apps/web/src/features/counsel/exportRequestDocx.ts) |
 
 ## W2. Review and triage (Built)
 
@@ -246,7 +246,9 @@ flowchart LR
 - Versions mode is the default on every load (D-6). Siblings mode labels clauses common or differing for feeder and parallel funds.
 - Sample 5 against sample 6 gives 4 fixed, 3 still present, 0 new.
 - Scanned documents cannot be compared yet (backlog). Diff-only rows cannot become counsel questions yet (backlog).
-- Key code: [diff](../../packages/core/src/diff/index.ts), [findings-delta.ts](../../packages/core/src/diff/findings-delta.ts), [sibling.ts](../../packages/core/src/diff/sibling.ts), [CompareScreen.tsx](../../apps/web/src/features/compare/CompareScreen.tsx)
+- **Variance (Built, live 18 Oct 2026)** is the baseline view inside Findings, not part of Compare. With a firm set, the analyst picks a baseline from the same firm ("vs <baseline>"; picker samples never qualify). The **Changes** segment lists meaningful changes only: cosmetic ones are hidden and grouped (demo: 214 raw changes shown as 7, 3 new + 4 logic), each row has an impact line computed from the logic graph and an owner chip (Counsel, GP, Fund admin). No model call is made.
+- Variance questions land in **Questions** (the former Counsel questions screen) under owner tabs Counsel, GP and Fund admin, with one export per owner. The answer dialog records intent and scope (fund or firm template). A firm-template answer such as "Appendix C must exist" creates an R-01 regression check; a later fund of the same firm that lacks it shows "Regression: confirmed in Fund II". The gate stays Blocked or Ready and counts changes, regressions and unanswered owner questions.
+- Key code: [variance](../../packages/core/src/variance/index.ts), [diff](../../packages/core/src/diff/index.ts), [findings-delta.ts](../../packages/core/src/diff/findings-delta.ts), [sibling.ts](../../packages/core/src/diff/sibling.ts), [CompareScreen.tsx](../../apps/web/src/features/compare/CompareScreen.tsx)
 
 ## W6. Structure and investor types (Built)
 
@@ -322,6 +324,7 @@ flowchart LR
 | Counsel loop | W2 to W4 to gate | "Needs counsel" and Accepted critical findings become sheet questions. A clear A, B or C answer resolves the item; the gate recomputes in W2 and W4. |
 | Rules to AI context to cache key | W7 to W3 | Approved rules are injected into the AI prompt as context. `rules_hash` (sha256 of sorted normalized active rule texts) is part of the cache key, so a rule change never serves stale AI output. |
 | Structure feeds review | W6 to W2 | Investor-path and structure detectors emit ordinary findings, so they get labels, triage and gate treatment like any other finding. |
+| Variance feeds questions and gate | W5 to W4 to gate | Meaningful changes get an owner and become questions; firm-template answers become regression checks for the firm's later funds; the gate counts changes, regressions and unanswered owner questions. |
 | Drift feeds review | W5 to W2 | Findings delta marks each finding fixed, still present or new between two versions; mapped rows can become counsel questions. |
 
 ## Related

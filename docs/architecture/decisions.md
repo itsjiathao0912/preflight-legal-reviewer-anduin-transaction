@@ -17,6 +17,7 @@ Thirteen architecture decisions in ADR form: what was chosen, why, what was reje
 | ADR-11 | Counsel stays outside the app (DOCX out, answer recorded in) | Built |
 | ADR-12 | Product defaults D-1 to D-9 | Built |
 | ADR-13 | Fund package intake folds into existing screens; browser-only package storage; rule-based type detection; LLM suggester deferred | Built; live (17 Oct 2026, version 3d2c7301) |
+| ADR-14 | Variance folds into Findings and Questions; deterministic, same-firm baseline, owners and regression checks; additive migration 0006 | Built; live (18 Oct 2026, version d9aaddd9) |
 
 ## ADR-1. Browser-first engine with a thin Worker proxy
 
@@ -121,6 +122,13 @@ Approved by the user in the design session (D-8 and D-9 were orchestrator decisi
 - **Context.** A sub doc cites an LPA, annexes, side letters and tax forms that are often not uploaded with it. Without them the tool either flags terms the LPA defines (false errors) or silently skips checks (false confidence). The product rule is to integrate new features into existing screens and keep the engine deterministic and free.
 - **Alternatives rejected.** Four separate screens as in the original PRD (intake, package map, coverage, requests): adds navigation the analyst does not need and fragments one flow. Server-side package storage (a D1 migration and a Worker route): nothing needs it, it adds privacy surface (full documents on the server) and Worker CPU, and the free D1 write budget is the known capacity risk. LLM classification of document type: rules reach the demo set with no wrong high-confidence type, a model call costs quota and adds a nondeterministic step in front of every check, and a wrong type would silently change coverage. Missing documents as ordinary findings: would need a new issue class, fingerprint and memory semantics and would change the gate matrix.
 - **Consequences.** Everything runs offline in the browser and costs $0 (0 live model calls). The gate, the 13 detectors and the 15 issue classes are unchanged; package-level checks sit beside them. Known costs: type detection is rules only, so two subscription agreements in one package always need the analyst to pick roles; reference and term extraction miss some forms (for example the "US Feeder Subscription Agreement" on package 02, and Schedule and Exhibit targets); the bundle grew by about 270 kB. See [status.md](status.md) and [data-model.md](data-model.md#fund-packages-are-browser-only).
+
+## ADR-14. Variance Management folds into Findings and Questions
+
+- **Decision.** Change review against a baseline lives inside existing screens: a Changes segment in Findings with a "vs <baseline>" control, owner tabs in Questions (the former Counsel questions), and the existing two-state gate. The baseline must come from the same law firm; picker samples never act as a baseline. Cosmetic changes are hidden and grouped; each meaningful change gets an impact line from the logic graph and an owner (Counsel, GP or Fund admin). An answer records intent and scope; a firm-template answer becomes an R-01 regression check that is tested against later funds of the same firm. No new screen, no new issue class (changes use `version_drift`), no model call.
+- **Context.** Analysts compare each new fund with the firm's earlier one. Raw diffs are mostly noise (the demo pair has 214 raw changes, 7 of which matter), and a change is useless unless someone owns the follow-up. The product rule is to integrate, not add screens.
+- **Alternatives rejected.** A separate Compare-style screen for variance (extra navigation, a second gate); LLM classification of changes (cost, non-determinism, breaks the deterministic-first principle); cross-firm baselines (different drafting conventions make the diff meaningless); a three-state gate (kept two-state: Blocked or Ready).
+- **Consequences.** Cost $0 and fully reproducible. Migration 0006 is additive and forward-only (nullable owner, intent and scope columns plus `regression_check`), but the previous Worker 8a82ead2 refuses memory writes afterwards, so rollback means roll forward or a D1 restore. Known costs: digit changes in operative text count as logic (package 01 shows 9 rows, not 7), the V7 trust-split change is owned by the GP (SPEC A9), and fund-scoped answers can supersede across funds.
 
 ## Related
 
