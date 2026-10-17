@@ -27,6 +27,8 @@ export function MemoryDialog({
   const ref = useRef<HTMLDialogElement>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  const busyRef = useRef(!!busy);
+  busyRef.current = !!busy;
 
   useEffect(() => {
     const d = ref.current;
@@ -34,7 +36,8 @@ export function MemoryDialog({
     if (!d.open && typeof d.showModal === 'function') d.showModal();
     const onCancel = (e: Event) => {
       e.preventDefault();
-      closeRef.current();
+      // a write is in flight: keep the dialog open until it settles
+      if (!busyRef.current) closeRef.current();
     };
     d.addEventListener('cancel', onCancel);
     // focus the first field (app.html: text input, else the reason box)
@@ -66,7 +69,10 @@ export function MemoryDialog({
             type="button"
             aria-label="Close dialog"
             data-testid="memory-dialog-close"
-            onClick={onClose}
+            disabled={busy}
+            onClick={() => {
+              if (!busy) onClose();
+            }}
           >
             <Icon name="x" />
           </button>
@@ -85,6 +91,7 @@ export function MemoryDialog({
             className="btn"
             type="button"
             data-testid="memory-dialog-cancel"
+            disabled={busy}
             onClick={onClose}
           >
             Cancel

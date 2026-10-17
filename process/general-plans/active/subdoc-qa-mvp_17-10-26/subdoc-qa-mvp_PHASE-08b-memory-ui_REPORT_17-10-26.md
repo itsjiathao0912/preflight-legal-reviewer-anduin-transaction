@@ -181,3 +181,12 @@ The Test Gate Outcomes table, in that order (preview before stack-memory, never 
 ### Dependency Changes
 
 None.
+
+## Review fixes (17-10-26, after 54ddaae)
+
+- **M1 (major), fixed (option: clear the answer, not restrict Reopen).** `refreshMemory(revokedId, match?)` in `apps/web/src/state/review.ts` now also clears a counsel answer (`counselAnswer`, `answeredBy`, `answeredAt`, `counselNote`, `answerId`) when the revoked decision is an answered one. Triage keeps the optimistic `pending:<op>` id even after the outbox drains, so matching is by exact id OR (pending id + same finding fingerprint + same decision kind). `MemoryView` passes the reopened row's fingerprint and kind. Test: `test/review-sync.test.ts` "M1: reopening an answered decision ... re-blocks the gate" (gate Ready before, `unanswered` reason after).
+- **m1, fixed.** Reopen no longer resets the entry to `{status:'open'}`; it spreads the entry and only clears the matched decision. Test: "m1: reopening a dismissal keeps an unrelated counsel answer".
+- **m4, fixed.** `MemoryDialog` ignores Escape/cancel while `busy`; Close (x) and Cancel are disabled while a write is in flight.
+- **NIT, fixed.** `no-e2e-hook-in-dist` asserts `useRealMemory` is absent in production and present in the e2e build. `memory.css` hex literals replaced with `var(--ink)` / `var(--accent)`. The Reopen snapshot stores the entered reason (ReopenDialog passes it to `onDone`).
+
+Gates: web unit 196/196 (incl. review-sync 13, memory-join, no-e2e-hook-in-d 2/2); e2e preview memory-ui-decisions 11, memory-ui-rules 7, memory-ui-audit 1, counsel-gate 4, gate-pill 3, counsel-answer 3, sample-picker-smoke 2; full preview 157 passed / 1 skipped; `pnpm typecheck` and `pnpm lint` clean. stack-memory not run (no change to its surface).

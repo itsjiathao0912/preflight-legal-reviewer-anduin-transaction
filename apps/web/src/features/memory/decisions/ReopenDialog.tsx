@@ -24,7 +24,7 @@ export function ReopenDialog({
   firmName: string;
   api: () => MemoryApi | null;
   onClose: () => void;
-  onDone: WriteDone;
+  onDone: (kind: 'ok' | 'changed' | 'readOnly', reason: string) => void;
 }) {
   const [why, setWhy] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +46,7 @@ export function ReopenDialog({
     const res = await runWrite(() => a.revoke(row.id, reason.slice(0, 500)));
     setBusy(false);
     if (res.kind === 'retry' || res.kind === 'cap') setError(MSG.retry);
-    else onDone(res.kind);
+    else onDone(res.kind, reason.slice(0, 500));
   };
 
   return (

@@ -131,7 +131,7 @@ export function MemoryView() {
   const ok = m.status === 'ok' && firmId !== null;
 
   // ---- write results (dialogs report; this owns close, refetch and toasts)
-  const onDone = async (d: Dlg, kind: 'ok' | 'changed' | 'readOnly') => {
+  const onDone = async (d: Dlg, kind: 'ok' | 'changed' | 'readOnly', reason = '') => {
     setDlg(null);
     if (kind === 'readOnly') {
       setReadOnly(true);
@@ -141,12 +141,18 @@ export function MemoryView() {
     if (kind === 'ok' && d.kind === 'reopen' && d.row.full) {
       const snap: Snapshot = {
         d: d.row.full,
-        rev: { who: analyst, at: Date.now(), reason: '' },
+        rev: { who: analyst, at: Date.now(), reason },
       };
       setSnaps((prev) => new Map(prev).set(d.row.id, snap));
     }
     await m.refetch();
-    if (d.kind === 'reopen') await refreshReview(kind === 'ok' ? d.row.id : undefined);
+    if (d.kind === 'reopen') {
+      const full = d.row.full;
+      await refreshReview(
+        kind === 'ok' ? d.row.id : undefined,
+        full ? { fingerprint: full.fingerprint, decision: full.decision } : undefined,
+      );
+    }
     showToast(kind === 'ok' ? SUCCESS[d.kind] : MSG.changed);
   };
 
@@ -351,7 +357,7 @@ export function MemoryView() {
           firmName={m.firmName}
           api={m.api}
           onClose={() => setDlg(null)}
-          onDone={(k) => void onDone(dlg, k)}
+          onDone={(k, why) => void onDone(dlg, k, why)}
         />
       ) : null}
       {dlg?.kind === 'review' ? (

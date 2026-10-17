@@ -126,10 +126,10 @@ table.t.fx td.pass .lean {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 14px;
-  color: #12302d;
+  color: var(--ink);
 }
 .srow .mut {
-  color: #1e3f3b;
+  color: var(--accent);
 }
 .rhead {
   display: flex;

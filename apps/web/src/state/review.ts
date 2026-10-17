@@ -120,7 +120,16 @@ interface ReviewState {
    * When `revokedDecisionId` is given (Reopen), any triage entry of this document whose decisionId
    * equals it is reset to `open`, so the finding is New on this review too (AC50).
    */
-  refreshMemory: (revokedDecisionId?: string) => Promise<void>;
+  /**
+   * Refetch memory labels. With a revoked decision (Firm memory Reopen), local triage that carries
+   * it is cleared first: an accepted/dismissed decision returns the finding to open, an answered one
+   * drops the local counsel answer so the gate re-evaluates. `match` (fingerprint + kind of the
+   * revoked row) also catches entries still holding an optimistic `pending:<op>` id.
+   */
+  refreshMemory: (
+    revokedDecisionId?: string,
+    match?: { fingerprint: string; decision: 'dismissed' | 'accepted' | 'answered' },
+  ) => Promise<void>;
   /** Phase 05: replace this document's AI findings (verified in the engine worker) and re-label memory. */
   setAiFindings: (docId: string, findings: FindingView[]) => Promise<void>;
 }
@@ -723,13 +732,40 @@ export const useReview = create<ReviewState>((set, get) => {
       );
     },
 
-    refreshMemory: async (revokedDecisionId) => {
-      const { doc, triage } = get();
+    refreshMemory: async (revokedDecisionId, match) => {
+      const { doc, triage, memory } = get();
       if (doc && revokedDecisionId) {
-        const hits = Object.keys(triage).filter((k) => triage[k]?.decisionId === revokedDecisionId);
-        if (hits.length) {
-          const next = { ...triage };
-          for (const k of hits) next[k] = { status: 'open' };
+        const fpOf = (k: string) => memory?.byId[k]?.fingerprint ?? null;
+        const pendingFp = (id: string | null | undefined, k: string) =>
+          !!match && !!id && id.startsWith('pending:') && fpOf(k) === match.fingerprint;
+        const next = { ...triage };
+        let changed = false;
+        for (const k of Object.keys(triage)) {
+          const t = triage[k];
+          if (!t) continue;
+          const answered =
+            !match || match.decision === 'answered'
+              ? t.answerId === revokedDecisionId || pendingFp(t.answerId, k)
+              : false;
+          const decided =
+            !match || match.decision !== 'answered'
+              ? t.decisionId === revokedDecisionId || pendingFp(t.decisionId, k)
+              : false;
+          if (!answered && !decided) continue;
+          // keep unrelated fields (an active counsel answer survives a reopened dismissal)
+          let e: Triage = { ...t };
+          if (decided) e = { ...e, status: 'open', decisionId: undefined };
+          if (answered) {
+            delete e.counselAnswer;
+            delete e.answeredBy;
+            delete e.answeredAt;
+            delete e.counselNote;
+            delete e.answerId;
+          }
+          next[k] = e;
+          changed = true;
+        }
+        if (changed) {
           set({ triage: next });
           await saveTriage(doc.id, next);
         }

@@ -202,6 +202,58 @@ describe('review-sync', () => {
     expect(useReview.getState().toast?.msg).toBe('Answer recorded. The gate is now Ready.');
   });
 
+  it('M1: reopening an answered decision from Firm memory clears the counsel answer and re-blocks the gate', async () => {
+    load(FIRM, [finding('f1')]);
+    await useReview.getState().accept('f1');
+    await useReview.getState().recordAnswer('f1', { option: 'B', by: 'R. Whitlock', at: 5 });
+    await flushOutbox();
+    const gate = () => {
+      const s = useReview.getState();
+      return computeGate(buildRows(s.result!.findings, s.memory, s.triage));
+    };
+    expect(gate().status).toBe('ready');
+    // triage still holds the optimistic pending id; the Memory page lists the real one
+    expect(isPendingId(useReview.getState().triage['f1']!.answerId)).toBe(true);
+    const [d] = await stub.lookup(FIRM, [fp(1)]);
+    expect(d?.decision).toBe('answered');
+    await stub.revoke(d!.id, 'counsel changed their answer');
+    await useReview
+      .getState()
+      .refreshMemory(d!.id, { fingerprint: d!.fingerprint, decision: d!.decision });
+    const t = useReview.getState().triage['f1']!;
+    expect(t.counselAnswer).toBeUndefined();
+    expect(t.answeredBy).toBeUndefined();
+    expect(t.answerId).toBeUndefined();
+    // the separate Accept is not the revoked decision: it stays
+    expect(t.status).toBe('accepted');
+    expect(gate().status).not.toBe('ready');
+    expect(gate().reasons).toContainEqual(
+      expect.objectContaining({ findingKey: 'f1', kind: 'unanswered' }),
+    );
+  });
+
+  it('m1: reopening a dismissal keeps an unrelated counsel answer on the entry', async () => {
+    load(FIRM, [finding('f1')]);
+    useReview.setState({
+      triage: {
+        f1: {
+          status: 'dismissed',
+          decisionId: 'dec-1',
+          counselAnswer: 'A',
+          answeredBy: 'C',
+          answerId: 'ans-1',
+        },
+      },
+    });
+    await useReview
+      .getState()
+      .refreshMemory('dec-1', { fingerprint: fp(1), decision: 'dismissed' });
+    const t = useReview.getState().triage['f1']!;
+    expect(t.status).toBe('open');
+    expect(t.decisionId).toBeUndefined();
+    expect(t).toMatchObject({ counselAnswer: 'A', answeredBy: 'C', answerId: 'ans-1' });
+  });
+
   it('should keep the gate blocked for an unclear answer', async () => {
     load(FIRM, [finding('f1')]);
     await useReview.getState().needsCounsel('f1');
