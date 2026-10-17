@@ -13,13 +13,13 @@ metadata:
 
 **Date**: 18-10-26
 **Complexity**: COMPLEX
-**Status**: ⏳ PLANNED (Phase A ready to execute after VALIDATE; Phases B and C gated)
+**Status**: Phase A VERIFIED; Phase B PLAN-SUPPLEMENTED (needs inner PVL); Phase C DROPPED (P-16)
 **Feature:** findings-v2 (`process/features/findings-v2/`)
 **Decision record:** `findings-v2_DECISION_18-10-26.md` (D-1..D-10, locked; cited, not redefined)
 **Research:** `findings-v2_RESEARCH_18-10-26.md` (file:line evidence)
 **Design source (read-only):** `design/mockups/findings-v2.html`, `design/mockups/findings-v2_NOTES.md` (D1-D15)
 **Context routers read:** `process/context/all-context.md`, `process/context/ui/all-ui.md`, `process/context/tests/all-tests.md`, `process/context/planning/all-planning.md`, `process/context/worker/all-worker.md` (deploy recipe only).
-**Next Step:** ENTER VALIDATE MODE for this plan, then ENTER EXECUTE MODE for Phase A only.
+**Next Step:** Inner PVL (vc-validate-agent) for Phase B, then EXECUTE Phase B.
 
 ---
 
@@ -87,6 +87,14 @@ Step A0 re-greps `.paper` in every `apps/web/src/styles/*.css` (there is no `sca
 - **P-8 Resizer key step (E12).** Arrow step is 2 (percent) and Shift+Arrow is 10, matching the mockup (`findings-v2.html`), so `FPW_STEP = 2` and `FPW_STEP_BIG = 10` replace the earlier 1 and 5 in `width-math.ts`; Home 40 and End 65 unchanged; the width-math and resizer tests assert 2 and 10.
 - **P-9 Reconfirm modal title (E14).** The mockup's Close issue modal title is "Close issue" (`findings-v2.html` line 830) and has no re-confirm state. Decision: title "Close issue" for every row, except `row.label === 'dismissed_reconfirm'`, where it is "Re-confirm this dismissal" (the existing `DismissModal` wording, `DismissModal.tsx:52`), because that state exists only in the product and dropping it would hide why the analyst is being asked again; the submitted call is the same. Tested in `findings-v2-panel-ui`.
 - **P-10 Accept on change rows (E24, supplement 2).** `isBlocking` is severity-based, so an ordinary change row counts as non-blocking, but under a variance policy the gate marks every change row `gates: true` and an accepted one `unanswered`. Decision: `groups.ts` adds `gatesReview(r)` (blocking severity or change/variance row); an accepted `gatesReview` row groups to Sent (not Closed) and "Real issue" is hidden in the Close issue modal for such rows; `planControl` keeps routing change rows to Ask owner so the bar never emits `accept` for them. Design question for the report: should "Real issue" (accept) exist on change rows at all (today's `ChangeRow` never accepts)? Reversible inside `groups.ts` and `reasons-map.ts`.
+- **P-11 (G1) Expected/Found ids.** `ExpandedBlock` renders the Expected/Found pair with ids `finding-expected` / `finding-found` inside "What's wrong", same text source as `FindingRow` (D-1: keep ids where meaning is equal). Proves slice.spec:51 and finding-highlight.spec:26.
+- **P-12 (G2) Memory note in the outcome toast.** Read the store toast text before replacing it; when `memoryNotSavedNote(doc)` is non-empty and the store toast text ends with it, the outcome text becomes `${outcome.text.trimEnd()} ${note}`, otherwise unchanged. `memoryNotSavedNote` is already exported (`state/review.ts:77`): no store edit. Unit assertion in `findings-v2-actions-flow` (note present on a firm-less doc, absent otherwise).
+- **P-13 (G3) locator-chip.** `locator-chip.spec.ts` is repaired to the v2 structure (locator chip in the severity line or Details). No `.sub2` revival.
+- **P-14 (G4) Re-confirm label.** When the open row's `label === 'dismissed_reconfirm'`, the bar's `action-dismiss` reads "Re-confirm dismissal"; modal title stays as P-9. Unit case in `findings-v2-panel-ui`.
+- **P-15 (G5, G7) Reasons and focus.** `dismiss-requires-reason` expects 5 `dismiss-reason` radios on non-blocking error rows and 4 on blocking and change rows (Real issue hidden), selecting by `value=` or `[data-reason=...]`. After a dismiss, focus moves to the next row; Esc closes the modal and returns focus to `action-dismiss` (implement in v2 if missing; proven in `findings-v2.spec` and the repaired spec).
+- **P-16 Phase C dropped (18-10-26).** Core already removes every AI finding overlapping any rule anchor in the same block (`packages/core/src/llm/dedupe.ts`, a2a7047, live; `e2e/ai-no-duplicates.spec.ts`), so `v2/dedupe.ts` matches nothing live. The program closes after Phase B; `v2/dedupe.ts` and its test stay unmounted as a defensive pure module. D11 "AI agrees" is descoped; backlog NOTE `process/features/findings-v2/backlog/findings-v2-ai-agrees-dedupe_NOTE_18-10-26.md`.
+- **P-17 Parity items G9-G11 (N1, E-B4).** (G9) A dismissed row shows `Reason: <label>` (label via `reasonLabel` from `../reasons`, plus the note text when present) in the expanded body, same text source as `FindingRow`; proves `triage-actions.spec.ts:44-46`. (G10) `finding-memory-tag` is rendered for every rule row, including label `new` (text "New"), inside the existing `fv2-tag` class, as `FindingRow` did; proves `previously-handled-section.spec.ts:117`, `memory-ui-decisions.spec.ts:222,292`, `memory-edit-is-new.spec.ts:25`. (G11) The prior-decision memory note (who decided, fund, date, reason) and the sentence that the row stays in the main list until re-confirmed are restored in `ExpandedBlock` as plain React text, same text sources as `FindingRow`. Unit assertions in `findings-v2-panel-ui`.
+- **P-18 Spec repair decisions (N2, N5).** Toast assertions move to the D12 outcome strings. The locator chip is NOT in the mockup severity line (`findings-v2.html` shows no location chip there), so `locator-chip.spec.ts` opens `finding-details` first and then asserts visibility. The toast field read by P-12 is `msg` (shape `{id, msg, undo}`). `UndoToast` is hosted in `shell/AppShell.tsx:38`, so the FindingsScreen swap does not touch it. The `data-memory-state` check (B0.5) is already satisfied at `FindingsPanelV2.tsx:107` and stays verify-only.
 
 ## Architecture Note (data flow)
 
@@ -388,131 +396,132 @@ Agent-Probe and Known-Gap in Phase A: none run (no browser). The visual calm-pal
 
 ---
 
-## Phase B - Integration (gated on Variance P05 close)
+## Phase B - Integration (UNBLOCKED; Variance closed dcb387d, live d9aaddd9)
 
-**Phase status:** ⏳ PLANNED (blocked until the Variance session messages "P05 closed")
-**Depends on:** Phase A VERIFIED, Variance P05 closed (its code commits landed or confirmed not to touch `apps/web/src`), Step 0 re-sync below.
-**Risk class:** medium-high (swaps the Findings list in locked files; changes many e2e references; production deploy).
-**Report destination:** `process/features/findings-v2/active/findings-v2_18-10-26/findings-v2-phase-b_REPORT_18-10-26.md`
-**Execute strategy:** B1 swap, B2 DocPane zoom plus mockup slicer, B3 e2e repairs, B4 new specs and parity test, each as 1 opus agent, run sequentially because every step edits shared locked files and Playwright shares port 4317. EVL (vc-tester, sonnet), code review (vc-code-reviewer, sonnet) and UPDATE PROCESS follow.
+- Status: PLAN-SUPPLEMENTED 18-10-26 (Step 0 done; inner PVL next). Risk: medium-high.
+- Report: `process/features/findings-v2/active/findings-v2_18-10-26/findings-v2-phase-b_REPORT_18-10-26.md`.
+- Strategy: one opus agent per step, sequential. EVL, review and UPDATE PROCESS run on sonnet.
+- Step 0 evidence: `findings-v2-phase-b-step0_RESEARCH_18-10-26.md`.
 
-### Step 0 (mandatory, before PVL): re-sync with Variance's landed code
+### Step 0
 
-The Phase B file and line targets are research-time facts (18-10-26, code HEAD a31dff0). Step 0 re-reads and re-verifies **every** Phase B file and line target below and writes an `## Inner Loop Refresh Note` in this plan (date newer than the Validate Contract) before Phase B PVL runs.
+- [x] B0.1-B0.4 targets re-verified (no change since a31dff0), anchors corrected, action-* recounted, zoom seed seam corrected.
+- [x] B0.5 (first action of EXECUTE) re-run the 16 findings-v2-* tokens plus `source-guard`, `import-graph`, `tokens-match-mockup`, `severity-label` (one per call). Run `grep -rn "data-memory-state" apps/web/src/features/review/v2` (verify-only: already satisfied at `FindingsPanelV2.tsx:107`; all specs await it via `memorySettled`).
+- [x] B0.6 DROPPED (no registry append; Variance closed; P-6 superseded).
+- [x] B0.7 Inner Loop Refresh Note written.
 
-- [ ] B0.1 `git log --oneline -15` and `git diff a31dff0..HEAD --stat -- apps/web` to list everything Variance P05 changed; read the diffs for the Phase B files (below).
-- [ ] B0.2 Re-read Variance's landed UI: owner chips and `OwnerSelect` (`features/variance/OwnerChip.tsx`), questions grouped by owner (`features/counsel/*`, `owner-groups.ts`), the gate's two states (`reviewGate`, `computeGate` policy, `GateButton`), regression rows (R-01), and any P05 additions (a11y-keyboard and perf-budget additive cases, H&C sample entries that change counts). Confirm the exports `ChangeExpanded` imports still exist with the same signatures.
-- [ ] B0.3 Re-verify each target: `FindingsScreen.tsx` (grid and `aside.fp` structure, kind segment, `CoverageLine`, J/K effect position, `DismissModal` host, `UndoToast` host); `DocPane.tsx` (scroll effect on `[selectedId, selectSeq]`, `.docbar`, `JumpMenu` placement, `.docscroll` ref); `use-review-view.ts` (Phase C only); `base.css` rules `.work` (556-561, 1684-1686, 1712-1738), `.paper`; `test/support/mockupCss.ts`; `e2e/layout-vs-mockup.spec.ts:26, 91-95`; the shared e2e fixture that opens documents (`e2e/fixtures/app.ts`, to confirm where `addInitScript` can seed `ui:v1:doczoom`).
-- [ ] B0.4 Recount `action-*` references: `grep -rnE "action-(accept|counsel|dismiss|restore)" apps/web/e2e apps/web/test apps/web/src` and compare with the Derived repair list; add any new spec Variance P05 introduced.
-- [ ] B0.5 Re-run the Phase A gates (all 16 tokens plus the 4 regression tokens) to prove Phase A still holds after P05; re-test `ChangeExpanded` (`findings-v2-change-expanded`).
-- [ ] B0.6 Append a `## Findings v2 Phase B` claim section to the Variance `phase-blast-radius-registry.md` (append-only), listing the locked files this phase edits and the derived repairs to Variance-owned specs.
-- [ ] B0.7 Write `## Inner Loop Refresh Note` in this plan (format: behavior-reference Section 5): what changed since 18-10-26, which targets moved, which gates changed.
+### Corrected anchors
 
-### Phase B files
-
-| File | Action | Change (line numbers re-verified at Step 0) |
-|---|---|---|
-| `apps/web/src/features/review/FindingsScreen.tsx` | EDIT (Variance-locked) | Replace the `aside.fp` body with `<FindingsPanelV2 view={view} />`; add class `fv2-work` to the `.work` element; delete the window J/K effect (about lines 66-90) in the same commit; keep the page header, `DocPane`, banners, `CoverageLine` and `UndoToast` hosts; the old `DismissModal` host goes away because `CloseIssueModal` replaces it (the old file is deleted at B5). |
-| `apps/web/src/features/review/components/DocPane.tsx` | EDIT (locked, about 4 lines) | Call `useDocZoom(scrollRef, selectedId)`; add `style={zoom.style}` and `data-dz={zoom.dataDz}` on the `.docscroll` element; render `<DocZoomControls .../>` next to `JumpMenu` inside `.docbar`. Scroll effect unchanged. |
-| `apps/web/test/support/mockupCss.ts` | EDIT | Add `findingsV2Css` slicer reading `design/mockups/findings-v2.html`: default width percents (50 at 1280 and above, 55 below), clamp 40 and 65, handle 8px. |
-| `apps/web/e2e/layout-vs-mockup.spec.ts` | EDIT (derived repair, lines ~26, 91-95) | Replace the 400/380 findings-column assertions with percentage assertions from `findingsV2Css`. |
-| `apps/web/e2e/fixtures/app.ts` (confirm at Step 0) | EDIT | `addInitScript` seeds `localStorage['ui:v1:doczoom'] = {"mode":"manual","pct":100}` so existing geometry and perf specs keep the 700px page. |
-| `apps/web/e2e/fixtures/findings-actions.ts` | CREATE | Helpers: `openFirstFinding`, `askCounsel`, `closeAsRealIssue` (opens `action-dismiss`, picks `data-reason="real_issue"`, saves), `closeWithReason(reason, note?)`, `moveBack`. |
-| e2e specs and fixtures in the Derived repair list | EDIT (derived repairs only) | Minimal edits: `action-accept` becomes `askCounsel` (blocking) or `closeAsRealIssue` (non-blocking); `finding-body`-scoped action clicks become page-level `action-*`; label strings follow D2. |
-| `apps/web/e2e/findings-v2.spec.ts` | CREATE | Bar, outcome toast and Undo, groups and progress, resize (drag and keys, persistence), zoom (fit, manual, keys, persistence), shortcuts, done state. |
-| `apps/web/src/features/review/v2/findings-v2-store-parity.test.tsx` | CREATE | Simulated `computeOutcome` equals a real recompute through the real store actions (pattern from `apps/web/test/review-sync.test.ts`, confirmed at Step 0). |
-| `apps/web/src/features/review/components/FindingRow.tsx` and `DismissModal.tsx` | DELETE (B5, only after the full gate is green and no importer remains) | Leave `features/variance/ChangeRow.tsx` to the Variance owner. |
-| `process/context/ui/all-ui.md`, `process/context/tests/all-tests.md` | EDIT at UPDATE PROCESS | Findings anatomy, published ids, persisted keys, new test tokens, the `.tsx`-only-under-`src` note. |
-
-### Derived repair list (answer d; counts from `grep` at 18-10-26)
-
-| Spec or fixture | Hits | Kind of repair | Owner flag |
-|---|---|---|---|
-| `e2e/triage-actions.spec.ts` | 5 (`action-accept` x2) | accept becomes `askCounsel` or `closeAsRealIssue`; "accepted" counts follow the group moves | free |
-| `e2e/app-shell.spec.ts` | 1 (`action-accept`, line 80) | same | free |
-| `e2e/fixtures/counsel.ts` | 2 (`action-accept`, line 136) | helper becomes `askCounsel`; used by many counsel specs, re-run all of them | free |
-| `e2e/gate-pill.spec.ts` | 2 (`action-accept`, line 25) | same | **Variance-locked** (coordinate) |
-| `e2e/a11y-keyboard.spec.ts` | 1 (`tabTo(page,'action-accept',40)`, line 160) | tab order now reaches the bar; retarget to `action-counsel`; additive P05 cases must be re-read | **Variance-locked** |
-| `e2e/dismiss-requires-reason.spec.ts` | 4 | Dismiss modal reasons and labels (D2); the required-reason error text is unchanged (`DISMISS_REASON_REQUIRED`) | free |
-| `e2e/layout-vs-mockup.spec.ts` | 1 | 400/380 becomes percent assertions | free |
-| `e2e/a11y-smoke.spec.ts`, `e2e/analyst-name.spec.ts`, `e2e/counsel-gate.spec.ts`, `e2e/metrics.spec.ts`, `e2e/previously-handled-section.spec.ts`, `e2e/slice.spec.ts` | 1-2 each | Verify they still pass; edit only where they assume actions live inside `finding-body` or assume `action-*` exists on a collapsed row (the bar is always present but disabled with nothing open) | free (`slice.spec.ts` is the live smoke on the stack project: run only with `SLICE_BASE_URL` at deploy) |
-| `e2e/memory-no-reflag.spec.ts`, `e2e/stack-memory-demo-workspace.spec.ts`, `e2e/stack-memory-roundtrip.spec.ts`, `e2e/fixtures/stack-memory.ts` | 1 each | accept becomes `askCounsel` or `closeAsRealIssue`; the stack-memory project is a separate run | **Variance-locked** |
-| `e2e/variance-no-baseline-errors-only.spec.ts` | 1 | same | **Variance-locked** |
-| `e2e/variance-gate-two-states.spec.ts:30`, `e2e/variance-owner-override.spec.ts:48`, `e2e/fixtures/variance-owners.ts:41` | 1 each | **scoped inside `finding-body`**: drop the `finding-body` scope so the click targets the bar (`getByTestId('action-dismiss')` or `getByTestId('action-counsel')`) | **Variance-locked** |
-
-Rule for Variance-locked files: once Variance posts "P05 closed", the files are free to edit; edits stay minimal, are logged in the Phase B report, and are announced to the Variance session before commit (shared checkout).
-
-### Phase B Implementation Checklist
-
-- [ ] B0. Step 0 complete (checklist above), refresh note written, PVL re-run from V1 if the note is newer than the contract.
-- [ ] B1. FindingsScreen swap commit (FindingsPanelV2 mounted, `fv2-work` class, J/K effect deleted, `useShortcuts` mounted through the panel). Run `typecheck`, the web vitest suite once, then Playwright smoke tokens (one per call) `triage-actions`, `app-shell`. Commit (one commit): `feat: mount findings v2 panel in the Findings screen`.
-- [ ] B2. DocPane zoom edit plus `findingsV2Css` slicer, `layout-vs-mockup` repair, e2e zoom seed. Run `layout-vs-mockup`, `finding-highlight`, `perf-budget` tokens. Commit: `feat: document zoom and fit width in the reading view`.
-- [ ] B3. Create `e2e/fixtures/findings-actions.ts`; apply the Derived repair list. Run each affected spec alone, then the whole preview project once. Commit: `test: repair e2e for findings v2 actions` (Variance-owned files named in the message).
-- [ ] B4. Create `findings-v2.spec.ts` and `findings-v2-store-parity.test.tsx`. Commit: `test: findings v2 e2e and store parity`.
-- [ ] B5. After the full gate is green, remove dead `FindingRow.tsx` and `DismissModal.tsx` only if no importer remains (`grep -rn "FindingRow\|DismissModal" apps/web/src`); keep `ChangeRow.tsx`. Commit: `refactor: remove superseded finding row and dismiss modal`.
-- [ ] B6. Agent-Probe: design-probe style screenshots (opt-in `DESIGN_PROBE=1`, `pnpm exec playwright test --project=preview design-probe` from `apps/web`, per all-tests.md) at 1440, 1199 and 1024, with zoom at 75, 100, 150 and fit; compare against `findings-v2.html` (calm palette, no horizontal overflow, bar visible while the list scrolls). Findings go in the report.
-- [ ] B7. EVL (vc-tester re-runs the contract commands), code review, UPDATE PROCESS (`all-ui.md`, `all-tests.md`), then the deploy recipe if Hard Rule 5 conditions hold, then message the design session.
-
-### Phase B acceptance
-
-- AC-B1: AC-1 to AC-10, AC-13, AC-15, AC-16, AC-19, AC-20 hold in the real app (Playwright preview project).
-- AC-B2: every spec in the Derived repair list passes; the whole preview suite passes (217 + 1 skip baseline plus the new spec); the stack-memory project passes when run (11 baseline).
-- AC-B3: the store parity test passes (simulated equals real).
-- AC-B4: `grep` finds no `action-accept` in `apps/web/e2e`, `apps/web/test`, `apps/web/src`.
-- AC-B5: web vitest, typecheck, `source-guard`, `import-graph`, `tokens-match-mockup`, `no-e2e-hook-in-dist` green; deploy preflight green when deploying.
-
-### Phase B Phase Loop Progress
-
-- [ ] 1 RESEARCH - Step 0 re-sync (B0.1-B0.6)
-- [ ] 2 INNOVATE - n/a unless Step 0 finds a contract change (then amend the DECISION file)
-- [ ] 3 PLAN-SUPPLEMENT - write `## Inner Loop Refresh Note` (B0.7)
-- [ ] 4 PVL - validate-contract re-run if the note is newer than the contract
-- [ ] 5 EXECUTE - B1 to B5
-- [ ] 6 EVL - vc-tester independent run
-- [ ] 7 UPDATE PROCESS - context docs, report, commit
-
----
-
-## Phase C - Dedupe hookup (build-split step 2)
-
-**Phase status:** ⏳ PLANNED
-**Depends on:** Phase B VERIFIED (committed; deployed if the deploy ran). Own commit.
-**Risk class:** medium (changes row counts and counsel questions; product confirmation pending for the tie rule).
-**Report destination:** `process/features/findings-v2/active/findings-v2_18-10-26/findings-v2-phase-c_REPORT_18-10-26.md`
+- `FindingsScreen.tsx`: `.work` at 120; `aside.fp` 122-238 (`findings-column` at 125); J/K `useEffect` at 70, listener 86-87; `DismissModal` import 13, JSX about 240; `CoverageLine` import 1, header 112; baseline control in `.hacts` about 114 (outside the aside, stays).
+- `DocPane.tsx`: scroll effect 217-227; `.docbar` 231-234; `JumpMenu` component 121, usage 233; `.docscroll` ref 236-237 (`scrollRef` 197).
+- `base.css`: `.work` 556-561 and 1684; `.view > .work` 475; mobile 1722-1732.
+- `layout-vs-mockup.spec.ts`: `columnWidth` 25-27; 400/380 at 91, test at 95; line 147 selector `li` not class `sel` becomes vacuous; style audit REF_FONTS/REF_RADII (22-23, asserted 88-89) needs a browser run with findings-v2.css.
+- `e2e/fixtures/app.ts` has NO `addInitScript`. The seam is `gotoApp()` (about line 45, used by 101 of 111 specs).
 
 ### Files
 
 | File | Action | Change |
 |---|---|---|
-| `apps/web/src/features/review/use-review-view.ts` | EDIT (about 3 lines plus 1 in the return object) | After `mergeFindings(...)`: `const d = dedupeFindings(merged)`; `buildRows(d.findings, memory, triageWithTwins(triage, d.twinOf))`; return `twins: d.twins` in the memo result. `Row` and `model.ts` are not edited. |
-| `apps/web/src/features/review/v2/{AccordionRow,ExpandedBlock}.tsx` | EDIT (own files) | `AccordionRow` shows the violet "AI agrees" tag when `view.twins[row.f.id]` exists; `ExpandedBlock` puts twin provenance, model and confidence in Details. (If Phase A already wires the optional `twin` prop, only the call site changes.) |
-| `apps/web/e2e/findings-v2-dedupe.spec.ts` | CREATE | One merged row with "AI agrees"; acting on it moves the primary and the twin never appears as a second row; counts and counsel questions count once. Fixture source resolved at C0 (an existing recorded-AI fixture that overlaps a rule finding, or a jsdom render of `useReviewView` seeded through `useReview.setState` and `setAiFindings`). |
-| `apps/web/src/features/review/v2/findings-v2-dedupe-view.test.tsx` | CREATE | Hybrid jsdom: seed `result.findings` with one rule and one overlapping ai finding; the view has 1 row, `twins` has 1 entry, triage on the twin id shows on the primary. |
+| v2 own files (`ExpandedBlock`, `use-finding-actions`, `ActionBar`, `AccordionRow`, `FindingsPanelV2`, `CloseIssueModal`) | EDIT | small additive edits for P-11, P-12, P-14, P-15 and `data-memory-state` if missing, with matching unit assertions. No `state/review.ts` edit (`memoryNotSavedNote` is already exported at `state/review.ts:77`). |
+| `apps/web/src/features/review/FindingsScreen.tsx` | EDIT | replace the `aside.fp` body with `<FindingsPanelV2 view={view}/>`; add class `fv2-work` to `.work`; delete the J/K effect and the `DismissModal` host; keep header, DocPane, banners, CoverageLine and baseline control (`UndoToast` is hosted in `shell/AppShell.tsx:38`, not here). |
+| `apps/web/src/features/review/components/DocPane.tsx` | EDIT (about 4 lines) | `useDocZoom(scrollRef, selectedId)`; `style={zoom.style}` and `data-dz` on `.docscroll`; `<DocZoomControls/>` next to `JumpMenu` in `.docbar`. |
+| `apps/web/test/support/mockupCss.ts` | EDIT | add a `findingsV2Css` slicer reading `design/mockups/findings-v2.html`: 50 at 1280 and above, 55 below, clamp 40/65, handle 8px. |
+| `apps/web/e2e/fixtures/app.ts` | EDIT | in `gotoApp()`, before `page.goto('/')`, `page.addInitScript` seeding `localStorage['ui:v1:doczoom']={"mode":"manual","pct":100}`. The 3 specs calling `page.goto` directly and the 10 stack specs keep the fit default (re-check the 3 direct specs for geometry assumptions). |
+| `apps/web/e2e/fixtures/findings-actions.ts` | CREATE | helpers `openFirstFinding`, `askCounsel`, `closeAsRealIssue`, `closeWithReason`, `moveBack`. |
+| `apps/web/e2e/design-probe.spec.ts` | EDIT | zoom variants via the `ui:v1:doczoom` seed (75, 100, 150) at widths 1440 and 1024, plus a capture of `design/mockups/findings-v2.html` for side-by-side; output into `process/features/findings-v2/active/findings-v2_18-10-26/design-probe/`. Agent-Probe, non-blocking. |
+| `apps/web/e2e/findings-v2.spec.ts` | CREATE | bar, outcome toast and Undo, groups and progress, resize (drag, keys, persistence), zoom (fit, manual, keys, persistence), shortcuts, done state, focus after dismiss and Esc return (P-15), nav unchanged. |
+| `apps/web/src/features/review/v2/findings-v2-store-parity.test.tsx` | CREATE | simulated outcome equals the real post-action recompute (pattern `test/review-sync.test.ts`). |
+| `FindingRow.tsx`, `DismissModal.tsx` | DELETE | after the full gate is green and no importer remains. `variance/ChangeRow.tsx` deleted only if nothing imports it, else left. |
+| `process/context/ui/all-ui.md`, `process/context/tests/all-tests.md` | EDIT (UPDATE PROCESS) | Findings v2 surfaces and new specs. |
 
-### Phase C Implementation Checklist
+### Derived repair list (Variance closed: all files editable; edits minimal and logged in the report)
 
-- [ ] C0. Re-run Phase A and B gates; confirm `use-review-view.ts` is unchanged by Variance since Phase B Step 0; find the AI-plus-rule overlap fixture (record the choice); the tie rule is recorded as the answer to NOTES Q2 and flagged for design confirmation in the report.
-- [ ] C1. Edit `use-review-view.ts` (3 lines). Run `findings-v2-dedupe`, `findings-v2-dedupe-view`, `typecheck`, web vitest once.
-- [ ] C2. Wire the `twin` display (AccordionRow and ExpandedBlock) if not already wired.
-- [ ] C3. Create `findings-v2-dedupe.spec.ts`; run it and the counts-sensitive specs (`filter-sort`, `metrics`, `counsel-gate`, `a11y-smoke`) one per call.
-- [ ] C4. Commit alone: `feat: merge AI suggestions that repeat a rule finding (findings v2 step 2)`.
-- [ ] C5. EVL, review, UPDATE PROCESS, deploy per Hard Rule 5 if not already deployed with Phase B.
+| Spec or fixture | Hits | Repair | Origin |
+|---|---|---|---|
+| triage-actions | accept at 12, 17 | `askCounsel` (blocking) or `closeAsRealIssue` (non-blocking) | free |
+| app-shell | accept at 80 | same | free |
+| fixtures/counsel.ts | accept at 136 (`markAccepted`) | helper becomes `askCounsel`; re-run all counsel specs | free |
+| upload-firm-tagging | accept at 67 (NEW) | same | free |
+| gate-pill | accept at 25 | same | Variance-origin |
+| a11y-keyboard | accept at 160-165, action-accept line 162 (G8) | retarget `tabTo` to `action-counsel`; adjust tab distance; re-read the P05 cases (data-kind change and change-type at 215-216, region tabindex at 125, severity regex at 121) | Variance-origin |
+| dismiss-requires-reason | dismiss about 21; focus about 33, 46 | P-15 | free |
+| slice, finding-highlight | ids at 51 and 26 | verify after P-11 (slice runs live only with `SLICE_BASE_URL`) | free |
+| locator-chip | `.sub2` at 17 (2 cases) | P-13 | free |
+| previously-handled-section:28, counsel-gate:116 | "Re-confirm dismissal" | verify after P-14 | free |
+| layout-vs-mockup | 25-27, 91-95, 147, 22-23/88-89 | percent assertions from `findingsV2Css`; replace the vacuous `li` selector; run the style audit with findings-v2.css | free |
+| variance-gate-two-states:30, variance-owner-override:46,48, variance-demo-gate-walk:92 (NEW), fixtures/variance-owners.ts:41 | finding-body-scoped clicks | drop the finding-body scope and click the bar (owner-select scoped at override:54 stays valid) | Variance-origin |
+| a11y-smoke, analyst-name, metrics, memory-no-reflag, stack-memory-*, variance-no-baseline-errors-only | 1-2 each | verify only; memory and stack specs use dismiss and counsel, not accept | mixed |
+| fixtures/counsel.ts `markCounsel` (127-132) | asserts `data-status = counsel`; Ask counsel on a blocking row becomes `accepted` | choose by the row `data-severity` (E-B5): `block` rows assert `accepted`; other rows assert `counsel`. Importers to re-run, each alone: counsel-answer, counsel-export, counsel-gate, counsel-sheet, csp-headers, fund-two-zero-hidden-zero-repeat, intake-missing-docs-request-export, memory-prior-answer, metrics, stack-memory-roundtrip (stack-memory after preview) | free |
+| fixtures/counsel.ts `markAccepted` (136) | non-blocking row | Close issue then Real issue (not Ask counsel; `counsel-sheet.spec.ts:62-63` depends on the difference); blocking rows use Ask counsel. Same importers as `markCounsel` | free |
+| triage-actions:14,39; gate-pill:32 | toast text `Finding accepted.`, `Dismissed.`, `N blocking reason(s) left.` | update to the D12 outcome strings (`Sent to counsel · Counsel questions now N · ...`, `Closed as a real issue · ...`, `Closed · Gate still blocked (M)`) | free; gate-pill Variance-origin |
+| dismiss-requires-reason:16,54 | radio count 4; first radio is Real issue on non-blocking rows | 5 radios on non-blocking error rows, 4 on blocking and change rows; pick by `value=` or `[data-reason=...]` per `data-severity` | free |
+| a11y-smoke:47-58 | focus after dismiss and Esc | P-15 focus return (next row after dismiss, `action-dismiss` after Esc or Cancel) | free |
+| a11y-keyboard (tab distance, ~162) | bar sits after the list, tab distance grows | raise `tabTo` limits as needed | Variance-origin |
+| locator-chip:19 | chip inside collapsed Details, `toBeVisible` fails | decision P-18: mockup has no location chip in the severity line, so the spec opens `finding-details` first | free |
 
-### Phase C acceptance
+### Phase B Implementation Checklist
 
-AC-12 holds end to end; counts, counsel questions and the gate count the merged issue once; undoing the action restores both; the AI-off and render-first paths are unchanged; no live AI call is made.
+- [x] B0 Run B0.5. (20/20 tokens green, 18-10-26)
+- [x] B1 (9427237) v2 fixes P-11..P-15 and P-17 (G9 dismissed `Reason: <label>` line, G10 `finding-memory-tag` for label `new` with text "New", G11 prior-decision memory note and re-confirm sentence in `ExpandedBlock`) with matching `findings-v2-panel-ui` assertions (data-memory-state already satisfied, verify only). Tokens one per call: `findings-v2-panel-ui`, `findings-v2-actions-flow`, `findings-v2-change-expanded`, then typecheck. Commit `fix: findings v2 ids, memory note, re-confirm label and focus before mount`.
+- [x] B2 (cc08373) FindingsScreen swap. typecheck, web vitest once, e2e tokens `triage-actions`, `app-shell`. Commit `feat: mount findings v2 panel in the Findings screen`.
+- [x] B3 (c20ebc9) DocPane zoom, `findingsV2Css` slicer, `gotoApp` seed, layout-vs-mockup repair: derive the allowed box-shadow selectors (open row card, outline button inset, invalid-field inset, popover menu) from `design/mockups/findings-v2.html` via `findingsV2Css`, keep fonts, radii and gradients strict, compare panel and handle widths with a 1px tolerance. Tokens `layout-vs-mockup`, `finding-highlight`, `perf-budget`. Commit `feat: document zoom and fit width in the reading view`.
+- [x] B4 (c411972) `findings-actions` fixture plus the repair list. Run each spec alone, then the full preview project once. Commit `test: repair e2e for findings v2 actions`.
+- [x] B5 (06b02ac) `findings-v2.spec` and store parity. Commit `test: findings v2 e2e and store parity`.
+- [x] B6 (a98ca9c) Dead code removal. Commit `refactor: remove superseded finding row and dismiss modal`.
+- [x] B7 Gates (table below; all green 18-10-26, design-probe spec d521bd5; results in the Phase B report).
+- [ ] B8 EVL (vc-tester), code review, UPDATE PROCESS (archive the plan folder since Phase C is dropped).
+- [ ] B-deploy, after EVL and review only:
+  1. Free port 4317. Run `pnpm guard:cf` then `pnpm secrets:scan`.
+  2. Make the plain web bundle with `VITE_TURNSTILE_SITE_KEY` inline via a scratch shell script stored OUTSIDE the repo (session scratchpad, written with the Write tool; command text must avoid the blocked words). The public site key is read from the currently live bundle (it is public, embedded in served JS) inside that script and used inline; never print, log, export or commit it. Run it immediately before deploy, because any stack Playwright run overwrites the output. The production-bundle hook test (token name contains a blocked word) runs only inside the full unit suite.
+  3. `pnpm --filter @aduin/scripts deploy:preflight` (13 checks), with the same inline site key in its own env.
+  4. `pnpm --filter @aduin/worker exec wrangler deploy`.
+  5. Live checks: `/api/health` 200 no-store, findings render in about 1 s, no Turnstile overlay.
+  - Static assets only: no Worker code or migration change.
+  - Rollback target is ONLY `d9aaddd9-a62f-4850-8ff2-89889c8ef652` (8a82ead2 and older refuse memory writes on schema 6). Re-read the live version right before deploy.
+  - Coordinate with hotfix session local_c18ddd8c-870b-46c6-be57-5413ebf73067 before deploy.
+  - After deploy, message design session local_6233f6ed-5b47-4443-9aea-f74c3ffd6c67.
+  - Ask parent session local_0e248e10-0073-4596-8166-9c41a8074139 whether to push. Do not push.
 
-### Phase C Phase Loop Progress
+All commits: `git add <paths>` then `git commit -m "<msg>" -- <paths>` (use bash, not zsh word-splitting), trailer `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`; never stash, checkout, reset or restore.
 
-- [ ] 1 RESEARCH - C0
-- [ ] 2 INNOVATE - n/a (D-7)
-- [ ] 3 PLAN-SUPPLEMENT - Inner Loop Refresh Note only if Phase B changed contracts
-- [ ] 4 PVL
+### Phase B gates (B7; serial, port 4317, free the port before each e2e call, one token per call, no `--`)
+
+| Gate / Scenario | Strategy | Proves SPEC criterion |
+|---|---|---|
+| Phase A tokens re-run (16 findings-v2-* plus source-guard, import-graph, tokens-match-mockup, severity-label) | Fully-Automated | AC-11, AC-17 |
+| `pnpm --filter @aduin/web test findings-v2-store-parity` | Hybrid | AC-13 |
+| `pnpm --filter @aduin/web typecheck` | Fully-Automated | AC-17 |
+| `pnpm --filter @aduin/web test` once (baseline 518 plus new) | Fully-Automated | AC-B5 |
+| `pnpm --filter @aduin/web test:e2e <token>` per repaired spec, then `findings-v2` | Hybrid | AC-1, 3, 4, 5, 6, 8, 10, 15, 16, 18, 19, 20 |
+| `pnpm --filter @aduin/web test:e2e` once (baseline 242 plus 1 skip, plus the new spec; run `intake-demo-packages` alone if flaky) | Hybrid | AC-B2 |
+| `pnpm --filter @aduin/web test:e2e:stack-memory` (baseline 12; never together with preview; run after preview) | Hybrid | AC-3 |
+| From `apps/web`: `DESIGN_PROBE=1 pnpm exec playwright test --project=preview design-probe` at widths 1440 and 1024, zoom 75, 100, 150 (seeded via `ui:v1:doczoom`; also captures the findings-v2 mockup into the task folder `design-probe/`; non-blocking) | Agent-Probe | AC-11, AC-16 |
+| `pnpm --filter @aduin/web test:e2e layout-vs-mockup` with findings-v2.css loaded | Hybrid | AC-5, AC-11 |
+| `grep -rn "action-accept" apps/web/e2e apps/web/test apps/web/src` returns nothing | Fully-Automated | AC-B4 |
+
+### Phase B acceptance
+
+- AC-B1: AC-1..10, 13, 15, 16, 19, 20 hold in the real app. AC-12 is N/A (P-16).
+- AC-B2: every repaired spec passes; the full preview suite passes; stack-memory passes (12).
+- AC-B3: store parity passes.
+- AC-B4: no `action-accept` anywhere.
+- AC-B5: vitest, typecheck, source-guard, import-graph, tokens-match-mockup and no-e2e-hook-in-dist are green; deploy preflight is green when deploying.
+
+### Phase B Phase Loop Progress
+
+- [x] 1 RESEARCH (Step 0 re-sync)
+- [x] 2 INNOVATE (n/a, mechanical decisions P-11..P-16 by the orchestrator)
+- [x] 3 PLAN-SUPPLEMENT
+- [ ] 4 PVL (inner; the Phase A contract is outer-pvl and older than the refresh note, so re-run from V1)
 - [ ] 5 EXECUTE
 - [ ] 6 EVL
-- [ ] 7 UPDATE PROCESS - archive the whole plan folder when Phase C is VERIFIED
+- [ ] 7 UPDATE PROCESS
 
 ---
+
+## Phase C - Dedupe hookup (DROPPED, P-16, 18-10-26)
+
+Phase status: Dropped. The program closes after Phase B. Reason: core already removes AI findings that overlap any rule anchor in the same block (`packages/core/src/llm/dedupe.ts`, a2a7047, live; `e2e/ai-no-duplicates.spec.ts`), so `v2/dedupe.ts` matches nothing live; it and its test stay unmounted as a defensive pure module, documented as unused. Revival needs a core engine decision: see the backlog NOTE `process/features/findings-v2/backlog/findings-v2-ai-agrees-dedupe_NOTE_18-10-26.md`. The Phase C file table, checklist and gates are removed.
 
 ## Acceptance Criteria (mapped to design D1-D15; each names its proving gate)
 
@@ -529,7 +538,7 @@ AC-12 holds end to end; counts, counsel questions and the gate count the merged 
 | AC-9 | D8 | Groups To review / Sent / Closed; progress "N of M reviewed" with Counsel, Closed, Left counts; done state | `findings-v2-groups`, `findings-v2-panel-ui` | Fully-Automated + Hybrid |
 | AC-10 | D9 | Severity chips plus the existing Filter popover retained | `findings-v2-panel-ui`, `filter-sort` (Phase B) | Hybrid |
 | AC-11 | D10 | Calm palette: no hex in features, no gradients, `fv2-` prefix, no `:root` additions, violet only on AI tags | `source-guard`, `tokens-match-mockup`, CSS review in AC-A3, Phase B design-probe screenshots | Fully-Automated + Agent-Probe |
-| AC-12 | D11, D-7 | An AI finding overlapping a rule finding (same block, overlapping offsets, same class) merges into one row "AI agrees"; acting on it acts on both; counts once | `findings-v2-dedupe`, `findings-v2-dedupe-view`, `findings-v2-dedupe.spec.ts` (Phase C) | Fully-Automated + Hybrid |
+| AC-12 | D11, D-7 | N/A by P-16 (dropped): core dedupe already removes AI twins, so "AI agrees" never occurs; pure logic proven only | findings-v2-dedupe (unmounted); backlog NOTE findings-v2-ai-agrees-dedupe_NOTE_18-10-26.md | Known-Gap (residual, stub written; D11 descoped) |
 | AC-13 | D12 | Outcome toast with Undo shows the D12 text; the text equals the real recompute | `findings-v2-outcome`, `findings-v2-actions-flow`, `findings-v2-store-parity` (Phase B) | Fully-Automated + Hybrid |
 | AC-14 | D13 | Not built in this plan; backlog stub exists for step 3 | `process/features/findings-v2/backlog/findings-v2-step3-flag-passage_NOTE_18-10-26.md` exists | Known-Gap (residual, stub written; gate stays CONDITIONAL for D13) |
 | AC-15 | D14 | J/K move, C Ask counsel, X Close issue; ignored while typing, with modifiers, IME, repeat (C and X), or a dialog open | `findings-v2-shortcut-guard`, `findings-v2-shortcuts-hook`, `findings-v2.spec.ts` | Fully-Automated + Hybrid |
@@ -544,8 +553,8 @@ AC-12 holds end to end; counts, counsel questions and the gate count the merged 
 - A phase is `CODE DONE` when its checklist is complete and committed; it is `VERIFIED` only when the phase's EVL gates are green (independent vc-tester run), the regression tokens are green, and the report lists commands and outcomes. Code-only completion is never VERIFIED.
 - Phase A is VERIFIED on vitest evidence only; AC-5, AC-6, AC-8 and AC-16 stay CONDITIONAL until Phase B browser evidence exists (vacuous-green ban: Known-Gap is never a terminal PASS for developed behavior).
 - A gate with a Known-Gap residual (AC-14, manual a11y pass) stays CONDITIONAL, with its backlog stub recorded.
-- Phase B does not start until the Variance P05-closed message is recorded in the Phase B report.
-- Archive the plan folder only when Phase C is VERIFIED (UPDATE PROCESS), not after Phase A or B.
+- Phase B Step 0 done; Variance closed at dcb387d (live d9aaddd9).
+- Archive the plan folder when Phase B is VERIFIED (Phase C dropped, P-16).
 
 ## Verification Evidence
 
@@ -574,7 +583,7 @@ AC-12 holds end to end; counts, counsel questions and the gate count the merged 
 | Phase B: `pnpm --filter @aduin/web test findings-v2-store-parity` | Hybrid | AC-13 |
 | Phase B: `pnpm --filter @aduin/web test:e2e:stack-memory` (11 baseline) | Hybrid | AC-3 (memory write paths unchanged) |
 | Phase B: design-probe screenshots at 1440, 1199, 1024; zoom 75, 100, 150, fit (opt-in `DESIGN_PROBE=1`, `pnpm exec playwright test --project=preview design-probe` from `apps/web`) | Agent-Probe | AC-11, AC-16 (visual calm palette, fit-width feel, no horizontal overflow) |
-| Phase C: `pnpm --filter @aduin/web test findings-v2-dedupe-view`; `pnpm --filter @aduin/web test:e2e findings-v2-dedupe` | Hybrid | AC-12 |
+| Phase B gates: see "Phase B gates (B7)" table in the Phase B section | Hybrid | AC-B1..AC-B5 |
 | Deploy (end of B or C): `pnpm guard:cf`, `pnpm secrets:scan`, a plain web bundle with the public site key inline (scratch script run, see Hard Rule 2), `pnpm --filter @aduin/scripts deploy:preflight`, `pnpm --filter @aduin/worker exec wrangler deploy`, live checks: `/api/health` 200 no-store, findings render in about 1 s, no Turnstile overlay; record the previous live version for `wrangler rollback` | Hybrid | AC-18 |
 | Manual keyboard and screen-reader pass over bar, modal, resizer, zoom controls | Known-Gap (residual; stub written) | AC-1, AC-5, AC-15, AC-16 stay CONDITIONAL on this residual |
 
@@ -769,7 +778,120 @@ Execute-agent instructions (apply to Phase A; the supplement cycle folds the con
 Gate: PASS (0 FAILs, 0 CONCERNs after the cycle-3 re-validation; all prior CONCERNs resolved in the plan text and verified against real code; three PVL cycles are recorded in `results.tsv` (baseline plus 2 supplement cycles); named Known-Gap residuals AC-14, the manual keyboard pass and the fit-width human look are excluded from the CONCERN count per V3 and remain open with a backlog stub; Phase A will be VERIFIED on vitest evidence only (after EVL) and AC-5, AC-6, AC-8, AC-16 stay CONDITIONAL until Phase B browser evidence.)
 Accepted by: n/a for the gate (Gate is PASS, no CONCERN to accept); residual Known-Gap items carried by name: AC-14 D13 not built here (backlog stub), manual keyboard and screen-reader pass (backlog stub), fit-width human look at 1900px and wider (backlog stub), `gatesReview` static policy approximation (E29), Closed-group-versus-filter visibility (P-7), Real issue on change rows (P-10 design question)
 
+## Validate Contract - Phase B (inner-pvl)
+
+Status: PASS
+Date: 18-10-26
+date: 2026-10-18
+generated-by: inner-pvl: phase-B
+supersedes: 2026-10-18 (inner-pvl: phase-B, cycle 1 CONDITIONAL) - re-validated cycle 2 after the Phase B supplement cycle 1; the Phase A cycle-3 contract above (outer-pvl, PASS) stays intact as history and governs Phase A only
+Scope: Phase B only (integration, repairs, dead-code removal, deploy). Phase C is DROPPED (P-16).
+Evidence base (read-only, code HEAD 832dac1, cycle 2): `validate-plan-artifact.mjs` on this plan = 0 failures, 0 warnings; every supplemented item was re-checked against real code and specs (FindingRow.tsx text sources, `ExpandedBlock.tsx`, `use-finding-actions.ts`, `CloseIssueModal.tsx`, `reasons-map.ts`, `use-panel-width.ts`, `width-math.ts`, `zoom-math.ts`, `use-doc-zoom.ts`, `findings-v2.css`, `fixtures/{app,counsel}.ts`, `design-probe.spec.ts`, `layout-vs-mockup.spec.ts`, `app-shell.spec.ts`, `a11y-keyboard.spec.ts`, `a11y-smoke.spec.ts`, `dismiss-requires-reason.spec.ts`, `triage-actions.spec.ts`, `gate-pill.spec.ts`, `locator-chip.spec.ts`, `previously-handled-section.spec.ts`, `findings-v2.html`, `mockupCss.ts`, `preflight.ts`). No bundle, no Playwright, no deploy and no source edit was run. `results.tsv` Phase B rows: cycle 0 BASELINE, cycle 1 CONTINUE; the orchestrator appends cycle 2 (phase B, PASS, 0 FAIL, 0 CONCERN, HALTED_SUCCESS). The `Gate: PASS` string already exists in the Phase A contract, so the mechanical EXECUTE gate MUST be read inside THIS section (the Gate line at the end of this contract), not file-wide.
+
+Parallel strategy: sequential (B1..B6 one opus agent per step; B8 EVL tester and code review may run as two read-only sonnet subagents in parallel)
+Rationale: 7-signal score 2/7 (S6 deploy surface, S7 5+ files; S1, S2, S3, S4, S5 absent) = MEDIUM, but the dominant constraint is one shared tree plus Playwright serial on port 4317 (and stack-memory never with preview), every step commits on top of the previous one, and no step needs cross-talk, so sequential is the fit. Model: opus only for the B1-B6 code-writing and deploy agents; validate, EVL, review and UPDATE PROCESS are sonnet. Agent count: 6 opus (B1-B6) + 1 opus (deploy) + 3 sonnet (EVL tester, code review, update-process) = about 10; cost guard not triggered.
+
+Test gates (C3 5-column table; each token its own command, no `--`; confirm more than 0 tests ran per token; free port 4317 before every e2e call):
+
+| criterion id | behavior | strategy | proving test | gap-resolution |
+|---|---|---|---|---|
+| AC-11, AC-17 | Phase A regression: 16 `findings-v2-*` tokens, then `source-guard`, `import-graph`, `tokens-match-mockup`, `severity-label` (B0.5, first action) | Fully-Automated | `pnpm --filter @aduin/web test <token>` per token | A |
+| AC-7, AC-19, AC-B1 | B1 v2 fixes P-11..P-15 and P-17 (Expected/Found ids, memory note in the toast, Re-confirm bar label, focus return, reason radios, dismissed `Reason:` line, memory tag text, prior-decision note) | Hybrid | `pnpm --filter @aduin/web test findings-v2-panel-ui`, then `findings-v2-actions-flow`, `findings-v2-change-expanded` | B |
+| AC-13, AC-B3 | simulated D12 outcome equals the real post-action recompute | Hybrid | `pnpm --filter @aduin/web test findings-v2-store-parity` | B |
+| AC-17, AC-B5 | types, lint, format | Fully-Automated | `pnpm --filter @aduin/web typecheck`; `pnpm exec eslint apps/web/src/features/review apps/web/e2e apps/web/test/support`; `pnpm exec prettier --check apps/web/src/features/review apps/web/e2e apps/web/test/support apps/web/src/styles/findings-v2.css` | B |
+| AC-B5 | full web unit suite once (baseline 518 at 0c6312e plus the new files; all green; the production-bundle hook test runs inside it and writes to a temp folder, so it never touches the preview output) | Fully-Automated | `pnpm --filter @aduin/web test` | B |
+| AC-1, AC-3, AC-4, AC-5, AC-6, AC-8, AC-10, AC-15, AC-16, AC-18, AC-19, AC-20 | repaired specs one by one, then the new spec | Hybrid | `pnpm --filter @aduin/web test:e2e <spec token>` per repaired spec (B2 `triage-actions`, `app-shell`; B3 `layout-vs-mockup`, `finding-highlight`, `perf-budget`; B4 each repaired spec), then `pnpm --filter @aduin/web test:e2e findings-v2` | B |
+| AC-B2 | full preview project once (baseline 242 + 1 skip, plus the new spec; `intake-demo-packages` alone if flaky) | Hybrid | `pnpm --filter @aduin/web test:e2e` | B |
+| AC-3 | memory write paths unchanged (baseline 12; after preview, never together) | Hybrid | `pnpm --filter @aduin/web test:e2e:stack-memory` | A |
+| AC-5, AC-11 | panel percent width from `findings-v2.html`, style vocabulary with findings-v2.css loaded | Hybrid | `pnpm --filter @aduin/web test:e2e layout-vs-mockup` (rules E-B7, E-B8, E-B14, E-B16) | B |
+| AC-11, AC-16 (visual) | calm palette, fit-width feel, no overflow at 1440 and 1024, zoom 75, 100, 150 | Agent-Probe | from `apps/web`: `DESIGN_PROBE=1 pnpm exec playwright test --project=preview design-probe` (EDIT row in the Files table; rule E-B15) | B |
+| AC-B4 | no `action-accept` anywhere | Fully-Automated | `grep -rn "action-accept" apps/web/e2e apps/web/test apps/web/src` prints nothing (new v2 tests must not contain the literal) | B |
+| AC-18, AC-B5 | deploy artifact and live checks | Hybrid | `pnpm guard:cf`, `pnpm secrets:scan`, plain web bundle via scratch script, `pnpm --filter @aduin/scripts deploy:preflight` (13 checks, needs the site key in its own env), `pnpm --filter @aduin/worker exec wrangler deploy`, then `/api/health` 200 no-store | B |
+| AC-14, manual keyboard and screen-reader pass, human fit-width look at 1900px and wider | not built or not automatable here | Known-Gap | none (named residuals) | D (backlog stubs recorded) |
+| AC-12 | N/A (P-16); `v2/dedupe.ts` stays unmounted | Known-Gap | none | D (backlog NOTE `findings-v2-ai-agrees-dedupe_NOTE_18-10-26.md`) |
+
+C-4 note: Known-Gap is only a named residual row (gap-resolution D), never a strategy that proves a behavior. Vacuous-green check: every developed Phase B behavior has a Fully-Automated or Hybrid gate; the only Known-Gap rows are AC-14, the manual a11y pass, the human fit-width look and AC-12.
+
+Failing stubs: none new. Every new Phase B test row is Hybrid (jsdom or Playwright); the Phase A Fully-Automated stubs were consumed in Phase A.
+
+Legacy line form (retained for existing consumers):
+- v2 fixes and mount: [Fully-automated: typecheck, eslint, prettier, full web vitest] | [hybrid: `findings-v2-panel-ui`, `-actions-flow`, `-change-expanded`, `-store-parity`; e2e per repaired spec, `findings-v2`, full preview, stack-memory; precondition: port 4317 free, one call at a time] | [agent-probe: design-probe screenshots] | [known-gap: AC-14, manual keyboard pass, human fit-width look, AC-12]
+- deploy: [fully-automated: `guard:cf`, `secrets:scan`, `deploy:preflight`] | [hybrid: live `/api/health`, findings in about 1 s, no Turnstile overlay]
+
+Dimension findings (cycle 2, re-validated against code; N1-N6 from cycle 1 are closed, see "Cycle 1 concerns" below):
+- Infra fit: PASS - FindingsScreen, DocPane, the `.work` cascade (`.work.fv2-work` beats `.work` and `.view > .work`), the zoom hook, both barrels, the `gotoApp()` seam, the live-bundle site key flow (`preflight.ts` reads `VITE_TURNSTILE_SITE_KEY` from its own env) and the design-probe EDIT row all match the code. The panel width is decided once at mount from `window.innerWidth` (same as the mockup), see E-B16.
+- Test coverage: PASS - the repair list now covers every breakage found in cycle 1; the importers of `markCounsel` (counsel-export, counsel-gate, counsel-sheet, csp-headers, fund-two-zero-hidden-zero-repeat, intake-missing-docs-request-export, memory-prior-answer, metrics, stack-memory-roundtrip) and `markAccepted` (counsel-answer, counsel-export, counsel-sheet) are exactly the plan's re-run list; four further mechanical hazards found in cycle 2 are bound as E-B13..E-B16 (they have one-line fixes inside the allowed set).
+- Breaking changes: PASS - `Reason: <label>` (`r.triage.reasonCode` through `reasonLabel`), the `finding-memory-tag` for label `new` (text `New`, no icon), and the prior-decision note (`r.prior` fields `decided_by_name`, `decision`, `fund_name`, `decided_at`, `reason_code`; re-confirm sentence only when `label === 'dismissed_reconfirm'` and status is not dismissed) have the same text sources in P-17 as `FindingRow.tsx`. Importers of the removal targets are clean (`FindingsScreen.tsx` only; `ownerLabel` has no importer).
+- Security surface: PASS - no auth, billing, secret or Worker change; static assets only; the site key is public and never printed or committed; v2 renders React text nodes only; no live LLM call; zone `itsjiathao.com` is not touched.
+- Section B1 (v2 fixes P-11..P-15, P-17): PASS - implementable in the v2 files (`use-finding-actions.ts` already calls `showToast(outcome.text, undo)` after the store action, so reading `useReview.getState().toast?.msg` for the note is exact; `memoryNotSavedNote` is exported at `state/review.ts:77`; the toast shape is `{id, msg, undo}`; `Modal` accepts `onCloseAutoFocus`; `data-memory-state` is at `FindingsPanelV2.tsx:107`; the error text `DISMISS_REASON_REQUIRED` is unchanged; the v2 reason labels differ from `reasonLabel` only for `firm_standard_wording` (radios use "Firm's standard wording"; `Reason:` lines and the previously-handled row use `reasonLabel` "Law firm's standard wording", which the specs expect).
+- Section B2 (FindingsScreen swap): PASS - swap list verified (J/K effect, `DismissModal` host, `FindingRow` and `ChangeRow` usages, and the locals only the old aside used); `UndoToast` is hosted at `shell/AppShell.tsx:38`.
+- Section B3 (DocPane zoom, slicer, seed, layout spec): PASS - `findings-v2.html` carries 50/55 (line 1060), the clamp 40/65, the 8px handle (line 114) and the allowed shadows (`.li.open`, `.btn.out`, `input[aria-invalid]`, `.pop`; modal shadow is allowed by the existing `role=dialog` plus `.modal` rule because `CloseIssueModal` passes `modal fv2-modal`); `findings-v2.css` fonts 13/14/15 and radii 2/3/4/var(--r) sit inside the app.html vocabulary; the seed key and shape (`ui:v1:doczoom`, `{"mode":"manual","pct":100}`) match `zoom-math.ts` and `safeGetJson`. Hazards bound by E-B13..E-B16.
+- Section B4 (repair list): PASS - rows verified against the specs and lines named (triage-actions 12/14/17/21/39/44, gate-pill 25/32, app-shell 80, upload-firm-tagging 67, a11y-keyboard 162, dismiss-requires-reason 16/21/33/46/54, a11y-smoke 47-58, locator-chip 17/19, fixtures counsel 127-136); two additions bound as E-B15 and E-B17.
+- Section B5 (new spec and store parity): PASS - `test/review-sync.test.ts` exists as the pattern; fixture ids confirmed.
+- Section B6 (dead code removal): PASS - importers clean; delete only after the full gate is green.
+- Section B-deploy: PASS - recipe matches `process/context/worker/all-worker.md` and `docs/DEPLOY.md`; `preflight.ts` line 189 reads the site key from env; rollback is only `d9aaddd9-a62f-4850-8ff2-89889c8ef652`; key handling bound by E-B11 and E-B19.
+
+Cycle 1 concerns (all closed, verified in the plan text and against code): N1 parity items G9-G11 in P-17 and checklist B1; N2 repair rows, importer re-run lists, D12 strings, radio counts, focus return, tab distance, locator chip; N3 B3 shadow allow-list from `findingsV2Css` and 1px tolerance; N4 deploy key source, scratch script outside the repo, key inline for bundle and preflight; N5 fact corrections (`shell/AppShell.tsx:38`, `data-memory-state` verify-only, `msg`, a11y-keyboard 162); N6 `design-probe.spec.ts` EDIT row with zoom variants and mockup capture.
+
+Execute-agent instructions (binding for Phase B; the plan supplement folds the plan-level ones into the checklist, but these hold either way):
+- E-B1 First action (B0.5): run the 20 tokens one per call. Do not start B1 until all are green. The panel root already carries `data-memory-state` (`FindingsPanelV2.tsx:107`), so no fix is needed; re-grep anyway.
+- E-B2 P-12: after `await call()` in `run()`, read `const st = useReview.getState(); const note = memoryNotSavedNote(st.doc); const kept = st.toast?.msg ?? ''` and use `note && kept.trimEnd().endsWith(note) ? outcome.text.trimEnd() + ' ' + note : outcome.text`. `withNote` only appends for accept and dismiss when no memory decision was created, so needsCounsel and restore never carry the note; add unit cases for note present (firm-less doc, accept) and absent. Never edit `state/review.ts`.
+- E-B3 P-15: `CloseIssueModal` sets `onCloseAutoFocus` (preventDefault) and focuses the next row after a successful dismiss (query `[data-testid="finding-row"]` and compare `data-finding-id`; no `CSS.escape` dependency), otherwise the bar's `action-dismiss`. Esc and Cancel return focus to `action-dismiss`. Proven by the repaired `dismiss-requires-reason` and `a11y-smoke`.
+- E-B4 N1 / P-17: in `ExpandedBlock`, (a) a dismissed row (`row.status === 'dismissed'` and `row.triage?.reasonCode`) renders `Reason: ` plus `reasonLabel(code)` from `../reasons` as ONE text node (the specs match `Reason: Does not affect the form`); a note, if shown, goes in a separate element after it; (b) `finding-memory-tag` renders for every rule row including label `new`: text exactly `New` (specs use exact `toHaveText('New')`), so no icon text and no extra words for `new`; keep the memory icon for the other labels; (c) port the prior-decision note (`<b>decided_by_name</b> dismissed | accepted | recorded counsel's answer on this in <fund_name or "another fund"> on <date><, reason label>.` plus ` Blocks digitization, so it stays in the main list until you re-confirm.` only when `label === 'dismissed_reconfirm'` and the row is not dismissed) rendered only when `row.prior && row.label !== 'new'`. The date helper `fmtDate` is private to `FindingRow.tsx`, which B6 deletes: copy the 5-line helper into `ExpandedBlock.tsx` (do not import from `components/FindingRow`). The `findings-v2-css-guard` cross-check only covers classes starting `fv2`: either reuse an existing `fv2-*` class or a base class (`memnote`, `dim`), or add the new `fv2-*` rule to `findings-v2.css` under E-B13. All text as React text nodes, no hex colors in features. Add unit assertions to `findings-v2-panel-ui`.
+- E-B5 Spec and helper repairs choose by the row's `data-severity`: Ask counsel for `block` rows (status becomes `accepted`); Close issue then Real issue for other rows when the spec needs `accepted`; Ask counsel for non-blocking rows when it needs `counsel`. `markCounsel` asserts `accepted` for blocking rows and `counsel` otherwise; `markAccepted` follows the same rule (non-blocking: Close issue then Real issue, because `counsel-sheet.spec.ts:62-63` depends on the difference). Re-run every spec that imports either helper, each alone, plus the other `action-counsel` callers (`stack-memory-demo-workspace.spec.ts:97`, `variance-no-baseline-errors-only.spec.ts:44`, `variance-owner-override.spec.ts:48`, `fixtures/variance-owners.ts:41`). `app-shell.spec.ts:80` expects an empty counsel badge after the accept, so it needs the non-blocking path (Close issue then Real issue); a blocking Accept adds a counsel question. Toast assertions move to the D12 strings (`Sent to counsel · Counsel questions now N · ...`, `Closed as a real issue · ...`, `Closed · Gate still blocked (M)`). Radio counts and first-radio picks derive from the row severity (the first radio on non-blocking rows is Real issue). Raise `tabTo` limits as needed.
+- E-B6 Phase B allowed edit set: the v2 files; `FindingsScreen.tsx`; `components/DocPane.tsx`; `test/support/mockupCss.ts`; the e2e files in the Derived repair list plus the N2 additions and `e2e/app-shell.spec.ts` (E-B15); `e2e/fixtures/{app,counsel,findings-actions,variance-owners}.ts`; new `e2e/findings-v2.spec.ts`; new `v2/findings-v2-store-parity.test.tsx`; `e2e/design-probe.spec.ts`; `apps/web/src/styles/findings-v2.css` ONLY as bound by E-B13; deletions of `components/FindingRow.tsx`, `components/DismissModal.tsx` and `variance/ChangeRow.tsx` after re-grepping importers. Forbidden: `packages/`, `apps/worker/`, migrations, `apps/web/src/state/`, `engine/`, `storage/`, `features/review/{model.ts,use-review-view.ts}`, `styles/{base.css,tokens.css}` (dead old-row rules stay), `components/ui/*`, any Worker or contract change.
+- E-B7 Style audit (`layout-vs-mockup`): keep font, radius and gradient checks strict. Derive the allowed shadow selectors from `design/mockups/findings-v2.html` through the new `findingsV2Css` slicer (open row card `.li.open`, outline button inset `.btn.out`, invalid-field inset, popover menu `.pop`) and allow a shadow only on those; the modal shadow stays allowed by the existing dialog-plus-`.modal` rule. Do not delete design shadows from `findings-v2.css` to satisfy the old audit, and do not loosen the audit for anything else. Record the decision in the report as a design note.
+- E-B8 Width assertions come from `findingsV2Css` (50 at 1280 and above, 55 below, clamp 40 and 65, handle 8px) times the real `.work` width, compared with a 1px tolerance (percent widths are fractional; the mockup rounds to integer pixels). Replace the vacuous `li` `\bsel\b` check at `layout-vs-mockup.spec.ts:147`.
+- E-B9 Boundary proof after the last commit: `git diff --name-only 832dac1..HEAD -- packages apps/worker apps/web/src/state apps/web/src/engine apps/web/src/storage apps/web/src/components/ui apps/web/src/styles/base.css apps/web/src/styles/tokens.css apps/web/src/features/review/model.ts apps/web/src/features/review/use-review-view.ts` prints nothing; `git diff --name-only 832dac1..HEAD` lists only paths in E-B6; each commit's `git show --name-only --format= <sha>` stays inside its step.
+- E-B10 Command hygiene: Bash text never contains the three words the kit hook blocks (the output-folder word, the node packages folder word, and the word for producing the bundle); use the package scripts above; the hook test file token is never passed as a token (it runs inside the full unit suite); the plain web bundle and the preflight run from a scratch shell file written with the Write tool OUTSIDE the repo, so no key can be committed. One token per call, no `--`, free port 4317 before every e2e call, preview first then stack-memory, one commit per step with `git add <paths>` then `git commit -m "<msg>" -- <paths>` and the Opus 5.5 trailer; never `git stash`, `checkout`, `reset`, `restore`, `git add -A` or `git add .`; no push.
+- E-B11 Deploy only after B7, EVL and review are green: `pnpm guard:cf` then `pnpm secrets:scan`; re-read the live version right before deploy (`pnpm --filter @aduin/worker exec wrangler deployments list`) and record it; the public Turnstile site key is read from the live bundle inside the scratch script and used inline for BOTH the bundle command and `deploy:preflight`, never exported, printed or written into the repo; run the plain bundle immediately before `deploy:preflight` and `wrangler deploy` (a stack Playwright run overwrites the output); live checks `/api/health` 200 `no-store`, findings render in about 1 s, no Turnstile overlay. Rollback target is ONLY `d9aaddd9-a62f-4850-8ff2-89889c8ef652` (older versions refuse memory writes on schema 6). Coordinate with the hotfix session before deploy, message the design session after, ask the parent session before any push; never touch zone `itsjiathao.com`.
+- E-B12 Report (`findings-v2-phase-b_REPORT_18-10-26.md`): each command with exit code and tests-run count, every spec edited and why, the final test counts (web unit, preview e2e, stack-memory), design questions (P-7 Closed group versus filter, P-10 Real issue on change rows, E-B7 shadow decision, E-B13 CSS edits), the live version before and after, and the residual Known-Gap items.
+- E-B13 (new, cycle 2) `styles/findings-v2.css` is a Phase A file owned by this plan; Phase B may make minimal additive or corrective edits to it ONLY to satisfy a mockup rule or a failing repaired spec, each logged in the report, `findings-v2-css-guard` kept green, nothing in `base.css` or `tokens.css`. Known first case: `.fv2-modal textarea` sets `font-size: 14px` (line 383) but the mockup (`findings-v2.html` line 314, `.modal textarea`) is 16px and `layout-vs-mockup.spec.ts:178` asserts `16px` on `dismiss-note`; fix the CSS to 16px, never the assertion. Any axe contrast failure on the v2 panel in `a11y-smoke` or `a11y-keyboard` is fixed the same way (colour token swap inside findings-v2.css), not by weakening the audit.
+- E-B14 (new, cycle 2) The `gotoApp()` zoom seed must be seed-if-absent (`if (localStorage.getItem('ui:v1:doczoom') === null) localStorage.setItem(...)` inside the init script) and `gotoApp` takes an optional `{ zoom }` parameter (`'fit'` skips seeding; a number seeds `{"mode":"manual","pct":N}`), because (a) an unconditional seed overwrites the user's zoom on every `page.reload()` and breaks the zoom-persistence cases in `findings-v2.spec`, (b) the fit-default cases in `findings-v2.spec` need no seed, and (c) the design-probe zoom variants (75, 100, 150) need their own seed to win. Existing callers keep the default (manual 100).
+- E-B15 (new, cycle 2) `e2e/app-shell.spec.ts:60` asserts `Object.keys(localStorage)` equals exactly `['ui:v1:sidebar']`; the E-B14 seed adds `ui:v1:doczoom`. Repair the assertion to ignore the test-seeded key (filter it out, keep the rest exact) and keep the test title meaning ("the only persisted shell state"). `design-probe.spec.ts` captures `findings-v2.html` with the panel open and writes to `process/features/findings-v2/active/findings-v2_18-10-26/design-probe/`.
+- E-B16 (new, cycle 2) The panel percent is chosen once at mount from `window.innerWidth` (`use-panel-width.ts`, `defaultPct`) and does not re-derive when the viewport is resized afterwards (the mockup behaves the same). `layout-vs-mockup` test 2 currently resizes the viewport in one page (1440, 1200, 1199, 1024): set each viewport BEFORE `gotoApp` (new page or `reload` after `setViewportSize`) so the expected 50 or 55 applies, and do not change `use-panel-width.ts`.
+- E-B17 (new, cycle 2) `locator-chip.spec.ts:17` reads `finding-body .sub2`, which v2 does not render: read the severity line instead (first `.fv2-sec-h` inside `finding-body`, text `Severity · <loc>`) for the section number, and open `finding-details` before asserting the `finding-locator` chip (P-18).
+- E-B18 (new, cycle 2) Dismissed-row access: the repaired `triage-actions` dismiss case selects the Dismissed status filter before opening the row, then asserts `Reason: Does not affect the form` in `finding-body` and uses `action-restore` (Move back to review); the bar is outside `finding-body`, so scoped clicks such as `finding-body.getByTestId('action-dismiss')` (variance-gate-two-states:30, variance-demo-gate-walk:92) become `page.getByTestId('action-dismiss')`.
+- E-B19 (new, cycle 2) Site key from the live bundle: inside the scratch script, fetch the live main script, extract Turnstile site-key-shaped values (`0x4` followed by 20 or more URL-safe characters), require EXACTLY ONE distinct value, and abort the deploy otherwise; hold it in a shell variable only for the bundle command and the preflight command (inline per command), and never echo it.
+
+Open gaps:
+- AC-14 (D13 Flag this passage, Suggest wording): known-gap: documented as NEW PLAN REQUIRED - see backlog/findings-v2-step3-flag-passage_NOTE_18-10-26.md
+- Manual keyboard and screen-reader pass over bar, modal, resizer, zoom controls: known-gap: documented as NEW PLAN REQUIRED - see backlog/findings-v2-step3-flag-passage_NOTE_18-10-26.md (section "Residual test stubs", item 1)
+- Human look at fit-width and calm palette at 1900px and wider: known-gap: documented as NEW PLAN REQUIRED - see backlog/findings-v2-step3-flag-passage_NOTE_18-10-26.md (item 2)
+- AC-12 (D11 AI agrees): known-gap: documented as NEW PLAN REQUIRED - see backlog/findings-v2-ai-agrees-dedupe_NOTE_18-10-26.md
+- Cycle 1 concerns N1-N6: closed (no open CONCERN).
+
+What this coverage does NOT prove:
+- The unit tokens prove v2 logic and jsdom structure only: no layout, real focus order, scroll-to-finding and flash, drag resize, fit width on a real `ResizeObserver`, or CSS cascade.
+- Store parity (`findings-v2-store-parity`) proves the simulated D12 text for the fixtures it seeds, not every gate transition in the live app.
+- The repaired e2e specs prove behavior on the stubbed memory API in the preview project; stack-memory proves memory writes on a seeded local D1 only, not the live Worker.
+- `layout-vs-mockup` proves widths, fonts, radii and gradients with the shadow allow-list of E-B7, not the visual match of the card shadow or the colors.
+- The design-probe screenshots are a judgment aid (Agent-Probe), not a pass/fail gate; they do not replace a human look at 1900px and wider or a manual keyboard and screen-reader pass.
+- Deploy preflight proves the artifact (headers, site key compiled in, no e2e hook, no routes), and the live checks prove health, headers and render-first timing; neither proves AI or OCR behind a human Turnstile challenge (operator residuals R2 and R4).
+- Nothing here proves the accepted-change-row group under a firm policy with `untriaged_change_blocks: false` (static `gatesReview`, E29).
+- The repair list is derived from a read of the specs, not a run: the full preview project (B4, B7) is what finds any remaining stale assertion; fixes follow E-B5 and E-B13..E-B18.
+
+Accepted by: n/a (Gate PASS, no accepted concern). Named residuals carried by name: AC-14, manual keyboard and screen-reader pass, human fit-width look, AC-12.
+Gate: PASS (0 FAILs, 0 CONCERNs after Phase B supplement cycle 1; cycle 2 re-validation against code found four mechanical hazards and three clarifications, bound as binding execute instructions E-B13..E-B19, each with a one-line fix inside the allowed edit set)
+
 ## Autonomous Goal Block
+
+```
+SESSION GOAL: Findings v2 (D1-D15) - Phase B integration (Phase A VERIFIED, Phase C dropped), then deploy to workers.dev
+Charter + umbrella plan: N/A - single plan: process/features/findings-v2/active/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md
+Autonomy: autopilot standing consent (feedback_autonomous_phase_execution.md): auto-proceed on reversible gates, EXECUTE=opus else sonnet, PVL/EVL loops cap 10, BLOCKED -> backlog and continue. Subagent delegation stays mandatory (no inline execution).
+Hard stop conditions / safety constraints:
+- Never git stash/checkout/reset/restore, never git add -A or ., no push; local commits on main with pathspec commit
+- No edits to packages/, apps/worker/, apps/web/src/state/, engine/, base.css, tokens.css, review model.ts or use-review-view.ts; findings-v2.css only as bound by E-B13
+- Deploy only to aduin-transaction-web.giathaowork.workers.dev after EVL and review; rollback target only d9aaddd9-a62f-4850-8ff2-89889c8ef652; never touch zone itsjiathao.com; no live LLM calls; the public site key is never printed or committed
+- Bash text must avoid the three kit-blocked words (see E-B10); Playwright serial on port 4317; stack-memory never with preview
+- Cascade BLOCKED (two phases) stops the run
+Next phase: EXECUTE Phase B steps B1-B6 (one opus agent each, sequential), B7 gates, B8 EVL (sonnet vc-tester) and review, UPDATE PROCESS, then deploy
+Validate contract: inline in the plan (## Validate Contract - Phase B (inner-pvl)), Gate PASS, re-validated cycle 2 (E-B1..E-B19 binding; read the Gate line inside that section, the Phase A contract above also says PASS)
+Execute start: B0.5 (20 tokens: 16 findings-v2-* plus source-guard, import-graph, tokens-match-mockup, severity-label, one per call), then B1 v2 fixes, B2 FindingsScreen swap, B3 DocPane zoom, B4 spec repairs, B5 new spec and store parity, B6 dead code removal | e2e: pnpm --filter @aduin/web test:e2e <token> per spec, then findings-v2, then the full project, then test:e2e:stack-memory | probe: design-probe (DESIGN_PROBE=1) | high-risk pack: no
+```
+
+## Superseded Goal Block (Phase A, history)
 
 ```
 SESSION GOAL: Findings v2 (D1-D15) - Phase A new-file slice, then Phase B/C after Variance P05 closes
@@ -787,6 +909,16 @@ Validate contract: inline in the plan (## Validate Contract), Gate PASS, re-vali
 Execute start: A1 pure logic (1 opus agent), then A2-UI + A2-ZOOM (2 opus agents, parallel, own tokens only; create A2-UI.0 files first), then one serial verify+commit. Gates, one token per call, no "--": pnpm --filter @aduin/web test findings-v2-reasons-map | -groups | -action-plan | -outcome | -dedupe | -width-math | -shortcut-guard | -zoom-math | -css-guard | -actions-flow | -shortcuts-hook | -panel-ui | -change-expanded | -panel-resizer | -use-doc-zoom | -zoom-controls; regression source-guard, import-graph, tokens-match-mockup, severity-label; then pnpm --filter @aduin/web typecheck and the full web suite (baseline 55 files / 375 tests) | e2e: none in Phase A | probe: Phase B design-probe | high-risk pack: no
 ```
 
+## Inner Loop Refresh Note
+
+Date: 2026-10-18 (later the same day, after the Phase A validate-contract cycle 3; newer than that contract).
+Phase: B, inner-loop Step 3 PLAN-SUPPLEMENT. Variance closed at dcb387d, live d9aaddd9, schema 6.
+Changed since planning: no Phase B target file changed since a31dff0; `state/review.ts` gained `memoryNotSavedNote`/`withNote` (f3a2a18); no v2 call signature changed.
+Sections changed: Plan-Level Decisions (P-11..P-16), Phase B (anchors corrected, zoom seed seam moved to `gotoApp()`, repair list recounted, B1 and B-deploy added, gates rewritten, registry step dropped), Phase C (dropped), Acceptance Criteria (AC-12 N/A, D11 descoped), Phase Completion Rules, Verification Evidence, Current Execution State.
+Plan correction: the earlier text claimed the e2e fixture has an `addInitScript`; it does not. The seam is `gotoApp()`.
+Validate-contract: still the Phase A outer-pvl contract. Phase B needs inner PVL (re-run from V1) before EXECUTE.
+Evidence: `findings-v2-phase-b-step0_RESEARCH_18-10-26.md`. Edits drafted by vc-plan-agent and placed by the orchestrator (harness refused the subagent write; same user-approved pattern as plan creation).
+
 ## Supplement Log
 
 - 2026-10-18, PVL-supplement cycle 1 (vc-plan-agent, scope-fenced to the 5 SUPPLEMENT REQUEST gaps):
@@ -802,28 +934,36 @@ Execute start: A1 pure logic (1 opus agent), then A2-UI + A2-ZOOM (2 opus agents
   - Gap 3 addressed (phase-a-implementation-checklist and CSS class contract): E21 state-variant and attribute-hook table, class-usage cross-check in `findings-v2-css-guard` (matrix row and A2-ZOOM.1), E22 CSS-import-only-from-barrels rule (A2-UI.4, A2-ZOOM.1), E25 one-liners (TriageStatus path, no `scan.css`, `tabIndex={0}`, `maxLength={500}`, `renderV2` with `createRoot` and `act`, J/K row focus), E26 (A1.7 pathspec commit), E27 (A2-UI.0 files before `use-finding-actions.ts`).
   - Validate Contract body untouched except "(addressed in supplement cycle 2)" annotations on E21-E27.
 
+- 2026-10-18, inner-loop PLAN-SUPPLEMENT for Phase B (vc-plan-agent draft, placed by orchestrator; Inner Loop Refresh Note written): re-sync folded in; P-11..P-16 recorded; Phase C dropped; Phase B rewritten; AC-12 N/A.
+
+- 2026-10-18, Phase B PVL-supplement cycle 1 (vc-plan-agent, scope-fenced to the 6 Phase B SUPPLEMENT REQUEST gaps; no Inner Loop Refresh Note written):
+  - Gap 1 (N1): P-17 added (G9, G10, G11); B1 extended with matching `findings-v2-panel-ui` assertions (E-B4).
+  - Gap 2 (N2): Derived repair list rows for `markCounsel` (with importer list), `markAccepted`, toast strings, radio count, a11y-smoke, a11y-keyboard, locator-chip; decision P-18 (open Details; mockup has no location chip in the severity line) (E-B5).
+  - Gap 3 (N3): B3 states shadow allow-list from `findingsV2Css`, strict fonts/radii/gradients, 1px width tolerance (E-B7, E-B8).
+  - Gap 4 (N4): B-deploy step 2 and 3 name the live-bundle site key source, scratch script outside the repo, inline use for bundle and preflight, hook-test note (E-B10, E-B11).
+  - Gap 5 (N5): UndoToast host `shell/AppShell.tsx:38`, B0.5 verify-only, toast field `msg`, a11y-keyboard line 162 (P-18, E-B1, E-B2).
+  - Gap 6 (N6): `design-probe.spec.ts` EDIT row and Agent-Probe gate text (E-B6).
+  - Validate Contract - Phase B body untouched except "(addressed in Phase B supplement cycle 1)" annotations on E-B1, E-B2, E-B4, E-B5, E-B6, E-B7, E-B8, E-B10, E-B11.
+
 ## Current Execution State
 
-- Last updated: 18-10-26 (Phase A UPDATE PROCESS, light inter-phase; plan NOT archived)
-- Current phase: A of A, B, C
-- Current loop step: Phase A steps 1-7 complete
-- Phase A status: VERIFIED (commits 9e866f2, 7a0d172, 597c9cf; web 71 files / 515 tests; source-guard, import-graph, tokens-match-mockup, severity-label, 16 findings-v2-* tokens (140 tests), typecheck, eslint, prettier, boundary proof B1-B3 green)
-- Phase A known gaps: AC-5/6/8/16 browser proof deferred to Phase B; manual keyboard and screen-reader pass; fit-width human look (Phase B agent-probe); AC-14 residual
-- Phase A report: `process/features/findings-v2/active/findings-v2_18-10-26/findings-v2-phase-a_REPORT_18-10-26.md`
-- Design session (18-10-26) confirmed all provisional decisions: Q1, Q2 rule-wins, D12 count, P-7, P-8, P-10, default width 50/55, action-accept retired, step 3 backlog. Still open for design: non-blocking "Ask counsel / Real issue" toast says gate blocked (1) (real gate behavior).
-- Phase B status: PLANNED, blocked on Variance P05 close
-- Phase C status: PLANNED, blocked on Phase B
-- Validate-contract status: written 18-10-26 (PASS, outer-pvl, Phase A scope; Phase B and C need an Inner Loop Refresh Note and their own PVL)
-- Next action: WAIT for the Variance P05 close message, then Phase B Step 0 re-sync (re-run Phase A gates at B0.5), Inner Loop Refresh Note, inner PVL
+- Last updated: 18-10-26 (Phase B inner PVL cycle 2: PASS)
+- Current phase: B (Phase C dropped, P-16)
+- Current loop step: Phase B Step 4 inner PVL PASS (cycle 2, 0 FAIL, 0 CONCERN); next Step 5 EXECUTE
+- Phase A status: VERIFIED (9e866f2, 7a0d172, 597c9cf; web 71 files / 515 tests at Phase A close; 518 at 0c6312e)
+- Phase B status: PLAN-SUPPLEMENTED, validated (inner PVL PASS after 1 supplement cycle), ready for EXECUTE
+- Phase C status: DROPPED (P-16); backlog NOTE written
+- Validate-contract status: Phase B contract PASS 18-10-26 (inner-pvl: phase-B, re-validated cycle 2, section `## Validate Contract - Phase B (inner-pvl)`); Phase A contract PASS 18-10-26 (outer-pvl) kept as history
+- Next action: orchestrator appends results.tsv row (cycle 2, phase B, PASS, 0 FAIL, 0 CONCERN, HALTED_SUCCESS), emits the /goal block, then spawns vc-execute-agent (opus) for B1 with E-B1..E-B19 from the Phase B contract
 
 ## Resume and Execution Handoff
 
 - Selected plan file (the only execute anchor): `process/features/findings-v2/active/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md`. Supporting artifacts: `findings-v2_DECISION_18-10-26.md`, `findings-v2_RESEARCH_18-10-26.md`, `findings-v2_AUTOPILOT_GOAL_18-10-26.md`.
-- EXECUTE receives ONE phase at a time: Phase A now. Do not start Phase B until the Variance session says P05 is closed and Step 0 finished.
-- Execute strategy for Phase A: A1 (1 opus agent), then A2-UI and A2-ZOOM in parallel (2 opus agents, disjoint directories, interfaces fixed above); sequential test runs; per-section test gate after each checklist section; pathspec-only commits with the Opus 5.5 trailer; no push; never stash, checkout, reset or restore.
+- EXECUTE receives Phase B only after inner PVL is PASS. Phase C is dropped (P-16).
+- Phase B: one opus agent per step B1..B6 sequentially; Playwright serial on port 4317; free the port before each call; pathspec commits only; no push; never stash, checkout, reset or restore. Deploy rollback target is only d9aaddd9 (schema 6); coordinate with hotfix session local_c18ddd8c-870b-46c6-be57-5413ebf73067 before deploy.
 - Context to pass: `process/context/all-context.md` plus `find process/context/ -type f`; `process/development-protocols/{orchestration,plan-lifecycle,implementation-standards}.md` (explicit read; not discoverable through the context router).
 - Validators to run by hand at closeout: `node .claude/skills/vc-generate-plan/scripts/validate-plan-artifact.mjs process/features/findings-v2/active/findings-v2_18-10-26/findings-v2_PLAN_18-10-26.md`; `node .claude/skills/vc-audit-vc/scripts/validate-agent-parity.mjs --strict` only if agent surfaces change (they do not in this plan); `vc-audit-context` after the `all-ui.md` and `all-tests.md` updates.
 - After compaction: read this plan, the Current Execution State, then the Phase A report; re-run `git status --short` and the Phase A tokens to see what exists.
 - Step 3 (Flag this passage, Suggest wording) is out of scope: `process/features/findings-v2/backlog/findings-v2-step3-flag-passage_NOTE_18-10-26.md`; it needs its own SPEC and PLAN after Phase B ships.
-- Deploy hand-off: Hard Rule 5; message the design session after deploy; message the Variance session before editing any Variance-owned spec.
+- Deploy hand-off: Hard Rule 5; message the design session after deploy; Variance is closed (no message needed before editing its specs).
 - Process deviation (18-10-26): the harness refused vc-plan-agent file writes during creation, so with the user's approval the orchestrator wrote DECISION, PLAN and the step-3 backlog NOTE verbatim from the agent's draft; later supplement and validate edits were applied by the subagents themselves.
