@@ -122,3 +122,6 @@ export {
   type PageNoiseResult,
 } from './adapters/page-noise';
 export { setSupSegments, supSegmentsOf, type SupSegment } from './adapters/sup-segments';
+
+// --- Phase 07 (07a): version / sibling diff engine (runs in the engine worker; main thread imports types only) ---
+export * from './diff/index';

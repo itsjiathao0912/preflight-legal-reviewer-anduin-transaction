@@ -937,6 +937,102 @@ export function buildDemoSeedSpec(): DemoSeedSpec {
   return DemoSeedSpecSchema.parse(spec);
 }
 
+// ---------------------------------------------------------------- Phase 07: diff fixtures
+// Seeded sibling pair (feeder vs parallel), identical pair, empty and single-section documents.
+// Expectations are AUTHORED here, never read back from the engine. The differing wire clause
+// changes the synthetic, non-routable account number itself (E17 leak gate exercises a changed
+// token): 990000017 (A) vs 990000025 (B).
+export const DIFF_DIR = 'fixtures/diff';
+const SYN_ABA_B = '990000025';
+
+const SIB_COMMON_NAME = 'Name of Subscriber: ____________';
+const SIB_COMMON_BANK = 'Bank: Example Trust Company, New York';
+const SIB_WIRE_A = `Account Number: ${SYN_ABA} (Fund I Feeder subscriptions)`;
+const SIB_WIRE_B = `Account Number: ${SYN_ABA_B} (Fund I Feeder subscriptions)`;
+const SIB_REF_A = 'Reference: the investor name and the feeder fund name';
+const SIB_REF_B = 'Reference: the investor name and the parallel fund name';
+const SIB_ONLY_A = 'The Subscriber invests through the feeder fund vehicle only.';
+const SIB_ONLY_B = 'Signature of Joint Subscriber: ____________';
+
+function siblingLines(side: 'A' | 'B'): string[] {
+  return [
+    p('SUBSCRIPTION AGREEMENT'),
+    sec(1, 'INVESTOR INFORMATION'),
+    p(SIB_COMMON_NAME),
+    p('Date of Birth: ____________'),
+    sec(2, 'WIRE INSTRUCTIONS'),
+    p(SIB_COMMON_BANK),
+    p(side === 'A' ? SIB_WIRE_A : SIB_WIRE_B),
+    p(side === 'A' ? SIB_REF_A : SIB_REF_B),
+    sec(3, 'INVESTOR STATUS'),
+    p('The Subscriber is an accredited investor under the applicable rules.'),
+    ...(side === 'A' ? [p(SIB_ONLY_A)] : []),
+    sec(4, 'SIGNATURE'),
+    p('Signature of Subscriber: ____________'),
+    ...(side === 'B' ? [p(SIB_ONLY_B)] : []),
+  ];
+}
+
+const IDENTICAL_LINES = [
+  p('SUBSCRIPTION AGREEMENT'),
+  sec(1, 'INVESTOR INFORMATION'),
+  p(SIB_COMMON_NAME),
+  sec(2, 'INVESTMENT AMOUNT'),
+  p('Amount of subscription: $____________'),
+  sec(3, 'SIGNATURE'),
+  p('Signature of Subscriber: ____________'),
+];
+
+const SINGLE_SECTION_LINES = [sec(1, 'INVESTOR INFORMATION'), p(SIB_COMMON_NAME)];
+
+export function buildDiffFixtures(): Map<string, string> {
+  const out = new Map<string, string>();
+  out.set(`${DIFF_DIR}/sibling-A.html`, html(siblingLines('A')));
+  out.set(`${DIFF_DIR}/sibling-B.html`, html(siblingLines('B')));
+  out.set(`${DIFF_DIR}/identical-pair/a.html`, html(IDENTICAL_LINES));
+  out.set(`${DIFF_DIR}/identical-pair/b.html`, html(IDENTICAL_LINES));
+  out.set(`${DIFF_DIR}/empty.html`, html([]));
+  out.set(`${DIFF_DIR}/single-section.html`, html(SINGLE_SECTION_LINES));
+  out.set(
+    `${DIFF_DIR}/expected/sibling-A-vs-B.json`,
+    json({
+      version: 1,
+      a: 'sibling-A.html',
+      b: 'sibling-B.html',
+      mode: 'sibling',
+      note: 'feeder (A) vs parallel (B); common = same text after normalization',
+      clauses: { common: 10, differing: 2, only_a: 1, only_b: 1 },
+      labels: [
+        { label: 'common', contains: SIB_COMMON_NAME },
+        { label: 'common', contains: SIB_COMMON_BANK },
+        { label: 'differing', contains: 'Account Number:' },
+        { label: 'differing', contains: 'Reference:' },
+        { label: 'only_a', contains: SIB_ONLY_A },
+        { label: 'only_b', contains: SIB_ONLY_B },
+      ],
+      sensitive: { clause: 'Account Number:', a: SYN_ABA, b: SYN_ABA_B },
+    }),
+  );
+  out.set(
+    `${DIFF_DIR}/expected/identical-pair.json`,
+    json({
+      version: 1,
+      a: 'identical-pair/a.html',
+      b: 'identical-pair/b.html',
+      notice: 'no_differences',
+    }),
+  );
+  out.set(
+    `${DIFF_DIR}/expected/not-enough-structure.json`,
+    json({
+      version: 1,
+      notice: 'not_enough_structure',
+      files: ['empty.html', 'single-section.html'],
+    }),
+  );
+  return out;
+}
+
 // ---------------------------------------------------------------- assemble
 export function buildFixtures(): Map<string, string> {
   const out = new Map<string, string>();
@@ -953,6 +1049,7 @@ export function buildFixtures(): Map<string, string> {
     );
   }
   for (const [k, v] of buildMemory()) out.set(k, v);
+  for (const [k, v] of buildDiffFixtures()) out.set(k, v);
   out.set(`${MEMORY_DIR}/demo-seed-spec.json`, json(buildDemoSeedSpec()));
   return out;
 }

@@ -5,7 +5,7 @@
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildFixtures, SEEDED_DIR } from './build-seeded';
+import { buildFixtures, DIFF_DIR, SEEDED_DIR } from './build-seeded';
 import { ROOT } from './find-shared-passages';
 import { buildDocxFixtures, DOCX_DIR, sameDocx } from './make-docx';
 import { buildPdfFixtures, PDF_CROP, PDF_DIR } from './make-pdf';
@@ -35,6 +35,17 @@ if (existsSync(seededRoot)) {
     }
   }
 }
+// Phase 07 diff fixtures: every file under fixtures/diff (recursive) must be generated.
+const walkStray = (rel: string) => {
+  const abs = join(ROOT, rel);
+  if (!existsSync(abs)) return;
+  for (const f of readdirSync(abs)) {
+    const r = `${rel}/${f}`;
+    if (statSync(join(ROOT, r)).isDirectory()) walkStray(r);
+    else if (f !== '.gitkeep' && !fresh.has(r)) problems.push(`stray: ${r}`);
+  }
+};
+walkStray(DIFF_DIR);
 // Phase 06 DOCX fixtures: entry-level compare (docx stamps a creation time into core.xml).
 const freshDocx = await buildDocxFixtures();
 for (const [rel, content] of freshDocx) {

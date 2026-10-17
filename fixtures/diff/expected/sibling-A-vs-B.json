@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "a": "sibling-A.html",
+  "b": "sibling-B.html",
+  "mode": "sibling",
+  "note": "feeder (A) vs parallel (B); common = same text after normalization",
+  "clauses": {
+    "common": 10,
+    "differing": 2,
+    "only_a": 1,
+    "only_b": 1
+  },
+  "labels": [
+    {
+      "label": "common",
+      "contains": "Name of Subscriber: ____________"
+    },
+    {
+      "label": "common",
+      "contains": "Bank: Example Trust Company, New York"
+    },
+    {
+      "label": "differing",
+      "contains": "Account Number:"
+    },
+    {
+      "label": "differing",
+      "contains": "Reference:"
+    },
+    {
+      "label": "only_a",
+      "contains": "The Subscriber invests through the feeder fund vehicle only."
+    },
+    {
+      "label": "only_b",
+      "contains": "Signature of Joint Subscriber: ____________"
+    }
+  ],
+  "sensitive": {
+    "clause": "Account Number:",
+    "a": "990000017",
+    "b": "990000025"
+  }
+}
