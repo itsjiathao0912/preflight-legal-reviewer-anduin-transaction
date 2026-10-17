@@ -10,7 +10,7 @@ metadata:
 
 # aduin-transaction - All Tests
 
-Last updated: 2026-10-18 (ai-review-stream-dedup EXECUTE, HEAD 685574d; earlier: Phase 10 UPDATE PROCESS, f0d924b)
+Last updated: 2026-10-18 (Variance P05 closeout, final counts at merged main 0c6312e; earlier: ai-review-stream-dedup EXECUTE, HEAD 685574d; earlier: Phase 10 UPDATE PROCESS, f0d924b)
 
 Attach this file first when the task involves testing, verification, or test debugging.
 
@@ -338,6 +338,15 @@ Whole suites after Variance Phase 02, independent EVL (no deploy, 0 model calls)
 - **Regression block (23 tokens, keep green):** counsel-gate, gate-pill, diff-pairs, memory-no-reflag, turnstile-no-block, a11y-keyboard, layout-vs-mockup, no-llm-corpus, sample-zero-calls, filter-sort, app-shell, placeholder-routes, mobile-shell, restore-and-no-text, nine `intake-*` tokens (run `intake-demo-packages` alone); unit `package-store` 21, `package-view` 8, `package-gate-ui` 7, `gate-pill` 4, `restore-last-doc` 10.
 - **Fixtures and pitfalls:** `apps/web/e2e/fixtures/variance.ts` (`uploadOne`, `varianceSettled`, `changeRows`, `errorRows`, `ageUploads`, `NGI_2024/NGI_2026`). Use the NGI 2024/2026 pair for cosmetic and diff e2e (Hartwell gives 1 change, 0 cosmetic hunks). Specs that upload two same-firm documents now get change rows: count error rows with `:not([data-kind="change"])`. Samples never become a firm-pointer baseline.
 - **Known gaps:** agent-probe keyboard walk and `DESIGN_PROBE=1` not run; human keyboard pass and live Turnstile render-first are backlog residuals.
+
+## Variance Phase 05 gate tokens and final counts (merged main 0c6312e, 18-10-26)
+
+Final counts after the Variance program, independent EVL (serial, one token per call): core 3190 (+3 skip), worker 608, web unit 518, scripts 183, preview e2e 242 (+1 opt-in skip), stack-memory 12. Live AI calls for the whole feature: 0.
+
+- **Demo e2e tokens:** `variance-demo-214-to-7`, `variance-demo-gate-walk` (N is read from `gate-button .lbl`), `variance-package-samples` (Northgate recall 7/7 and 9 shown rows, Lotus Bay "shall not" to "shall" surfaced, Redwood errors only); also `perf-budget`, `a11y-keyboard`, `sample-picker-smoke`. Scripts: `counts-wording` (13 detectors / 15 issue classes), `probe-variance` (6 offline tests). Four "(variance demo)" picker samples (`vh-fund-I`, `-II`, `-III`, `-III-appendix-c`, firm `hartwell-crane`); the guard in `build-samples.ts` is `12 + 4`.
+- **Live script:** `pnpm --filter @aduin/scripts probe:live-variance` (session ledger, max 5 per UTC day; fixed in `179c315` to wait for the Open dialog to close). Re-run pending on the next UTC day (backlog `variance-live-probe-rerun_NOTE_18-10-26.md`).
+- **Runner caveats:** wait for port 4317 to be free between serial e2e calls (teardown race); `intake-demo-packages` is load-sensitive, run it alone; core `size-cap` and `diff-determinism` can time out under the parallel full run and pass alone; `design-probe.spec.ts` writes into another program's tracked folder, do not run it. `pnpm package:fixtures` regenerates DOCX with timestamp-only drift: restore or ignore it before any deploy (clean-worktree check), backlog `variance-package-fixtures-docx-nondeterminism_NOTE_18-10-26.md`.
+- **Known gaps:** live probe re-run, live R-01 write path (operator), manual keyboard pass, remote `rows_written` burst.
 
 ## Debugging Quick Reference
 

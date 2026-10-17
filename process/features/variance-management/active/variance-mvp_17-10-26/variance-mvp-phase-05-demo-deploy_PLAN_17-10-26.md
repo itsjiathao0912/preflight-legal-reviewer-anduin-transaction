@@ -320,13 +320,13 @@ Step-0 carry-over items from the Phase 03 closeout.
 ## Phase Loop Progress
 
 - [x] 0. PRECONDITION - Intake feature closed and deployed; Step 0 re-sync done; rollback target recorded (3d2c7301; re-read read-only at EXECUTE entry) (note 18-10-26: rollback target is now b04f1a8c, see Step 0 (a)); Inner Loop Refresh Note written (2026-10-17)
-- [ ] 1. RESEARCH - research-agent: V1 to V4 reports read (V4 in full, earlier Forward Preview); test context loaded; drift checked
-- [ ] 2. INNOVATE - innovate-agent: approach decided (n/a if the DECISION and this plan still hold)
-- [ ] 3. PLAN-SUPPLEMENT - plan-agent: existing phase plan updated (or "n/a - research clean")
-- [ ] 4. PVL - vc-validate-agent: full V1-V7 (security and deploy dimensions mandatory); validate-contract per `.claude/skills/vc-validate-findings/references/example-validate-output.md`
-- [ ] 5. EXECUTE - vc-execute-agent (opus): leg 1 (A-E, F1, F2b) DONE 18-10-26 at HEAD 07db58b; leg 2 (F0 confirmation, F2c-G) pending; checklist A to G done; per-section gates green; the deploy sections run only with the validate-contract's explicit outward-facing instruction
-- [ ] 6. EVL - independent vc-tester: full regression block re-run serially; stubs registered; EVL HANDOFF SUMMARY
-- [ ] 7. UPDATE PROCESS - phase report written, context docs updated, umbrella state updated, program closeout, then the final local commit (no push)
+- [x] 1. RESEARCH - research-agent: V1 to V4 reports read (V4 in full, earlier Forward Preview); test context loaded; drift checked
+- [x] 2. INNOVATE - innovate-agent: approach decided (n/a if the DECISION and this plan still hold)
+- [x] 3. PLAN-SUPPLEMENT - plan-agent: existing phase plan updated (or "n/a - research clean")
+- [x] 4. PVL - vc-validate-agent: full V1-V7 (security and deploy dimensions mandatory); validate-contract per `.claude/skills/vc-validate-findings/references/example-validate-output.md`
+- [x] 5. EXECUTE - vc-execute-agent (opus): leg 1 and leg 2 DONE 18-10-26 (live d9aaddd9); leg 1 (A-E, F1, F2b) DONE 18-10-26 at HEAD 07db58b; leg 2 (F0 confirmation, F2c-G) pending; checklist A to G done; per-section gates green; the deploy sections run only with the validate-contract's explicit outward-facing instruction
+- [x] 6. EVL - independent vc-tester: full regression block re-run serially; stubs registered; EVL HANDOFF SUMMARY
+- [x] 7. UPDATE PROCESS - phase report written, context docs updated, umbrella state updated, program closeout, then the final local commit (no push)
 
 **Validate-contract required before execute.** If step 4 (PVL) is unchecked or `## Validate Contract` reads "(placeholder - vc-validate-agent writes this section before EXECUTE)", the orchestrator must spawn vc-validate-agent first. A partial contract is a placeholder. Deploy and remote migration are outward-facing: they run only when the validate-contract names them explicitly.
 

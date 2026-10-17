@@ -173,3 +173,44 @@ Follow-up stubs created: `process/features/variance-management/backlog/variance-
 - Outage window (memory writes 503): 20:28:35 -> 20:32:11 UTC, about 3.5 minutes. Reads worked throughout. D1 not restored.
 - Probe fix: `179c315` `fix: live variance probe waits for the Open dialog to close` (`scripts/src/live/probe-variance.ts`: wait for `open-document-dialog` hidden after `open-submit`). Offline `test probe-variance` 6/6, eslint and tsc clean. Not pushed.
 - Deferred: `probe:live-variance` on the next UTC day. Spend: 0 AI calls.
+
+## Final closeout (UPDATE PROCESS, 18-10-26)
+
+**TL;DR:** Phase 05 is COMPLETE_WITH_GAPS. Variance is live as Worker `d9aaddd9-a62f-4850-8ff2-89889c8ef652` (D1 migration 0006 applied, schema 6). Every local gate is green on merged main `0c6312e`. The gaps are operator-only live proofs (R-01 write path, live probe, keyboard pass) plus one incident lesson now recorded in context.
+
+### Final EVL (merged main 0c6312e, independent re-run)
+core 3190 (+3 skip), worker 608, web unit 518, scripts 183, preview e2e 242 (+1 opt-in skip), stack-memory 12. Live checks on `d9aaddd9`: `/api/health` ok no-store, `/api/memory/health` ok schema 6 = expected 6 seed_mode 0, CSP and security headers on `/`, `guard:cf` OK, stack smoke 1/1. Live AI calls for the whole feature: 0.
+
+### Incident summary
+Deploy `d9aaddd9` at about 20:28 UTC. The live probe failed twice (probe timing bug, harness-drift, not product). Per the leg-2 rule the Worker was rolled back to `8a82ead2`, but that Worker pins `EXPECTED_SCHEMA_VERSION '5'` (`health.ts:7`, `ctx.ts:115`) and refuses memory writes on schema 6: memory writes returned 503 from 20:28:35 to 20:32:11 UTC (about 3.5 min; reads worked). The orchestrator rolled forward to `d9aaddd9`; D1 was not restored. **Lesson (durable):** after a migration that bumps `schema_version`, the previous Worker is write-incompatible. "Roll the Worker back, keep the migration" is NOT a safe rollback. A post-deploy failure must roll forward (fix) or the user restores D1 from the Time Travel bookmark. Plans must not list the pre-migration Worker version as an automatic rollback target. Recorded in `process/context/worker/all-worker.md` and backlog.
+
+### SPEC Achievement (Phase 05 scope)
+Phase 05 owns the demo, deploy and live-proof criteria. Scored against its named gates.
+
+| Criterion | Score | Evidence |
+|---|---|---|
+| AC-V4 demo reduction (214 to 7 plus R-01) | met | e2e `variance-demo-214-to-7`, core `variance-demo-count` |
+| AC-V18 gate walk Blocked to Ready, counts agree | met | e2e `variance-demo-gate-walk` (counts agree at 5 steps) |
+| AC-V8 no baseline means errors only (package 03) | met | `variance-package-samples` (Redwood errors only) |
+| AC-V20 reproducible, no-AI | met | core `variance-determinism-repeat-run`, `variance-no-llm-full-run` |
+| Deploy with Time Travel backup, then verify | met | bookmark recorded, 0006 verified, `d9aaddd9` live checks green |
+| Live variance probe on the deployed Worker | **unmet** | failed twice (probe bug), fixed in `179c315`, re-run deferred (ledger 4/5) |
+| Live R-01 write path (AC-V16 on the real D1) | **unmet** | operator run needed (human, real browser) |
+| Manual keyboard / screen-reader pass | **unmet** | Hybrid Known-Gap; human only |
+
+SPEC Gaps (each has a backlog note): live probe re-run (`variance-live-probe-rerun_NOTE_18-10-26.md`), live R-01 write path (`variance-live-regression-operator_NOTE_17-10-26.md`), keyboard pass (`variance-manual-keyboard-pass_NOTE_17-10-26.md`, `variance-web-manual-keyboard-pass_NOTE_17-10-26.md`), fund-scope supersede (`variance-fund-scope-supersede_NOTE_17-10-26.md`), docs handoff (`variance-docs-handoff_NOTE_17-10-26.md`).
+
+### Closeout packet (final)
+1. Selected plan: `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-05-demo-deploy_PLAN_17-10-26.md`
+2. Classification: Keep in active/testing (archival gate: live R-01 write path and live probe are Known-Gap residuals, so the folder is not archivable yet; same convention as Intake).
+3. Finished: leg 1 (A-E, F1, F2b), merge unblock, F2c-F6b, roll forward, probe fix, evidence pack 1-4.
+4. Verified: all local gates, remote migration, live health/schema/headers/stack smoke. Unverified: live probe, live R-01 write, keyboard pass.
+4b. Validate-contract: present, Gate PASS (inner-pvl phase 5).
+5. Cleanup done: context docs, umbrella state, registry, backlog notes. Needed: operator residuals.
+6. Next valid state: operator residual runs, then archive the task folder; Findings v2 Phase B (mount) may proceed.
+7. Commit checkpoint: process commit after this UPDATE PROCESS (source commits already done).
+8. Regression: full preview e2e 242 + stack-memory 12 PASS on 0c6312e.
+9. SPEC achievement: see table above.
+Drift score: HIGH (4 signals: 10+ files, durable lesson in worker context, 3+ memory-worthy observations, backlog notes written). Strongly recommend UPDATE PROCESS -- harness/protocol files touched.
+
+Follow-up stubs: `variance-live-probe-rerun_NOTE_18-10-26.md`, `variance-schema-bump-rollback-recipe_NOTE_18-10-26.md`, `variance-package-fixtures-docx-nondeterminism_NOTE_18-10-26.md`.

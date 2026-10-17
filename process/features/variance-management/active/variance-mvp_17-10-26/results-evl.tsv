@@ -9,3 +9,5 @@ cycle	phase	domain	gate	failing	loop_status	note
 0	P05	tests	LEG1-DONE	?	BASELINE	leg1 green at 07db58b; HEAD moved to 9e866f2 (findings-v2) -> EVL + deploy from clean worktree pinned at 07db58b
 1	P05	tests	PASS	none	HALTED_SUCCESS	EVL leg1 green at 07db58b in clean worktree (core 3190, worker 608, web 375, scripts 183, e2e 241+1skip, stack 12); DOCX timestamp drift from package:fixtures -> restore in worktree + backlog
 2	P05	tests	BLOCKED	leg2 F3a	CONTINUE	live 8a82ead2 not in 07db58b; owner merged to main 566416e; re-run EVL on 566416e
+3	P05	tests	PASS	none	HALTED_SUCCESS	EVL leg1 green on merged main 0c6312e (core 3190, worker 608, web 518, scripts 183, e2e 242, stack 12, live-branch tokens green)
+4	P05	tests	PASS	none	HALTED_SUCCESS	leg2: 0006 applied (bookmark 0000003e-...), deploy d9aaddd9, rolled back on probe bug -> 3.5 min write outage (old Worker expects schema 5) -> rolled forward to d9aaddd9; health/schema 6/smoke green; probe fixed 179c315; live probe deferred next UTC day

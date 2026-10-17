@@ -114,3 +114,7 @@ status: DONE (2026-10-18; EVL green after 1 fix cycle; commits 838ca1e a31dff0 f
 - Files touched beyond the Phase 4 claim: `apps/worker/src/memory/http.ts` (composite question key resolved from the plain finding id; `owner_key_mismatch` 400), `apps/web/src/api/stubMemoryApi.ts` (stub parity: stored-finding check on the plain id, owner cross-check), `apps/web/src/features/review/use-review-view.ts` (owner groups and counts feed). Advisory edits: `apps/worker/src/routes/memory/counsel.ts` (owner cross-check), `apps/web/src/api/outbox.ts` (`scrubTerminal` drops `question.interpretations`), `apps/web/src/memory/fingerprintFindings.ts`, and new tests.
 - New files: `features/variance/{OwnerChip.tsx,owner-store.ts,owner-groups.ts,regression-client.ts,AssertionPreview.tsx}`, e2e fixture `apps/web/e2e/fixtures/variance-owners.ts`.
 - Seams for Phase 05: no new hook exports; question keys are `<findingId>@<owner>` on the question route only; no migration, no Dexie bump, no new dependency.
+
+## Phase 5 result (UPDATE PROCESS, 2026-10-18)
+status: DONE (2026-10-18; EVL green on merged main 0c6312e; commits bd8ff4e 07db58b 179c315 plus process commits; live Worker d9aaddd9; append-only, earlier `status: planned` kept for history)
+- Files touched beyond the Phase 5 claim: `apps/web/src/features/open-document/OpenDocumentDialog.tsx` (1-line label repair), `scripts/src/live/probe-variance.ts` (wait for dialog hidden, 179c315). Remote effect: D1 migration 0006 applied to live `aduin-transaction-db`; Worker deployed. No new file outside the claim.
