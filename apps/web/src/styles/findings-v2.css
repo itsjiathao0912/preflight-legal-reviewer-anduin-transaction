@@ -742,6 +742,17 @@
   padding: calc(52px * var(--dz-box, var(--dz))) calc(60px * var(--dz-box, var(--dz)))
     calc(72px * var(--dz-box, var(--dz)));
   font-size: calc(16px * var(--dz));
+  /* long unbreakable runs (fill-in blanks "_____", URLs, file names) wrap inside the page, and
+     `anywhere` lowers min-content so flex items can shrink: Fit width never scrolls sideways */
+  overflow-wrap: anywhere;
+}
+.docscroll[data-dz] .paper .opt > * {
+  min-width: 0;
+}
+.docscroll[data-dz] .paper img,
+.docscroll[data-dz] .paper table,
+.docscroll[data-dz] .paper pre {
+  max-width: 100%;
 }
 .docscroll[data-dz] .paper h1 {
   font-size: calc(28px * var(--dz));

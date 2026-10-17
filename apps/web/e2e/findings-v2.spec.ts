@@ -420,7 +420,48 @@ test.describe('findings-v2', () => {
       }
       // the default 1440 / 1024 areas and the 65% panel all need the reflow
       expect(m.fitNeeded).toBeLessThan(85);
-      console.log(`fit ${w}x${h} panel ${fpw ?? 'default'}: area ${m.clientW}px raw ${m.fitNeeded}% -> ${pct}% page ${m.pageW}px font ${m.bodyFont}px`);
+      console.log(
+        `fit ${w}x${h} panel ${fpw ?? 'default'}: area ${m.clientW}px raw ${m.fitNeeded}% -> ${pct}% page ${m.pageW}px font ${m.bodyFont}px`,
+      );
+      await page.close();
+    });
+  }
+
+  // Reflowed page: long unbreakable strings, nowrap spans and wide tables wrap or shrink inside
+  // the page, so default Fit width never scrolls sideways on any sample in the picker.
+  for (const [w, h] of [
+    [1024, 768],
+    [1440, 900],
+  ] as const) {
+    test(`fit width never scrolls sideways on any sample (${w}x${h})`, async ({ browser }) => {
+      test.setTimeout(240_000);
+      const page = await browser.newPage({ viewport: { width: w, height: h } });
+      await gotoApp(page, { zoom: 'fit' });
+      const manifest = (await page.evaluate(() =>
+        fetch('/samples/manifest.json').then((r) => r.json()),
+      )) as { samples: { id: string; kind: string; disabled: boolean }[] };
+      // HTML samples use the reading view; the scan sample (#9) has its own image viewer
+      const sampleIds = manifest.samples
+        .filter((s) => !s.disabled && s.kind === 'html')
+        .map((s) => s.id);
+      expect(sampleIds.length).toBeGreaterThan(10);
+      const bad: string[] = [];
+      for (const id of sampleIds) {
+        await openSample(page, id);
+        await expect(page.getByTestId('zoom-fit')).toHaveAttribute('aria-pressed', 'true');
+        await page.waitForTimeout(200);
+        const m = await zoomPane(page).evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          const limit = r.left + el.clientWidth + 1;
+          const out = [...el.querySelectorAll('.paper *')]
+            .filter((e) => e.getBoundingClientRect().right > limit)
+            .slice(0, 3)
+            .map((e) => `${e.tagName}.${String(e.className).slice(0, 30)}`);
+          return { sw: el.scrollWidth, cw: el.clientWidth, out };
+        });
+        if (m.sw > m.cw + 1) bad.push(`${id}: ${m.sw}>${m.cw} ${m.out.join(',')}`);
+      }
+      expect(bad).toEqual([]);
       await page.close();
     });
   }
