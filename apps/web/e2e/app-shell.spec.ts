@@ -12,7 +12,7 @@ test.describe('app-shell', () => {
     await expect(nav.locator('.gl')).toHaveText(['Review', 'Check', 'Firm']);
     await expect(nav.locator('.ni .lbl')).toHaveText([
       'Findings',
-      'Counsel questions',
+      'Questions',
       'Structure',
       'Compare versions',
       'Firm memory',
