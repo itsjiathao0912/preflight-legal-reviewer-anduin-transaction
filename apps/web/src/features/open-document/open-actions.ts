@@ -120,7 +120,14 @@ export async function openUpload(
 /** Reopen a document from the switcher (samples re-fetch; uploads read back from IndexedDB). */
 export async function reopenRecent(d: DocMeta): Promise<void> {
   // intake: a package primary restores its package; anything else clears package UI
-  if (d.packageId && (await usePackage.getState().restore(d.packageId))) {
+  // review Minor 6: a failed restore falls back to the classic reopen below
+  const restored = d.packageId
+    ? await usePackage
+        .getState()
+        .restore(d.packageId)
+        .catch(() => false)
+    : false;
+  if (restored) {
     useShell.getState().setRoute('findings');
     return;
   }

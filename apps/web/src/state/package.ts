@@ -33,6 +33,7 @@ import {
   readMemberBytes,
   readPackage,
   readUpload,
+  safeSampleRef,
   writeFacts,
   writeMemberDocument,
   writePackage,
@@ -117,7 +118,7 @@ interface PackageState {
     opts?: { demoId?: string },
   ) => Promise<PrepareResult>;
   setDraftField: (docId: string, field: 'type' | 'role', value: string) => PackageActionResult;
-  setDraftTag: (tag: Partial<PackageTag>) => void;
+  setDraftTag: (tag: Pick<PackageTag, 'version'>) => void;
   confirmDraftRow: (docId: string) => void;
   removeDraftRow: (docId: string) => void;
   addEarlierDocument: (storedDocId: string) => Promise<PackageActionResult>;
@@ -143,6 +144,23 @@ interface PackageState {
 }
 
 const sources = new Map<string, MemberSource>();
+
+/** Review Minor 3: drop member sources (bytes) that belong to neither the package nor the draft. */
+function pruneSources(
+  keep: { docs?: readonly { id: string }[] } | null,
+  draft: { rows: readonly { id: string }[] } | null,
+): void {
+  const ids = new Set<string>([
+    ...(keep?.docs ?? []).map((d) => d.id),
+    ...(draft?.rows ?? []).map((d) => d.id),
+  ]);
+  for (const id of [...sources.keys()]) if (!ids.has(id)) sources.delete(id);
+}
+
+/** Test seam: number of member sources held in memory. */
+export function packageSourceCount(): number {
+  return sources.size;
+}
 
 function emptyFacts(
   hash: string,
@@ -324,7 +342,7 @@ async function earlierFor(
   pkg: { id: string; firmId: string | null },
   exclude: ReadonlySet<string>,
 ): Promise<BaselineCandidate[]> {
-  const rows = await listUploads();
+  const rows = await listUploads(50, pkg.firmId);
   const candidates: BaselineCandidate[] = rows.map((r) => ({
     docId: r.id,
     name: r.name,
@@ -407,8 +425,11 @@ export const usePackage = create<PackageState>((set, get) => {
   };
 
   /** Open the primary through the normal render-first path; fills primary facts afterwards. */
+  /** Review Minor 7: a newer openPrimary supersedes an older one (refreshing stays true). */
+  let openSeq = 0;
   const openPrimary = async (reopen: boolean): Promise<void> => {
     const seq = get().seq;
+    const mine = ++openSeq;
     const current = get().current;
     if (!current) return;
     const doc = current.docs.find((d) => d.id === current.primaryDocId);
@@ -422,7 +443,7 @@ export const usePackage = create<PackageState>((set, get) => {
       ...(o.scan ? { scan: o.scan } : {}),
       package: { id: current.id, defs, ...(reopen ? { reopen: true } : {}) },
     });
-    if (get().seq !== seq) return; // superseded: write nothing
+    if (get().seq !== seq || mine !== openSeq) return; // superseded: write nothing
     const r = useReview.getState();
     if (r.phase !== 'ready' || r.doc?.packageId !== current.id) {
       set({ refreshing: false });
@@ -439,6 +460,69 @@ export const usePackage = create<PackageState>((set, get) => {
       refreshing: false,
     });
     if (next !== latest) void writePackage(toStored(next));
+  };
+
+  const restoreRow = async (id: string): Promise<boolean> => {
+    const row = await readPackage(id);
+    if (!row) return false;
+    const seq = get().seq + 1;
+    set({ seq });
+    const facts: Record<string, PackageFacts> = {};
+    const docs: PackageDocument[] = [];
+    for (const sd of row.docs) {
+      if (get().seq !== seq) return false;
+      let bytes: Uint8Array | null = null;
+      if (sd.storedDocId) bytes = await readMemberBytes(sd.storedDocId);
+      else if (sd.sampleRef) bytes = await fetchBundled(sd.sampleRef);
+      if (sd.sampleRef?.startsWith('scan:')) {
+        const scan = await scanOf(sd.sampleRef);
+        if (scan)
+          sources.set(sd.id, {
+            kind: 'scan',
+            name: sd.name,
+            scan,
+            sampleRef: sd.sampleRef,
+            sampleId: sd.sampleRef.slice(5),
+          });
+      } else if (bytes) {
+        const sampleId = /^\d{2}-[A-Za-z0-9._-]+$/.exec(sd.sampleRef ?? '')?.[0]?.slice(0, 2);
+        sources.set(sd.id, {
+          kind: 'bytes',
+          name: sd.name,
+          bytes,
+          ...(sd.storedDocId ? { storedDocId: sd.storedDocId } : {}),
+          ...(sd.sampleRef ? { sampleRef: sd.sampleRef } : {}),
+          ...(sampleId ? { sampleId } : {}),
+        });
+      }
+      let f = await readFacts(sd.id);
+      if (!f && bytes && !sd.sampleRef?.startsWith('scan:')) {
+        const r = await lightRead({ name: sd.name, bytes });
+        f = r.facts;
+      }
+      if (f) facts[sd.id] = f;
+      docs.push({ ...sd, titleLines: f ? [...f.titleLines] : [] });
+    }
+    if (get().seq !== seq) return false;
+    const current: CurrentPackage = {
+      id: row.id,
+      tag: { firmId: row.firmId, firmName: row.firmName, fund: row.fund, version: row.version },
+      docs,
+      primaryDocId: row.primaryDocId,
+      confirmedTargets: { ...row.confirmedTargets },
+      createdAt: row.createdAt,
+    };
+    set({
+      current,
+      facts: { ...get().facts, ...facts },
+      primary: null,
+      analysis: computeAnalysis(current, { ...get().facts, ...facts }, null),
+      draft: null,
+    });
+    pruneSources(current, null);
+    if (!sources.has(row.primaryDocId)) return false;
+    await openPrimary(true);
+    return true;
   };
 
   /** Persist the row; recompute; re-open when the definition sources changed. */
@@ -469,6 +553,7 @@ export const usePackage = create<PackageState>((set, get) => {
         members.map((m) => ({ name: m.name, size: 'bytes' in m ? m.bytes.byteLength : 0 })),
       );
       if (!limit.ok) return { ok: false, message: limit.message };
+      pruneSources(get().current, null); // an abandoned earlier draft releases its bytes
       const seq = get().seq + 1;
       set({
         seq,
@@ -544,7 +629,7 @@ export const usePackage = create<PackageState>((set, get) => {
 
     setDraftTag: (tag) => {
       const d = get().draft;
-      if (d) set({ draft: { ...d, tag: { ...d.tag, ...tag } } });
+      if (d) set({ draft: { ...d, tag: { ...d.tag, version: tag.version } } });
     },
 
     confirmDraftRow: (docId) => {
@@ -558,7 +643,7 @@ export const usePackage = create<PackageState>((set, get) => {
     removeDraftRow: (docId) => {
       const d = get().draft;
       if (!d) return;
-      sources.delete(docId);
+      if (!get().current?.docs.some((x) => x.id === docId)) sources.delete(docId);
       set({ draft: { ...d, rows: d.rows.filter((r) => r.id !== docId) } });
     },
 
@@ -584,6 +669,9 @@ export const usePackage = create<PackageState>((set, get) => {
       const cur = get().draft;
       if (!cur) return { ok: false, reason: 'unknown_doc' };
       if (cur.rows.some((x) => x.id === r.facts.contentHash)) return { ok: true };
+      // review Minor 4: only a subscription agreement can be a baseline (same rule as setRole)
+      if (r.failed || rowOf(r.facts, r.failed).type !== 'sub_agreement')
+        return { ok: false, reason: 'role_not_allowed' };
       sources.set(r.facts.contentHash, {
         kind: 'bytes',
         name: row.name,
@@ -683,6 +771,7 @@ export const usePackage = create<PackageState>((set, get) => {
       set({ draft: null });
       await opening;
       if (get().seq !== seq) return;
+      pruneSources(get().current, get().draft);
       // one AI allowance per package run (preview stub only, same rule as openUpload)
       const s = sources.get(primaryDoc.id);
       const db = appDb();
@@ -728,6 +817,7 @@ export const usePackage = create<PackageState>((set, get) => {
         titleLines: lines.slice(0, 12).map((t) => t.slice(0, 200)),
         headText,
       };
+      pruneSources(null, get().draft);
       sources.set(result.docHash, { kind: 'bytes', name, bytes, storedDocId });
       const seq = get().seq + 1;
       const current: CurrentPackage = {
@@ -765,65 +855,12 @@ export const usePackage = create<PackageState>((set, get) => {
     },
 
     restore: async (id) => {
-      const row = await readPackage(id);
-      if (!row) return false;
-      const seq = get().seq + 1;
-      set({ seq });
-      const facts: Record<string, PackageFacts> = {};
-      const docs: PackageDocument[] = [];
-      for (const sd of row.docs) {
-        if (get().seq !== seq) return false;
-        let bytes: Uint8Array | null = null;
-        if (sd.storedDocId) bytes = await readMemberBytes(sd.storedDocId);
-        else if (sd.sampleRef) bytes = await fetchBundled(sd.sampleRef);
-        if (sd.sampleRef?.startsWith('scan:')) {
-          const scan = await scanOf(sd.sampleRef);
-          if (scan)
-            sources.set(sd.id, {
-              kind: 'scan',
-              name: sd.name,
-              scan,
-              sampleRef: sd.sampleRef,
-              sampleId: sd.sampleRef.slice(5),
-            });
-        } else if (bytes) {
-          const sampleId = /^\d{2}-/.exec(sd.sampleRef ?? '')?.[0]?.slice(0, 2);
-          sources.set(sd.id, {
-            kind: 'bytes',
-            name: sd.name,
-            bytes,
-            ...(sd.storedDocId ? { storedDocId: sd.storedDocId } : {}),
-            ...(sd.sampleRef ? { sampleRef: sd.sampleRef } : {}),
-            ...(sampleId ? { sampleId } : {}),
-          });
-        }
-        let f = await readFacts(sd.id);
-        if (!f && bytes && !sd.sampleRef?.startsWith('scan:')) {
-          const r = await lightRead({ name: sd.name, bytes });
-          f = r.facts;
-        }
-        if (f) facts[sd.id] = f;
-        docs.push({ ...sd, titleLines: f ? [...f.titleLines] : [] });
+      // review Minor 6: a failure anywhere falls back to the classic path (caller sees false)
+      try {
+        return await restoreRow(id);
+      } catch {
+        return false;
       }
-      if (get().seq !== seq) return false;
-      const current: CurrentPackage = {
-        id: row.id,
-        tag: { firmId: row.firmId, firmName: row.firmName, fund: row.fund, version: row.version },
-        docs,
-        primaryDocId: row.primaryDocId,
-        confirmedTargets: { ...row.confirmedTargets },
-        createdAt: row.createdAt,
-      };
-      set({
-        current,
-        facts: { ...get().facts, ...facts },
-        primary: null,
-        analysis: computeAnalysis(current, { ...get().facts, ...facts }, null),
-        draft: null,
-      });
-      if (!sources.has(row.primaryDocId)) return false;
-      await openPrimary(true);
-      return true;
     },
 
     listRecent: () => listPackages(),
@@ -872,7 +909,8 @@ export const usePackage = create<PackageState>((set, get) => {
         .map((d) => ({ docId: d.id, name: d.name }))
         .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)),
 
-    clear: () =>
+    clear: () => {
+      sources.clear();
       set({
         seq: get().seq + 1,
         current: null,
@@ -880,15 +918,21 @@ export const usePackage = create<PackageState>((set, get) => {
         analysis: null,
         refreshing: false,
         draft: null,
-      }),
+      });
+    },
 
-    clearDraft: () => set({ seq: get().seq + 1, draft: null }),
+    clearDraft: () => {
+      pruneSources(get().current, null);
+      set({ seq: get().seq + 1, draft: null });
+    },
   };
 });
 
 /** Bundled member bytes by public path (`/samples/...`). */
 async function fetchBundled(ref: string): Promise<Uint8Array | null> {
-  if (!ref.startsWith('/samples/') && !/^[\w.-]+\.htm$/.test(ref)) return null;
+  // review Minor 6: same safe-ref rule as restore-on-reload; never `..`
+  if (!safeSampleRef(ref)) return null;
+  if (!ref.startsWith('/samples/') && !/^[\w-]+(\.[\w-]+)*\.htm$/.test(ref)) return null;
   try {
     const res = await fetch(ref.startsWith('/') ? ref : `/samples/${ref}`);
     return res.ok ? new Uint8Array(await res.arrayBuffer()) : null;

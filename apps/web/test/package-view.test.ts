@@ -23,6 +23,8 @@ vi.mock('../src/engine/client', async () => {
 });
 vi.mock('../src/features/ai/ai-lane', () => ({
   aiBeginOpen: () => undefined,
+  aiHolds: () => false,
+  aiReopen: () => null,
   aiOnOpen: async () => ({ findings: [], fresh: false }),
   aiRunFresh: async () => undefined,
   setAiSink: () => undefined,

@@ -20,7 +20,14 @@ import {
   type RenderedPage,
 } from '../engine/render-pages';
 import { useScan } from '../features/scan/scan-store';
-import { aiBeginOpen, aiOnOpen, aiRunFresh, setAiSink } from '../features/ai/ai-lane';
+import {
+  aiBeginOpen,
+  aiHolds,
+  aiOnOpen,
+  aiReopen,
+  aiRunFresh,
+  setAiSink,
+} from '../features/ai/ai-lane';
 import type {
   AnalyzeInput,
   EngineResult,
@@ -576,7 +583,10 @@ export const useReview = create<ReviewState>((set, get) => {
       loadAbort?.abort();
       const ctrl = new AbortController();
       loadAbort = ctrl;
-      aiBeginOpen();
+      // intake S4: a package re-open of the document the AI lane holds keeps the lane (no abort,
+      // no reset); anything else (incl. a restore after reload) starts the lane like a classic open
+      const keepAi = !!opts?.package?.reopen && aiHolds(get().doc?.id);
+      if (!keepAi) aiBeginOpen();
       useScan.getState().clear();
       set({
         phase: 'loading',
@@ -648,17 +658,20 @@ export const useReview = create<ReviewState>((set, get) => {
       const engineResult = result;
       // Phase 05 AI lane: static precomputed lookup + verify (never /api/ai for samples here)
       void (async () => {
-        const ai = await aiOnOpen(bytes, engineResult, {
-          id: doc.id,
-          docHash: engineResult.docHash,
-          source: meta.source,
-          firmId: meta.firmId,
-        });
+        const kept = keepAi ? aiReopen(bytes, engineResult) : null;
+        const ai =
+          kept ??
+          (await aiOnOpen(bytes, engineResult, {
+            id: doc.id,
+            docHash: engineResult.docHash,
+            source: meta.source,
+            firmId: meta.firmId,
+          }));
         if (!live()) return;
         if (ai.findings.length) await get().setAiFindings(doc.id, ai.findings);
         // uploads only: a fresh AI review starts once the deterministic list is on screen
-        // intake S4: a package-initiated re-open never starts a fresh AI run (one per package run)
-        if (ai.fresh && live() && !opts?.package?.reopen) void aiRunFresh();
+        // intake S4: a kept lane never starts a second run (aiReopen returns fresh: false)
+        if (ai.fresh && live()) void aiRunFresh();
       })().catch(() => undefined);
       // memory: bootstrap (firm documents only: no firm, no memory call), then queued writes land
       // before memory is read back; a failure shows "Memory unavailable" (Retry)

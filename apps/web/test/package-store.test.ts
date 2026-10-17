@@ -10,6 +10,9 @@ const h = vi.hoisted(() => ({
   aiOnOpen: 0,
   spend: 0,
   analyzeGate: null as Promise<void> | null,
+  /** docHash the mocked AI lane holds (null = fresh page, e.g. after a reload) */
+  held: null as string | null,
+  reopenKept: 0,
 }));
 vi.mock('../src/api/client', () => ({ memoryApi: () => null, isRealMemoryApi: () => false }));
 vi.mock('../src/api/base', async (orig) => ({
@@ -31,8 +34,17 @@ vi.mock('../src/engine/client', async () => {
 vi.mock('../src/features/ai/ai-lane', async () => {
   const { useSession } = await import('../src/state/session');
   return {
-    aiBeginOpen: () => undefined,
-    aiOnOpen: async () => {
+    aiBeginOpen: () => {
+      h.held = null;
+    },
+    aiHolds: (docHash: string | null | undefined) => !!docHash && docHash === h.held,
+    aiReopen: (_b: Uint8Array, result: { docHash: string }) => {
+      if (result.docHash !== h.held) return null;
+      h.reopenKept++;
+      return { findings: [], fresh: false };
+    },
+    aiOnOpen: async (_b: Uint8Array, result: { docHash: string }) => {
+      h.held = result.docHash;
       h.aiOnOpen++;
       return { findings: [], fresh: useSession.getState().aiOn };
     },
@@ -53,7 +65,9 @@ vi.mock('../src/storage/db', async (orig) => {
   };
 });
 
-const { usePackage, NO_SUB_LINE, UNREADABLE_REASON } = await import('../src/state/package');
+const { usePackage, NO_SUB_LINE, UNREADABLE_REASON, packageSourceCount } =
+  await import('../src/state/package');
+const persist = await import('../src/features/package/package-persist');
 const { useReview } = await import('../src/state/review');
 const { useSession } = await import('../src/state/session');
 const { appDb } = await import('../src/storage/db');
@@ -109,6 +123,8 @@ beforeEach(async () => {
   h.aiOnOpen = 0;
   h.spend = 0;
   h.analyzeGate = null;
+  h.held = null;
+  h.reopenKept = 0;
   useSession.setState({ aiOn: false });
   await clearDb();
 });
@@ -334,7 +350,22 @@ describe('package-store: AI lane and allowance (S4, E10)', () => {
     await settle();
     expect(h.aiRunFresh).toBe(1);
     expect(h.spend).toBe(1);
+    expect(h.reopenKept).toBe(2); // both re-opens kept the lane (no abort, no reset)
     open.mockRestore();
+  });
+
+  it('review Major 1: a restore after reload (lane holds nothing) starts AI like a classic restore', async () => {
+    useSession.setState({ aiOn: true });
+    const c = await runned();
+    expect(h.aiRunFresh).toBe(1);
+    usePackage.getState().clear();
+    h.held = null; // a reload: the lane state is gone
+    expect(await usePackage.getState().restore(c.id)).toBe(true);
+    await settle();
+    // never stuck on "pending": the classic path runs the lookup and one fresh call (server cache)
+    expect(h.aiRunFresh).toBe(2);
+    expect(h.reopenKept).toBe(0);
+    expect(h.spend).toBe(1); // allowance count unchanged: one per package run
   });
 
   it('with AI off the package flow never starts the AI lane or spends an allowance', async () => {
@@ -412,4 +443,116 @@ describe('package-store: classic-path corpus guard (S3)', () => {
       expect(useReview.getState().doc?.packageId, name).toBe(c?.id);
     }
   }, 60_000);
+});
+
+describe('package-store: review fixes (Minor 3-7)', () => {
+  it('Minor 3: member sources are released on clear, clearDraft and an abandoned draft', async () => {
+    await usePackage.getState().prepareDraft([SUB], TAG);
+    await usePackage.getState().prepareDraft([LPA], TAG); // the first draft is abandoned
+    expect(packageSourceCount()).toBe(1);
+    usePackage.getState().clearDraft();
+    expect(packageSourceCount()).toBe(0);
+    await runned();
+    expect(packageSourceCount()).toBe(3);
+    await usePackage.getState().prepareDraft([LPA], TAG);
+    usePackage.getState().clearDraft();
+    expect(packageSourceCount()).toBe(3); // the current package keeps its members
+    usePackage.getState().clear();
+    expect(packageSourceCount()).toBe(0);
+  });
+
+  it('Minor 4: an earlier document that is not a sub agreement cannot be added as a baseline', async () => {
+    await appDb()!.documents.put({
+      id: 'up_lpa',
+      name: LPA.name,
+      kind: 'upload',
+      bytes: LPA.bytes,
+      firmId: 'firm-a',
+      fund: 'F',
+      version: 'v1',
+      createdAt: Date.now(),
+    });
+    await usePackage.getState().prepareDraft([SUB], { ...TAG, firmId: 'firm-a', firmName: 'A' });
+    expect(usePackage.getState().draft!.earlier.map((e) => e.docId)).toEqual(['up_lpa']);
+    expect(await usePackage.getState().addEarlierDocument('up_lpa')).toEqual({
+      ok: false,
+      reason: 'role_not_allowed',
+    });
+    expect(usePackage.getState().draft!.rows.some((r) => r.role === 'baseline')).toBe(false);
+  });
+
+  it("Minor 5: more than 50 newer uploads of another firm never hide this firm's earlier document", async () => {
+    const db = appDb()!;
+    const now = Date.now();
+    await db.documents.bulkPut(
+      Array.from({ length: 60 }, (_, i) => ({
+        id: `up_b${i}`,
+        name: `b${i}.html`,
+        kind: 'upload' as const,
+        bytes: new Uint8Array([1]),
+        firmId: 'firm-b',
+        fund: 'F',
+        version: 'v1',
+        createdAt: now - i,
+      })),
+    );
+    await db.documents.put({
+      id: 'up_same',
+      name: PRIOR.name,
+      kind: 'upload',
+      bytes: PRIOR.bytes,
+      firmId: 'firm-a',
+      fund: 'F',
+      version: 'v1',
+      createdAt: now - 10_000,
+    });
+    const rows = await persist.listUploads(50, 'firm-a');
+    expect(rows.map((r) => r.id)).toEqual(['up_same']);
+    await usePackage.getState().prepareDraft([SUB], { ...TAG, firmId: 'firm-a', firmName: 'A' });
+    expect(usePackage.getState().draft!.earlier.map((e) => e.docId)).toEqual(['up_same']);
+  });
+
+  it('Minor 6: invalid stored rows fail safe (restore false, list skips them); unsafe refs refused', async () => {
+    const c = await runned();
+    await vi.waitFor(async () => expect(await appDb()!.packages.get(c.id)).toBeTruthy());
+    const good = (await appDb()!.packages.get(c.id))!;
+    expect(persist.parseStoredPackage(good)).not.toBeNull();
+    const bad = [
+      { ...good, docs: [{ ...good.docs[0]!, id: '../etc' }] },
+      { ...good, docs: good.docs.map((d) => ({ ...d, sampleRef: '/samples/../secret.htm' })) },
+      { ...good, docs: good.docs.map((d) => ({ ...d, role: 'owner' })) },
+      { ...good, primaryDocId: 'f'.repeat(64) },
+      { ...good, confirmedTargets: { ppm: 7 } },
+      { ...good, docs: 'x' },
+    ];
+    for (const b of bad) expect(persist.parseStoredPackage(b)).toBeNull();
+    await appDb()!.packages.put({ ...bad[0], id: 'pkg_bad' } as never);
+    usePackage.getState().clear();
+    expect(await usePackage.getState().restore('pkg_bad')).toBe(false);
+    expect((await usePackage.getState().listRecent()).map((r) => r.id)).toEqual([c.id]);
+    expect(persist.safeSampleRef('/samples/01-a.htm')).toBe(true);
+    expect(persist.safeSampleRef('scan:09')).toBe(true);
+    expect(persist.safeSampleRef('/samples/../x')).toBe(false);
+    expect(persist.safeSampleRef('a/b/c')).toBe(false);
+    expect(persist.safeSampleRef('..')).toBe(false);
+  });
+
+  it('Minor 7: a superseded re-open never clears refreshing while a newer re-open loads', async () => {
+    const c = await runned();
+    const lpa = c.docs.find((d) => d.type === 'lpa')!;
+    const phases: string[] = [];
+    const off = usePackage.subscribe((s, prev) => {
+      if (prev.refreshing && !s.refreshing) phases.push(useReview.getState().phase);
+    });
+    let release!: () => void;
+    h.analyzeGate = new Promise<void>((r) => (release = r));
+    usePackage.getState().setType(lpa.id, 'other'); // re-open 1
+    usePackage.getState().setType(lpa.id, 'lpa'); // re-open 2 (sources changed back)
+    release();
+    await vi.waitFor(() => expect(usePackage.getState().refreshing).toBe(false));
+    await settle();
+    off();
+    expect(phases).toEqual(['ready']);
+    expect(useReview.getState().doc?.packageId).toBe(c.id);
+  });
 });

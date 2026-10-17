@@ -28,6 +28,8 @@ vi.mock('../src/engine/client', () => ({
 }));
 vi.mock('../src/features/ai/ai-lane', () => ({
   aiBeginOpen: () => undefined,
+  aiHolds: () => false,
+  aiReopen: () => null,
   // the AI lane's firm-rules read sits behind the same session; it must not hold the list either
   aiOnOpen: () => new Promise(() => undefined),
   aiRunFresh: async () => undefined,

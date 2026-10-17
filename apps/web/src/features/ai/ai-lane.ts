@@ -83,6 +83,8 @@ interface Ctx {
   ruleTexts: string[] | null;
   /** a fresh run was requested for this document (upload auto-run, Run / Retry): resume target */
   wanted: boolean;
+  /** verified AI findings last handed to the review store (re-applied after a package re-open) */
+  shown: FindingView[];
 }
 
 let ctx: Ctx | null = null;
@@ -91,6 +93,11 @@ let controller: AbortController | null = null;
 let timer: ReturnType<typeof setTimeout> | null = null;
 
 const set = (p: Partial<LaneState>) => useAiLane.setState(p);
+
+function emit(c: Ctx, findings: FindingView[]): void {
+  c.shown = findings;
+  sink(c.doc.id, findings);
+}
 
 function abortCall(): void {
   controller?.abort();
@@ -228,6 +235,7 @@ async function evaluate(my: number): Promise<{ findings: FindingView[]; fresh: b
     if (my !== seq) return none;
     if (v.ok) {
       applyVerified(v, 'cache');
+      c.shown = v.findings;
       return { findings: v.findings, fresh: false };
     }
   }
@@ -266,8 +274,33 @@ export async function aiOnOpen(
     failed: result.failedStage !== null,
     ruleTexts: null,
     wanted: false,
+    shown: [],
   };
   return evaluate(my);
+}
+
+/**
+ * Intake S4 (review Major 1): true when the lane already holds this document. A package re-open of
+ * the same document (setRole / setType / confirmTarget) then keeps the lane as-is: no abort of the
+ * call in flight, no status reset, no second fresh run.
+ */
+export function aiHolds(docHash: string | null | undefined): boolean {
+  return !!docHash && ctx?.doc.docHash === docHash;
+}
+
+/**
+ * Re-open of the document the lane holds: refresh the bytes (verify may re-analyze) and hand back
+ * the findings already shown so the new result keeps them. Null when the lane holds another
+ * document (the caller then runs the normal aiOnOpen path).
+ */
+export function aiReopen(
+  bytes: Uint8Array,
+  result: EngineResult,
+): { findings: FindingView[]; fresh: false } | null {
+  const c = ctx;
+  if (!c || !result.docHash || c.doc.docHash !== result.docHash) return null;
+  c.bytes = bytes;
+  return { findings: c.shown, fresh: false };
 }
 
 /** Fresh AI review through /api/ai: upload auto-run, "Run AI on this sample", Retry, resume. */
@@ -309,7 +342,7 @@ export async function aiRunFresh(): Promise<void> {
   // (read-only sessions never get rules injected server-side, so they skip the check)
   if (rulesEchoMismatch(t.meta, useSession.getState().readOnly ? null : before)) {
     c.ruleTexts = null;
-    sink(c.doc.id, []);
+    emit(c, []);
     return downgrade('rules_changed');
   }
   const provenance = t.cache === 'hit' ? 'cache' : 'fresh';
@@ -322,11 +355,11 @@ export async function aiRunFresh(): Promise<void> {
   if (my !== seq) return;
   if (after !== before) {
     c.ruleTexts = null;
-    sink(c.doc.id, []);
+    emit(c, []);
     return downgrade('rules_changed');
   }
   applyVerified(v, provenance);
-  sink(c.doc.id, v.findings);
+  emit(c, v.findings);
   if (t.cache === 'miss') void useSession.getState().refreshQuota();
 }
 
@@ -377,13 +410,13 @@ async function aiToggled(on: boolean): Promise<void> {
     return;
   }
   if (!on) {
-    sink(c.doc.id, []);
+    emit(c, []);
     set({ status: 'off', docId: c.doc.id, ...EMPTY });
     return;
   }
   const r = await evaluate(my);
   if (my !== seq) return;
-  sink(c.doc.id, r.findings);
+  emit(c, r.findings);
   if (r.fresh) void aiRunFresh();
 }
 

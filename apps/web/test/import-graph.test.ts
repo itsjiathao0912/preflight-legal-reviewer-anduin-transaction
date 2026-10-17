@@ -57,6 +57,9 @@ const ALLOWED = new Set([
   'PACKAGE_DOC_TYPES',
   'PACKAGE_DOC_ROLES',
   'PackageAnalysisSchema',
+  // review Minor 6: stored package rows are validated before restore (pure zod schemas)
+  'PackageDocumentSchema',
+  'PackageFactsSchema',
 ]);
 
 function files(dir: string): string[] {

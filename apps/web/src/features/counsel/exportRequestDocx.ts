@@ -17,7 +17,8 @@ const LABEL_MAX = 200;
 const QUOTE_MAX = 300;
 
 export function requestDocxFilename(meta: RequestDocxMeta): string {
-  const base = (meta.fund || 'document')
+  // masked fund: digits of a sensitive span (account numbers) never reach the file name
+  const base = (meta.fund ? maskAndClamp(meta.fund, META_MAX) : 'document')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
