@@ -1,9 +1,16 @@
 import type { MemoryLabel } from '../contracts/memory';
 import { findingLink } from './gate';
-import { clampInterpretations, maskQuote, templateInterpretations } from './template-draft';
+import { questionKey } from '../variance/owners';
+import {
+  clampInterpretations,
+  maskQuote,
+  templateInterpretations,
+  templateVersionDriftInterpretations,
+} from './template-draft';
 import type {
   CounselSheet,
   CounselSheetMeta,
+  GateOwner,
   GateState,
   SheetFinding,
   SheetQuestion,
@@ -38,6 +45,19 @@ export function includeOnSheet(state: GateState, label: MemoryLabel): boolean {
 export interface BuildSheetOptions {
   /** Interpretations per finding key (edited or AI drafts); template draft when absent. */
   drafts?: Readonly<Record<string, readonly string[]>>;
+  /**
+   * Variance: build the sheet for one owner. Change findings (`owners` set) are included when they
+   * list the owner and keyed `<findingId>@<owner>`; error findings (no `owners`) belong to the
+   * default owner, counsel, and keep the plain key. Absent = the unchanged all-questions sheet.
+   */
+  owner?: GateOwner;
+}
+
+/** State seen by one owner's question: that owner's answer replaces the finding-level answer. */
+function ownerState(state: GateState, owner: GateOwner): GateState {
+  const oa = state.ownerAnswers;
+  if (!oa || !Object.prototype.hasOwnProperty.call(oa, owner)) return state;
+  return { ...state, counselAnswer: oa[owner] ?? null };
 }
 
 export function buildCounselSheet(
@@ -48,19 +68,26 @@ export function buildCounselSheet(
   opts: BuildSheetOptions = {},
 ): CounselSheet {
   const questions: SheetQuestion[] = [];
+  const owner = opts.owner;
   for (const f of findings) {
-    if (!includeOnSheet(states[f.id] ?? { status: 'open' }, labels[f.id] ?? 'new')) continue;
-    const draft = opts.drafts?.[f.id];
+    if (owner && !(f.owners ?? ['counsel']).includes(owner)) continue;
+    const base = states[f.id] ?? { status: 'open' };
+    const state = owner ? ownerState(base, owner) : base;
+    if (!includeOnSheet(state, labels[f.id] ?? 'new')) continue;
+    const key = owner && f.owners ? questionKey(f.id, owner) : f.id;
+    const draft = opts.drafts?.[key] ?? opts.drafts?.[f.id];
     questions.push({
       number: questions.length + 1,
-      findingKey: f.id,
+      findingKey: key,
       link: findingLink(f.id),
       location: f.location,
       quote: maskQuote(f.quote),
       interpretations: draft?.length
         ? clampInterpretations(draft)
-        : templateInterpretations(f.issue_class),
+        : f.issue_class === 'version_drift' && f.change
+          ? templateVersionDriftInterpretations(f.change)
+          : templateInterpretations(f.issue_class),
     });
   }
-  return { meta, questions };
+  return { meta: owner ? { ...meta, owner } : meta, questions };
 }

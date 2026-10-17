@@ -74,3 +74,51 @@ export function templateQuestionText(issueClass: string, location: string): stri
     INTERPRETATION_MAX_CHARS,
   );
 }
+
+/** Change finding fields the deterministic `version_drift` draft needs (Variance MVP). */
+export interface VersionDriftDraft {
+  change_type: string;
+  old_text: string;
+  new_text: string;
+}
+
+/** Embedded clause text inside an option: masked, then clamped so the option stays <= 500. */
+const EMBED_MAX = 300;
+const quoted = (s: string) => `"${maskAndClamp(s.replace(/\s+/g, ' ').trim(), EMBED_MAX)}"`;
+
+/**
+ * Deterministic no-LLM draft for a change finding (`version_drift` + change type): options A/B/C
+ * built from the old and new text. Masked and clamped to the Worker limits; the intent field is
+ * human-only and never drafted here.
+ */
+export function templateVersionDriftInterpretations(c: VersionDriftDraft): string[] {
+  const oldT = c.old_text.trim();
+  const newT = c.new_text.trim();
+  if (c.change_type === 'new' || !oldT)
+    return clampInterpretations([
+      `The new text is intended; digitize it as written: ${quoted(newT || '(new text)')}.`,
+      'The new text was added by mistake; remove it and keep the baseline form.',
+      'The new text needs changes; please provide the intended wording.',
+    ]);
+  if (!newT)
+    return clampInterpretations([
+      `The removal is intended; do not digitize the baseline text: ${quoted(oldT)}.`,
+      'The text was removed by mistake; restore the baseline wording.',
+      'The text should be replaced; please provide the intended wording.',
+    ]);
+  return clampInterpretations([
+    `Use the new wording: ${quoted(newT)}.`,
+    `Keep the baseline wording: ${quoted(oldT)}.`,
+    'Neither wording is right; please provide the intended wording.',
+  ]);
+}
+
+/** Deterministic question wording for a change finding. */
+export function templateVersionDriftQuestion(c: VersionDriftDraft, location: string): string {
+  const what =
+    c.change_type === 'new' ? 'New text' : c.new_text.trim() ? 'Changed text' : 'Removed text';
+  return maskAndClamp(
+    `${what} vs the baseline at ${location || 'the cited clause'}: which version should we digitize?`,
+    INTERPRETATION_MAX_CHARS,
+  );
+}

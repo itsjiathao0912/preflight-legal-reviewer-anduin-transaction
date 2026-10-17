@@ -17,6 +17,25 @@ export interface GateFinding {
   severity: Severity;
   /** Optional; absent means `'rule'`. An `'ai'` finding never gates (L4). */
   detector_kind?: 'rule' | 'ai';
+  /**
+   * Variance: the caller marks a variance finding as gating-eligible regardless of severity
+   * (critical = regression, otherwise a change). Only read when a `VarianceGatePolicy` is passed;
+   * undefined keeps the legacy `isGating` rule.
+   */
+  gates?: boolean;
+}
+
+/** Variance question owners (mirrors `variance/types.ts` `Owner`). */
+export type GateOwner = 'counsel' | 'gp' | 'fund_admin';
+
+/** Variance gate policy (rules config `gate_policy`); undefined = exact legacy gate. */
+export interface VarianceGatePolicy {
+  /** An untriaged change finding (`gates: true`, not critical) blocks. */
+  untriaged_change_blocks: boolean;
+  /** An asked question without a clear A/B/C answer blocks, for any severity. */
+  asked_unanswered_blocks: boolean;
+  /** A regression finding (`gates: true`, critical) blocks. */
+  regression_blocks: boolean;
 }
 export interface GateState {
   status: TriageStatus;
@@ -24,22 +43,33 @@ export interface GateState {
   reasonCode?: string | null;
   /** Counsel answer recorded for this finding (current document). */
   counselAnswer?: CounselOption | null;
+  /**
+   * Variance per-owner answers. A key PRESENT = that owner was asked; `null` = asked, not answered;
+   * a missing key = not asked. Resolves only when every asked owner answered A/B/C.
+   */
+  ownerAnswers?: Partial<Record<GateOwner, CounselOption | null>>;
 }
 export interface GateReason {
   findingKey: string;
   kind: GateReasonKind;
   link: string;
+  /** Variance: the asked owner this reason waits on (popover grouping). */
+  owner?: GateOwner;
 }
 export interface GateResult {
   status: GateStatus;
   reasons: GateReason[];
 }
 
-/** `computeGate(findings, states, labels)`: critical-only; AI findings never gate. */
+/**
+ * `computeGate(findings, states, labels, policy?)`: critical-only; AI findings never gate. With a
+ * variance `policy` (optional 4th parameter) change / regression / asked-unanswered rows also gate.
+ */
 export type ComputeGate = (
   findings: readonly GateFinding[],
   states: Readonly<Record<string, GateState>>,
   labels: Readonly<Record<string, MemoryLabel>>,
+  policy?: VarianceGatePolicy,
 ) => GateResult;
 
 /**
@@ -52,6 +82,13 @@ export interface SheetFinding extends GateFinding {
   location: string;
   /** Raw quote; the builder masks it (`mask(text, sensitiveSpans(text))`) and clamps to 1000 chars. */
   quote: string;
+  /**
+   * Variance: suggested owners of a change finding (one question per owner, key
+   * `<findingId>@<owner>`). Absent = error finding (plain key; default owner counsel).
+   */
+  owners?: GateOwner[];
+  /** Variance: change fields for the deterministic `version_drift` draft. */
+  change?: { change_type: string; old_text: string; new_text: string };
 }
 export interface SheetQuestion {
   /** 1-based question number. */
@@ -69,6 +106,8 @@ export interface CounselSheetMeta {
   firm: string | null;
   fund: string | null;
   version: string | null;
+  /** Variance: the owner this sheet is for (per-owner export); absent = all questions. */
+  owner?: GateOwner;
 }
 export interface CounselSheet {
   meta: CounselSheetMeta;

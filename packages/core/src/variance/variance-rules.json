@@ -1,0 +1,219 @@
+{
+  "version": "2026.10.1",
+  "tokenizer": "word-punct",
+  "hunk": { "merge_gap_tokens": 1, "max_edit_length": 1500 },
+  "new_min_words": 12,
+  "rules": [
+    { "id": "VAR-NEW-UNIT", "class": "new", "label": "Whole unit added" },
+    { "id": "VAR-NEW-INSERTION", "class": "new", "label": "Pure insertion of a full sentence" },
+    { "id": "VAR-LOGIC-REMOVED", "class": "changed_logic", "label": "Whole unit removed" },
+    { "id": "VAR-LOGIC-GUARD-DIGIT", "class": "changed_logic", "label": "A number changed" },
+    {
+      "id": "VAR-LOGIC-GUARD-AMOUNT",
+      "class": "changed_logic",
+      "label": "An amount or percent changed"
+    },
+    { "id": "VAR-LOGIC-GUARD-NEGATION", "class": "changed_logic", "label": "A negation changed" },
+    { "id": "VAR-LOGIC-GUARD-MODAL", "class": "changed_logic", "label": "A modal word changed" },
+    {
+      "id": "VAR-LOGIC-GUARD-CONDITION",
+      "class": "changed_logic",
+      "label": "A condition word changed"
+    },
+    {
+      "id": "VAR-LOGIC-GUARD-INVESTOR",
+      "class": "changed_logic",
+      "label": "An investor type changed"
+    },
+    {
+      "id": "VAR-LOGIC-GUARD-JURISDICTION",
+      "class": "changed_logic",
+      "label": "A jurisdiction changed"
+    },
+    {
+      "id": "VAR-LOGIC-GUARD-TRUNCATED",
+      "class": "changed_logic",
+      "label": "Diff too large to read word by word"
+    },
+    {
+      "id": "VAR-LOGIC-DEFAULT",
+      "class": "changed_logic",
+      "label": "Wording changed (no cosmetic rule applies)"
+    },
+    { "id": "VAR-COS-RENUMBER", "class": "changed_cosmetic", "label": "Section renumbering" },
+    { "id": "VAR-COS-DATE", "class": "changed_cosmetic", "label": "Cover or header date" },
+    { "id": "VAR-COS-NAME", "class": "changed_cosmetic", "label": "Name swap" },
+    { "id": "VAR-COS-RENAME", "class": "changed_cosmetic", "label": "Term renamed everywhere" },
+    {
+      "id": "VAR-COS-FORMAT",
+      "class": "changed_cosmetic",
+      "label": "Case, spacing or punctuation"
+    },
+    { "id": "VAR-COS-MOVED", "class": "changed_cosmetic", "label": "Moved without change" },
+    { "id": "VAR-REG-SCOPE-EXISTS", "class": "regression", "label": "Required scope is missing" }
+  ],
+  "guards": {
+    "negation": ["not", "no", "never", "neither", "nor", "none", "without", "non"],
+    "modals": [
+      "shall",
+      "must",
+      "may",
+      "will",
+      "should",
+      "can",
+      "cannot",
+      "could",
+      "would",
+      "might"
+    ],
+    "conditions": [
+      "if",
+      "unless",
+      "provided",
+      "except",
+      "excluding",
+      "only",
+      "subject",
+      "when",
+      "whenever",
+      "where",
+      "whether",
+      "until"
+    ],
+    "jurisdiction": [
+      "united",
+      "states",
+      "us",
+      "usa",
+      "america",
+      "american",
+      "singapore",
+      "cayman",
+      "luxembourg",
+      "delaware",
+      "ireland",
+      "jersey",
+      "guernsey",
+      "outside",
+      "foreign",
+      "domestic",
+      "offshore",
+      "onshore",
+      "jurisdiction",
+      "jurisdictions",
+      "domicile",
+      "domiciled",
+      "resident",
+      "residents",
+      "country",
+      "countries"
+    ],
+    "amount_tokens": ["$", "€", "£", "%", "percent", "usd", "eur", "gbp"]
+  },
+  "cosmetic": {
+    "name_min_occurrences": 2,
+    "name_max_words": 4,
+    "renumber_context": ["section", "sections", "§", "paragraph", "article"],
+    "months": [
+      "january",
+      "february",
+      "march",
+      "april",
+      "may",
+      "june",
+      "july",
+      "august",
+      "september",
+      "october",
+      "november",
+      "december"
+    ]
+  },
+  "audience_dimensions": [
+    {
+      "id": "us",
+      "label": "US",
+      "patterns": [
+        "\\bwithin the united states\\b",
+        "\\bunited states (?:persons?|entit(?:y|ies)|investors?)\\b",
+        "\\bu\\.s\\. (?:persons?|entit(?:y|ies)|investors?)\\b"
+      ],
+      "complement": "non-us"
+    },
+    {
+      "id": "non-us",
+      "label": "non-US",
+      "patterns": ["\\boutside the united states\\b", "\\bnon-u\\.?s\\.?", "\\bforeign\\b"],
+      "complement": "us"
+    },
+    { "id": "singapore", "label": "Singapore", "patterns": ["\\bsingapore\\b"] }
+  ],
+  "restriction_phrases": [
+    "\\bnow applies only to\\b",
+    "\\bonly (?:to|if|for)\\b",
+    "\\bformed or organized\\b",
+    "\\boutside the united states\\b",
+    "\\bother than\\b"
+  ],
+  "routing": [
+    {
+      "id": "aml-kyc-section",
+      "match": {
+        "title": "source of funds|money laundering|\\baml\\b|\\bkyc\\b|know your customer"
+      },
+      "owners": ["fund_admin"],
+      "reason": "AML/KYC and source-of-funds checks are run by the fund administrator"
+    },
+    {
+      "id": "aml-kyc-keywords",
+      "match": { "keywords": ["anti-money", "aml", "kyc", "source of funds"] },
+      "owners": ["fund_admin"],
+      "reason": "AML/KYC wording is owned by the fund administrator"
+    },
+    {
+      "id": "named-country",
+      "match": { "keywords": ["singapore"] },
+      "owners": ["gp", "counsel"],
+      "reason": "A newly named country: the GP decides acceptance, counsel confirms the wording"
+    },
+    {
+      "id": "sanctions",
+      "match": { "keywords": ["sanction", "ofac"] },
+      "owners": ["counsel"],
+      "reason": "Sanctions representations are a legal judgment for counsel"
+    },
+    {
+      "id": "audience-restriction",
+      "match": { "audience_restricted": true },
+      "owners": ["counsel"],
+      "reason": "The clause now applies to a narrower audience; counsel confirms the intent"
+    },
+    {
+      "id": "class-minimum",
+      "match": { "title": "\\bminimum\\b" },
+      "owners": ["gp"],
+      "reason": "Minimum commitments are a commercial term set by the GP"
+    },
+    {
+      "id": "tax-status",
+      "match": { "title": "\\btax status\\b" },
+      "owners": ["counsel"],
+      "reason": "Tax status questions are confirmed by tax counsel"
+    },
+    {
+      "id": "investor-type-list",
+      "match": { "title": "\\binvestor type\\b" },
+      "owners": ["gp"],
+      "reason": "Which investor types are offered is a GP decision"
+    }
+  ],
+  "default_owner": "counsel",
+  "default_reason": "No routing rule matched; counsel reviews by default",
+  "error_owner_by_issue_class": { "sensitive_data": "fund_admin" },
+  "gate_policy": {
+    "untriaged_change_blocks": true,
+    "asked_unanswered_blocks": true,
+    "regression_blocks": true
+  },
+  "regression": { "max_checks_per_firm": 20, "label_max_chars": 80 }
+}

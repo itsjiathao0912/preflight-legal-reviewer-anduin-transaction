@@ -170,3 +170,31 @@ export {
 
 // --- Intake Phase 1: fund package module
 export * from './package/index';
+
+// --- Variance MVP Phase 01: change classification vs a same-firm baseline (explicit names only) ---
+export {
+  runVariance,
+  varianceMetaOf,
+  loadVarianceRules,
+  questionKey,
+  parseQuestionKey,
+  runRegressionChecks,
+  describeAssertion,
+  assertionCandidateOf,
+  normalizeAssertionLabel,
+} from './variance/index';
+export type {
+  VarianceResult,
+  VarianceMeta,
+  VarianceSide,
+  VarianceInput,
+  VarianceSummary,
+  VarianceRules,
+  Owner,
+  RuleId,
+  ChangeClass,
+  CosmeticGroup,
+  RegressionCheck,
+  AssertionCandidate,
+  ImpactResult,
+} from './variance/index';
