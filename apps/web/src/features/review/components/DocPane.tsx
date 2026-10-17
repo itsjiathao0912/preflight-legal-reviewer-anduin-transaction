@@ -3,6 +3,7 @@ import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from 'reac
 import { Icon } from '../../../components/ui/icon';
 import { Popover } from '../../../components/ui/popover';
 import type { BlockView, SectionView } from '../../../engine/types';
+import { useFilters } from '../../../state/filters';
 import { useReview } from '../../../state/review';
 import type { Row } from '../model';
 
@@ -118,6 +119,7 @@ const Block = memo(function Block({
 });
 
 function JumpMenu({ sections, rows }: { sections: SectionView[]; rows: Row[] }) {
+  const kind = useFilters((st) => st.kind);
   const [open, setOpen] = useState(false);
   return (
     <Popover
@@ -141,7 +143,13 @@ function JumpMenu({ sections, rows }: { sections: SectionView[]; rows: Row[] }) 
     >
       <ul>
         {sections.map((s) => {
-          const fs = rows.filter((r) => r.f.section_path[0] === s.key && r.status !== 'dismissed');
+          // Variance P02 (D2b): change rows count under the Changes segment only
+          const fs = rows.filter(
+            (r) =>
+              r.f.section_path[0] === s.key &&
+              r.status !== 'dismissed' &&
+              (kind === 'changes') === (r.f.kind === 'change'),
+          );
           const b = fs.filter((r) => r.sev === 'block').length;
           const o = fs.length - b;
           return (

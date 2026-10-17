@@ -17,6 +17,12 @@ import { FindingRow } from './components/FindingRow';
 import { PreviouslyHandledRow } from './components/PreviouslyHandledRow';
 import { SEV, SEV_KEYS } from './severity';
 import { useReviewView } from './use-review-view';
+import { BaselineControl } from '../variance/BaselineControl';
+import { ChangeRow } from '../variance/ChangeRow';
+import { CosmeticGroups } from '../variance/CosmeticGroups';
+import { NoBaselineLine } from '../variance/NoBaselineLine';
+import { headerMeta } from '../variance/select';
+import { useVariance, varianceLines } from '../variance/variance-store';
 
 function focusRow(id: string) {
   requestAnimationFrame(() =>
@@ -36,6 +42,11 @@ export function FindingsScreen() {
   const select = useReview((s) => s.select);
   const dismiss = useReview((s) => s.dismiss);
   const sevFilter = useFilters((s) => s.sev);
+  const kindFilter = useFilters((s) => s.kind);
+  const vLine = useVariance((s) => s.line);
+  const vIgnored = useVariance((s) => s.ignored);
+  const vBaseline = useVariance((s) => s.baseline);
+  const vDoc = useVariance((s) => s.docId);
   const setFilters = useFilters((s) => s.set);
   const setOpenDoc = useShell((s) => s.setOpenDoc);
   const result = useReview((s) => s.result);
@@ -76,7 +87,18 @@ export function FindingsScreen() {
     return () => window.removeEventListener('keydown', onKey);
   }, [view.visible, selectedId, select, dismissFor]);
 
-  const blocked = view.gate.reasons.length;
+  // Variance P02: the segment shows for documents with a firm (unknown firm = no baseline ever)
+  const showKind = phase === 'ready' && !!doc?.firmId;
+  const lines = vDoc === doc?.id ? varianceLines({ line: vLine, ignored: vIgnored }) : [];
+  const currentLabel = doc ? [doc.fund, doc.version].filter(Boolean).join(' ') || doc.name : '';
+  const baselineLabel = vBaseline?.name ?? 'Baseline';
+  // removed-unit change rows anchor at the document start with no text: no mark (list only)
+  const markRows = view.rows.filter(
+    (r) =>
+      r.f.kind !== 'change' ||
+      (r.f.anchor.offsetEnd > r.f.anchor.offsetStart &&
+        view.variance?.meta[r.f.id]?.quote_side !== 'old'),
+  );
   return (
     <section className="view" aria-labelledby="h-findings">
       <header className="pagehead" data-testid="findings-header">
@@ -85,21 +107,49 @@ export function FindingsScreen() {
             Findings
           </h1>
           <p className="meta" data-testid="findings-meta">
-            {doc ? `${view.open} open · ${blocked} block digitization` : 'No document open'}
+            {doc ? headerMeta(view.counts, view.hasChanges) : 'No document open'}
           </p>
           <CoverageLine placement="header" />
         </div>
-        <StageStatus />
+        <div className="hacts">
+          <BaselineControl />
+          <StageStatus />
+        </div>
       </header>
       <Banners />
       <div className="work">
-        {scan ? <ScanPane rows={view.rows} /> : <DocPane rows={view.rows} />}
+        {scan ? <ScanPane rows={view.rows} /> : <DocPane rows={markRows} />}
         <aside
           className="fp"
           aria-label="Findings list"
           data-testid="findings-column"
           data-memory-state={memoryState}
         >
+          {showKind ? (
+            <div className="fkind">
+              <div className="seg" role="group" aria-label="Show" data-testid="kind-segment">
+                {(
+                  [
+                    ['all', 'All', null],
+                    ['errors', 'Errors', view.counts.errors],
+                    ['changes', 'Changes', view.counts.changes],
+                  ] as const
+                ).map(([k, label, n]) => (
+                  <button
+                    key={k}
+                    type="button"
+                    data-testid={`kind-${k}`}
+                    aria-pressed={kindFilter === k}
+                    onClick={() => setFilters({ kind: k })}
+                  >
+                    {label}
+                    {n !== null ? <span className="kn">{n}</span> : null}
+                  </button>
+                ))}
+              </div>
+              <NoBaselineLine lines={lines} />
+            </div>
+          ) : null}
           <div className="fhead">
             <div className="chips" role="group" aria-label="Filter by severity">
               {SEV_KEYS.map((k) => (
@@ -140,26 +190,49 @@ export function FindingsScreen() {
             ) : (
               <ul className="rows" data-testid="findings-list">
                 {view.visible.length ? (
-                  view.visible.map((r) => (
-                    <FindingRow
-                      key={r.f.id}
-                      r={r}
-                      selected={r.f.id === selectedId}
-                      onDismiss={(id, el) => {
-                        opener.current = el;
-                        setDismissFor(id);
-                      }}
-                    />
-                  ))
+                  view.visible.map((r) =>
+                    r.f.kind === 'change' ? (
+                      <ChangeRow
+                        key={r.f.id}
+                        r={r}
+                        meta={view.variance?.meta[r.f.id]}
+                        selected={r.f.id === selectedId}
+                        baselineLabel={baselineLabel}
+                        currentLabel={currentLabel}
+                        onDismiss={(id, el) => {
+                          opener.current = el;
+                          setDismissFor(id);
+                        }}
+                      />
+                    ) : (
+                      <FindingRow
+                        key={r.f.id}
+                        r={r}
+                        selected={r.f.id === selectedId}
+                        onDismiss={(id, el) => {
+                          opener.current = el;
+                          setDismissFor(id);
+                        }}
+                      />
+                    ),
+                  )
                 ) : (
                   <li className="empty" data-testid="empty-state">
-                    {view.main.length
-                      ? 'No findings match these filters.'
-                      : 'No findings in this document.'}
+                    {kindFilter === 'changes' && !view.hasChanges
+                      ? 'No changes against a baseline.'
+                      : view.main.length
+                        ? 'No findings match these filters.'
+                        : 'No findings in this document.'}
                   </li>
                 )}
               </ul>
             )}
+            {phase === 'ready' && view.variance && kindFilter !== 'errors' ? (
+              <CosmeticGroups
+                groups={view.variance.cosmeticGroups}
+                count={view.variance.summary.cosmetic}
+              />
+            ) : null}
           </div>
           {phase === 'ready' ? <PreviouslyHandledRow items={view.previous} /> : null}
         </aside>
