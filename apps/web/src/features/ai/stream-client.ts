@@ -1,4 +1,4 @@
-import type { AiCandidate } from '@aduin/core';
+import type { AiCandidate, AiTaskId } from '@aduin/core';
 import { apiUrl } from '../../api/base';
 import { clientHeaders, DOC_HEADER, TURNSTILE_HEADER } from '../../api/http';
 import { postNdjson, type StreamTerminal } from '../../api/ndjson';
@@ -10,7 +10,10 @@ import { turnstileToken } from './turnstile';
  * One call per request: no auto-retry (manual Retry in the lane), abort supported.
  */
 export interface AiCall {
-  docHash: string;
+  /** Sent as `x-aduin-doc` when present (optional for document-pair tasks such as drift-narrative). */
+  docHash?: string;
+  /** Registered task id (Phase 07 additive); default clause-judgment. */
+  task?: AiTaskId;
   lawFirmId: string | null;
   candidates: AiCandidate[];
   signal?: AbortSignal;
@@ -26,14 +29,14 @@ export async function requestAi(call: AiCall): Promise<StreamTerminal> {
   }
   const token = await turnstileToken();
   const headers = clientHeaders({
-    [DOC_HEADER]: call.docHash,
+    ...(call.docHash ? { [DOC_HEADER]: call.docHash } : {}),
     ...(token ? { [TURNSTILE_HEADER]: token } : {}),
   });
   return postNdjson(
     url,
     {
       v: 1,
-      task: 'clause-judgment',
+      task: call.task ?? 'clause-judgment',
       law_firm_id: call.lawFirmId,
       candidates: call.candidates,
       settings: {},

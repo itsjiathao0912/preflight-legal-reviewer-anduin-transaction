@@ -24,6 +24,8 @@ describe('llm task registry and wire (Phase 05 Stage 0)', () => {
     expect(TASKS['counsel-draft'].promptVersion).toBe('counsel-draft@1');
     expect(TASKS['clause-judgment'].schemaVersion).toBe('clause-judgment.s1');
     expect(TASKS['counsel-draft'].schemaVersion).toBe('counsel-draft.s1');
+    expect(TASKS['drift-narrative'].promptVersion).toBe('drift-narrative@1');
+    expect(TASKS['drift-narrative'].schemaVersion).toBe('drift-narrative.s1');
     expect(taskById('nope')).toBeUndefined();
     expect(taskById('counsel-draft')).toBe(TASKS['counsel-draft']);
   });

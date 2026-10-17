@@ -1,0 +1,62 @@
+{
+  "case": "drift-narrative-hostile-invented-rename",
+  "taskId": "drift-narrative",
+  "promptVersion": "drift-narrative@1",
+  "inputHash": "7252bfe74de14154fe2412e1d15eb8327a4c76d54925448b4b8a0d60911606a5",
+  "model": "nvidia/nemotron-3-super-120b-a12b:free",
+  "messagesDigest": "7252bfe74de14154fe2412e1d15eb8327a4c76d54925448b4b8a0d60911606a5",
+  "request": {
+    "task": "drift-narrative",
+    "sample": null,
+    "candidates": [
+      {
+        "id": "rn_01",
+        "quote": "Rename: \"Units\" -> \"Shares\" (29 of 35 occurrences)\nBefore: Part A – Unit class (please select the Unit class the Subscriber wishes to acquire Units in – please consult with your Financial Advisor) ☐ Class A (0.85% distribution fee) ☐ Class S (0.25% distribution fee) ☐ Class I (n…\nAfter: Part A – Share class (please select the Share class the Subscriber wishes to acquire Shares in – please consult with your Financial Advisor) ☐ Class A (0.85% distribution fee) ☐ Class S (0.25% distribution fee) ☐ Class I…",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "6. INVESTMENT DETAILS",
+          "Part A – Share class"
+        ]
+      },
+      {
+        "id": "rn_02",
+        "quote": "Rename: \"Memorandum\" -> \"Prospectus\" (8 of 8 occurrences)\nBefore: Part B – Investment amount (please consult with your Financial Advisor and the Memorandum for applicable minimum investment amounts) Gross Subscription Amount: $ Less: Placement Fee* (not to exceed 3.5% of the gross subs…\nAfter: Part B – Investment amount (please consult with your Financial Advisor and the Prospectus for applicable minimum investment amounts) Gross Subscription Amount: $ Less: Sales Load* (not to exceed 3.5% of the gross subscri…",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "6. INVESTMENT DETAILS",
+          "Part B – Investment amount"
+        ]
+      }
+    ],
+    "rule_texts": [],
+    "mode": "json_schema",
+    "pair": [
+      "05",
+      "06"
+    ]
+  },
+  "response": {
+    "raw": "{\"drafts\":[{\"candidate_id\":\"rn_01\",\"text\":\"The \\\"Units\\\" are now called \\\"Interests\\\" and the Subscriber is now the Limited Partner.\"},{\"candidate_id\":\"rn_09\",\"text\":\"The \\\"Custodian\\\" is now called the \\\"Trustee\\\".\"},{\"candidate_id\":\"rn_02\",\"text\":\"The \\\"Memorandum\\\" is now the \\\"Prospectus\\\".\"}]}",
+    "parsed": {
+      "drafts": [
+        {
+          "candidate_id": "rn_01",
+          "text": "The \"Units\" are now called \"Interests\" and the Subscriber is now the Limited Partner."
+        },
+        {
+          "candidate_id": "rn_09",
+          "text": "The \"Custodian\" is now called the \"Trustee\"."
+        },
+        {
+          "candidate_id": "rn_02",
+          "text": "The \"Memorandum\" is now the \"Prospectus\"."
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "authored",
+    "served_model": "nvidia/nemotron-3-super-120b-a12b:free",
+    "recordedAt": "2026-10-17T00:00:00.000Z"
+  }
+}

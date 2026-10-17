@@ -4,7 +4,7 @@
  * `author-recordings.ts`; live runs (`record-ai.ts`) replace a case's file at the same path.
  */
 import type { AiResponseMode, AiTaskId } from '@aduin/core';
-import { sampleCandidates, type RecordedRequest } from './ai-request';
+import { pairCandidates, sampleCandidates, type RecordedRequest } from './ai-request';
 
 export interface RecordingCase {
   id: string;
@@ -17,6 +17,8 @@ export interface RecordingCase {
   precompute?: boolean;
   /** Recorded live when a live run is allowed (F4). Hostile cases are authored only. */
   live?: boolean;
+  /** Phase 07 drift-narrative: candidates come from the version diff of this [base, compare] pair. */
+  pair?: readonly [string, string];
 }
 
 /** Active firm rule used by the rules-in-context case (synthetic; the demo seed rule is only proposed). */
@@ -92,6 +94,24 @@ export const CASES: readonly RecordingCase[] = [
     pick: ['c_624f0f476f804afb'],
     rule_texts: [],
   },
+  // Phase 07 (07c): drift narrative over the #5 -> #6 version diff (public SEC samples)
+  {
+    id: 'drift-narrative-05-06',
+    task: 'drift-narrative',
+    sample: '05',
+    pair: ['05', '06'],
+    pick: 'all',
+    rule_texts: [],
+    live: true,
+  },
+  {
+    id: 'drift-narrative-hostile-invented-rename',
+    task: 'drift-narrative',
+    sample: '05',
+    pair: ['05', '06'],
+    pick: ['rn_01', 'rn_02'],
+    rule_texts: [],
+  },
 ];
 
 export function caseById(id: string): RecordingCase {
@@ -105,7 +125,9 @@ export function caseRequest(
   c: RecordingCase,
   mode: AiResponseMode = 'json_schema',
 ): RecordedRequest {
-  const { candidates } = sampleCandidates(c.sample);
+  const candidates = c.pair
+    ? pairCandidates(c.pair[0], c.pair[1])
+    : sampleCandidates(c.sample).candidates;
   let picked = candidates;
   if (c.pick !== 'all') {
     picked = c.pick.map((id) => {
@@ -116,9 +138,11 @@ export function caseRequest(
   }
   return {
     task: c.task,
-    sample: c.sample,
+    // pair cases are not single-sample engine candidates (the core recorded check skips null)
+    sample: c.pair ? null : c.sample,
     candidates: picked,
     rule_texts: [...c.rule_texts],
     mode,
+    ...(c.pair ? { pair: [c.pair[0], c.pair[1]] as [string, string] } : {}),
   };
 }

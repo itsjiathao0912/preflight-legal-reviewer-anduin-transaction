@@ -207,7 +207,8 @@
         "default": "clause-judgment",
         "enum": [
           "clause-judgment",
-          "counsel-draft"
+          "counsel-draft",
+          "drift-narrative"
         ],
         "type": "string"
       },

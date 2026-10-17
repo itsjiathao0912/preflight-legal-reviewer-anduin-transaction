@@ -17,6 +17,8 @@ import {
   TASKS,
   analyzeHtml,
   buildAiCandidates,
+  buildDriftNarrativeCandidates,
+  diffDocuments,
   inputHash,
   responseFormat,
   runDeterministic,
@@ -46,6 +48,8 @@ export interface RecordedRequest {
   candidates: AiCandidate[];
   rule_texts: string[];
   mode: AiResponseMode;
+  /** Phase 07 drift-narrative: the [base, compare] sample pair the candidates were diffed from. */
+  pair?: [string, string];
 }
 
 export function sampleFile(id: string): string {
@@ -58,6 +62,17 @@ export function sampleFile(id: string): string {
 export function sampleCandidates(id: string): { docHash: string; candidates: AiCandidate[] } {
   const g = analyzeHtml(new Uint8Array(readFileSync(sampleFile(id))));
   return { docHash: g.doc.id, candidates: buildAiCandidates(g, runDeterministic(g)) };
+}
+
+/** Drift-narrative candidates for a sample pair (version diff, masked + clipped in core, E18). */
+export function pairCandidates(a: string, b: string): AiCandidate[] {
+  const side = (id: string) => {
+    const g = analyzeHtml(new Uint8Array(readFileSync(sampleFile(id))));
+    return { ok: true as const, structure: g.structure, graph: g, findings: runDeterministic(g) };
+  };
+  const o = diffDocuments({ a: side(a), b: side(b), mode: 'version' });
+  if ('error' in o) throw new Error(`diff ${a}->${b} failed: ${o.error.code}`);
+  return buildDriftNarrativeCandidates(o.result);
 }
 
 /**

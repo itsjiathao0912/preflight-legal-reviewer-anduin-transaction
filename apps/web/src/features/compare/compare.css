@@ -338,3 +338,22 @@ ul.cards {
     grid-template-columns: 300px minmax(0, 1fr);
   }
 }
+
+/* Phase 07c: AI summary of the rename drift (optional, labeled AI suggestion) */
+.aisum {
+  background: var(--card);
+  border-radius: var(--r);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.aisum h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+.aisum .ainar {
+  margin: 0 0 6px;
+  padding-left: 18px;
+}
+.aisum .ainar li {
+  margin: 4px 0;
+}

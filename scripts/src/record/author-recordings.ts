@@ -212,6 +212,49 @@ export function authoredRaw(c: RecordingCase, r: RecordedRequest): string {
           }),
         ],
       });
+    case 'drift-narrative-05-06':
+      return j({
+        drafts: [
+          {
+            candidate_id: 'rn_01',
+            text: 'The 2026 version says "Shares" where the 2024 version said "Units", including the share class choice in Part A. Re-check every form label and option that still names Units.',
+          },
+          {
+            candidate_id: 'rn_02',
+            text: 'References to the "Memorandum" now point to the "Prospectus". Check that investor guidance and minimum-amount notes cite the Prospectus.',
+          },
+          {
+            candidate_id: 'rn_03',
+            text: 'A subscriber now becomes a "Shareholder" instead of a "Member". Check the defined term and the signature-page wording.',
+          },
+          {
+            candidate_id: 'rn_04',
+            text: 'The "placement agent" is now called the "distributor". Check representations and fee text that name the intermediary.',
+          },
+          {
+            candidate_id: 'rn_05',
+            text: 'The "Placement Fee" deduction is now a "Sales Load". Check the gross-to-net amount fields and the fee footnote.',
+          },
+        ],
+      });
+    case 'drift-narrative-hostile-invented-rename':
+      // rn_01 states a rename the diff did not find; rn_09 was never sent; rn_02 is honest
+      return j({
+        drafts: [
+          {
+            candidate_id: 'rn_01',
+            text: 'The "Units" are now called "Interests" and the Subscriber is now the Limited Partner.',
+          },
+          {
+            candidate_id: 'rn_09',
+            text: 'The "Custodian" is now called the "Trustee".',
+          },
+          {
+            candidate_id: 'rn_02',
+            text: 'The "Memorandum" is now the "Prospectus".',
+          },
+        ],
+      });
     default:
       throw new Error(`no authored response for case ${c.id}`);
   }

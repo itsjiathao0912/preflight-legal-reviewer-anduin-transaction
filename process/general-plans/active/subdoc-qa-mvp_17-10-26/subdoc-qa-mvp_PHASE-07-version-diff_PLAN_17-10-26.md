@@ -141,7 +141,7 @@ Restructured docs (#3 vs #4): unmatched sections shown as added/removed, never a
   - `sibling-clauses.spec.ts`: Siblings mode on the seeded pair shows common / differing / only-in-one chips and clause labels; an unchanged clause is labeled common.
 
 ### Step F — AI narrative (07c, conditional on Phase 05 verified)
-- [ ] F1. `drift-narrative.v1` task with recorded response for #5→#6 (at most 3 free live recordings); test that narrative text only states renames present in `DiffResult.renames`; the narrative inputs (renames plus sample aligned sentences) are built from MASKED and clipped excerpts, with an assertion that no raw sensitive span text and no 4+ raw digit run reaches the task input (E18). If Phase 05 is not verified: write backlog stub; AC15 H-part stays CONDITIONAL.
+- [x] F1. `drift-narrative.v1` task with recorded response for #5→#6 (at most 3 free live recordings); test that narrative text only states renames present in `DiffResult.renames`; the narrative inputs (renames plus sample aligned sentences) are built from MASKED and clipped excerpts, with an assertion that no raw sensitive span text and no 4+ raw digit run reaches the task input (E18). If Phase 05 is not verified: write backlog stub; AC15 H-part stays CONDITIONAL.
 
 ### Step G — Compare placeholder test repairs (07b, S2; derivation not loosening)
 - [x] G1. `apps/web/e2e/placeholder-routes.spec.ts`: remove the `['compare','Compare versions']` placeholder row and add a test "compare is no longer a placeholder" (the Compare view is shown, `placeholder-view` is absent).
@@ -150,7 +150,7 @@ Restructured docs (#3 vs #4): unmatched sections shown as added/removed, never a
 - [x] G4. `apps/web/src/smoke.test.tsx`: append `'compare'` AFTER `'structure'` in the exact `features.map(f => f.id)` array (E16); label and nav order are unchanged because the id keeps its first (placeholder) registration position.
 
 ### Backlog Stubs (written by EXECUTE/UPDATE PROCESS, not by this plan)
-- [ ] `process/general-plans/backlog/drift-narrative-live-quality_NOTE_17-10-26.md` — live-model narrative quality (AC15 H part Known-Gap; test-building stub; gate stays CONDITIONAL).
+- [x] `process/general-plans/backlog/drift-narrative-live-quality_NOTE_17-10-26.md` — live-model narrative quality (AC15 H part Known-Gap; test-building stub; gate stays CONDITIONAL).
 - [x] `process/general-plans/backlog/compare-ocr-documents_NOTE_17-10-26.md` — Compare for scanned/OCR documents (OCR runs on the main thread in Phase 06; out of scope here; recorded as a Phase 07 deviation).
 - [x] `process/general-plans/backlog/phase08-version-drift-questions_NOTE_17-10-26.md` — ask Phase 08 to create "Version drift" counsel questions from diff-only rows (renames, leftovers, section add/remove/change) and enable the Needs counsel control on them.
 
@@ -241,7 +241,7 @@ Orchestrator reads this before deciding which subagent to spawn next. The canoni
 - [x] 2. INNOVATE — innovate-agent: approach decided; Decision Summary written
 - [x] 3. PLAN-SUPPLEMENT — plan-agent: existing phase plan updated; Inner Loop Refresh Note if sections changed (or "n/a — research clean")
 - [x] 4. PVL — vc-validate-agent: full V1-V7; validate-contract written per `.claude/skills/vc-validate-findings/references/example-validate-output.md`
-- [ ] 5. EXECUTE — all checklist items done; per-section test gates run and green (or gaps documented)
+- [x] 5. EXECUTE — all checklist items done; per-section test gates run and green (or gaps documented)
 - [ ] 6. EVL — all EVL gates green; follow-up stubs registered; EVL HANDOFF SUMMARY written
 - [ ] 7. UPDATE PROCESS — phase report written, umbrella state updated, commit done
 
@@ -427,3 +427,7 @@ What This Coverage Does NOT Prove:
 
 Gate: PASS (0 FAILs, 0 CONCERNs; N3 verified resolved in plan text and against code; PVL supplement cycles 1, 2 and 3 recorded; named residuals carried as documented known-gaps with backlog stubs; ready for EXECUTE after Phase 05 and Phase 06 engine changes have landed)
 Accepted by: n/a — Gate is PASS (no CONCERN accepted); session (autonomous, autopilot /goal execution) recorded the named residuals above as documented known-gaps.
+
+## Deviations
+
+- 07c (within blast radius, autopilot): `AI_TASK_IDS` gained `'drift-narrative'` (frozen-contract additive enum value; snapshot regenerated, only the `AiRequestSchema.task` enum entry moved). Extra touched files beyond the Touchpoints list: `packages/core/src/llm/{registry.ts,index.ts}` (append), `scripts/src/record/{casebook,ai-request,author-recordings}.ts` (additive pair cases), `apps/web/src/features/ai/stream-client.ts` (optional `task` / `docHash`), `apps/web/test/import-graph.test.ts` (allow-list +2 pure functions), `packages/core/test/unit/llm/llm-task-registry.test.ts` (+2 version pins). The live recording went to OpenRouter through the Phase 05 guarded `record:ai` script (body byte-parity with the Worker), not a deployed `/api/ai`, matching the Phase 05 precedent. No `apps/worker` edit, no `engine.worker.ts` edit (candidates are made on the main thread from the `DiffResult` by an allow-listed pure core function).

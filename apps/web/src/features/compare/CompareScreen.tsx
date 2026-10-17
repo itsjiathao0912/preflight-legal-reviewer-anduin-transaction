@@ -15,6 +15,7 @@ import {
   type ItemKind,
 } from './model';
 import { listSources, loadSide, type CompareSource } from './sources';
+import { AiSummary } from './AiSummary';
 
 /**
  * #compare (AC19, app.html #v-compare): base / compare pickers with swap, Versions | Siblings
@@ -577,7 +578,12 @@ export function CompareScreen() {
           </div>
         </aside>
         <section className="scroll cdp" aria-label="Clause comparison" data-testid="cmp-detail">
-          <div className="dpin">{detail}</div>
+          <div className="dpin">
+            {result && mode === 'version' && result.notice === 'none' ? (
+              <AiSummary result={result} />
+            ) : null}
+            {detail}
+          </div>
         </section>
       </div>
     </section>

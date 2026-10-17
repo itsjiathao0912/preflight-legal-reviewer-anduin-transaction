@@ -1,0 +1,97 @@
+{
+  "case": "drift-narrative-05-06",
+  "taskId": "drift-narrative",
+  "promptVersion": "drift-narrative@1",
+  "inputHash": "5685e20db8f250a9a63fb4160c3179c08239f4c58493f31ff1bcf81462422e80",
+  "model": "nvidia/nemotron-3-super-120b-a12b:free",
+  "messagesDigest": "5685e20db8f250a9a63fb4160c3179c08239f4c58493f31ff1bcf81462422e80",
+  "request": {
+    "task": "drift-narrative",
+    "sample": null,
+    "candidates": [
+      {
+        "id": "rn_01",
+        "quote": "Rename: \"Units\" -> \"Shares\" (29 of 35 occurrences)\nBefore: Part A – Unit class (please select the Unit class the Subscriber wishes to acquire Units in – please consult with your Financial Advisor) ☐ Class A (0.85% distribution fee) ☐ Class S (0.25% distribution fee) ☐ Class I (n…\nAfter: Part A – Share class (please select the Share class the Subscriber wishes to acquire Shares in – please consult with your Financial Advisor) ☐ Class A (0.85% distribution fee) ☐ Class S (0.25% distribution fee) ☐ Class I…",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "6. INVESTMENT DETAILS",
+          "Part A – Share class"
+        ]
+      },
+      {
+        "id": "rn_02",
+        "quote": "Rename: \"Memorandum\" -> \"Prospectus\" (8 of 8 occurrences)\nBefore: Part B – Investment amount (please consult with your Financial Advisor and the Memorandum for applicable minimum investment amounts) Gross Subscription Amount: $ Less: Placement Fee* (not to exceed 3.5% of the gross subs…\nAfter: Part B – Investment amount (please consult with your Financial Advisor and the Prospectus for applicable minimum investment amounts) Gross Subscription Amount: $ Less: Sales Load* (not to exceed 3.5% of the gross subscri…",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "6. INVESTMENT DETAILS",
+          "Part B – Investment amount"
+        ]
+      },
+      {
+        "id": "rn_03",
+        "quote": "Rename: \"Member\" -> \"Shareholder\" (4 of 4 occurrences)\nBefore: …of the Subscription Agreement Signature Pages (collectively, the “Subscriber”) hereby applies to become a member (a “Member”), with the subscription amount specified in Part B of Section 6 of the Subscription Agreement Signature Pages, in P…\nAfter: …ubscription Agreement Signature Pages (collectively, the “Subscriber”) hereby applies to become a shareholder (a “Shareholder”), with the subscription amount specified in Part B of Section 6 of the Subscription Agreement Signature Pages, in…",
+        "section_path": [
+          "SubscripTIon Agreement terms & conditions"
+        ]
+      },
+      {
+        "id": "rn_04",
+        "quote": "Rename: \"placement agent\" -> \"distributor\" (4 of 4 occurrences)",
+        "section_path": []
+      },
+      {
+        "id": "rn_05",
+        "quote": "Rename: \"Placement Fee\" -> \"Sales Load\" (3 of 3 occurrences)\nBefore: …nancial Advisor and the Memorandum for applicable minimum investment amounts) Gross Subscription Amount: $ Less: Placement Fee* (not to exceed 3.5% of the gross subs…\nAfter: …Financial Advisor and the Prospectus for applicable minimum investment amounts) Gross Subscription Amount: $ Less: Sales Load* (not to exceed 3.5% of the gross subscri…",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "6. INVESTMENT DETAILS",
+          "Part B – Investment amount"
+        ]
+      }
+    ],
+    "rule_texts": [],
+    "mode": "json_schema",
+    "pair": [
+      "05",
+      "06"
+    ]
+  },
+  "response": {
+    "raw": "{\"drafts\": [{\"candidate_id\": \"rn_01\", \"text\": \"The term “Units” was renamed to “Shares” in the Part A – Share class label and instruction. The analyst should verify that all form labels, defined terms and option‑text checkboxes now use “Shares” consistently.\"}, {\"candidate_id\": \"rn_02\", \"text\": \"The term “Memorandum” was renamed to “Prospectus” in the Part B – Investment amount instruction. The analyst should re‑check any defined term or cross‑reference to the Memorandum and ensure the Prospectus is referenced correctly.\"}, {\"candidate_id\": \"rn_03\", \"text\": \"The term “Member” was renamed to “Shareholder” throughout the Subscription Agreement terms. The analyst should re‑check the defined term “Member” elsewhere and ensure all references now read “Shareholder”.\"}, {\"candidate_id\": \"rn_04\", \"text\": \"The term “placement agent” was renamed to “distributor” in all occurrences. The analyst should verify that any defined term, footnote or clause referencing the placement agent now uses “distributor”.\"}, {\"candidate_id\": \"rn_05\", \"text\": \"The term “Placement Fee” was renamed to “Sales Load” in the Part B – Investment amount clause. The analyst should re‑check the fee definition, any defined term “Placement Fee”, and ensure the asterisk footnote reflects the new label.\"}]}",
+    "parsed": {
+      "drafts": [
+        {
+          "candidate_id": "rn_01",
+          "text": "The term “Units” was renamed to “Shares” in the Part A – Share class label and instruction. The analyst should verify that all form labels, defined terms and option‑text checkboxes now use “Shares” consistently."
+        },
+        {
+          "candidate_id": "rn_02",
+          "text": "The term “Memorandum” was renamed to “Prospectus” in the Part B – Investment amount instruction. The analyst should re‑check any defined term or cross‑reference to the Memorandum and ensure the Prospectus is referenced correctly."
+        },
+        {
+          "candidate_id": "rn_03",
+          "text": "The term “Member” was renamed to “Shareholder” throughout the Subscription Agreement terms. The analyst should re‑check the defined term “Member” elsewhere and ensure all references now read “Shareholder”."
+        },
+        {
+          "candidate_id": "rn_04",
+          "text": "The term “placement agent” was renamed to “distributor” in all occurrences. The analyst should verify that any defined term, footnote or clause referencing the placement agent now uses “distributor”."
+        },
+        {
+          "candidate_id": "rn_05",
+          "text": "The term “Placement Fee” was renamed to “Sales Load” in the Part B – Investment amount clause. The analyst should re‑check the fee definition, any defined term “Placement Fee”, and ensure the asterisk footnote reflects the new label."
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "nvidia/nemotron-3-super-120b-a12b:free",
+    "tokens": {
+      "in": 986,
+      "out": 767
+    },
+    "recordedAt": "2026-10-17T04:12:30.178Z",
+    "cost_usd": 0,
+    "response_mode": "json_schema"
+  }
+}

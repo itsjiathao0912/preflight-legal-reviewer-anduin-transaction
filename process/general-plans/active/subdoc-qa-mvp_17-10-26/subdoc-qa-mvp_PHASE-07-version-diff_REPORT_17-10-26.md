@@ -126,3 +126,63 @@ Perf (AC29, worker, measured in the browser): #5 vs #6 `diff-ms 343` (both prepa
 - Blast Radius Changes: `.prettierignore` (one line, orchestrator request).
 - Commands to Stay Green: the gates in the table above, one token per call.
 - Dependency Changes: none.
+
+## 07c — AI drift narrative (opus, 2026-10-17)
+
+Status: COMPLETE. F1 and the backlog stub ticked. Not committed. Phase 05 VERIFIED precondition met.
+
+### What was built
+
+- `packages/core/src/llm/tasks/drift-narrative.v1.ts` (new): task `drift-narrative` (`drift-narrative@1` / `drift-narrative.s1`, model schema `drift_narrative_v1` = `drafts[{candidate_id,text<=600}]`), `buildDriftNarrativeCandidates(DiffResult)` (one candidate per rename, max 8, largest count first; quote `Rename: "from" -> "to" (n of m occurrences)` + masked/clipped `Before:`/`After:` sample from a changed/renamed/moved section, fallback the renamed definition), `readDriftNarrative(data, candidates)` (main-thread reader), `renameOfCandidate`, `mentionsRename`.
+- E18: excerpt text is masked with its `sensitiveSpans`, masked again by the account-number pattern, then clipped (clip after mask); the whole quote is pattern-masked once more. Asserted: seeded number and any 5+ digit run absent from candidates AND from the built messages.
+- Validator: Phase 05 `wrapEnvelope` (drafts) + drop any draft whose candidate is not a sent rename or whose text does not name both terms (`ext.dropped` counts them). The narrative can only state renames in `DiffResult.renames`.
+- Contract (additive): `AI_TASK_IDS` += `'drift-narrative'`; snapshot regen moved only the `AiRequestSchema.task` enum (3 lines). Worker picks the task up via `TASKS` with no code change.
+- Registry append + `llm/index.ts` export append.
+- Scripts: casebook `pair` cases `drift-narrative-05-06` (live) and `drift-narrative-hostile-invented-rename` (authored); `pairCandidates(a,b)` in `ai-request.ts`; request `sample: null` + `pair`.
+- Web: `features/compare/AiSummary.tsx` in the Compare detail pane (version mode, notice none). States (`data-state`): `none` (no renames), `off` (AI switch off), `unavailable` (no API in build), `idle` ("Summarize changes" button, no call on open), `pending`, `done` (lines `from → to` + text, "AI suggestion" tag, `model · fresh|from cache`), `skipped` (banner reason + Retry; diff unaffected). `stream-client` got optional `task` and `docHash` (no `x-aduin-doc` for a pair). `import-graph` allow-list +`buildDriftNarrativeCandidates`, `readDriftNarrative`.
+
+### Live calls (E10, APPROVED-LIVE <= 3)
+
+- Used: **1 of 3**. Case `drift-narrative-05-06`, strict `json_schema`, HTTP 200, `usage.cost = 0`, 986 tokens in / 767 out.
+- Served model: `nvidia/nemotron-3-super-120b-a12b:free`.
+- Quality: 5 of 5 lines kept by the validator; each names old and new term and a sensible re-check hint (form labels, Prospectus references, fee footnote). Minor: it calls every change "throughout"/"all occurrences" although Units is 29 of 35. Residual stays Known-Gap (backlog stub).
+- Key sourced with the approval marker only; `secrets:scan` OK.
+
+### Gate outcomes
+
+| Command | Result |
+|---|---|
+| `pnpm --filter @aduin/core test drift-narrative` | 1 file, 6 pass |
+| `pnpm --filter @aduin/core test contracts` | 34 pass (after snapshot regen) |
+| `pnpm --filter @aduin/core test llm-task-registry` | 9 pass |
+| `pnpm --filter @aduin/core test llm-schema` | 9 pass |
+| `pnpm --filter @aduin/core test` | 73 files, 501 pass (an earlier run had 2 timeouts, `diff-determinism`/`size-cap`, under concurrent Phase 09 load; green on rerun) |
+| `pnpm --filter @aduin/worker test record-body-parity` | 21 pass |
+| `pnpm --filter @aduin/worker test` | 64 files, 521 pass |
+| `pnpm --filter @aduin/scripts test` | 9 files, 63 pass; `record:author --check` OK (11 cases) |
+| `pnpm --filter @aduin/web test` | 18 files, 76 pass (incl. `import-graph` 4) |
+| `pnpm --filter @aduin/web test:e2e compare-ai-summary` (new) | 4 pass |
+| e2e `diff-pairs` 10, `layout-vs-mockup` 5, `a11y-smoke` 1, `provenance` 2, `sample-zero-calls` 4, `sibling-clauses` 1 | pass (`provenance` failed once while the Phase 09 agent shared the preview port, green on rerun) |
+| `pnpm typecheck`, eslint + prettier on touched files, `guard:cf`, `secrets:scan` | OK |
+
+### Deviations
+
+See plan `## Deviations` (07c entry). No web unit test for `AiSummary` (states are covered by the 4-test e2e spec). Strict red-first not run for the recorded test (Hybrid tier, Mode B).
+
+### Concurrency note
+
+The Phase 09 agent rewrote `apps/web/test/import-graph.test.ts` mid-run and dropped my allow-list line; it was re-appended after their `maskOutlineName` entry. Both phases' entries are present now.
+
+### Test infra gaps found
+
+- None blocking. Known-Gap: live narrative quality (`process/general-plans/backlog/drift-narrative-live-quality_NOTE_17-10-26.md`); AC15 H part stays CONDITIONAL.
+- The shared preview port 4317 serializes e2e runs across concurrent agents.
+
+CONTEXT_PARTIAL: none.
+
+### Forward Preview
+
+- Test infra found: casebook `pair` cases; `recordingByCase('drift-narrative-05-06')`; e2e reads `fixtures/llm-recordings/drift-narrative/`.
+- Blast radius changes: files above; `fixtures/llm-recordings/drift-narrative/5685e20db8f250a9.json` (live) and `7252bfe74de14154.json` (authored hostile).
+- Commands to stay green: the gates above, plus `record:author --check` after any diff-engine change (candidate quotes move the inputHash; re-record or re-author).
+- Dependency changes: none.

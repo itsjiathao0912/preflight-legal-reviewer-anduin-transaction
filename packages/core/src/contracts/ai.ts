@@ -13,8 +13,11 @@ export const AiCandidateSchema = z.object({
 });
 export type AiCandidate = z.infer<typeof AiCandidateSchema>;
 
-/** LLM task ids (Phase 05, additive). Plain tuple; the enum schema stays module-private (G9). */
-export const AI_TASK_IDS = ['clause-judgment', 'counsel-draft'] as const;
+/**
+ * LLM task ids (Phase 05, additive; Phase 07 appends 'drift-narrative'). Plain tuple; the enum
+ * schema stays module-private (G9).
+ */
+export const AI_TASK_IDS = ['clause-judgment', 'counsel-draft', 'drift-narrative'] as const;
 export type AiTaskId = (typeof AI_TASK_IDS)[number];
 const AiTask = z.enum(AI_TASK_IDS);
 
