@@ -290,7 +290,7 @@ Strategy (vc-agent-strategy-compare, PLAN-end): signals S1 (core+worker+web), S2
 - Validate-contract status: written 17-10-26 (outer-pvl, PVL cycle 2 re-validate: Gate: PASS, 0 FAIL, 0 CONCERN; N1-N5 from cycle 1 verified closed against the repo; the cycle-1 CONDITIONAL and first-pass BLOCKED contracts are superseded; Step 0 re-sync with Intake and Phase 01 symbol re-verification remain the pre-EXECUTE known-gaps)
 - Next step: after Phase 01 is VERIFIED and Intake is closed, spawn vc-research-agent for Step 0 plus RESEARCH (allocate the migration number there). EXECUTE receives this one exact plan path.
 - Validators: `node .claude/skills/vc-generate-plan/scripts/validate-plan-artifact.mjs <this plan>`; `node .claude/skills/vc-generate-phase-program/scripts/validate-phase-stub.mjs <this plan>`.
-- Hard rules for every agent prompt: never git stash, checkout, reset or restore; commit on main with conventional prefixes; no push; no remote D1 or deploy in this phase; execution commits separate from process commits.
+- Hard rules for every agent prompt: never git stash, checkout, reset or restore; commit on main with conventional prefixes; never run git push in any phase (the user pushes); no remote D1 or deploy in this phase; execution commits separate from process commits.
 
 ## Validate Contract
 
@@ -427,3 +427,5 @@ Accepted by: session (autonomous autopilot, planning phases only; no EXECUTE) - 
 Autonomous goal block: BRANCH B (the umbrella plan `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-umbrella_PLAN_17-10-26.md` holds `## Stable Program Goal`, verified on disk). No per-phase goal-block section is written to this phase plan (BRANCH B: the check passes vacuously); the umbrella's /goal governs ("Reference for latest state: the umbrella plan path above").
 
 Gate: PASS
+
+Amendment 17-10-26 (user decision): no git push in any phase; commit locally only; the user pushes. Wording-only tightening, no gate change.

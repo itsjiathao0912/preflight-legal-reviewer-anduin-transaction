@@ -279,7 +279,7 @@ Strategy (vc-agent-strategy-compare, PLAN-end): signals S2 (frozen-adjacent cont
 - Validate-contract status: pending
 - Next step: when Intake is closed, spawn vc-research-agent for Step 0 plus RESEARCH; then follow Phase Loop Progress. EXECUTE receives this one exact plan path.
 - Validators for the plan artifact: `node .claude/skills/vc-generate-plan/scripts/validate-plan-artifact.mjs <this plan>` and `node .claude/skills/vc-generate-phase-program/scripts/validate-phase-stub.mjs <this plan>`.
-- Hard rules for every agent prompt: never run git stash, checkout, reset or restore; commit directly on main with conventional prefixes; no push; execution commits separate from process commits.
+- Hard rules for every agent prompt: never run git stash, checkout, reset or restore; commit directly on main with conventional prefixes; never run git push in any phase (the user pushes); execution commits separate from process commits.
 
 ## Validate Contract
 
@@ -413,3 +413,5 @@ Autonomous goal block: BRANCH B - the umbrella plan `process/features/variance-m
 
 Gate: PASS
 Accepted by: not required (Gate PASS, no unresolved CONCERNs); known-gaps G7 and G8 recorded above as named residuals.
+
+Amendment 17-10-26 (user decision): no git push in any phase; commit locally only; the user pushes. Wording-only tightening, no gate change.

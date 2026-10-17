@@ -245,7 +245,7 @@ Strategy (vc-agent-strategy-compare, PLAN-end): signals S2 (contract consumption
 - Validate-contract status: PASS written (outer-pvl, PVL cycle 2 re-validation, 17-10-26); EXECUTE still held until Intake closes and Step 0 re-sync is done
 - Next step: after Phases 02 and 03 are VERIFIED and Intake is closed, spawn vc-research-agent for Step 0 plus RESEARCH. EXECUTE receives this one exact plan path.
 - Validators: `node .claude/skills/vc-generate-plan/scripts/validate-plan-artifact.mjs <this plan>`; `node .claude/skills/vc-generate-phase-program/scripts/validate-phase-stub.mjs <this plan>`.
-- Hard rules for every agent prompt: never git stash, checkout, reset or restore; commit on main with conventional prefixes; no push; execution commits separate from process commits.
+- Hard rules for every agent prompt: never git stash, checkout, reset or restore; commit on main with conventional prefixes; never run git push in any phase (the user pushes); execution commits separate from process commits.
 
 ## Validate Contract
 
@@ -346,3 +346,5 @@ What this coverage does NOT prove:
 
 Gate: PASS
 Accepted by: not required for PASS (no CONCERN open). Session: autonomous autopilot, planning-only run; PVL cycle 2 re-validation, 0 FAIL, 0 CONCERN after the N5 plan-text fix. Recorded fix cycles: 2 (results.tsv has P04 cycle-1 and cycle-2 rows).
+
+Amendment 17-10-26 (user decision): no git push in any phase; commit locally only; the user pushes. Wording-only tightening, no gate change.

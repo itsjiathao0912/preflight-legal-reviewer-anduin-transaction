@@ -256,7 +256,7 @@ Strategy (vc-agent-strategy-compare, PLAN-end): signals S2 weak, S7 (5+ files) =
 - Validate-contract status: pending
 - Next step: after Phase 01 is VERIFIED and Intake is closed, spawn vc-research-agent for Step 0 plus RESEARCH. EXECUTE receives this one exact plan path.
 - Validators: `node .claude/skills/vc-generate-plan/scripts/validate-plan-artifact.mjs <this plan>`; `node .claude/skills/vc-generate-phase-program/scripts/validate-phase-stub.mjs <this plan>`.
-- Hard rules for every agent prompt: never git stash, checkout, reset or restore; commit on main with conventional prefixes; no push; execution commits separate from process commits.
+- Hard rules for every agent prompt: never git stash, checkout, reset or restore; commit on main with conventional prefixes; never run git push in any phase (the user pushes); execution commits separate from process commits.
 
 ## Validate Contract
 
@@ -334,7 +334,7 @@ Execute-agent instructions (apply on top of the plan; the former E6 and E7 are n
 - E2. Red first: write each Fully-Automated stub above in its named spec or unit file, confirm it fails for the right reason, then implement; one token per call, never the `--` token, never the bare token `gate`; use the token `no-e2e-hook-in-d`, never the full word the hook filter rejects.
 - E3. Sequence: Section A, then B (pointer path before package path), C, D, E, F, G, H, I; run the section gate after each; serial Playwright only on port 4317; never run `preview` and `stack-memory` together.
 - E4. Shared files: when `state/review.ts`, `features/review/use-review-view.ts`, `FindingsScreen.tsx` or `GateButton.tsx` were changed by Intake (a concurrent Intake edit to `GateButton.tsx` and `features/gate/gate-pill.ts` is visible in the working tree), edit narrowly and leave Intake's additions intact; run `import-graph` after the single appended line.
-- E5. Never git stash, checkout, reset or restore; commit on main with conventional prefixes; no push; execution commits separate from process commits.
+- E5. Never git stash, checkout, reset or restore; commit on main with conventional prefixes; never run git push in any phase (the user pushes); execution commits separate from process commits.
 - E6. Step 0 (g): read P01's landed `VarianceResult`; if it lacks `gatePolicy`, `rulesVersion` or `rulesHash8`, add them in the `engine.worker.ts` wrapper from `loadVarianceRules()`; if a second main-thread runtime symbol proves unavoidable, STOP and replan (the plan's own Blocker).
 - E7. Baseline tie-break: B1 and B3 assert only the fields Intake's landed view really exposes; if no "marked at" time exists, the tie-break is `createdAt` descending then document id ascending (the `roleMarkedAt` step is dropped from the assertion and recorded in the Refresh Note).
 
@@ -355,3 +355,5 @@ What This Coverage Does NOT Prove:
 - Regression block: keyboard and screen-reader quality (agent walk plus axe only), pixel parity with `app-variance.html`, parallel Playwright (the block is serial).
 
 Gate: PASS
+
+Amendment 17-10-26 (user decision): no git push in any phase; commit locally only; the user pushes. Wording-only tightening, no gate change.

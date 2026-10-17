@@ -41,7 +41,7 @@ Atomic program steps; the per-phase checklists live in each phase plan.
 2. Orchestrator fills `## Pre-PVL Conflict Resolution` and emits the post-VALIDATE /goal block.
 3. Wait for the Intake feature to close (hard precondition); then run Step 0 plus the 7-step inner loop for Phase 01.
 4. Phase 01, then Phase 02 and Phase 03 (either order, default sequential), then Phase 04, then Phase 05; each phase commits its execution changes before the next starts.
-5. Phase 05 deploys (remote migration, then Worker) only under the validate-contract's explicit instruction; program closeout updates context docs and pushes main after the feature closes.
+5. Phase 05 deploys (remote migration, then Worker) only under the validate-contract's explicit instruction; program closeout updates context docs and commits locally on main (no git push in any phase; the user pushes).
 
 Context routers for every agent: `process/context/all-context.md`, then `process/context/engine/all-engine.md`, `process/context/ui/all-ui.md`, `process/context/worker/all-worker.md`, and the verification router `process/context/tests/all-tests.md` (exact test commands and the no-`--`, one-token-per-call rules). Test verification language: every phase gate is an exact command listed in that phase's Test Gates; the program-level matrix below maps each acceptance criterion to its proving scenario. A phase is marked VERIFIED only after the independent EVL run and, for the final program closeout, after the user confirms the result (user confirmed working).
 
@@ -69,7 +69,7 @@ Definition of done (an unattended agent must be able to do all of these):
 3. See impact (investor types, conditional paths, old rule reusable yes/no) and a suggested, overridable owner per change; a two-owner change gives two questions; questions group per owner with one DOCX export each (AC-V10 to V13).
 4. Record an answer with option, note, intent and scope; firm-template answers need an intent and may create the one supported check; the R-01 check fires on the next same-firm document and never crosses firms or workspaces (AC-V14 to V16).
 5. Gate counts untriaged changes, regression findings and unanswered questions, with exactly two states (AC-V17); results are versioned, reproducible and work with no AI (AC-V19, V20; AI never gates, AC-V9).
-6. The feature is deployed to the allowed workers.dev target with the forward-only migration applied, and main is pushed after the feature closes.
+6. The feature is deployed to the allowed workers.dev target with the forward-only migration applied, and the work is committed locally on main (no git push in any phase; the user pushes).
 
 What "verified" means (program level):
 - A phase is VERIFIED only when its Exit Gate commands are green, its validate-contract (PVL) is written with Gate: PASS, regression evidence for every overlapping earlier surface is recorded, and an independent vc-tester EVL run confirmed the gates. Code-only completion is CODE DONE.
@@ -92,7 +92,7 @@ Hard safety constraints (non-negotiable, per phase):
 - Free OpenRouter models only; at most 6 live AI calls for this feature and at most 3 per UTC day; this plan uses 0; stop on any cost, non-free model, 429 or open breaker.
 - Render-first: never await session, Turnstile or memory before deterministic findings render.
 - Forward-only migration (never edit a landed migration); apply the remote migration BEFORE the Worker deploy; deploy order is migration, then Worker (which serves the web bundle).
-- Push main only after the feature closes (guard:cf and secrets:scan first). Commit directly on main with conventional prefixes. Never git stash, checkout, reset or restore in agent prompts.
+- Commit locally on main only; never run git push in any phase (the user pushes). Run guard:cf and secrets:scan before the final local commit. Commit directly on main with conventional prefixes. Never git stash, checkout, reset or restore in agent prompts.
 - "13 detectors / 15 issue classes" wording stays true (update only if counts change; the plan changes no count).
 - Commit each phase's execution changes before starting the next phase. Keep process/plan/context commits separate from execution commits.
 ```
@@ -102,7 +102,7 @@ Hard safety constraints (non-negotiable, per phase):
 ## Stable Program Goal (copy-paste this to start autonomous execution)
 
 ```
-SESSION GOAL: Variance management slim MVP (AC-V1..V20) folded into existing screens; deployed to workers.dev; pushed after close
+SESSION GOAL: Variance management slim MVP (AC-V1..V20) folded into existing screens; deployed to workers.dev; local commits only (user pushes)
 Ref: process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-umbrella_PLAN_17-10-26.md
 
 TARGET: all 5 phases VERIFIED until:
@@ -128,7 +128,7 @@ HARD STOPS (pause, wait for user):
 SAFETY (never override):
 - no new screens/sidebar items; render-first (never await session/Turnstile/memory before findings)
 - deploy only aduin-transaction-web.giathaowork.workers.dev; aduin-transaction-* only; no routes/domains; never touch the protected zone
-- forward-only migration; migration then deploy; push main only after close
+- forward-only migration; migration then deploy; never git push (user pushes)
 - never git stash/checkout/reset/restore; commit on main, conventional prefixes
 - "13 detectors / 15 issue classes" wording unchanged
 
@@ -152,7 +152,7 @@ START: Phase 1, Step 0 + RESEARCH (pending Intake close). Spawn vc-research-agen
 | 2 - V2 Web: Findings | `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-02-web-findings_PLAN_17-10-26.md` | engine-worker pass, baseline adapter (single Intake coupling point), variance store, change rows, All/Errors/Changes, baseline control and modal, cosmetic groups, no-baseline line, gate pending, count selector | Phase 1 |
 | 3 - V3 Memory backend | `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-03-memory-backend_PLAN_17-10-26.md` | one migration, additive memory contracts + snapshot note, Worker route/repo/weights/triggers, stub + real API + outbox, label scope rule, hartwell-crane firm, worker + stack-memory tests | Phase 1; parallel-safe with Phase 2 |
 | 4 - V4 Owners, answers, regression UI | `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-04-owners-answers_PLAN_17-10-26.md` | owner chips and override, per-owner keys, Questions tabs and export, template wording, answer intent/scope + preview, regression client wiring, gate popover groups | Phase 2 + Phase 3 |
-| 5 - V5 Demo, e2e, deploy | `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-05-demo-deploy_PLAN_17-10-26.md` | H&C samples, demo e2e (214 to 7, gate walk), perf and a11y re-runs, full regression, remote migration then Worker deploy, live smoke, residuals, closeout, push | Phases 1-4 |
+| 5 - V5 Demo, e2e, deploy | `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-05-demo-deploy_PLAN_17-10-26.md` | H&C samples, demo e2e (214 to 7, gate walk), perf and a11y re-runs, full regression, remote migration then Worker deploy, live smoke, residuals, closeout, final local commit | Phases 1-4 |
 
 ### Join Conditions
 
@@ -171,7 +171,7 @@ START: Phase 1, Step 0 + RESEARCH (pending Intake close). Spawn vc-research-agen
 | 2 | Phase 1 VERIFIED; Step 0 done | `variance-render-first`, baseline/cosmetic/no-baseline/ai-never-gates e2e; `variance-counts-selector`; `import-graph`; regression `counsel-gate`, `gate-pill`, `turnstile-no-block` |
 | 3 | Phase 1 VERIFIED; Step 0 done; migration number allocated | worker `migrations`, `triggers`, `rows-written`, `firm-list-parity`, `variance-*` worker gates; core `contracts`; web `api-contract`; stack-memory `variance-regression-no-cross-firm`; evidence pack 0 failures |
 | 4 | Phases 2 and 3 VERIFIED; Step 0 done | owner/two-owner/export/answer/intent/r01/gate-two-states e2e; counts agree; regression `counsel-*`, `memory-*` |
-| 5 | Phases 1-4 VERIFIED; Intake closed and deployed | demo e2e green; full regression green; migration applied; health schema version; live smoke and probe; evidence pack 0 failures; guard:cf and secrets:scan before push |
+| 5 | Phases 1-4 VERIFIED; Intake closed and deployed | demo e2e green; full regression green; migration applied; health schema version; live smoke and probe; evidence pack 0 failures; guard:cf and secrets:scan before the final local commit |
 
 ---
 
@@ -285,7 +285,7 @@ Program-level checklist (the per-phase boxes live in each phase plan; the orches
 - [ ] Phase 03 loop: same 8 boxes
 - [ ] Phase 04 loop: same 8 boxes
 - [ ] Phase 05 loop: same 8 boxes (deploy under explicit validate-contract instruction)
-- [ ] Program closeout: context docs, push main after close
+- [ ] Program closeout: context docs, final local commit on main (no push)
 
 ---
 
@@ -306,7 +306,7 @@ Program-level checklist (the per-phase boxes live in each phase plan; the orches
 - One baseline per review, same firm only; the only regression kind is `scope_exists`.
 - Run Playwright serially, one agent at a time (port 4317; stack-memory afterwards, never together). Select tests as `pnpm --filter <pkg> test <token>`; never the `--` token; one token per call; an unmatched token exits 1 and counts as a failure.
 - After any diff-adjacent change run `pnpm --filter @aduin/scripts record:author --check`.
-- Commit each phase's execution changes before starting the next phase. Keep process/plan/context commits separate from execution commits. Commit directly on main (conventional prefixes), never push before the feature closes, never git stash, checkout, reset or restore.
+- Commit each phase's execution changes before starting the next phase. Keep process/plan/context commits separate from execution commits. Commit directly on main (conventional prefixes), never run git push in any phase (the user pushes), never git stash, checkout, reset or restore.
 
 ---
 
@@ -415,7 +415,7 @@ Plan artifact validators (run at PLAN end and again after any supplement): `node
 - Each later phase must re-run research (and Step 0) before execution. EXECUTE receives exactly ONE selected plan file path.
 - Current phase: none started. Next action: orchestrator runs the outer PVL (one read-only vc-validate-agent per phase plan), fills `## Pre-PVL Conflict Resolution`, then waits for the Intake close.
 - Execute-agent start instruction: read this file, read the Phase 1 plan, complete Step 0 and RESEARCH first.
-- Hard rules for every agent prompt: never git stash, checkout, reset or restore; commit on main; no push before the feature closes; never touch the protected zone.
+- Hard rules for every agent prompt: never git stash, checkout, reset or restore; commit locally on main; never run git push in any phase (the user pushes); never touch the protected zone.
 
 ---
 
@@ -445,3 +445,5 @@ Note: The Stable Program Goal above is fixed. This section is the only part that
 (placeholder - vc-validate-agent writes this section before EXECUTE)
 
 Next Step: run the outer PVL (vc-validate-agent per phase plan), then say ENTER EXECUTE MODE only after PVL passes and the Intake feature is closed (RIPER-5).
+
+Amendment 17-10-26 (user decision): no git push in any phase; commit locally only; the user pushes. Wording-only tightening, no gate change.

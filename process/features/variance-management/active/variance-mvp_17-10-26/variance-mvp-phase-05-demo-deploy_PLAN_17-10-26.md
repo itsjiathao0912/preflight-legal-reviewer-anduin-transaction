@@ -1,6 +1,6 @@
 ---
 name: plan:variance-mvp-phase-05-demo-deploy
-description: "Variance MVP Phase 05 (V5): Hartwell and Crane demo samples, variance-demo e2e specs (214 to 7, gate walk), perf and a11y re-runs, full regression, remote migration then Worker deploy to workers.dev, live smoke, residuals, closeout and push"
+description: "Variance MVP Phase 05 (V5): Hartwell and Crane demo samples, variance-demo e2e specs (214 to 7, gate walk), perf and a11y re-runs, full regression, remote migration then Worker deploy to workers.dev, live smoke, residuals, closeout and final local commit"
 date: 17-10-26
 metadata:
   node_type: memory
@@ -26,7 +26,7 @@ metadata:
 
 ## Overview
 
-Proves the whole feature on the demo story and ships it. Demo story (L9): Hartwell and Crane LLP, Northgate Infrastructure Fund III against the Fund II baseline: 214 raw changes become 7 shown (3 new, 4 logic) plus the R-01 regression, with owners, impact and the gate walk. Then: full regression of every earlier surface, remote migration, Worker deploy (the Worker serves the web bundle, so one `wrangler deploy` ships both), live smoke, residuals recorded, closeout, and push of `main` only after the feature closes.
+Proves the whole feature on the demo story and ships it. Demo story (L9): Hartwell and Crane LLP, Northgate Infrastructure Fund III against the Fund II baseline: 214 raw changes become 7 shown (3 new, 4 logic) plus the R-01 regression, with owners, impact and the gate walk. Then: full regression of every earlier surface, remote migration, Worker deploy (the Worker serves the web bundle, so one `wrangler deploy` ships both), live smoke, residuals recorded, closeout, and a final local commit on `main` (no git push in any phase; the user pushes).
 
 Decisions made at PLAN time (reversible, recorded):
 1. **No remote demo-workspace seed delta.** The demo workspace is append-only and is seeded once with `seed_mode=1`; adding rows to the LIVE demo workspace would be irreversible (delete is blocked by trigger). So the live demo shows R-01 by recording the Fund II answer in the visitor's sandbox copy (about 2 minutes, scripted in the demo flow); `seed/demo.sql` and `seed:check` are NOT changed. A backlog stub `variance-demo-preseeded-r01_NOTE_17-10-26.md` (feature backlog) records the option and the approval it would need. (DECISION D7 called the demo seed a "deploy-slice extra"; this is the safe form of it.)
@@ -126,7 +126,7 @@ Files directly modified or created: 2 e2e specs, 1 live probe plus its test, 1 c
 
 - Never touch the protected Cloudflare zone; never write its name or id into any file or command; never attach a route or custom domain; only `aduin-transaction-*` resources.
 - Free OpenRouter models only; at most 6 live AI calls for the whole feature and at most 3 per UTC day; this plan uses 0. Stop on any cost greater than 0, a non-`:free` model, a 429 or an open breaker.
-- Push `main` only after the feature closes (UPDATE PROCESS), after `pnpm guard:cf` and `pnpm secrets:scan` pass.
+- Commit locally on `main` only; never run git push in any phase (the user pushes). Run `pnpm guard:cf` and `pnpm secrets:scan` before the final local commit (UPDATE PROCESS).
 - Never run `git stash`, `checkout`, `reset` or `restore`.
 - Remote D1: only `wrangler d1 migrations list/apply ... --remote` for the one new migration, read-only SELECTs, and the read-only `wrangler d1 time-travel info` (bookmark recorded as the data rollback pointer); no `execute --file` against `--remote` (local-only rehearsal in F2b is allowed, never `--remote`); no destructive SQL; a Time Travel restore is never run by an agent (a hard stop that needs the user).
 - Credentials for wrangler are loaded in the same Bash call that uses them (the approved line from the all-worker deploy recipe; the privacy hook needs the `APPROVED:` marker from the user) and never exported, printed or persisted.
@@ -186,7 +186,7 @@ Files directly modified or created: 2 e2e specs, 1 live probe plus its test, 1 c
 
 - [ ] H1. Evidence pack artifact 5 (live smoke output) and validation: `node .claude/skills/vc-risk-evidence-pack/scripts/validate-risk-artifacts.mjs process/features/variance-management/active/variance-mvp_17-10-26/harness/phase-05` (0 failures).
 - [ ] H2. UPDATE PROCESS (vc-update-process-agent): update `process/context/{all-context,engine/all-engine,ui/all-ui,worker/all-worker,tests/all-tests}.md` (feature summary, new gate tokens, migration number, deploy record, residuals); rewrite the umbrella `## Current Execution State`; register backlog notes; run the harness validators relevant to the change type (`validate-context-discovery`, `validate-plan-inventory`, `validate-umbrella-artifact`, `git diff --check`).
-- [ ] H3. Push: after the feature closes, `pnpm guard:cf` and `pnpm secrets:scan` pass, then `git push origin main` (orchestrator or vc-git-manager; the only push of the program). Notify the design session via the docs handoff NOTE.
+- [ ] H3. Final local commit: after the feature closes and `pnpm guard:cf` and `pnpm secrets:scan` pass, make the final local commit on `main` (orchestrator or vc-git-manager); never run git push in any phase, the user pushes. Notify the design session via the docs handoff NOTE.
 
 ### Edge cases carried from vc-scenario
 
@@ -261,7 +261,7 @@ Failing stubs: the two new e2e specs start as `test("should <scenario>", ...)` t
 
 - All commands in Test Gates exit 0 (including the full regression block); counts recorded; no baseline count regressed.
 - Deploy section: migration applied, health shows the new schema version, headers 200, live stack smoke green, `probe:live-variance` green with timing recorded; version id and rollback id in the report.
-- Evidence pack validator: 0 failures. `pnpm guard:cf` and `pnpm secrets:scan` green before push.
+- Evidence pack validator: 0 failures. `pnpm guard:cf` and `pnpm secrets:scan` green before the final local commit.
 - Residuals listed in the report (live R-01 write, AC51-style items, manual keyboard pass), each with its backlog stub.
 
 ## Blockers That Would Justify BLOCKED Status
@@ -280,7 +280,7 @@ Failing stubs: the two new e2e specs start as `test("should <scenario>", ...)` t
 - [ ] 4. PVL - vc-validate-agent: full V1-V7 (security and deploy dimensions mandatory); validate-contract per `.claude/skills/vc-validate-findings/references/example-validate-output.md`
 - [ ] 5. EXECUTE - vc-execute-agent (opus): checklist A to G done; per-section gates green; the deploy sections run only with the validate-contract's explicit outward-facing instruction
 - [ ] 6. EVL - independent vc-tester: full regression block re-run serially; stubs registered; EVL HANDOFF SUMMARY
-- [ ] 7. UPDATE PROCESS - phase report written, context docs updated, umbrella state updated, program closeout, commit, then push after the feature closes
+- [ ] 7. UPDATE PROCESS - phase report written, context docs updated, umbrella state updated, program closeout, then the final local commit (no push)
 
 **Validate-contract required before execute.** If step 4 (PVL) is unchecked or `## Validate Contract` reads "(placeholder - vc-validate-agent writes this section before EXECUTE)", the orchestrator must spawn vc-validate-agent first. A partial contract is a placeholder. Deploy and remote migration are outward-facing: they run only when the validate-contract names them explicitly.
 
@@ -316,7 +316,7 @@ Strategy (vc-agent-strategy-compare, PLAN-end): signals S1, S2, S6 (deploy, remo
 - Validate-contract status: written (outer-pvl, 2026-10-17, PASS after PVL cycle 1 re-validation; supersedes the first-pass CONDITIONAL contract)
 - Next step: after Phases 01 to 04 are VERIFIED and Intake is closed, spawn vc-research-agent for Step 0 plus RESEARCH. EXECUTE receives this one exact plan path.
 - Validators: `node .claude/skills/vc-generate-plan/scripts/validate-plan-artifact.mjs <this plan>`; `node .claude/skills/vc-generate-phase-program/scripts/validate-phase-stub.mjs <this plan>`.
-- Hard rules for every agent prompt: never git stash, checkout, reset or restore; commit on main with conventional prefixes; push only at program closeout; never name or touch the protected zone; execution commits separate from process commits.
+- Hard rules for every agent prompt: never git stash, checkout, reset or restore; commit on main with conventional prefixes; never run git push in any phase (the user pushes); never name or touch the protected zone; execution commits separate from process commits.
 
 ## Validate Contract
 
@@ -374,7 +374,7 @@ Dimension findings:
 - Infra fit: PASS - `build-samples.ts` (line 169 `expected 12 HTML samples` guard, `HTML_IDS` list of 12) is handled by B1 and A2 (explicit `12 + N`, never loosened); the Intake collision on that file is now in the registry `## Phase 5 revision` and Step 0 (e). `scripts/src/live/{common,probe-session,probe-ai}.ts` and `scripts/test/live/live-guards.test.ts` exist as named; `scripts/package.json` has the sibling `probe:live-*` keys; the scripts workspace depends on `@aduin/core` (counts-wording imports are feasible).
 - Test coverage: PASS - every developed behavior has an automated or agent-probe gate; `counts-wording` is feasible (`detectors` and `ISSUE_CLASSES` are exported from the core barrel; README lines 26, 101, 165 and `status.md` line 13 carry the wording the grep gate matches); `rows-written.test.ts`, `conformance-free-plan.test.ts`, `slice.spec.ts`, `perf-budget`, `a11y-keyboard`, `a11y-smoke`, `design-probe`, `turnstile-no-block`, `csp-headers`, `no-llm-corpus`, `sample-zero-calls`, `fund-two*` exist; variance and intake gate tokens are defined in the sibling phase plans. The one new gap found this cycle (conditional `variance-package-samples` gate missing from the Test Gates block and this table) was fixed inline.
 - Breaking changes: PASS - no contract or code change in V5; the migration (V3, applied not edited) is additive and forward-only, rollback is code-only; `sample-picker-smoke` count `toHaveCount(13)` (line 35) changes by logged derived repair.
-- Security surface: PASS (deploy rules re-checked, all present) - target only `https://aduin-transaction-web.giathaowork.workers.dev` (enforced in code by `assertLiveBase`); `aduin-transaction-*` resources only; no routes or custom domains; the protected zone is never named in the plan or the backlog notes (grep clean); remote migration (F2 list, bookmark, F2b local rehearsal, F3 apply, schema_version check) strictly before the single `wrangler deploy` (F4); forward-only, `wrangler rollback` code-only, Time Travel restore forbidden to agents; wrangler stop clause and clean `wrangler.jsonc` check; credentials loaded in the same call, never printed; FREE models only, 0 live AI calls (feature budget at most 6, at most 3 per UTC day); push `main` only after the feature closes with guard:cf and secrets:scan green. Evidence pack (5 artifacts) required before F.
+- Security surface: PASS (deploy rules re-checked, all present) - target only `https://aduin-transaction-web.giathaowork.workers.dev` (enforced in code by `assertLiveBase`); `aduin-transaction-*` resources only; no routes or custom domains; the protected zone is never named in the plan or the backlog notes (grep clean); remote migration (F2 list, bookmark, F2b local rehearsal, F3 apply, schema_version check) strictly before the single `wrangler deploy` (F4); forward-only, `wrangler rollback` code-only, Time Travel restore forbidden to agents; wrangler stop clause and clean `wrangler.jsonc` check; credentials loaded in the same call, never printed; FREE models only, 0 live AI calls (feature budget at most 6, at most 3 per UTC day); final local commit only (no push) after the feature closes with guard:cf and secrets:scan green. Evidence pack (5 artifacts) required before F.
 - Section A feasibility (pre-checks): PASS - A1 to A5 reference real files and names; site-key source is the live bundle (NEEDS_CONTEXT stop if not extractable); A5 reads `fixtures/variance/expected/` (not yet on disk: Phase 01 output, known-gap).
 - Section B feasibility (samples): PASS - B1 concrete (ids, second source dir, titles, `firmId`, `12 + N` guard); B2 conditional on Step 0 (g), `samples/packages/` still uncommitted at this check (untracked, three package folders with `docs/` and `_build/`), handled by the n/a path; picker-versus-upload decision and the "no duplicate titles" rule are stated in `## Fictional Sample Packages` rule 3 and Step 0 (b). Not-yet-committed samples are a Step-0-checked known-gap.
 - Section C feasibility (demo e2e): PASS (conditional on prior phases) - depends on V2/V4 testids, `apps/web/e2e/fixtures/variance.ts` and the Fund III expected file, not yet on disk; ASSUMED known-gap, re-verified at Step 0 and EXECUTE (by-design hold on Intake and Phases 01 to 04).
@@ -382,7 +382,7 @@ Dimension findings:
 - Section E feasibility (regression): PASS - regression tokens exist or are defined in sibling plans; `fixtures:check`, `record:author`, `precompute:ai`, `seed:check`, `slice:check`, `guard:cf`, `secrets:scan` script keys exist; counts wording corrected earlier (status.md has "13" only).
 - Section F feasibility (remote migration and deploy): PASS - order, forward-only and rollback match `docs/DEPLOY.md` and `all-worker.md`; F2b, bookmark and stop clause present. Highest-risk edit: the live migration apply (recreates guard triggers on a populated D1); sequence list, bookmark, rehearsal, apply, verify, then deploy. `deploy:preflight` script key exists.
 - Section G feasibility (live smoke): PASS - `slice.spec.ts` is the live smoke; `probe:live-variance` follows `probe-session.ts` and the shared `common.ts`; ledger and stop-on-anomaly reused.
-- Section H feasibility (evidence, closeout, push): PASS - validators exist; push only after feature close.
+- Section H feasibility (evidence, closeout, final local commit): PASS - validators exist; no push in any phase.
 - Prior SUPPLEMENT REQUEST closure: gap 1 (live-regression operator note and Known Gaps section) CLOSED - the note exists with exact operator steps, `## Known Gaps (Resolved via Backlog)` lists it and the four other stubs, all five notes exist on disk. Gap 2 (registry `build-samples.ts` collision) CLOSED - `## Phase 5 revision` names it as an Intake seam file (append-only). The 9 earlier inline fixes (12-count guard, counts-wording, real probe names, site-key source, expected-folder listing, status.md wording, slice.spec.ts, F2b with Time Travel and stop clause, credential rule) are intact.
 - Advisory (not counted): the registry's older `## Phase 5` section still names `probe-live-variance.ts`, `scripts/test/probe-variance.test.ts` and `deployed-smoke`; the append-only revision note states the plan text governs (`scripts/src/live/probe-variance.ts`, `scripts/test/live/probe-variance.test.ts`, `slice.spec.ts`). Concurrent Intake working-tree edits (GateButton, gate-pill, demo.sql, detectors) are Step 0 (h) re-check items.
 
@@ -391,9 +391,9 @@ Execute-agent instructions (outward-facing, named explicitly as the umbrella req
 - E2. Sections A to E are a separate leg from F and G. The orchestrator confirms this instruction before spawning the F and G leg.
 - E3. AUTHORIZED outward-facing actions (and only these): (1) `wrangler d1 migrations list/apply aduin-transaction-db --remote` for exactly the one V3 migration, after F2 shows it is the only pending file and F2b is clean; (2) one `wrangler deploy` of Worker `aduin-transaction-web` from `apps/worker`, only after the remote migration succeeded and `app_meta.schema_version` was verified; (3) `wrangler rollback <previous-version-id>` on failure; (4) read-only live GETs and the headless probe against https://aduin-transaction-web.giathaowork.workers.dev. Anything else (route, custom domain, new resource, secret change, remote seed, destructive SQL, Time Travel restore, a live AI or OCR call, any step touching the protected zone) is a hard stop, never retried.
 - E4. Free OpenRouter models only; this phase makes 0 live AI calls (budget for the feature: at most 6, at most 3 per UTC day). Stop on any cost above 0, a non-`:free` model, a 429 or an open breaker.
-- E5. Load credentials in the same Bash call that uses them; never print or persist them; run `pnpm guard:cf` and `pnpm secrets:scan` before and after deploy and before the push.
+- E5. Load credentials in the same Bash call that uses them; never print or persist them; run `pnpm guard:cf` and `pnpm secrets:scan` before and after deploy and before the final local commit.
 - E6. B1 must keep the 12 original sample entries byte-identical and turn the `expected 12 HTML samples` guard into an explicit `12 + N` check; never delete it or loosen it to a range.
-- E7. Write the evidence pack artifacts 1 to 4 before F and artifact 5 after G; the validator must report 0 failures. Push `main` only at feature close (UPDATE PROCESS) with `pnpm guard:cf` and `pnpm secrets:scan` green.
+- E7. Write the evidence pack artifacts 1 to 4 before F and artifact 5 after G; the validator must report 0 failures. Commit locally on `main` only at feature close (UPDATE PROCESS), never git push, with `pnpm guard:cf` and `pnpm secrets:scan` green.
 - E8. A red baseline at HEAD that Variance did not cause stops the phase. A defect in `packages/**` is routed to a follow-up plan stub in its owning phase, never fixed silently here. The `samples/packages/**` inputs are read-only; answer-key errors are reported to the design owner, never edited.
 
 Open gaps (named known-gaps, excluded from the CONCERN count; none is a FAIL):
@@ -413,3 +413,5 @@ What this coverage does NOT prove:
 
 Gate: PASS (0 FAILs, 0 unresolved CONCERNs; the one new gap was fixed inline; named residuals above are documented known-gaps with backlog notes, not CONCERNs)
 Accepted by: n/a for the gate (PASS); session (autonomous, planning-phase autopilot, no EXECUTE) acknowledges the named known-gaps listed under Open gaps
+
+Amendment 17-10-26 (user decision): no git push in any phase; commit locally only; the user pushes. Wording-only tightening, no gate change.
