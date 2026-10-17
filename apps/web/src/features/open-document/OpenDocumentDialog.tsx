@@ -2,13 +2,29 @@ import { resolveFirm } from '@aduin/core';
 import { useEffect, useId, useState, type FormEvent } from 'react';
 import { Icon } from '../../components/ui/icon';
 import { Modal } from '../../components/ui/modal';
+import { usePackage } from '../../state/package';
 import { useReview } from '../../state/review';
 import { useSession } from '../../state/session';
 import { useShell } from '../../state/shell';
+import type { StoredPackage } from '../../storage/db';
+import { loadDemoPackages, type DemoPackage } from './demo-packages';
 import { openSample, openUpload } from './open-actions';
+import {
+  openDemoPackage,
+  prepareUploadDraft,
+  restorePackage,
+  runPackageDraft,
+} from './package-actions';
+import { PackageConfirmTable } from './PackageConfirmTable';
 import { privacyLines } from './privacy-copy';
 import { loadFirms, loadManifest, type FirmEntry, type SampleEntry } from './samples';
-import { ACCEPT, checkUpload, limitsCopy } from './validate-upload';
+import {
+  ACCEPT,
+  checkPackageFiles,
+  checkUpload,
+  limitsCopy,
+  PACKAGE_LIMITS_COPY,
+} from './validate-upload';
 
 export const NO_FIRM = 'Other / no firm';
 
@@ -25,7 +41,11 @@ export function OpenDocumentDialog() {
   const showToast = useReview((s) => s.showToast);
   const [samples, setSamples] = useState<SampleEntry[]>([]);
   const [firms, setFirms] = useState<FirmEntry[]>([]);
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const file = files[0] ?? null;
+  const [demos, setDemos] = useState<DemoPackage[]>([]);
+  const [recentPkgs, setRecentPkgs] = useState<StoredPackage[]>([]);
+  const draft = usePackage((s) => s.draft);
   const [firm, setFirm] = useState('');
   const [fund, setFund] = useState('');
   const [version, setVersion] = useState('');
@@ -35,9 +55,15 @@ export function OpenDocumentDialog() {
   const listId = useId();
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      // intake: closing the modal drops an unconfirmed draft (a running one is left alone)
+      if (usePackage.getState().draft?.status === 'ready') usePackage.getState().clearDraft();
+      return;
+    }
     void loadManifest().then(setSamples);
     void loadFirms().then(setFirms);
+    void loadDemoPackages().then(setDemos);
+    void usePackage.getState().listRecent().then(setRecentPkgs);
     setError('');
     setAck(privacyAck);
   }, [open, privacyAck]);
@@ -58,11 +84,60 @@ export function OpenDocumentDialog() {
     }
   };
 
+  /** Intake: a ready draft with exactly one high-confidence subscription agreement auto-runs. */
+  const afterDraft = async () => {
+    const d = usePackage.getState().draft;
+    if (!d || d.status !== 'ready') return;
+    const only = d.rows.length === 1 ? d.rows[0] : undefined;
+    if (
+      only?.type === 'sub_agreement' &&
+      only.confidence === 'high' &&
+      usePackage.getState().draftReadiness().ok
+    ) {
+      setOpen(false);
+      await runPackageDraft();
+    }
+  };
+
+  const pickDemo = async (p: DemoPackage) => {
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      const r = await openDemoPackage(p.id);
+      if (!r.ok) setError(r.message);
+      else await afterDraft();
+    } catch {
+      showToast('The demo package could not be opened.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const pickRecent = async (p: StoredPackage) => {
+    if (busy) return;
+    setBusy(true);
+    setOpen(false);
+    try {
+      if (!(await restorePackage(p.id)))
+        showToast('This package is no longer stored in this browser.');
+    } catch {
+      showToast('The package could not be opened.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const runDraft = async () => {
+    setOpen(false);
+    await runPackageDraft();
+  };
+
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     if (!file) return setError('Choose a file to upload.');
-    const check = checkUpload(file.name, file.size);
+    const check = files.length > 1 ? checkPackageFiles(files) : checkUpload(file.name, file.size);
     if (!check.ok) return setError(check.message);
     const f = firm.trim();
     if (!f) return setError(`Choose the law firm, or "${NO_FIRM}".`);
@@ -72,6 +147,24 @@ export function OpenDocumentDialog() {
     if (!ack) return setError('Read and accept the privacy notice before uploading.');
     ackPrivacy();
     setBusy(true);
+    if (files.length > 1) {
+      // intake: many files -> light read + confirmation table (version label required there)
+      try {
+        const r = await prepareUploadDraft(files, {
+          firmId: resolved,
+          firmName: resolvedName,
+          fund: fund.trim(),
+          version: version.trim(),
+        });
+        if (!r.ok) setError(r.message);
+        else await afterDraft();
+      } catch {
+        showToast('The files could not be read.');
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       setOpen(false);
@@ -97,9 +190,15 @@ export function OpenDocumentDialog() {
       onOpenChange={setOpen}
       title="Open a document"
       testId="open-document-dialog"
-      className="modal od"
+      className={draft ? 'modal od od-pkg' : 'modal od'}
     >
-      <div className="od-body">
+      {draft ? (
+        <PackageConfirmTable
+          onRun={() => void runDraft()}
+          onBack={() => usePackage.getState().clearDraft()}
+        />
+      ) : null}
+      <div className="od-body" hidden={!!draft}>
         <section aria-labelledby="od-samples">
           <h3 className="od-h" id="od-samples">
             Samples <span className="dim">(public SEC filings, open in one click)</span>
@@ -128,6 +227,60 @@ export function OpenDocumentDialog() {
               </li>
             ))}
           </ul>
+          {demos.length ? (
+            <>
+              <h3 className="od-h" id="od-demo-packages">
+                Demo packages <span className="dim">(several documents of one fund)</span>
+              </h3>
+              <ul className="pkg-lists od-samples" aria-labelledby="od-demo-packages">
+                {demos.map((p) => (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      className="od-sample"
+                      data-testid="package-sample-option"
+                      data-package-id={p.id}
+                      disabled={busy}
+                      onClick={() => void pickDemo(p)}
+                    >
+                      <span className="od-t">{p.title}</span>
+                      <span className="dim">
+                        {p.members.length} file{p.members.length === 1 ? '' : 's'}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {recentPkgs.length ? (
+            <>
+              <h3 className="od-h" id="od-recent-packages">
+                Recent packages <span className="dim">(this browser, 24 h)</span>
+              </h3>
+              <ul className="pkg-lists od-samples" aria-labelledby="od-recent-packages">
+                {recentPkgs.map((p) => (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      className="od-sample"
+                      data-testid="package-recent-option"
+                      data-package-id={p.id}
+                      disabled={busy}
+                      onClick={() => void pickRecent(p)}
+                    >
+                      <span className="od-t">
+                        {p.fund} {p.version}
+                      </span>
+                      <span className="dim">
+                        {p.firmName || 'No firm'} · {p.docs.length} files
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
         </section>
         <form
           onSubmit={(e) => void submit(e)}
@@ -144,17 +297,27 @@ export function OpenDocumentDialog() {
               type="file"
               data-testid="upload-input"
               accept={ACCEPT}
+              multiple
               onChange={(e) => {
-                const f = e.target.files?.[0] ?? null;
-                setFile(f);
+                const list = Array.from(e.target.files ?? []);
+                const f = list[0] ?? null;
+                setFiles(list);
                 // Reject an unsupported, empty or oversized file as soon as it is picked.
-                const check = f ? checkUpload(f.name, f.size) : null;
+                const check =
+                  list.length > 1
+                    ? checkPackageFiles(list)
+                    : f
+                      ? checkUpload(f.name, f.size)
+                      : null;
                 setError(check && !check.ok ? check.message : '');
               }}
             />
           </label>
           <p className="mut" data-testid="limits-copy">
             {limitsCopy()}
+          </p>
+          <p className="mut" data-testid="package-limits-copy">
+            {PACKAGE_LIMITS_COPY}
           </p>
           <label className="nl">
             Law firm <span>(choose from the list; aliases resolve)</span>

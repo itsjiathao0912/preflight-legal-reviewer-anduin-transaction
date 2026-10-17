@@ -1,4 +1,4 @@
-import { limits } from '@aduin/core';
+import { checkPackageLimits, limits } from '@aduin/core';
 
 /**
  * Upload validation (AC37): runs before any AI/OCR call. Phase 06: PDF, Word and JPEG/PNG are
@@ -39,4 +39,20 @@ export function checkUpload(name: string, size: number): UploadCheck {
   if (ext === '.pdf') return { ok: true, kind: 'pdf' };
   if (ext === '.docx') return { ok: true, kind: 'docx' };
   return { ok: true, kind: 'image' };
+}
+
+/** Intake Phase 2: package limits copy (testid `package-limits-copy`). */
+export const PACKAGE_LIMITS_COPY = 'A package takes up to 12 files and 40 MB in total.';
+
+/** Intake Phase 2: core package limits plus the per-file check, BEFORE any read. */
+export function checkPackageFiles(
+  files: ReadonlyArray<{ name: string; size: number }>,
+): { ok: true } | { ok: false; message: string } {
+  const p = checkPackageLimits(files);
+  if (!p.ok) return p;
+  for (const f of files) {
+    const c = checkUpload(f.name, f.size);
+    if (!c.ok) return { ok: false, message: `"${f.name.slice(0, 120)}": ${c.message}` };
+  }
+  return { ok: true };
 }

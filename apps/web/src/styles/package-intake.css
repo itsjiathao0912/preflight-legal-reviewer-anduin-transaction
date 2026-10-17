@@ -1,0 +1,71 @@
+/* Intake Phase 2: package confirmation table inside the Upload modal (tokens only, no new colors). */
+.modal.od.od-pkg {
+  width: min(1040px, 100%);
+}
+.pkg-step {
+  display: grid;
+  gap: 12px;
+}
+.pkg-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.pkg-table th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--ink-3);
+  padding: 4px 6px;
+}
+.pkg-table td {
+  padding: 6px;
+  vertical-align: top;
+  border-top: 1px solid var(--step);
+}
+.pkg-table select {
+  font: inherit;
+  max-width: 160px;
+}
+.pkg-name {
+  overflow-wrap: anywhere;
+  max-width: 220px;
+}
+.pkg-reason {
+  color: var(--ink-2);
+  max-width: 260px;
+}
+.pkg-conf {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pkg-low-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--fix-fg);
+  background: var(--fix-bg);
+  border-radius: var(--r);
+  padding: 0 6px;
+  font-size: 12px;
+}
+.pkg-notice {
+  color: var(--ink-2);
+}
+.pkg-held {
+  color: var(--block-fg);
+}
+.pkg-earlier {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.pkg-lists {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
