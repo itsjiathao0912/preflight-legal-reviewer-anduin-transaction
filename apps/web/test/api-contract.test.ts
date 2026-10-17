@@ -3,6 +3,7 @@ import 'fake-indexeddb/auto';
 import { fingerprintFor, type FindingWire, type IssueClass } from '@aduin/core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MemoryApiError, nextUtcDay, toMemoryApiError, type MemoryApi } from '../src/api/memoryApi';
+import { RealMemoryApi } from '../src/api/realMemoryApi';
 import { StubMemoryApi } from '../src/api/stubMemoryApi';
 import type { FindingView } from '../src/engine/types';
 import { AppDb } from '../src/storage/db';
@@ -10,8 +11,8 @@ import { createFakeMemoryFetch } from './support/fakeMemoryFetch';
 
 /**
  * Shared MemoryApi contract (Phase 08 S0). The same behavioural cases run against every
- * implementation: the Dexie stub now; S1 appends the real client (`realMemoryApi.ts`) over
- * `createFakeMemoryFetch()` to IMPLS below.
+ * implementation: the Dexie stub and the real client (`realMemoryApi.ts`, Phase 08 S1) over
+ * `createFakeMemoryFetch()`.
  */
 interface Impl {
   name: string;
@@ -26,6 +27,25 @@ const IMPLS: Impl[] = [
       const db = new AppDb(`api-contract-${++dbN}`);
       return {
         api: new StubMemoryApi(db, () => 1_700_000_000_000),
+        async dispose() {
+          db.close();
+          await db.delete();
+        },
+      };
+    },
+  },
+  {
+    name: 'real',
+    async make() {
+      const db = new AppDb(`api-contract-${++dbN}`);
+      const fake = createFakeMemoryFetch();
+      return {
+        api: new RealMemoryApi({
+          fetch: fake.fetch,
+          url: (p) => p,
+          db,
+          now: () => 1_700_000_000_000,
+        }),
         async dispose() {
           db.close();
           await db.delete();
