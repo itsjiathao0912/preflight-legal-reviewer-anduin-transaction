@@ -20,13 +20,13 @@ Live version 23612b12-51c7-4d75-a324-f4f2f6392ba8 (code af59da6) · status: D1 `
 
 ## At a glance
 
-| | |
-| --- | --- |
-| **Problem** | Errors in a subscription agreement (dead cross-references, wrong conditional skips, unreachable sections, undefined terms) carry into the digital form; finding them by hand across versions is slow and uneven. |
-| **Approach** | Parse in the browser to a logic graph, run 13 deterministic detectors covering 15 issue classes, diff related versions, and turn confirmed issues into a counsel query sheet with a digitization gate. |
-| **What AI does** | Free OpenRouter models judge graph-selected clause neighborhoods (ambiguity, contradiction, meaning-changing typos) and read scanned pages (OCR). |
-| **What AI never does** | See whole documents, parse, override a deterministic finding, or run without a quotable, locatable citation. The app works with AI switched off. |
-| **Status** | Live on Cloudflare Workers with D1 and Turnstile. Largest sample reviews in 169 ms, a ~50 KB sample in 104 ms. Live AI/OCR calls 0, cost $0. Known misses are listed below. |
+|                        |                                                                                                                                                                                                                  |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Problem**            | Errors in a subscription agreement (dead cross-references, wrong conditional skips, unreachable sections, undefined terms) carry into the digital form; finding them by hand across versions is slow and uneven. |
+| **Approach**           | Parse in the browser to a logic graph, run 13 deterministic detectors covering 15 issue classes, diff related versions, and turn confirmed issues into a counsel query sheet with a digitization gate.           |
+| **What AI does**       | Free OpenRouter models judge graph-selected clause neighborhoods (ambiguity, contradiction, meaning-changing typos) and read scanned pages (OCR).                                                                |
+| **What AI never does** | See whole documents, parse, override a deterministic finding, or run without a quotable, locatable citation. The app works with AI switched off.                                                                 |
+| **Status**             | Live on Cloudflare Workers with D1 and Turnstile. Largest sample reviews in 169 ms, a ~50 KB sample in 104 ms. Live AI/OCR calls 0, cost $0. Known misses are listed below.                                      |
 
 ## Contents
 
@@ -60,12 +60,12 @@ Parsing and checks run in the browser; the Worker never parses documents. Detail
 
 ## Screenshots
 
-| | |
-| --- | --- |
-| ![A finding expanded with its quoted evidence](docs/demo/img/04-finding-expanded.png) | ![Compare view with drift rows between two versions](docs/demo/img/08-compare.png) |
-| Every finding cites the document text and its location. | Compare related versions: drift rows with a short narrative. |
-| ![Counsel questions sheet](docs/demo/img/09-counsel.png) | ![Digitization gate showing blocked until answers arrive](docs/demo/img/10-gate.png) |
-| Confirmed issues become counsel questions, exportable as DOCX. | The gate stays blocked until every blocking question has an answer. |
+|                                                                                       |                                                                                      |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| ![A finding expanded with its quoted evidence](docs/demo/img/04-finding-expanded.png) | ![Compare view with drift rows between two versions](docs/demo/img/08-compare.png)   |
+| Every finding cites the document text and its location.                               | Compare related versions: drift rows with a short narrative.                         |
+| ![Counsel questions sheet](docs/demo/img/09-counsel.png)                              | ![Digitization gate showing blocked until answers arrive](docs/demo/img/10-gate.png) |
+| Confirmed issues become counsel questions, exportable as DOCX.                        | The gate stays blocked until every blocking question has an answer.                  |
 
 Full shot list: `docs/demo/storyboard.md`.
 
