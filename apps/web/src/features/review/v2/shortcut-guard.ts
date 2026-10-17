@@ -24,9 +24,9 @@ function currentDoc(doc?: Document): Document | undefined {
   return typeof document === 'undefined' ? undefined : document;
 }
 
-/** Editable target, ctrl/meta/alt, IME composition, or an open dialog. Repeat is per key. */
+/** Editable target, ctrl/meta/alt/shift (R17), IME composition, or an open dialog. Repeat is per key. */
 export function shouldIgnoreKey(e: KeyLike, doc?: Document): boolean {
-  if (e.ctrlKey || e.metaKey || e.altKey) return true;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return true;
   if (e.isComposing) return true;
   if (isEditableTarget(e.target)) return true;
   const d = currentDoc(doc);

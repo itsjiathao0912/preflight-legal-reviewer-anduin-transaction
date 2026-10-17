@@ -182,4 +182,34 @@ describe('findings-v2-css-guard', () => {
     }
     expect(missing).toEqual([]);
   });
+  // R2/R14: attribute selectors on fv2 row/bar/group elements must name attributes the components
+  // actually render on that element class (AccordionRow, ActionBar, GroupedList).
+  it('uses only attributes the components render on fv2 row, group and bar elements', () => {
+    const RENDERED: Record<string, readonly string[]> = {
+      'fv2-row': [],
+      'fv2-rowb': [
+        'aria-expanded',
+        'data-severity',
+        'data-status',
+        'data-kind',
+        'data-change-type',
+        'data-regression',
+      ],
+      'fv2-group': ['data-group', 'data-count'],
+      'fv2-group-h': [],
+      'fv2-bar': [],
+    };
+    const BAR_ACTIONS = ['ask-counsel', 'close-issue', 'move-back'];
+    const bad: string[] = [];
+    for (const s of SELECTORS) {
+      for (const m of s.matchAll(/\.(fv2-(?:rowb|row|group-h|group|bar))((?:\[[^\]]+\])+)/g)) {
+        const allowed = RENDERED[m[1]!]!;
+        for (const a of m[2]!.matchAll(/\[([\w-]+)/g))
+          if (!allowed.includes(a[1]!)) bad.push(`${s}: ${m[1]} has no ${a[1]}`);
+      }
+      for (const m of s.matchAll(/\.fv2-bar \[data-action='([^']+)'\]/g))
+        if (!BAR_ACTIONS.includes(m[1]!)) bad.push(`${s}: no bar action ${m[1]}`);
+    }
+    expect(bad).toEqual([]);
+  });
 });

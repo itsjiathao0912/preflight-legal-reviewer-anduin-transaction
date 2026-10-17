@@ -199,4 +199,19 @@ describe('findings-v2-store-parity', () => {
     expect(sim.gateBefore).toBe('ready');
     expect(sim.text).toBe('Moved back to review · Counsel questions now 0 · Gate now blocked (1)');
   });
+
+  it('dismiss lands on the next To-review row, not on the Sent row the store picked (R3)', async () => {
+    load(
+      [
+        h.fv('f1', 'high', { order: 1 }),
+        h.fv('f2', 'high', { order: 2 }),
+        h.fv('f3', 'high', { order: 3 }),
+      ],
+      { f3: { status: 'counsel' } },
+    );
+    useReview.setState({ selectedId: 'f2' });
+    await parity('f2', { action: 'close-dismiss', reason: 'tool_false_alarm' });
+    expect(useReview.getState().triage['f2']?.status).toBe('dismissed');
+    expect(useReview.getState().selectedId).toBe('f1');
+  });
 });

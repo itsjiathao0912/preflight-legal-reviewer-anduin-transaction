@@ -12,7 +12,7 @@ export interface ShortcutArgs {
 }
 
 /** E25: focus the row after J/K like the old FindingsScreen handler (no CSS.escape dependency, E15). */
-function focusRow(id: string): void {
+export function focusRow(id: string): void {
   requestAnimationFrame(() => {
     const rows = document.querySelectorAll<HTMLElement>('[data-testid="finding-row"]');
     for (const el of rows) {

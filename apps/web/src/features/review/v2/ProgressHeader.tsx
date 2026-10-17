@@ -16,7 +16,7 @@ export function ProgressHeader({ progress }: { progress: Progress }) {
           role="progressbar"
           aria-label="Review progress"
           aria-valuemin={0}
-          aria-valuemax={total}
+          aria-valuemax={Math.max(1, total)}
           aria-valuenow={reviewed}
         >
           <i style={{ width }} />

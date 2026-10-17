@@ -301,7 +301,9 @@ test.describe('findings-v2', () => {
       expect(shell).toEqual([0, 0, 0, 0]);
       const head = (await page.getByTestId('findings-header').boundingBox())!;
       expect(head.y).toBeGreaterThanOrEqual(0);
-      const mark = page.locator(`[data-testid="doc-highlight"][data-finding-id="${openId}"]`).first();
+      const mark = page
+        .locator(`[data-testid="doc-highlight"][data-finding-id="${openId}"]`)
+        .first();
       const p = (await zoomPane(page).boundingBox())!;
       const m = (await mark.boundingBox())!;
       expect(m.y).toBeGreaterThanOrEqual(p.y - 1);
@@ -373,6 +375,44 @@ test.describe('findings-v2', () => {
     await closeWithReason(page, b!, 'tool_false_alarm');
     await expect(row(page, c!)).toHaveAttribute('aria-expanded', 'true');
     await expect(row(page, c!)).toBeFocused();
+  });
+
+  test('the bar acts only on a visible row; focus moves to the next row after a keyboard action (R1, R8)', async ({
+    page,
+  }) => {
+    await gotoApp(page);
+    await seed(page, ['critical', 'medium', 'medium']);
+    await openSample(page, '01');
+    const block = await idOf(page, 'block');
+    await row(page, block).click();
+    await expect(row(page, block)).toHaveAttribute('aria-expanded', 'true');
+
+    // the open blocking row is filtered out: the bar shows nothing open and C does nothing
+    await page.getByTestId('severity-chip-note').click();
+    await expect(row(page, block)).toHaveCount(0);
+    await expect(page.getByTestId('action-counsel')).toBeDisabled();
+    await expect(page.getByTestId('action-dismiss')).toBeDisabled();
+    await page.keyboard.press('c');
+    await page.keyboard.press('x');
+    await expect(page.getByTestId('dismiss-modal')).toHaveCount(0);
+    await expect(toast(page)).toHaveCount(0);
+    await page.getByTestId('severity-chip-note').click();
+    await expect(row(page, block)).toHaveAttribute('data-status', 'open');
+
+    // Ask counsel from the keyboard on the bar: focus lands on the newly opened row
+    const notes = await page
+      .locator('[data-testid="finding-row"][data-severity="note"]')
+      .evaluateAll((els) => els.map((e) => e.getAttribute('data-finding-id')!));
+    await row(page, notes[0]!).click();
+    await page.getByTestId('action-counsel').focus();
+    await page.keyboard.press('Enter');
+    await expect(row(page, notes[0]!)).toHaveAttribute('data-status', 'counsel');
+    const opened = (await ids(page))[await openIdx(page)]!;
+    expect(opened).not.toBe(notes[0]);
+    await expect(row(page, opened)).toBeFocused();
+    expect(
+      await page.evaluate(() => document.activeElement?.getAttribute('data-testid') ?? null),
+    ).toBe('finding-row');
   });
 
   test('a Variance change row keeps the owner chip and the bar reads Ask owner (P-5)', async ({

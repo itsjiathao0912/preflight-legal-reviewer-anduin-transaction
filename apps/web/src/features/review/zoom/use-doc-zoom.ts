@@ -41,10 +41,13 @@ export function useDocZoom(
   const areaRef = useRef(areaPx);
   areaRef.current = areaPx;
 
+  // R6: the state object produced by the last user zoom action (buttons, presets, keys)
+  const userState = useRef<ZoomState | null>(null);
   const dispatch = useCallback((a: ZoomAction) => {
     setState((s) => {
       const next = zoomReducer(s, a, areaRef.current);
       safeSet(DOCZOOM_KEY, JSON.stringify(next));
+      userState.current = next;
       return next;
     });
   }, []);
@@ -80,18 +83,19 @@ export function useDocZoom(
 
   const pct = effectivePct(state, areaPx);
 
-  // After any zoom change keep the selected finding in view.
+  // R6: after a user zoom action keep the selected finding in view; area-driven fit recomputes
+  // (panel drag, window resize, the first measurement) never move the scroll position.
   const prevPct = useRef(pct);
-  const measured = useRef(areaPx > 0);
+  const prevState = useRef(state);
   const selectedRef = useRef(selectedId);
   selectedRef.current = selectedId;
   useEffect(() => {
-    // The first real measurement after mount is the baseline, not a user change.
-    const baseline = !measured.current && areaPx > 0;
-    if (areaPx > 0) measured.current = true;
+    const user = state !== prevState.current && userState.current === state;
+    prevState.current = state;
+    if (user) userState.current = null;
     if (prevPct.current === pct) return;
     prevPct.current = pct;
-    if (baseline) return;
+    if (!user) return;
     const id = selectedRef.current;
     const root = scrollRef.current;
     if (!id || !root) return;
@@ -99,7 +103,7 @@ export function useDocZoom(
     if (mark && typeof mark.scrollIntoView === 'function') {
       mark.scrollIntoView({ block: 'center' });
     }
-  }, [pct, areaPx, scrollRef]);
+  }, [pct, state, scrollRef]);
 
   return {
     state,

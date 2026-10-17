@@ -28,6 +28,11 @@ export function ActionBar({
   onControl(c: Control): void;
 }) {
   const st = barState(row);
+  // R8: while a save is in flight the buttons stay focusable (aria-disabled) and ignore clicks
+  const press = (c: Control) => {
+    if (!busy) onControl(c);
+  };
+  const ariaBusy = busy ? true : undefined;
   // P-14: a memory re-confirm row keeps the old "Re-confirm dismissal" wording on the bar
   const closeLabel = row?.label === 'dismissed_reconfirm' ? RECONFIRM_LABEL : st.labels.close;
   return (
@@ -43,9 +48,10 @@ export function ActionBar({
           className="btn fv2-btn fv2-btn-outline"
           data-testid="action-restore"
           data-action="move-back"
-          disabled={busy || !st.moveBackEnabled}
+          disabled={!st.moveBackEnabled}
+          aria-disabled={ariaBusy}
           title={st.moveBackEnabled ? undefined : MOVE_BACK_ANSWERED}
-          onClick={() => onControl('move-back')}
+          onClick={() => press('move-back')}
         >
           <Icon name="undo" />
           Move back to review
@@ -57,9 +63,10 @@ export function ActionBar({
             className="btn pri fv2-btn fv2-btn-fill"
             data-testid="action-counsel"
             data-action="ask-counsel"
-            disabled={busy || row === null || askDisabled}
+            disabled={row === null || askDisabled}
+            aria-disabled={ariaBusy}
             title={askDisabled ? askTitle : row ? `${st.labels.ask} (C)` : undefined}
-            onClick={() => onControl('ask-counsel')}
+            onClick={() => press('ask-counsel')}
           >
             <Icon name="counsel" />
             {st.labels.ask}
@@ -69,9 +76,10 @@ export function ActionBar({
             className="btn fv2-btn fv2-btn-outline"
             data-testid="action-dismiss"
             data-action="close-issue"
-            disabled={busy || !st.closeEnabled}
+            disabled={!st.closeEnabled}
+            aria-disabled={ariaBusy}
             title={row ? `${closeLabel} (X)` : undefined}
-            onClick={() => onControl('close-issue')}
+            onClick={() => press('close-issue')}
           >
             <Icon name="x" />
             {closeLabel}

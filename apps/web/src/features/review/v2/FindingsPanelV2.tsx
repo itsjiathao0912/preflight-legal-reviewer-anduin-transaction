@@ -22,7 +22,7 @@ import type { CloseReasonKey, Control, ReviewView } from './types';
 import { useAskOwners } from './use-ask-owners';
 import { useFindingActions } from './use-finding-actions';
 import { usePanelWidth } from './use-panel-width';
-import { useShortcuts } from './use-shortcuts';
+import { focusRow, useShortcuts } from './use-shortcuts';
 
 /**
  * Findings v2 panel (D1-D9, D12, D14): progress, segment, chips + Filter, grouped accordion list,
@@ -52,7 +52,9 @@ export function FindingsPanelV2({ view }: { view: ReviewView }) {
   const groups = useMemo(() => groupRows(view.visible), [view.visible]);
   const flat = useMemo(() => flatOrder(groups), [groups]);
   const progress = useMemo(() => progressOf(view.main), [view.main]);
-  const selectedRow = view.rows.find((r) => r.f.id === selectedId) ?? null;
+  // R1: the bar and C/X act only on a row the list shows (a filtered-out or Previously handled
+  // selection leaves the bar in its "nothing open" state)
+  const selectedRow = flat.find((r) => r.f.id === selectedId) ?? null;
   const owners = useAskOwners(selectedRow, view);
   const actions = useFindingActions(view);
   const width = usePanelWidth();
@@ -67,8 +69,12 @@ export function FindingsPanelV2({ view }: { view: ReviewView }) {
     const plan = planControl(c, selectedRow, owners.ask ? { ask: owners.ask } : undefined);
     if (plan.kind === 'open-close-modal') setModalFor(plan.id);
     else if (plan.kind === 'call') {
-      if (plan.call === 'restore') void actions.moveBack(plan.id);
-      else void actions.ask(plan.id);
+      const done = plan.call === 'restore' ? actions.moveBack(plan.id) : actions.ask(plan.id);
+      // R8: keep keyboard focus on the list after the bar button re-renders or disappears
+      void done.then((ok) => {
+        const id = useReview.getState().selectedId;
+        if (ok && id) focusRow(id);
+      });
     }
   };
   const barEnabled = (c: Control): boolean => {
@@ -79,13 +85,17 @@ export function FindingsPanelV2({ view }: { view: ReviewView }) {
   };
   useShortcuts({ flat, selectedId, select, onControl, barEnabled });
 
-  const onSubmitClose = async (key: CloseReasonKey, note: string) => {
+  // R9/R10: the modal closes only after a real save; a failure or a skipped call keeps it open
+  const onSubmitClose = async (key: CloseReasonKey, note: string): Promise<boolean> => {
     const id = modalFor;
-    if (!id) return;
+    if (!id) return false;
     const call = toCloseCall(key, note);
-    if (call.call === 'accept') await actions.closeRealIssue(id);
-    else await actions.closeDismiss(id, call.reason, call.note);
-    setModalFor(null);
+    const ok =
+      call.call === 'accept'
+        ? await actions.closeRealIssue(id)
+        : await actions.closeDismiss(id, call.reason, call.note);
+    if (ok) setModalFor(null);
+    return ok;
   };
 
   // P-15: after a save focus the newly selected row; after Esc or Cancel return to the bar button

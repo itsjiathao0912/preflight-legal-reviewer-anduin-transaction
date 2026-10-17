@@ -208,4 +208,22 @@ describe('findings-v2-use-doc-zoom', () => {
     key('=');
     expect(scrollSpy).not.toHaveBeenCalled();
   });
+  it('does not re-center when only the area changes in fit mode (panel drag, window resize) (R6)', () => {
+    mount('f2');
+    resize(1000);
+    resize(600);
+    expect(scrollSpy).not.toHaveBeenCalled();
+    key('=');
+    expect(scrollSpy).toHaveBeenCalledTimes(1);
+    resize(900);
+    expect(scrollSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('re-centers after the fit preset when the fit width differs from the manual zoom (R6)', () => {
+    mount('f2');
+    key('=');
+    scrollSpy.mockClear();
+    act(() => latest!.dispatch({ type: 'fit' }));
+    expect(scrollSpy).toHaveBeenCalledTimes(1);
+  });
 });

@@ -36,6 +36,8 @@ describe('findings-v2-shortcut-guard', () => {
     for (const m of ['ctrlKey', 'metaKey', 'altKey'] as const)
       expect(actionForKey(key('j', { [m]: true }))).toBeNull();
     expect(actionForKey(key('j', { isComposing: true }))).toBeNull();
+    for (const k of ['j', 'k', 'c', 'x', 'C', 'X'])
+      expect(actionForKey(key(k, { shiftKey: true }))).toBeNull();
     expect(shouldIgnoreKey(key('j'))).toBe(false);
   });
 

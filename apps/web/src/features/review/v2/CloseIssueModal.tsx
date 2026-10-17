@@ -24,7 +24,8 @@ export function CloseIssueModal({
   row: Row | null;
   open: boolean;
   onClose(): void;
-  onSubmit(key: CloseReasonKey, note: string): Promise<void> | void;
+  /** Resolve `false` to keep the modal open (save failed or skipped, R9/R10). */
+  onSubmit(key: CloseReasonKey, note: string): Promise<boolean | void> | boolean | void;
   /** P-15: called when the dialog has closed; `saved` is true after a successful save. */
   focusAfterClose?(saved: boolean): void;
 }) {
@@ -61,8 +62,8 @@ export function CloseIssueModal({
     }
     setSaving(true);
     try {
-      await onSubmit(key, note.trim());
-      saved.current = true;
+      const ok = await onSubmit(key, key === 'real_issue' ? '' : note.trim());
+      saved.current = ok !== false;
     } finally {
       setSaving(false);
     }
@@ -112,25 +113,30 @@ export function CloseIssueModal({
             ))}
           </div>
         </fieldset>
-        <label className="nl" htmlFor="dismiss-note">
-          Note{' '}
-          <span>
-            {key === 'other' ? '(required for "Other")' : '(optional, kept in the audit trail)'}
-          </span>
-        </label>
-        <textarea
-          id="dismiss-note"
-          ref={noteRef}
-          rows={2}
-          data-testid="dismiss-note"
-          value={note}
-          maxLength={500}
-          aria-invalid={noteError || undefined}
-          onChange={(e) => {
-            setNote(e.target.value);
-            if (noteError) setError(null);
-          }}
-        />
+        {/* R5: "Real issue" saves no note, so the field is hidden for it */}
+        {key === 'real_issue' ? null : (
+          <>
+            <label className="nl" htmlFor="dismiss-note">
+              Note{' '}
+              <span>
+                {key === 'other' ? '(required for "Other")' : '(optional, kept in the audit trail)'}
+              </span>
+            </label>
+            <textarea
+              id="dismiss-note"
+              ref={noteRef}
+              rows={2}
+              data-testid="dismiss-note"
+              value={note}
+              maxLength={500}
+              aria-invalid={noteError || undefined}
+              onChange={(e) => {
+                setNote(e.target.value);
+                if (noteError) setError(null);
+              }}
+            />
+          </>
+        )}
         <div className={error ? 'err on' : 'err'} role="alert" data-testid="dismiss-error">
           {error ? (
             <>

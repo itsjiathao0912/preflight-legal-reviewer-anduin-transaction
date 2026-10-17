@@ -194,14 +194,16 @@ describe('findings-v2-actions-flow', () => {
     );
     useReview.setState({ accept });
     mount(h.makeView([E1, E2]));
-    let first: Promise<void> = Promise.resolve();
+    let first: Promise<boolean> = Promise.resolve(true);
     await act(async () => {
       first = out.current!.ask('e1');
     });
     expect(out.current!.busy).toBe(true);
+    let skipped: boolean | null = null;
     await act(async () => {
-      await out.current!.ask('e1');
+      skipped = await out.current!.ask('e1');
     });
+    expect(skipped).toBe(false);
     expect(accept).toHaveBeenCalledTimes(1);
     await act(async () => {
       release();
@@ -210,23 +212,71 @@ describe('findings-v2-actions-flow', () => {
     expect(out.current!.busy).toBe(false);
   });
 
-  it('should rethrow a rejected action, clear busy and leave toast and selection unchanged', async () => {
-    const boom = new Error('write failed');
+  it('should catch a rejected action, show the save error, clear busy and keep selection (R9)', async () => {
     const accept = vi.fn(async () => {
-      throw boom;
+      throw new Error('write failed');
     });
     useReview.setState({ accept, selectedId: 'e1' });
     mount(h.makeView([E1, E2]));
-    let caught: unknown = null;
+    let ok: boolean | null = null;
     await act(async () => {
-      await out.current!.ask('e1').catch((e: unknown) => {
-        caught = e;
-      });
+      ok = await out.current!.ask('e1');
     });
-    expect(caught).toBe(boom);
+    expect(ok).toBe(false);
     expect(out.current!.busy).toBe(false);
-    expect(useReview.getState().toast).toBeNull();
+    expect(useReview.getState().toast?.msg).toBe('Could not save. Try again.');
+    expect(useReview.getState().toast?.undo).toBeNull();
     expect(useReview.getState().selectedId).toBe('e1');
+  });
+
+  it('should move dismiss to the next To-review row, never a Sent row (R3)', async () => {
+    // the store picks the next visible row by index, which here is the Sent row e3
+    const dismiss = vi.fn(async () => {
+      useReview.setState({ selectedId: 'e3', toast: { id: 5, msg: 'Dismissed. x', undo: undoFn } });
+      return 'e3';
+    });
+    useReview.setState({ dismiss, selectedId: 'e2' });
+    const a = mount(h.makeView([E1, E2, E3], { e3: { status: 'counsel' } }));
+    await act(async () => {
+      await a.closeDismiss('e2', 'tool_false_alarm', '');
+    });
+    expect(useReview.getState().selectedId).toBe('e1');
+  });
+
+  it('should not move selection when the analyst picked another row during the call (R12)', async () => {
+    let release: () => void = () => undefined;
+    const accept = vi.fn(
+      () =>
+        new Promise<void>((r) => {
+          release = () => {
+            useReview.setState({ toast: { id: 7, msg: 'Finding accepted.', undo: undoFn } });
+            r();
+          };
+        }),
+    );
+    useReview.setState({ accept, selectedId: 'e1' });
+    mount(h.makeView([E1, E2, E3]));
+    let p: Promise<boolean> = Promise.resolve(true);
+    await act(async () => {
+      p = out.current!.ask('e1');
+    });
+    act(() => useReview.getState().select('e3'));
+    await act(async () => {
+      release();
+      await p;
+    });
+    expect(useReview.getState().selectedId).toBe('e3');
+  });
+
+  it('should not reuse an older toast Undo when the store showed no new toast (R13)', async () => {
+    const stale = () => undefined;
+    const accept = vi.fn(async () => undefined);
+    useReview.setState({ accept, toast: { id: 42, msg: 'Older.', undo: stale } });
+    const a = mount(h.makeView([E1, E2]));
+    await act(async () => {
+      await a.closeRealIssue('e2');
+    });
+    expect(useReview.getState().toast!.undo).toBeNull();
   });
 
   it('should dismiss with reason and trimmed note, keep the store selection and show "Closed · ..." (P-4)', async () => {

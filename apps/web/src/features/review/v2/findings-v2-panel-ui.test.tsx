@@ -560,4 +560,118 @@ describe('findings-v2-panel-ui', () => {
     expect(useReview.getState().selectedId).toBe('e1');
     raf.mockRestore();
   });
+
+  describe('code review fixes', () => {
+    const press = (k: string) =>
+      act(() => {
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
+      });
+
+    it('R1: a selected row filtered out of the list disables the bar and C/X do nothing', async () => {
+      seed({}, 'e1');
+      mount({ errors: [E1, E2, E3] });
+      act(() => useFilters.setState({ sev: 'note' }));
+      expect(row('e3')).not.toBeNull();
+      expect(q('[data-finding-id="e1"]')).toBeNull();
+      const counsel = q('[data-testid="action-counsel"]') as HTMLButtonElement;
+      const close = q('[data-testid="action-dismiss"]') as HTMLButtonElement;
+      expect(counsel.disabled).toBe(true);
+      expect(close.disabled).toBe(true);
+      press('c');
+      press('x');
+      await flush();
+      expect(accept).not.toHaveBeenCalled();
+      expect(needsCounsel).not.toHaveBeenCalled();
+      expect(h.queryDoc('[data-testid="dismiss-modal"]')).toBeNull();
+      expect(useReview.getState().toast).toBeNull();
+      expect(useReview.getState().triage.e1).toBeUndefined();
+    });
+
+    it('R1: a Previously handled row selected from the document gets no bar actions', () => {
+      const prev = h.fv('e9', 'critical', { order: 9 });
+      const base = h.makeView([E1, prev]);
+      // e9 is shown only under "Previously handled" (open, memory label), not in the v2 list
+      const view = {
+        ...base,
+        main: base.main.filter((r) => r.f.id !== 'e9'),
+        visible: base.visible.filter((r) => r.f.id !== 'e9'),
+        previous: base.rows.filter((r) => r.f.id === 'e9'),
+      };
+      seed({}, 'e9');
+      mounted = h.renderV2(
+        <div className="work">
+          <FindingsPanelV2 view={view} />
+        </div>,
+      );
+      expect((q('[data-testid="action-counsel"]') as HTMLButtonElement).disabled).toBe(true);
+      expect((q('[data-testid="action-dismiss"]') as HTMLButtonElement).disabled).toBe(true);
+      press('c');
+      expect(accept).not.toHaveBeenCalled();
+      expect(needsCounsel).not.toHaveBeenCalled();
+    });
+
+    it('R5: hides the note field for "Real issue"', () => {
+      seed({}, 'e2');
+      mount({ errors: [E1, E2] });
+      click(q('[data-testid="action-dismiss"]'));
+      expect(h.queryDoc('[data-testid="dismiss-note"]')).not.toBeNull();
+      click(h.queryDoc('[data-reason="real_issue"]'));
+      expect(h.queryDoc('[data-testid="dismiss-note"]')).toBeNull();
+      click(h.queryDoc('[data-reason="tool_false_alarm"]'));
+      expect(h.queryDoc('[data-testid="dismiss-note"]')).not.toBeNull();
+    });
+
+    it('R9/R10: a failed save shows an error toast and keeps the modal open', async () => {
+      dismiss.mockImplementationOnce(async () => {
+        throw new Error('write failed');
+      });
+      seed({}, 'e2');
+      mount({ errors: [E1, E2] });
+      click(q('[data-testid="action-dismiss"]'));
+      click(h.queryDoc('[data-reason="tool_false_alarm"]'));
+      await act(async () => {
+        (h.queryDoc('[data-testid="dismiss-save"]') as HTMLButtonElement).click();
+      });
+      await flush();
+      expect(useReview.getState().toast?.msg).toBe('Could not save. Try again.');
+      expect(h.queryDoc('[data-testid="dismiss-modal"]')).not.toBeNull();
+      expect(useReview.getState().selectedId).toBe('e2');
+    });
+
+    it('R8: bar buttons use aria-disabled while busy and ignore clicks', async () => {
+      let release: () => void = () => undefined;
+      accept.mockImplementationOnce(
+        () =>
+          new Promise<void>((r) => {
+            release = () => {
+              writeTriage('e1', { status: 'accepted' });
+              r();
+            };
+          }),
+      );
+      seed({}, 'e1');
+      mount({ errors: [E1, E2] });
+      const counsel = q('[data-testid="action-counsel"]') as HTMLButtonElement;
+      await act(async () => {
+        counsel.click();
+      });
+      const busyBtn = q('[data-testid="action-counsel"]') as HTMLButtonElement;
+      expect(busyBtn.disabled).toBe(false);
+      expect(busyBtn.getAttribute('aria-disabled')).toBe('true');
+      await act(async () => {
+        busyBtn.click();
+      });
+      expect(accept).toHaveBeenCalledTimes(1);
+      await act(async () => {
+        release();
+      });
+      await flush();
+      expect(useReview.getState().selectedId).toBe('e2');
+    });
+
+    it('R18: progress aria-valuemax is at least 1 with no findings', () => {
+      mount({ errors: [] });
+      expect(q('[data-testid="progress-bar"]')!.getAttribute('aria-valuemax')).toBe('1');
+    });
+  });
 });

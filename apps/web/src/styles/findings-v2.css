@@ -157,7 +157,7 @@
   font-weight: 600;
   color: var(--ink-2);
 }
-.fv2-group-h[data-count='0'] {
+.fv2-group[data-count='0'] .fv2-group-h {
   color: var(--ink-3);
 }
 .fv2-group[data-group='closed'] .fv2-group-h {
@@ -218,13 +218,13 @@
   width: 16px;
   height: 16px;
 }
-.fv2-row[data-severity='block'] .fv2-sev {
+.fv2-rowb[data-severity='block'] .fv2-sev {
   color: var(--block-fg);
 }
-.fv2-row[data-severity='fix'] .fv2-sev {
+.fv2-rowb[data-severity='fix'] .fv2-sev {
   color: var(--fv2-fix-sev);
 }
-.fv2-row[data-severity='note'] .fv2-sev {
+.fv2-rowb[data-severity='note'] .fv2-sev {
   color: var(--note-fg);
 }
 .fv2-title {
@@ -238,18 +238,18 @@
   font-weight: 600;
   white-space: normal;
 }
-.fv2-row[data-status='accepted'] .fv2-title,
-.fv2-row[data-status='dismissed'] .fv2-title {
+.fv2-rowb[data-status='accepted'] .fv2-title,
+.fv2-rowb[data-status='dismissed'] .fv2-title {
   color: var(--ink-3);
 }
-.fv2-row[data-status='counsel'] .fv2-title {
+.fv2-rowb[data-status='counsel'] .fv2-title {
   color: var(--ink-2);
 }
-.fv2-row[data-kind='change'] .fv2-sev,
-.fv2-row[data-kind='regression'] .fv2-sev {
+.fv2-rowb[data-kind='change'] .fv2-sev,
+.fv2-rowb[data-kind='regression'] .fv2-sev {
   color: var(--ink-2);
 }
-.fv2-row[data-regression] .fv2-sev {
+.fv2-rowb[data-regression] .fv2-sev {
   color: var(--block-fg);
 }
 .fv2-tag {
@@ -459,7 +459,7 @@
 .fv2-btn-outline:disabled:hover {
   background: transparent;
 }
-.fv2-bar [data-action='restore'] {
+.fv2-bar [data-action='move-back'] {
   grid-column: 1 / -1;
 }
 
