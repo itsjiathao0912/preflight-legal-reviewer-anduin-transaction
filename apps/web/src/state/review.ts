@@ -32,7 +32,7 @@ import {
 import { fingerprintFindings, type MemoryResult } from '../memory/fingerprintFindings';
 import { appDb } from '../storage/db';
 import { useFilters } from './filters';
-import { ANALYST_NAME } from './session';
+import { ANALYST_NAME, useSession } from './session';
 
 export interface DocMeta {
   id: string;
@@ -97,6 +97,16 @@ interface ReviewState {
 
 let toastSeq = 0;
 let loadSeq = 0;
+/** Review F3: one controller per load; a newer openDocument aborts the older OCR queue. */
+let loadAbort: AbortController | null = null;
+
+/** The load this analysis belongs to; `live()` is false once a newer document was opened. */
+interface LoadToken {
+  signal: AbortSignal;
+  live: () => boolean;
+}
+
+class SupersededError extends Error {}
 
 type InputKind = 'html' | 'pdf' | 'docx' | 'image';
 
@@ -132,13 +142,21 @@ async function analyzeDocument(
   fileName: string | undefined,
   settings: EngineSettings,
   onStage: (s: StageReport) => void,
-  scanSet?: ScanSetInput,
+  scanSet: ScanSetInput | undefined,
+  load: LoadToken,
 ): Promise<EngineResult> {
   const kind = inputKindOf(fileName);
   const name = fileName ?? '';
   const store = useScan.getState();
   let seq = store.seq;
+  /** Throws when a newer document took over, so no scan-store write lands for this one. */
+  const ensureLive = () => {
+    if (!load.live()) throw new SupersededError();
+  };
+  // F2: page images leave the browser only while AI review is on (consent read once per load)
+  const ocrOpts = { signal: load.signal, aiOff: !useSession.getState().aiOn };
   const onOcr = (pages: OcrPageInput[]) => {
+    if (!load.live()) return;
     store.setProgress(seq, pages);
     onStage({ id: 'read', state: 'running', sub: ocrProgressSub(pages) });
   };
@@ -147,9 +165,12 @@ async function analyzeDocument(
     const pages = scanSet.pages.filter((p) => HEX64.test(p.sourceHash)).slice(0, 30);
     const urls: Record<number, string> = {};
     pages.forEach((p, i) => (urls[i] = p.url));
+    ensureLive();
     seq = store.begin(pages.length, urls);
     const sourceHash = await sha256Hex(pages.map((p) => p.sourceHash).join('|'));
+    ensureLive();
     const ocrPages = await runOcrQueue({
+      ...ocrOpts,
       sourceHash,
       jobs: pages.map((p, i) => ({
         index: i,
@@ -162,6 +183,7 @@ async function analyzeDocument(
       })),
       onProgress: onOcr,
     });
+    ensureLive();
     input = { kind: 'ocr', sourceHash, pageCount: pages.length, pages: ocrPages };
     rememberInput(bytes, input);
     return analyzeInWorker(input, settings, onStage);
@@ -174,16 +196,20 @@ async function analyzeDocument(
     // not a JPEG/PNG: the worker's format check refuses it with a clear message (never OCR'd)
     input = { kind: 'html', bytes, name };
   } else if (kind === 'image') {
+    ensureLive();
     seq = store.begin(1);
     const mime = imageKindOf(bytes) === 'png' ? 'image/png' : 'image/jpeg';
     // local display only (the bytes never leave the browser; OCR gets the re-encoded JPEG)
     store.setUrl(seq, 0, URL.createObjectURL(new Blob([bytes.slice()], { type: mime })), true);
     const sourceHash = await sha256Hex(bytes);
+    ensureLive();
     const pages = await runOcrQueue({
+      ...ocrOpts,
       sourceHash,
       jobs: [{ index: 0, render: () => renderImage(bytes, 0) }],
       onProgress: onOcr,
     });
+    ensureLive();
     input = { kind: 'ocr', sourceHash, pageCount: 1, pages, bytes: bytes.byteLength };
   } else {
     input = { kind: 'pdf', bytes, name };
@@ -193,6 +219,7 @@ async function analyzeDocument(
       rememberInput(bytes, input);
       return first;
     }
+    ensureLive();
     seq = useScan.getState().begin(first.pageCount ?? 0);
     const renders = new Map<number, Promise<RenderedPage>>();
     const renderOnce = (index: number): Promise<RenderedPage> => {
@@ -200,7 +227,7 @@ async function analyzeDocument(
       if (!r) {
         r = renderPdfPages(bytes, [index]).then(([p]) => {
           if (!p) throw new Error('The page could not be rendered.');
-          useScan.getState().setUrl(seq, index, URL.createObjectURL(p.jpeg), true);
+          if (load.live()) useScan.getState().setUrl(seq, index, URL.createObjectURL(p.jpeg), true);
           return p;
         });
         renders.set(index, r);
@@ -210,12 +237,18 @@ async function analyzeDocument(
     // page images for the viewer, one page at a time (bounded memory); OCR reuses them
     void (async () => {
       for (const i of scan) {
-        if (useScan.getState().seq !== seq) return;
+        if (!load.live() || useScan.getState().seq !== seq) return;
         await renderOnce(i).catch(() => undefined);
       }
     })();
     const jobs: OcrJob[] = scan.map((index) => ({ index, render: () => renderOnce(index) }));
-    const ocrPages = await runOcrQueue({ sourceHash: first.docHash, jobs, onProgress: onOcr });
+    const ocrPages = await runOcrQueue({
+      ...ocrOpts,
+      sourceHash: first.docHash,
+      jobs,
+      onProgress: onOcr,
+    });
+    ensureLive();
     input = { kind: 'pdf', bytes, name, ocrPages };
   }
   rememberInput(bytes, input);
@@ -353,6 +386,9 @@ export const useReview = create<ReviewState>((set, get) => {
 
     openDocument: async (bytes, meta, opts) => {
       const seq = ++loadSeq;
+      loadAbort?.abort();
+      const ctrl = new AbortController();
+      loadAbort = ctrl;
       aiBeginOpen();
       useScan.getState().clear();
       set({
@@ -375,6 +411,7 @@ export const useReview = create<ReviewState>((set, get) => {
             if (seq === loadSeq) set({ stages: { ...get().stages, [s.id]: s } });
           },
           opts?.scan,
+          { signal: ctrl.signal, live: () => seq === loadSeq },
         );
       } catch {
         if (seq === loadSeq) {

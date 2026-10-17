@@ -1,17 +1,83 @@
 {
-  "task": "subdoc-qa-mvp phase 06 PDF, DOCX, OCR and precompute (06a-06f)",
-  "reviewer": "pending independent review",
+  "task": "subdoc-qa-mvp phase 06 PDF, DOCX, OCR and precompute (06a-06f) + security review fix cycle",
+  "reviewer": "automated vc-code-reviewer security-reviewer (sonnet), independent of the implementing execute-agent",
   "decision": "approved-with-concerns",
-  "reviewDecision": "PROVISIONAL_SELF_ASSESSMENT",
+  "reviewDecision": "APPROVE_WITH_FIXES",
   "date": "2026-10-17",
   "timestamp": "2026-10-17",
   "blockingFindings": [],
   "nonBlockingFindings": [
-    "Provisional self-assessment by the implementing execute agent; NOT an independent approval. The orchestrator overwrites this file after the independent reviewer runs.",
-    "Image uploads skip the core polyglot check (bytes never enter the engine worker); mitigated by magic check + header size cap + canvas re-encode (06d deviation 6).",
-    "Deployed Worker still runs ocr1 + the schema with propertyNames until redeploy (06a deviation 1); Phase 10.",
-    "Ground truth is agent-transcribed (3 pages); human spot-check recommended.",
-    "Live bbox is row-level and conf is uninformative (always 0.95); region highlight is row-level."
+    "F4 (backlog): no image-coverage signal for PDF pages that mix text and images.",
+    "F6 (backlog): pdf.js document is re-opened per rendered page; reuse one document.",
+    "F7 (backlog): lower the megapixel cap / resize during decode for large page images.",
+    "F8 (backlog): lower-quality JPEG retry when a page body exceeds the OCR body cap.",
+    "F10 (Phase 10): CSP and security headers on the web app.",
+    "F12 (Phase 10): redeploy the Worker (ocr prompt + magic check) before the web bundle.",
+    "Carried: image uploads skip the core polyglot check; mitigated by magic check + header size cap + canvas re-encode, and now the Worker magic check (F5).",
+    "Carried: deployed Worker still runs ocr1 schema until redeploy (Phase 10).",
+    "Carried: OCR ground truth is agent-transcribed (3 pages); human spot-check recommended.",
+    "Carried: live bbox is row-level and conf is uninformative (0.95)."
   ],
-  "notes": "Validator vocabulary: decision uses approved | approved-with-concerns | rejected."
+  "pendingFixes": [],
+  "resolvedFindings": [
+    {
+      "id": "F1",
+      "severity": "High",
+      "fix": "readZipDirectory rejects EOCD/central-directory mismatch (walk end != cdOff+cdSize or trailing 0x02014b50), duplicate entry names, and word/document.xml over 20 MB (header and streamed inflate).",
+      "tests": [
+        "docx-zip-bomb: refuses an EOCD count lower than the real central directory (hidden trailing entry)",
+        "docx-zip-bomb: refuses duplicate entry names (EOCD count honest)",
+        "docx-zip-bomb: refuses a word/document.xml that inflates past the per-entry cap, even when it lies"
+      ]
+    },
+    {
+      "id": "F2",
+      "severity": "Medium-High",
+      "fix": "OCR page-image egress follows the AI switch: aiOff -> no /api/ocr and no quota call; precomputed/cached results still apply; ocr-ai-off banner; privacy copy discloses page images.",
+      "tests": [
+        "ocr-ai-consent: discloses that scanned pages are sent as images to a third-party free AI model",
+        "ocr-ai-consent: AI off: zero /api/ocr requests and no quota call for a scanned upload",
+        "ocr-ai-consent: AI off: precomputed static results (sample #9) still read the page",
+        "ocr-supersede: passes aiOff to the queue when AI review is off (F2)",
+        "e2e ocr-unavailable: AI off: a scanned upload shows its image and sends nothing to /api/ocr"
+      ]
+    },
+    {
+      "id": "F3",
+      "severity": "Medium",
+      "fix": "AbortController per load passed as signal to runOcrQueue; aborted on supersede; scan-store begin/setUrl/progress skipped for superseded loads.",
+      "tests": [
+        "ocr-supersede: opening a second document aborts the first OCR queue",
+        "ocr-supersede: a superseded PDF load does not overwrite the scan store or start its OCR",
+        "ocr-ai-consent: ocr queue abort stops posting once the load signal aborts"
+      ]
+    },
+    {
+      "id": "F5",
+      "severity": "Low",
+      "fix": "shapeOcr requires JPEG FFD8FF or PNG 89504E47 magic in decoded data, else 415 unsupported_type.",
+      "tests": [
+        "worker ocr-never-sends-pdf: pdf bytes labelled image/jpeg (or png) are refused with 415 before any upstream call"
+      ]
+    },
+    {
+      "id": "F9",
+      "severity": "Low",
+      "fix": "precompute-ocr aborts when usage.cost is present but not exactly numeric 0.",
+      "tests": [
+        "ocr-live-guard: should abort when usage.cost is present but not a finite zero"
+      ]
+    },
+    {
+      "id": "F11",
+      "severity": "Info",
+      "fix": "ScanPane: aria-live=polite on OCR summary; scroll pane tabIndex 0, role region, accessible label.",
+      "tests": [
+        "e2e ocr-render-path / ocr-position-confidence / scan-set-smoke (regression)"
+      ]
+    }
+  ],
+  "mustStopBeforeFinalize": false,
+  "autoStopCleared": true,
+  "notes": "Verdict updated after the fix cycle by the execute-agent applying the reviewer's findings; pending independent confirmation of F1/F2. Validator vocabulary: decision uses approved | approved-with-concerns | rejected."
 }

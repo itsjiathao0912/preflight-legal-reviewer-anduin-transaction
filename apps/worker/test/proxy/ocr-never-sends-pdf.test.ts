@@ -44,4 +44,18 @@ describe('ocr-never-sends-pdf (Phase 06, AC1 support)', () => {
     );
     expect(JSON.stringify(json)).not.toMatch(/"type":"file"|application\/pdf/);
   });
+
+  // Review F5: the declared mime is caller-controlled; the bytes must really be JPEG/PNG.
+  test('pdf bytes labelled image/jpeg (or png) are refused with 415 before any upstream call', async () => {
+    for (const mime of ['image/jpeg', 'image/png']) {
+      const h = makeHarness();
+      h.or.reply(okOcr());
+      const res = await send(h, {
+        path: '/api/ocr',
+        body: ocrBody({ mime, pages: [{ index: 0, data_b64: PDF_B64 }] }),
+      });
+      expect(res.status).toBe(415);
+      expect(h.or.calls).toHaveLength(0);
+    }
+  });
 });

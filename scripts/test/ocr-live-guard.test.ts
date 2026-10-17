@@ -49,7 +49,7 @@ function tmp(): string {
   return d;
 }
 
-function completion(o: { cost?: number; model?: string; content?: string; error?: unknown }) {
+function completion(o: { cost?: unknown; model?: string; content?: string; error?: unknown }) {
   const content =
     o.content ??
     JSON.stringify({ v: 1, pages: [{ index: 0, lines: [{ text: 'Trust^{2}', conf: 0.9 }] }] });
@@ -92,6 +92,20 @@ describe('ocr-live-guard', () => {
     expect(f.calls).toHaveLength(1);
     expect(run.aborted).toMatch(/usage\.cost/);
     expect(readdirSync(out)).toEqual([]);
+  });
+
+  // Review F9: a present but non-numeric / non-finite / non-zero cost must not pass as free.
+  it('should abort when usage.cost is present but not a finite zero', async () => {
+    for (const cost of ['0.5', null, Number.NaN, -1, '0']) {
+      const out = tmp();
+      const body = JSON.parse(await completion({}).text()) as { usage: { cost: unknown } };
+      body.usage.cost = cost;
+      const f = fakeFetch([() => new Response(JSON.stringify(body), { status: 200 })]);
+      const run = await runOcrLive(resolveOcrOptions([], LIVE), LIVE, deps(f.fn, out));
+      expect(f.calls).toHaveLength(1);
+      expect(run.aborted).toMatch(/usage\.cost/);
+      expect(readdirSync(out)).toEqual([]);
+    }
   });
 
   it('should abort on a non-free served model', async () => {

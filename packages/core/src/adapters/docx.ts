@@ -47,7 +47,11 @@ export const DOCX_LIMITS = {
   maxBytes: limits.maxUploadBytes,
   maxEntries: 2000,
   maxUncompressedBytes: 64 * 1024 * 1024,
+  /** Per-entry cap for the main document part (mammoth loads it whole into memory). */
+  maxDocumentXmlBytes: 20 * 1024 * 1024,
 } as const;
+
+const DOCUMENT_XML = 'word/document.xml';
 
 /** Word style names -> HTML so headings survive (mammoth's defaults cover "Heading N"). */
 export const DOCX_STYLE_MAP: readonly string[] = [
@@ -116,6 +120,7 @@ export function readZipDirectory(b: Uint8Array): ZipEntry[] {
   }
   if (cdOff + cdSize > eocd) throw new CoreError('unsupported_type', ZIP_ERR);
   const entries: ZipEntry[] = [];
+  const names = new Set<string>();
   let p = cdOff;
   let declared = 0;
   for (let i = 0; i < count; i++) {
@@ -129,6 +134,17 @@ export function readZipDirectory(b: Uint8Array): ZipEntry[] {
     const localOffset = u32(b, p + 42);
     if (p + 46 + nameLen > eocd) throw new CoreError('unsupported_type', ZIP_ERR);
     const name = new TextDecoder().decode(b.subarray(p + 46, p + 46 + nameLen));
+    // Duplicate names let a JSZip-style reader pick a different entry than the one we inspected.
+    if (names.has(name)) {
+      throw new CoreError('unsupported_type', 'This DOCX archive has duplicate entry names.');
+    }
+    names.add(name);
+    if (name === DOCUMENT_XML && uncompressed > DOCX_LIMITS.maxDocumentXmlBytes) {
+      throw new CoreError(
+        'payload_too_large',
+        `The DOCX main document expands beyond ${DOCX_LIMITS.maxDocumentXmlBytes} bytes.`,
+      );
+    }
     declared += uncompressed;
     if (declared > DOCX_LIMITS.maxUncompressedBytes) {
       throw new CoreError(
@@ -138,6 +154,11 @@ export function readZipDirectory(b: Uint8Array): ZipEntry[] {
     }
     entries.push({ name, method, compressed, uncompressed, localOffset });
     p += 46 + nameLen + extraLen + commentLen;
+  }
+  // The EOCD count must describe the WHOLE central directory: a lower count would hide trailing
+  // entries from this guard while other readers (JSZip) still see and inflate them.
+  if (p !== cdOff + cdSize || (p + 4 <= b.byteLength && u32(b, p) === 0x02014b50)) {
+    throw new CoreError('unsupported_type', ZIP_ERR);
   }
   return entries;
 }
@@ -172,7 +193,7 @@ async function inflatedSize(data: Uint8Array, budget: number): Promise<number> {
  */
 export async function guardZip(b: Uint8Array): Promise<number> {
   const entries = readZipDirectory(b);
-  if (!entries.some((e) => e.name === 'word/document.xml')) {
+  if (!entries.some((e) => e.name === DOCUMENT_XML)) {
     throw new CoreError('unsupported_type', 'This file is a zip but not a Word document.');
   }
   let total = 0;
@@ -184,11 +205,21 @@ export async function guardZip(b: Uint8Array): Promise<number> {
     const start = lo + 30 + u16(b, lo + 26) + u16(b, lo + 28);
     const end = start + e.compressed;
     if (end > b.byteLength) throw new CoreError('unsupported_type', ZIP_ERR);
-    const budget = DOCX_LIMITS.maxUncompressedBytes - total;
-    if (e.method === 0) total += e.compressed;
-    else if (e.method === 8) total += await inflatedSize(b.subarray(start, end), budget);
+    const isDoc = e.name === DOCUMENT_XML;
+    const remaining = DOCX_LIMITS.maxUncompressedBytes - total;
+    const budget = isDoc ? Math.min(remaining, DOCX_LIMITS.maxDocumentXmlBytes) : remaining;
+    let size: number;
+    if (e.method === 0) size = e.compressed;
+    else if (e.method === 8) size = await inflatedSize(b.subarray(start, end), budget);
     else
       throw new CoreError('unsupported_type', `Unsupported DOCX compression method ${e.method}.`);
+    if (isDoc && size > DOCX_LIMITS.maxDocumentXmlBytes) {
+      throw new CoreError(
+        'payload_too_large',
+        `The DOCX main document expands beyond ${DOCX_LIMITS.maxDocumentXmlBytes} bytes.`,
+      );
+    }
+    total += size;
     if (total > DOCX_LIMITS.maxUncompressedBytes) {
       throw new CoreError(
         'payload_too_large',

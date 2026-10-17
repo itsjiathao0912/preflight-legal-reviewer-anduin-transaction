@@ -96,7 +96,7 @@ export function ScanPane({ rows }: { rows: Row[] }) {
   return (
     <section className="docpane" aria-label="Scanned pages" data-testid="scan-viewer">
       <div className="docbar">
-        <span data-testid="scan-summary">
+        <span data-testid="scan-summary" aria-live="polite">
           Scanned pages · text read by OCR · {done} of {pages.length} read
         </span>
         <span className="sc-nav">
@@ -123,7 +123,13 @@ export function ScanPane({ rows }: { rows: Row[] }) {
           </button>
         </span>
       </div>
-      <div className="scroll docscroll" tabIndex={-1} data-testid="doc-pane">
+      <div
+        className="scroll docscroll"
+        tabIndex={0}
+        role="region"
+        aria-label="Scanned page and its text"
+        data-testid="doc-pane"
+      >
         <ol className="sc-chips" aria-label="Page reading progress" data-testid="scan-progress">
           {pages.map((i) => (
             <Chip

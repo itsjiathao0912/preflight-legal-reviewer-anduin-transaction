@@ -1,5 +1,6 @@
 import { limits } from '@aduin/core';
 import {
+  OCR_UNAVAILABLE_AI_OFF,
   OCR_UNAVAILABLE_BUILD,
   OCR_UNAVAILABLE_LIMIT,
   OCR_UNAVAILABLE_SERVICE,
@@ -86,7 +87,7 @@ export function highlightFor(f: FindingView | undefined, index: number): Highlig
   return { kind: 'region', x, y, w: clamp01(g.w), h: clamp01(g.h) };
 }
 
-export type OcrBanner = 'build' | 'service' | 'limit' | null;
+export type OcrBanner = 'build' | 'service' | 'limit' | 'ai_off' | null;
 
 /** Which "OCR unavailable" banner applies (first match by severity of cause). */
 export function ocrBanner(pages: Iterable<PageStatus>): OcrBanner {
@@ -95,7 +96,9 @@ export function ocrBanner(pages: Iterable<PageStatus>): OcrBanner {
     if (p.state !== 'unavailable') continue;
     if (p.reason === OCR_UNAVAILABLE_BUILD) return 'build';
     if (p.reason === OCR_UNAVAILABLE_SERVICE) out = 'service';
-    else if (p.reason === OCR_UNAVAILABLE_LIMIT && out === null) out = 'limit';
+    else if (p.reason === OCR_UNAVAILABLE_LIMIT && (out === null || out === 'ai_off'))
+      out = 'limit';
+    else if (p.reason === OCR_UNAVAILABLE_AI_OFF && out === null) out = 'ai_off';
   }
   return out;
 }

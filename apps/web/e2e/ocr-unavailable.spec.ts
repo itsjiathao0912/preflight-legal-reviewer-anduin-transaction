@@ -82,4 +82,34 @@ test.describe('ocr-unavailable', () => {
       await expect(page.getByTestId('ocr-down')).toContainText(c.banner);
     });
   }
+
+  // Review F2: page images follow the AI consent switch. AI off -> zero /api/ocr requests.
+  test('AI off: a scanned upload shows its image and sends nothing to /api/ocr', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    const openrouter = await blockOpenRouter(page);
+    await forbidAi(page);
+    await interceptQuota(page);
+    const ocr: string[] = [];
+    page.on('request', (r) => {
+      if (r.url().includes('/api/ocr')) ocr.push(r.url());
+    });
+    await page.route('**/api/ocr', (route) => route.abort());
+    await gotoApp(page);
+    await enableLane(page);
+    await page.getByTestId('ai-off').click();
+    await expect(page.getByTestId('ai-off-banner')).toBeVisible();
+    await openDialog(page);
+    await uploadJpeg(page);
+    await expectImageOnly(page);
+    await expect(page.getByTestId('ocr-ai-off')).toContainText(
+      'Text reading is off while AI review is off',
+    );
+    await expect(page.getByTestId('scan-no-text')).toContainText(
+      'Text reading is off while AI review is off',
+    );
+    expect(ocr).toEqual([]);
+    expect(openrouter).toEqual([]);
+  });
 });

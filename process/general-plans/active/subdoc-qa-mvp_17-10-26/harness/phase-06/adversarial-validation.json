@@ -106,6 +106,13 @@
       "ruled_out": true,
       "rationale": "ALLOW_LIVE_LLM=1 + OCR_MAX_REQUESTS required; cap above the in-code ceiling (26) refused; :free allow-list; abort at usage.cost > 0 or a non-free served model; 429 stops the run; retries <= 4 and counted.",
       "test": "scripts test ocr-live-guard (cost > 0, served model, missing cap, cap 31, 429, retry budget)"
+    },
+    {
+      "stride": "T",
+      "scenario": "DOCX zip parser differential (review F1): EOCD declares fewer entries than the central directory holds, hiding a trailing duplicate word/document.xml that JSZip/mammoth reads (last-wins) and inflates unguarded; also honest-count duplicate names and an oversized main document",
+      "ruled_out": true,
+      "rationale": "readZipDirectory now requires the walk to end exactly at cdOff+cdSize with no further 0x02014b50 signature, rejects duplicate names, and caps word/document.xml at 20 MB (header + streamed inflate) inside the 64 MB total, so guardZip inspects exactly the entries any reader will see.",
+      "test": "core test security (docx-zip-bomb: 'refuses an EOCD count lower than the real central directory', 'refuses duplicate entry names', 'refuses a word/document.xml that inflates past the per-entry cap')"
     }
   ]
 }

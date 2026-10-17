@@ -413,3 +413,22 @@ The page 1 gap is the model's space before `^{n}` (the adapter strips it).
 - If prompts change, re-run `precompute:ocr` (the key changes with `promptVer`); the next run needs a fresh APPROVED-LIVE line (3 left).
 
 CONTEXT_PARTIAL: none. Follow-up stubs created: none.
+
+## Review fix cycle (17-10-26)
+
+Independent security review verdict: APPROVE_WITH_FIXES (2 blocking: F1, F2). All requested fixes applied with regression tests; uncommitted on top of f3f533f.
+
+| Finding | Fix | Proving test |
+|---|---|---|
+| F1 High: DOCX central-directory differential | `readZipDirectory` rejects walk end != cdOff+cdSize / trailing CD signature, duplicate names; 20 MB cap on `word/document.xml` | `docx-zip-bomb` (3 new cases) |
+| F2 Med-High: OCR egress without consent | `runOcrQueue({ aiOff })` from the AI switch; `ocr-ai-off` banner; privacy copy discloses page images | `ocr-ai-consent`, `ocr-supersede`, e2e `ocr-unavailable` "AI off" |
+| F3 Medium: superseded OCR queue | AbortController per load; scan store writes skipped for superseded loads | `ocr-supersede`, `ocr-ai-consent` abort |
+| F5 Low: mime-only image check | Worker `hasImageMagic` -> 415 | worker `ocr-never-sends-pdf` |
+| F9 Low: non-numeric cost passes | abort unless `usage.cost` absent or exactly 0 | `ocr-live-guard` |
+| F11 Info: a11y | `aria-live` summary; focusable labelled scroll pane | e2e regression |
+
+Deferred: F4 image-coverage signal, F6 single pdf.js document reuse, F7 lower MP cap / resize decode, F8 lower-quality retry -> backlog. F10 CSP + security headers, F12 redeploy Worker before web -> Phase 10.
+
+Deviation (within blast radius): `apps/worker/test/proxy/global-daily-cap-and-budget.test.ts` now sends a real PNG instead of `'AAAA'` (the new magic check correctly refuses it).
+
+Gates: core full 460/460 (one `size-cap` timeout on the first run under load, green on re-run), worker full 521/521, web unit 72/72 (incl. import-graph, source-guard), scripts ocr-live-guard 12/12, e2e ocr-unavailable 4, ocr-render-path 2, ocr-position-confidence 2, scan-set-smoke 1, privacy-notice 3, upload-limits 5; `pnpm typecheck` clean; `pnpm lint` eslint clean, prettier flags only `fixtures/diff/empty.html` (Phase 07a, not touched). Pending independent confirmation of F1/F2.

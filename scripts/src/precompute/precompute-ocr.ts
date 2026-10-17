@@ -384,9 +384,12 @@ export async function runOcrLive(
         run.outcomes.push({ page: p.n, status: res.status, ms, note: 'non-JSON completion' });
         break;
       }
-      const cost = typeof j.usage?.cost === 'number' ? j.usage.cost : 0;
+      const rawCost = j.usage?.cost;
+      const cost = typeof rawCost === 'number' && Number.isFinite(rawCost) ? rawCost : 0;
+      // A present cost must be exactly 0: NaN, Infinity, strings, null or negatives all abort.
+      const costBad = rawCost !== undefined && !(typeof rawCost === 'number' && rawCost === 0);
       const served = typeof j.model === 'string' ? j.model : 'unknown';
-      if (cost > 0 || (served !== 'unknown' && !sameBaseModel(opts.model, served))) {
+      if (costBad || (served !== 'unknown' && !sameBaseModel(opts.model, served))) {
         run.outcomes.push({
           page: p.n,
           status: res.status,
@@ -395,7 +398,7 @@ export async function runOcrLive(
           servedModel: served,
           note: 'paid or non-free response',
         });
-        run.aborted = `stopped: usage.cost ${cost} / served ${served}`;
+        run.aborted = `stopped: usage.cost ${String(rawCost)} / served ${served}`;
         break;
       }
       if (j.error !== undefined) {

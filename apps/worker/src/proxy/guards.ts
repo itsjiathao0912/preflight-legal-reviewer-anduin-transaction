@@ -173,6 +173,23 @@ export function shapeOcr(raw: Record<string, unknown>): ShapedOcr {
   if (!r.success) throw new ProxyError('invalid_request', 'schema');
   return {
     mime,
-    pages: r.data.pages.map((p) => ({ index: p.index, data_b64: imageBase64(p.data_b64) })),
+    pages: r.data.pages.map((p) => {
+      const data_b64 = imageBase64(p.data_b64);
+      if (!hasImageMagic(data_b64)) throw new ProxyError('unsupported_type', 'image_magic');
+      return { index: p.index, data_b64 };
+    }),
   };
+}
+
+/** True when the decoded bytes start with a JPEG (FF D8 FF) or PNG (89 50 4E 47) signature. */
+export function hasImageMagic(b64: string): boolean {
+  let bytes: string;
+  try {
+    bytes = atob(b64.slice(0, 16));
+  } catch {
+    return false;
+  }
+  const c = (i: number): number => bytes.charCodeAt(i);
+  if (bytes.length >= 3 && c(0) === 0xff && c(1) === 0xd8 && c(2) === 0xff) return true;
+  return bytes.length >= 4 && c(0) === 0x89 && c(1) === 0x50 && c(2) === 0x4e && c(3) === 0x47;
 }

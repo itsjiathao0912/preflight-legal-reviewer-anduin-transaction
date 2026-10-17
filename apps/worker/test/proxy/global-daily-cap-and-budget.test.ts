@@ -1,7 +1,7 @@
 import { QuotaResponseSchema } from '@aduin/core';
 import { describe, expect, test } from 'vitest';
 import { okAi, okOcr } from '../fakes/openrouter-stub';
-import { aiBody, baseEnv, frames, makeHarness, send, T0 } from '../fakes/harness';
+import { aiBody, baseEnv, frames, makeHarness, PNG_B64, send, T0 } from '../fakes/harness';
 import { keys } from '../../src/limits/policy';
 import { globalCap, loadConfig } from '../../src/config';
 import { nextUtcMidnightS, utcDay } from '../../src/limits/clock';
@@ -65,7 +65,7 @@ describe('global-daily-cap-and-budget (AC33)', () => {
     expect(h.platform.count(g(T0))).toBe(35);
     const ocr = await send(h, {
       path: '/api/ocr',
-      body: { v: 1, mime: 'image/jpeg', pages: [{ index: 1, data_b64: 'AAAA' }] },
+      body: { v: 1, mime: 'image/jpeg', pages: [{ index: 1, data_b64: PNG_B64 }] },
     });
     expect(await ocr.json()).toMatchObject({ error: { reason: 'global_cap' } });
   });
@@ -85,7 +85,7 @@ describe('global-daily-cap-and-budget (AC33)', () => {
     await frames(first);
     const res = await send(h2, {
       path: '/api/ocr',
-      body: { v: 1, mime: 'image/png', pages: [{ index: 3, data_b64: 'AAAA' }] },
+      body: { v: 1, mime: 'image/png', pages: [{ index: 3, data_b64: PNG_B64 }] },
       cookie: first.headers.get('set-cookie')!.split(';')[0],
     });
     expect(await res.json()).toMatchObject({

@@ -41,6 +41,15 @@ export function ScanNotices() {
           </p>
         </div>
       ) : null}
+      {scan && banner === 'ai_off' ? (
+        <div className="banner on" role="status" data-testid="ocr-ai-off">
+          <Icon name="info" />
+          <p className="bn-p">
+            <b>Text reading is off while AI review is off.</b> Page images are shown; switch AI
+            review on to send the page images to the free AI model that reads their text.
+          </p>
+        </div>
+      ) : null}
       {result?.notice && (result.source === 'ocr' || result.source === 'pdf') ? (
         <div className="banner on note" role="status" data-testid="scan-notice">
           <Icon name="info" />

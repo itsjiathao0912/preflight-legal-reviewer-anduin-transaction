@@ -29,6 +29,8 @@ export const OCR_SCHEMA_VER = 's1';
 export const OCR_UNAVAILABLE_BUILD = 'OCR unavailable in this build';
 export const OCR_UNAVAILABLE_LIMIT = 'OCR page limit reached for today';
 export const OCR_UNAVAILABLE_SERVICE = 'OCR is not available right now';
+/** Review F2: page images follow the AI consent switch; AI off -> no fresh /api/ocr call. */
+export const OCR_UNAVAILABLE_AI_OFF = 'Text reading is off while AI review is off';
 const PRECOMPUTED_INDEX = '/precomputed/ocr/index.json';
 const MAX_LINES = 400;
 const MAX_LINE_CHARS = 4000;
@@ -224,6 +226,11 @@ export interface OcrQueueOptions {
   concurrency?: number;
   onProgress?: (pages: OcrPageInput[]) => void;
   signal?: AbortSignal;
+  /**
+   * AI review is off: never send page images (and skip the quota call). Precomputed static
+   * results and the local cache still apply - they are not egress.
+   */
+  aiOff?: boolean;
   fetchFn?: typeof fetch;
   cache?: OcrCache | null;
   /** Precomputed key -> file map (default: fetched from /precomputed/ocr/index.json). */
@@ -257,7 +264,7 @@ export async function runOcrQueue(opts: OcrQueueOptions): Promise<OcrPageInput[]
   let freeLeft: number | null =
     opts.freePagesLeft !== undefined
       ? opts.freePagesLeft
-      : url
+      : url && !opts.aiOff
         ? await fetchQuota(fetchFn).then((q) =>
             q ? Math.max(0, q.ocrPages.limit - q.ocrPages.used) : null,
           )
@@ -287,6 +294,8 @@ export async function runOcrQueue(opts: OcrQueueOptions): Promise<OcrPageInput[]
     const cached = cache ? await cache.get(key) : null;
     if (cached) return set({ index: job.index, state: 'done', lines: cached });
 
+    if (opts.aiOff)
+      return set({ index: job.index, state: 'unavailable', reason: OCR_UNAVAILABLE_AI_OFF });
     if (!url) return set({ index: job.index, state: 'unavailable', reason: OCR_UNAVAILABLE_BUILD });
     if (freeLeft !== null && freeLeft <= 0)
       return set({ index: job.index, state: 'unavailable', reason: OCR_UNAVAILABLE_LIMIT });
