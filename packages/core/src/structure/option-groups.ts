@@ -1,6 +1,7 @@
 import { sha256Hex } from '../model/hash';
 import type { Block } from '../model/types';
-import { EXCLUSIVITY_CUES, supSegmentsOf } from '../adapters/html';
+import { EXCLUSIVITY_CUES } from '../adapters/html';
+import { supSegmentsOf } from '../adapters/sup-segments';
 import type { OptionGroup, OptionItem } from './types';
 
 const BOX = /[☐☒]/;

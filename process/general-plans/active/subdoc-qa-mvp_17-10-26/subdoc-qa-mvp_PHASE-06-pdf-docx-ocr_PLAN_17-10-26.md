@@ -101,7 +101,7 @@ Corrupt/encrypted/empty file → clear message, partial state none; OCR 429/402/
 
 ### Step A — Spikes and ground truth
 - [ ] A0. Mockup sketch `design/mockups/scan-viewer.html` reusing tokens.
-- [ ] A1. S3 (two pages per request) is RECORD-ONLY: `limits.ocrPagesPerRequest` stays 1 and the Worker reads `pages[0]`, so a positive S3 cannot ship without changing a frozen limit and the contract snapshot; live allowance ≤ 1 request, or skip it to save quota. S4 (region coordinates) fits the frozen `OcrResultSchema` (optional per-line `bbox` {x,y,w,h} and `conf`); coordinate convention = normalized 0..1 of the downscaled page, defined in the adapter and tested. Verdicts and adopted fallbacks written to the REF and this plan's refresh note.
+- [x] A1. (06a, 2026-10-17: S3 SKIPPED to save quota, adopted 1 page/request; S4 VIABLE row-level bbox on page 1; 2 live free requests, cost 0; verdicts in the phase REPORT `## 06a`) S3 (two pages per request) is RECORD-ONLY: `limits.ocrPagesPerRequest` stays 1 and the Worker reads `pages[0]`, so a positive S3 cannot ship without changing a frozen limit and the contract snapshot; live allowance ≤ 1 request, or skip it to save quota. S4 (region coordinates) fits the frozen `OcrResultSchema` (optional per-line `bbox` {x,y,w,h} and `conf`); coordinate convention = normalized 0..1 of the downscaled page, defined in the adapter and tested. Verdicts and adopted fallbacks written to the REF and this plan's refresh note.
 - [ ] A2. Hand-made ground-truth transcripts for 3–5 pages of `samples/sub-docs/raw/09-rw-holdings-scans/` (including `appa1-pg1`); mark as agent-transcribed, spot-check recommended.
 
 ### Step B — Adapters
@@ -112,7 +112,7 @@ Corrupt/encrypted/empty file → clear message, partial state none; OCR 429/402/
 ### Step C — OCR pipeline
 - [ ] C1. (superseded by D1/D2/D7) `adapters/ocr.ts` over the frozen OcrResultSchema, `adapters/sup-segments.ts`, `adapters/page-noise.ts`, `confidence.ts`; core `ocr/schema.ts` and `options[]/footnotes[]` are DELETED from scope; prompt lives in the Worker (06a).
 - [ ] C2. `render-pages.ts` (pdf.js render, downscale to ≈ 1600 px JPEG 0.8, page hashing) and `ocr-queue.ts` (concurrency 3, progress per page, resume from cache).
-- [ ] C3. Recorded OCR fixtures for `appa1-pg1` (and 2–3 more pages); `golden-09-ocr-footnote2` runs the engine on recorded OCR output and asserts exactly one finding for Partnership/LLC lacking footnote 2 (expected from PATH-04; see D2 probe-first).
+- [ ] C3. (06b partial, 2026-10-17: `golden-09-ocr-footnote2` green on authored + live-recorded page 1; fires `footnote-requirement` OCR branch since PATH-04 has no scope on OCR; 2-3 more recorded pages and the real OCR adapter swap remain for 06d/06f) Recorded OCR fixtures for `appa1-pg1` (and 2–3 more pages); `golden-09-ocr-footnote2` runs the engine on recorded OCR output and asserts exactly one finding for Partnership/LLC lacking footnote 2 (expected from PATH-04; see D2 probe-first).
 - [ ] C4. `ocr-position-confidence` tests (recorded), `ocr-accuracy-vs-transcript` via `cer.ts` (reported, not gated).
 
 ### Step D — Viewer and degraded mode

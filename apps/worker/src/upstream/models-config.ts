@@ -21,7 +21,7 @@ export function paidModelsFor(cfg: ProxyConfig): readonly string[] {
  * OCR prompt/schema versions (cache key). AI uses the task registry instead (Phase 05):
  * `prompt_ver` = `TASKS[task].promptVersion`, `schema_ver` = `TASKS[task].schemaVersion`.
  */
-export const PROMPT_VER = { ocr: 'ocr1' } as const;
+export const PROMPT_VER = { ocr: 'ocr2' } as const; // ocr1 -> ocr2: Phase 06 D1 prompt
 export const SCHEMA_VER = 's1';
 /**
  * Output token caps. AI raised 6000 -> 10000 in Phase 05: live sample #3 used 5783 output

@@ -1,10 +1,8 @@
 import { checkTarget, conditionalTargets, sectionOfBlock } from '../detectors/flow';
 import type { DocGraph } from '../graph/graph';
 import type { Scope } from '../structure/types';
-import { cleanLabel, extractInvestorTypes, investorGroups, withoutMarker } from './extract';
+import { extractInvestorTypes, investorGroups, peerMarkerGaps } from './extract';
 import {
-  classifyType,
-  FAMILY,
   typesIn,
   type InvestorModel,
   type InvestorPath,
@@ -127,34 +125,21 @@ export function investorModel(g: DocGraph): InvestorModel {
 
   // PATH-04 peer items: within a family, >= 2 peers carry footnote m and this type does not
   for (const group of investorGroups(g)) {
-    const typed = group.options
-      .map((o) => ({ o, id: classifyType(cleanLabel(withoutMarker(o.label, o.footnote_marker))) }))
-      .filter((x): x is { o: (typeof group.options)[number]; id: InvestorTypeId } => x.id !== null);
-    const markers = [
-      ...new Set(typed.map((x) => x.o.footnote_marker).filter((m): m is string => !!m)),
-    ];
-    for (const m of markers) {
-      const carriers = typed.filter((x) => x.o.footnote_marker === m);
-      for (const fam of new Set(carriers.map((x) => FAMILY[x.id]))) {
-        const peers = carriers.filter((x) => FAMILY[x.id] === fam).map((x) => x.id);
-        if (peers.length < 2) continue;
-        for (const x of typed) {
-          if (FAMILY[x.id] !== fam || x.o.footnote_marker) continue;
-          const text = blockText(g, x.o.blockIndex);
-          const at = Math.max(0, text.indexOf(x.o.label));
-          acc.get(x.id)?.gaps.push({
-            kind: 'peer-item',
-            item: `footnote ${m}`,
-            peers,
-            citation: {
-              text: x.o.label.slice(0, 200),
-              blockIndex: x.o.blockIndex,
-              start: at,
-              end: at + x.o.label.length,
-            },
-          });
-        }
-      }
+    for (const gap of peerMarkerGaps(group)) {
+      const o = gap.option;
+      const text = blockText(g, o.blockIndex);
+      const at = Math.max(0, text.indexOf(o.label));
+      acc.get(gap.type)?.gaps.push({
+        kind: 'peer-item',
+        item: `footnote ${gap.marker}`,
+        peers: gap.peers,
+        citation: {
+          text: o.label.slice(0, 200),
+          blockIndex: o.blockIndex,
+          start: at,
+          end: at + o.label.length,
+        },
+      });
     }
   }
 

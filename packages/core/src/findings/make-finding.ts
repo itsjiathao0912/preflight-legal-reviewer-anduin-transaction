@@ -1,6 +1,7 @@
 import { limits } from '../config/limits';
 import { makeAnchor } from '../model/anchors';
 import type { DocGraph } from '../graph/graph';
+import type { Line, Region } from '../model/types';
 import { mask, sensitiveSpans, type Span } from '../memory/mask';
 import { quoteHash } from '../memory/fingerprint';
 import { snapToSentence } from '../memory/snap';
@@ -83,7 +84,32 @@ export function buildFinding(g: DocGraph, input: FindingInput): Finding {
   if (input.patternKey) f.pattern_key = input.patternKey;
   const page = block.lines[0]?.page;
   if (page) f.page = page;
+  const region = evidenceRegion(block.lines, input.matchStart);
+  if (region) f.region = region;
   return FindingSchema.parse(f);
+}
+
+/** The whole page, in the normalized 0..1 page coordinates used by OCR / PDF regions. */
+const WHOLE_PAGE: Region = { x: 0, y: 0, w: 1, h: 1 };
+
+/**
+ * Finding region (Phase 06 D3): the region of the evidence line (the line that contains
+ * `matchStart` in the space-joined block text); the whole page when only the page is known;
+ * none for HTML (no page, no region), so HTML findings are unchanged.
+ */
+export function evidenceRegion(lines: readonly Line[], matchStart: number): Region | undefined {
+  let pos = 0;
+  let hit = lines[lines.length - 1];
+  for (const l of lines) {
+    if (matchStart < pos + l.text.length + 1) {
+      hit = l;
+      break;
+    }
+    pos += l.text.length + 1;
+  }
+  if (!hit) return undefined;
+  if (hit.region) return { ...hit.region };
+  return (hit.page ?? lines[0]?.page) !== undefined ? { ...WHOLE_PAGE } : undefined;
 }
 
 /** pattern_key spec: single implementation in memory/patternKey.ts (byte-identical for existing keys). */

@@ -106,11 +106,15 @@ export interface RecordingFile {
   request: RecordedRequestFile;
 }
 
-const files = import.meta.glob('../../../../fixtures/llm-recordings/**/*.json', {
-  eager: true,
-  import: 'default',
-  query: '?raw',
-});
+// AI task folders only: fixtures/llm-recordings/ocr/ holds OCR results (Phase 06), not AI recordings.
+const files = import.meta.glob(
+  '../../../../fixtures/llm-recordings/{clause-judgment,counsel-draft}/*.json',
+  {
+    eager: true,
+    import: 'default',
+    query: '?raw',
+  },
+);
 
 export function loadRecordings(): RecordingFile[] {
   return Object.entries(files)

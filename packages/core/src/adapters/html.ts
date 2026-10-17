@@ -4,6 +4,7 @@ import { CoreError } from '../model/errors';
 import { sha256Hex } from '../model/hash';
 import { isCaps } from '../model/line-stream';
 import type { Cue, Line } from '../model/types';
+import { setSupSegments, type SupSegment } from './sup-segments';
 
 /**
  * HTML adapter: htmlparser2 SAX -> Line[] with cues.
@@ -177,24 +178,8 @@ interface Run {
   sup?: boolean;
 }
 
-/** A <sup> segment inside an emitted Line's text: [start, end) offsets + the marker text. */
-export interface SupSegment {
-  start: number;
-  end: number;
-  text: string;
-}
-
-/**
- * TS-only side channel (E5): <sup> segments per emitted Line object. Not part of LineSchema / Cue
- * (contracts snapshot unchanged) and the line text itself is untouched. The structurer keeps the
- * same Line object in block.lines[0], so structure/option-groups.ts can read it back.
- */
-const SUP_SEGMENTS = new WeakMap<Line, readonly SupSegment[]>();
-
-/** <sup> segments recorded for a Line produced by htmlToLines (empty for any other Line). */
-export function supSegmentsOf(line: Line | undefined): readonly SupSegment[] {
-  return (line && SUP_SEGMENTS.get(line)) ?? [];
-}
+// <sup> side channel (E5) lives in sup-segments.ts (Phase 06 D2, shared with the OCR adapter).
+export { supSegmentsOf, type SupSegment } from './sup-segments';
 
 const WEIGHT_RE = /font-weight\s*:\s*([a-z0-9]+)/i;
 const FONT_RE = /(?:^|;)\s*font\s*:\s*([^;]*)/i;
@@ -418,7 +403,7 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
         const own = sups
           .filter((s) => s.start >= base && s.end <= base + part.length)
           .map((s) => ({ start: s.start - base, end: s.end - base, text: s.text }));
-        if (own.length) SUP_SEGMENTS.set(line, own);
+        setSupSegments(line, own);
         cursor = base + part.length;
       }
       lines.push(line);
