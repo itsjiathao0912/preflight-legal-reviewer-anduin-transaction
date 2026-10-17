@@ -96,7 +96,11 @@ metadata:
 | N6 | A method-8 (deflate) zero-byte DOCX entry is refused; fails closed, no action unless a real DOCX trips it | later |
 | N7 | The repack self-check does not compare the local-header name with the central-directory name; no effect today because both are written from the same verified entry | later |
 | N8 | `DecompressionStream` per entry; bounded by the 2000-entry cap | later |
-| P6-1 | Detector for references to non-existent sections (missing-target xref). P1, before Phase 10; corpus check required (run on the 13 sample docs to confirm no false-positive flood) | before 10 |
+| P6-1 | DEFERRED 17-10-26 — feasibility INCONCLUSIVE, see backlog/missing-target-xref_17-10-26/ (missing-target xref detector; post-MVP) | post-MVP |
+| P6-1a | Structurer misses: doc 02 accepts zero sections (duplicated application text); doc 12 sections 4 and 6 not accepted though headings exist; doc 01 "14." not accepted. Post-MVP / README known-misses candidate | post-MVP |
+| P6-1b | Statutory/external cite misses classified internal/out-of-range instead of statutory: Patriot Act "Sections 311", "Section 2O2(a)(22) of the Adviser Act" (O-for-zero typo), "Section 13 or 15(d) of the Securities Exchange Act", "18 U.S.C. Sections 1956", "Code Section 544". Post-MVP / README known-misses candidate | post-MVP |
+| P6-1c | Sub-letter refs ("Section 4B/3A/3C/4C", meaning Part B of Section 4) are not resolved to parts. Post-MVP / README known-misses candidate | post-MVP |
+| P6-1d | resolveScope single-other-scope fallback may hide false negatives on docs 03-06. Post-MVP / README known-misses candidate | post-MVP |
 | P6-2 | Test infra: concurrent Playwright runs share port 4317 and `test-results`, which causes flakes when two agents run e2e at once. Serialize e2e or use per-agent ports | 10 / any |
 | P6-3 | Live OCR bbox is row-level (not word-level) and confidence is uninformative (0.95); ground truth is agent-transcribed on 3 pages, so a human spot-check is recommended | 10 |
 | F10 | CSP and security headers on the web app (Phase 10 precondition) | 10 |
