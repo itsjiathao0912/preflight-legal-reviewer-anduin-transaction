@@ -23,6 +23,8 @@ export interface MemoryResult {
   byId: Record<string, MemoryAnnotated>;
   applied: boolean;
   unavailable: boolean;
+  /** Render-first placeholder: labels are New until the memory lookup settles (no network yet). */
+  pending?: boolean;
 }
 
 export async function fingerprintFindings(

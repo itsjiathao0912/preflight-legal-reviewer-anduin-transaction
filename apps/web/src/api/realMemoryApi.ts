@@ -70,6 +70,8 @@ export interface RunCacheControl {
 export const DEFAULT_ANALYST_NAME = 'Linh Tran';
 const PATTERN_KEY_RE = /^[a-z0-9:#>-]{1,80}$/;
 const RUN_PREFIX = 'run:';
+/** A failed (unauthorized) bootstrap is replayed for this long unless the user acts. */
+export const BOOT_FAILURE_TTL_MS = 60_000;
 const WORKSPACE_KEY = 'run:#workspace';
 /** `features/counsel/question-ids.ts` key prefix (finding -> question id per document). */
 const QUESTIONS_PREFIX = 'questions:';
@@ -122,6 +124,8 @@ export class RealMemoryApi implements MemoryApi, RunCacheControl {
   private session: SessionInfo | null = null;
   private name: string | null = null;
   private booting: Promise<SessionInfo> | null = null;
+  /** Last unauthorized bootstrap (e.g. turnstile_missing); replayed until it expires or is cleared. */
+  private bootFail: { error: MemoryApiError; at: number } | null = null;
   /** Memory mirror of the `run:` uiState rows (also the only cache when db is null). */
   private readonly cache = new Map<string, unknown>();
   private readonly sessionListeners = new Set<(s: SessionInfo) => void>();
@@ -135,6 +139,14 @@ export class RealMemoryApi implements MemoryApi, RunCacheControl {
     this.turnstile = opts.turnstileToken ?? (() => null);
     this.turnstileRequired = opts.turnstileRequired ?? (() => false);
     this.opId = opts.newOpId ?? newClientOpId;
+  }
+
+  /**
+   * Forget a cached verification failure so the next call bootstraps again (explicit user action:
+   * Retry, a memory write, an analyst-name edit, opening the Firm memory page).
+   */
+  clearBootFailure(): void {
+    this.bootFail = null;
   }
 
   /** The current session (null before the first bootstrap). */
@@ -218,6 +230,11 @@ export class RealMemoryApi implements MemoryApi, RunCacheControl {
     const n = typeof name === 'string' ? name.trim() : '';
     if (n.length < 1 || n.length > 80) throw bad('analyst_name', 'analyst name must be 1-80 chars');
     if (this.booting) return this.booting;
+    // a failed verification is not re-run by every memory call (each run is a Turnstile challenge)
+    if (this.bootFail && this.now() - this.bootFail.at < BOOT_FAILURE_TTL_MS) {
+      throw this.bootFail.error;
+    }
+    this.bootFail = null;
     const run = (async () => {
       let token: string | null;
       try {
@@ -247,6 +264,11 @@ export class RealMemoryApi implements MemoryApi, RunCacheControl {
     this.booting = run;
     try {
       return await run;
+    } catch (e) {
+      if (e instanceof MemoryApiError && e.code === 'unauthorized') {
+        this.bootFail = { error: e, at: this.now() };
+      }
+      throw e;
     } finally {
       this.booting = null;
     }

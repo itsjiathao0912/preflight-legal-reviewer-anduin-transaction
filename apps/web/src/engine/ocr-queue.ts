@@ -313,7 +313,7 @@ export async function runOcrQueue(opts: OcrQueueOptions): Promise<OcrPageInput[]
         reason: e instanceof Error ? e.message.slice(0, 120) : 'The page could not be prepared.',
       });
     }
-    const token = await turnstileToken();
+    const token = await turnstileToken({ interactive: true });
     const t = await postNdjson(url, body, {
       headers: clientHeaders({
         [DOC_HEADER]: opts.sourceHash,

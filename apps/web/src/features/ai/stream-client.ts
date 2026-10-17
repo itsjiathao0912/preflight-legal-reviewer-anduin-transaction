@@ -27,7 +27,7 @@ export async function requestAi(call: AiCall): Promise<StreamTerminal> {
       error: { code: 'quota_exhausted', reason: 'ai_unavailable', message: 'AI is not connected.' },
     };
   }
-  const token = await turnstileToken();
+  const token = await turnstileToken({ interactive: true });
   const headers = clientHeaders({
     ...(call.docHash ? { [DOC_HEADER]: call.docHash } : {}),
     ...(token ? { [TURNSTILE_HEADER]: token } : {}),

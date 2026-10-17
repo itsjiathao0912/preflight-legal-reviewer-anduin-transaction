@@ -8,6 +8,7 @@ export function Banners() {
   const aiOn = useSession((s) => s.aiOn);
   const doc = useReview((s) => s.doc);
   const memory = useReview((s) => s.memory);
+  const retryMemory = useReview((s) => s.retryMemory);
   return (
     <>
       {!aiOn ? (
@@ -36,6 +37,14 @@ export function Banners() {
           <p className="bn-p">
             <b>Memory unavailable.</b> Every finding is shown as New.
           </p>
+          <button
+            className="btn sm"
+            type="button"
+            data-testid="memory-unavailable-retry"
+            onClick={() => void retryMemory()}
+          >
+            Retry
+          </button>
         </div>
       ) : null}
     </>

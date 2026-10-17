@@ -186,7 +186,7 @@ describe('turnstile-widget interactive challenge (m1)', () => {
     expect(el.style.pointerEvents).toBe('auto');
     expect(el.style.opacity).toBe('1');
     expect(document.getElementById(el.getAttribute('aria-labelledby')!)?.textContent).toBe(
-      'Verify you are human to use AI features',
+      'Verify you are human to use AI and memory features',
     );
     expect(document.activeElement).toBe(el);
     opts()['after-interactive-callback']!();

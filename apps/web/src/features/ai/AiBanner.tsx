@@ -2,6 +2,7 @@ import { Icon } from '../../components/ui/icon';
 import { useReview } from '../../state/review';
 import { useSession } from '../../state/session';
 import { aiRunFresh, useAiLane } from './ai-lane';
+import { markUserIntent } from './turnstile';
 import { BANNERS } from './banner-map';
 
 function resumeText(at: number | null): string {
@@ -41,7 +42,10 @@ export function AiBanner() {
               className="btn sm"
               type="button"
               data-testid="ai-retry"
-              onClick={() => void aiRunFresh()}
+              onClick={() => {
+                markUserIntent();
+                void aiRunFresh();
+              }}
             >
               <Icon name="undo" />
               Retry
@@ -60,7 +64,10 @@ export function AiBanner() {
             className="btn sm"
             type="button"
             data-testid="ai-run-sample"
-            onClick={() => void aiRunFresh()}
+            onClick={() => {
+              markUserIntent();
+              void aiRunFresh();
+            }}
           >
             <Icon name="spark" />
             Run AI on this sample

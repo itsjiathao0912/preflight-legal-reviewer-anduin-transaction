@@ -41,6 +41,7 @@ import { appDb } from '../storage/db';
 import { useFilters } from './filters';
 import {
   ensureSession,
+  ensureSessionWithin,
   flushOutbox,
   memoryDown,
   onSyncEvent,
@@ -51,6 +52,7 @@ import {
   writesDisabled,
 } from './memory-sync';
 import { useSession } from './session';
+import { markUserIntent } from '../features/ai/turnstile';
 
 export interface DocMeta {
   id: string;
@@ -132,6 +134,11 @@ interface ReviewState {
   ) => Promise<void>;
   /** Phase 05: replace this document's AI findings (verified in the engine worker) and re-label memory. */
   setAiFindings: (docId: string, findings: FindingView[]) => Promise<void>;
+  /**
+   * "Memory unavailable" Retry: explicit user intent, so a cached verification failure is dropped
+   * and the session bootstrap may show an interactive challenge; then memory is read again.
+   */
+  retryMemory: () => Promise<void>;
 }
 
 export interface RecordedAnswer {
@@ -355,6 +362,8 @@ export const useReview = create<ReviewState>((set, get) => {
     const { result, doc } = get();
     if (!result || !doc) return;
     const memory = await fingerprintFindings(result.findings, doc.firmId, api());
+    // a newer document (or a newer finding set) owns the labels now
+    if (get().result !== result || get().doc !== doc) return;
     set({ memory });
   };
 
@@ -407,7 +416,9 @@ export const useReview = create<ReviewState>((set, get) => {
     const box = outbox();
     if (!doc || !f || !doc.firmId || !fp || !box || writesDisabled() || memoryDown()) return null;
     try {
-      await ensureSession();
+      // explicit write: verification may be interactive, but the write never hangs on it
+      markUserIntent();
+      await ensureSessionWithin();
       if (writesDisabled() || memoryDown()) return null;
       rememberWires(doc.id, wiresFor([id]));
       const d = await box.enqueueDecide(await outboxDocFor(doc), {
@@ -455,7 +466,9 @@ export const useReview = create<ReviewState>((set, get) => {
     // no firm: the Worker refuses questions and answers (`firm_required`); triage stays local
     if (!doc || !f || !doc.firmId || !fp || !box || writesDisabled() || memoryDown()) return null;
     try {
-      await ensureSession();
+      // explicit write: verification may be interactive, but the write never hangs on it
+      markUserIntent();
+      await ensureSessionWithin();
       if (writesDisabled() || memoryDown()) return null;
       rememberWires(doc.id, wiresFor([id]));
       const qid = (await readQuestionIds(doc.id))[id];
@@ -579,33 +592,45 @@ export const useReview = create<ReviewState>((set, get) => {
       if (seq !== loadSeq) return;
       result = { ...result, findings: e2eTransform(result.findings, result.blocks) };
       const doc: DocMeta = { ...meta, id: result.docHash || `doc_${seq}` };
-      // Phase 05 AI lane: static precomputed lookup + verify before the list shows (never /api/ai here)
-      const ai = await aiOnOpen(bytes, result, {
-        id: doc.id,
-        docHash: result.docHash,
-        source: meta.source,
-        firmId: meta.firmId,
-      });
-      if (seq !== loadSeq) return;
-      if (ai.findings.length)
-        result = { ...result, findings: [...result.findings, ...ai.findings] };
       const stages: Partial<Record<StageId, StageReport>> = {};
       for (const s of result.stages) stages[s.id] = s;
       void recordOpen(doc.id, t0);
       const triage = await loadTriage(doc.id);
-      // bootstrap precedes the first lookup (firm documents only: no firm, no memory call);
-      // queued writes land before memory is read back
-      if (doc.firmId) await ensureSession();
-      await flushOutbox();
       if (seq !== loadSeq) return;
-      const memory = await fingerprintFindings(result.findings, doc.firmId, api());
+      // Render first: deterministic findings never wait on the network or Turnstile. Labels start
+      // as New (fingerprints computed locally, no lookup); memory and AI arrive in the background.
+      const local = await fingerprintFindings(result.findings, doc.firmId, null);
       if (seq !== loadSeq) return;
+      const memory: MemoryResult = doc.firmId
+        ? { ...local, unavailable: false, pending: true }
+        : local;
       const recent = [doc, ...get().recent.filter((r) => r.id !== doc.id)].slice(0, 6);
       const rows = buildRows(result.findings, memory, triage);
       const first = visibleRows(placement(rows).main, useFilters.getState())[0]?.f.id ?? null;
       set({ phase: 'ready', doc, recent, result, stages, memory, triage, selectedId: first });
-      // uploads only: a fresh AI review starts once the deterministic list is on screen
-      if (ai.fresh) void aiRunFresh();
+      const live = () => seq === loadSeq && get().doc === doc;
+      const engineResult = result;
+      // Phase 05 AI lane: static precomputed lookup + verify (never /api/ai for samples here)
+      void (async () => {
+        const ai = await aiOnOpen(bytes, engineResult, {
+          id: doc.id,
+          docHash: engineResult.docHash,
+          source: meta.source,
+          firmId: meta.firmId,
+        });
+        if (!live()) return;
+        if (ai.findings.length) await get().setAiFindings(doc.id, ai.findings);
+        // uploads only: a fresh AI review starts once the deterministic list is on screen
+        if (ai.fresh && live()) void aiRunFresh();
+      })().catch(() => undefined);
+      // memory: bootstrap (firm documents only: no firm, no memory call), then queued writes land
+      // before memory is read back; a failure shows "Memory unavailable" (Retry)
+      void (async () => {
+        if (doc.firmId) await ensureSession();
+        await flushOutbox();
+        if (!live() || !doc.firmId) return;
+        await refreshMemory();
+      })().catch(() => undefined);
       const db = appDb();
       if (db) {
         db.parsedModels
@@ -779,6 +804,11 @@ export const useReview = create<ReviewState>((set, get) => {
       const kept = result.findings.filter((f) => f.detector_kind !== 'ai');
       if (kept.length === result.findings.length && findings.length === 0) return;
       set({ result: { ...result, findings: [...kept, ...findings] } });
+      await refreshMemory();
+    },
+
+    retryMemory: async () => {
+      markUserIntent();
       await refreshMemory();
     },
   };

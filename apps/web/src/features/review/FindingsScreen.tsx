@@ -38,6 +38,15 @@ export function FindingsScreen() {
   const setFilters = useFilters((s) => s.set);
   const setOpenDoc = useShell((s) => s.setOpenDoc);
   const result = useReview((s) => s.result);
+  const memoryState = useReview((s) =>
+    !s.memory
+      ? 'none'
+      : s.memory.pending
+        ? 'pending'
+        : s.memory.unavailable
+          ? 'unavailable'
+          : 'ready',
+  );
   const scanPages = useScan((s) => s.pageCount);
   // Phase 06e: scanned documents show the page image beside the OCR text
   const scan = isScanResult(result) || (phase === 'loading' && scanPages > 0);
@@ -83,7 +92,12 @@ export function FindingsScreen() {
       <Banners />
       <div className="work">
         {scan ? <ScanPane rows={view.rows} /> : <DocPane rows={view.rows} />}
-        <aside className="fp" aria-label="Findings list" data-testid="findings-column">
+        <aside
+          className="fp"
+          aria-label="Findings list"
+          data-testid="findings-column"
+          data-memory-state={memoryState}
+        >
           <div className="fhead">
             <div className="chips" role="group" aria-label="Filter by severity">
               {SEV_KEYS.map((k) => (

@@ -21,6 +21,19 @@ export async function openSample(page: Page, id: string) {
     timeout: 30_000,
   });
   await expect(page.getByTestId('loading-state')).toHaveCount(0);
+  await memorySettled(page);
+}
+
+/**
+ * Findings render before memory (Phase 10 EVL fix): wait until the background memory lookup has
+ * settled (labels applied or "Memory unavailable") before asserting on memory labels or sessions.
+ */
+export async function memorySettled(page: Page) {
+  await expect(page.getByTestId('findings-column')).not.toHaveAttribute(
+    'data-memory-state',
+    'pending',
+    { timeout: 30_000 },
+  );
 }
 
 export async function gotoApp(page: Page) {

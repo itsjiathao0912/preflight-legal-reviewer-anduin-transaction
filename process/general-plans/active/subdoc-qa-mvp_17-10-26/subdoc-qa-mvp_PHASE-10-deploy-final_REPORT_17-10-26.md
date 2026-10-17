@@ -165,3 +165,21 @@ Session ledger: smoke 1, probe:live-session 2 claimed. No real `POST /api/sessio
 - Placeholders: all `P10:FILL` markers filled in README.md, docs/DEPLOY.md, docs/demo/script.md, storyboard.md, slides.html (live version 67c796ff, D1 and Turnstile live, test counts, rows_written 238 baseline, known misses added: Turnstile in automation, CPU p99 16 ms, D4 burst not run, live AI sweep pending).
 - Gates: `grep P10:FILL` empty; `pnpm guard:cf` OK; `pnpm secrets:scan` OK; `pnpm lint` OK (eslint + prettier).
 - Note: web unit count written as 214 per the handoff; the AE section recorded 210 before later additions.
+
+## EVL fix: firm-doc open blocked by Turnstile
+
+**Problem:** On the live site, a firm sample (#3-#6) showed no findings until the Turnstile-gated memory session bootstrap failed (measured: over 172 s on #5). `openDocument` awaited three session bootstraps (AI firm rules, `ensureSession`, memory lookup), each one a fresh challenge. Failures were not cached. Preview/e2e had no site key, so the e2e suite never saw this.
+
+**Fix (apps/web, uncommitted):**
+- `state/review.ts`: findings render first. `openDocument` sets `phase: 'ready'` right after the engine result. Memory labels start as New: fingerprints are computed locally with no network, and `memory.pending` is true for firm documents. Three steps then run in the background, each applied only while the load is still current: the AI precomputed lookup (`aiOnOpen` → `setAiFindings`), session + outbox flush, and the memory lookup (`refreshMemory`). `refreshMemory` ignores results for a superseded document or finding set. A new `retryMemory()` action counts as explicit user intent.
+- `features/ai/turnstile.ts`: adds the `TokenOptions.interactive` request option and `markUserIntent()` (15 s window), plus `onUserIntent`. `turnstileToken()` defaults to interactive only right after a user action.
+- `features/ai/turnstile-widget.ts`: on a background request, `before-interactive-callback` settles null at once and the overlay is never shown. The overlay copy is now "Verify you are human to use AI and memory features".
+- `api/realMemoryApi.ts`: an unauthorized bootstrap (e.g. `turnstile_missing`) is cached for 60 s (`BOOT_FAILURE_TTL_MS`). Every memory call in that window gets the cached error instead of a new challenge. `clearBootFailure()` resets it; `api/client.ts` calls it on user intent.
+- User-intent markers: AI Run/Retry buttons, memory writes (`decide` / `persistAnswer`), the analyst-name edit, Firm memory page load/Retry, and the new "Memory unavailable" banner Retry (`memory-unavailable-retry`). Memory writes wait at most 4 s for the session (`ensureSessionWithin`) and then queue in the outbox. Every token request on AI (`stream-client`) and OCR (`ocr-queue`) is interactive.
+- `FindingsScreen.tsx`: new `data-memory-state` attribute (pending/ready/unavailable/none) on the findings column. The e2e fixtures `openSample` / `openFund` wait until memory is no longer pending. Without that wait, stack-memory specs that read the session right after open raced the new background bootstrap.
+
+**Tests:** new `test/turnstile-no-block.test.ts` (9 cases) and new `e2e/turnstile-no-block.spec.ts` (2 cases: never-token and interactive-request stubs; findings appear in under 5 s, no POST /api/session, no dialog from the automatic open, memory unavailable). One existing assertion updated for the new copy (`turnstile-widget.test.ts`).
+
+**Results:** web unit 223/223 pass, preview e2e 173/173 pass, stack-memory 10/10 pass twice in a row (it failed 1-2 of 10 before the fixture wait was added), `pnpm typecheck` and `pnpm lint` both clean. Red-first was not run literally: the new tests were written after the fix, because git stash/checkout are not allowed. The old code awaited `ensureSession()` before `phase: 'ready'`, so the first unit case could not have passed against it.
+
+**Residual:** the live fix needs a redeploy (owned by the orchestrator). AI firm-rules lookup on a firm doc still downgrades to `rules_unavailable` when the background verification fails (the existing degrade path). Run AI re-reads the rules with user intent.

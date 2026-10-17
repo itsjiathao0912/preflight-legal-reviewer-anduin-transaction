@@ -1,5 +1,5 @@
 import { IS_E2E } from '../../e2e-flag';
-import { setTurnstileProvider, type TurnstileProvider } from './turnstile';
+import { setTurnstileProvider, type TokenOptions, type TurnstileProvider } from './turnstile';
 
 /**
  * Cloudflare Turnstile widget (Phase 10, D1). The public site key is compiled in from
@@ -23,7 +23,7 @@ const SITE_KEY_RE = /^[A-Za-z0-9_-]{1,100}$/;
 export const TURNSTILE_TIMEOUT_MS = 30_000;
 /** Once Turnstile asks for an interactive challenge, a human gets this long (from that moment). */
 export const TURNSTILE_INTERACTIVE_TIMEOUT_MS = 120_000;
-export const TURNSTILE_PROMPT = 'Verify you are human to use AI features';
+export const TURNSTILE_PROMPT = 'Verify you are human to use AI and memory features';
 const HIDDEN_CSS =
   'position:fixed;right:0;bottom:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;';
 const VISIBLE_CSS =
@@ -183,6 +183,8 @@ export function createTurnstileProvider(
   let pending: ((token: string | null) => void) | null = null;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let queue: Promise<unknown> = Promise.resolve();
+  /** Whether the request in flight may show an interactive challenge. */
+  let allowInteractive = true;
 
   const settle = (token: string | null) => {
     const p = pending;
@@ -193,6 +195,11 @@ export function createTurnstileProvider(
 
   const onInteractive = () => {
     if (!pending || !host) return;
+    // background request: never pop the challenge; the caller degrades (memory unavailable)
+    if (!allowInteractive) {
+      settle(null);
+      return;
+    }
     reveal(host);
     clearTimeout(timer);
     timer = setTimeout(() => settle(null), interactiveMs);
@@ -226,7 +233,8 @@ export function createTurnstileProvider(
     return { api, id: widgetId };
   };
 
-  const once = async (): Promise<string | null> => {
+  const once = async (interactive: boolean): Promise<string | null> => {
+    allowInteractive = interactive;
     let w: { api: TurnstileApi; id: string };
     try {
       w = await ensureWidget();
@@ -255,8 +263,10 @@ export function createTurnstileProvider(
     }
   };
 
-  return () => {
-    const run = queue.then(once, once);
+  return (opts?: TokenOptions) => {
+    const interactive = opts?.interactive !== false;
+    const go = () => once(interactive);
+    const run = queue.then(go, go);
     queue = run.catch(() => null);
     return run;
   };

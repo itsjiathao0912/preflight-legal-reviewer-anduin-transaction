@@ -5,6 +5,7 @@ import { MemoryApiError } from '../api/memoryApi';
 import { Outbox, type OutboxDoc, type OutboxEvent } from '../api/outbox';
 import { sha256Hex } from '../engine/ocr-queue';
 import type { FindingView } from '../engine/types';
+import { markUserIntent } from '../features/ai/turnstile';
 import { appDb } from '../storage/db';
 import { cleanAnalystName, DEFAULT_ANALYST_NAME, useSession } from './session';
 
@@ -253,10 +254,34 @@ export function ensureSession(): Promise<void> {
   return p;
 }
 
+/** How long a user-triggered write waits for the session before queueing anyway. */
+export const SESSION_WAIT_MS = 4_000;
+
+/**
+ * `ensureSession` bounded to `ms`: a user-triggered path (a memory write) never hangs on a pending
+ * verification; the outbox op is queued and syncs once the session exists. Never throws.
+ */
+export async function ensureSessionWithin(ms = SESSION_WAIT_MS): Promise<void> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      ensureSession(),
+      new Promise<void>((resolve) => {
+        timer = setTimeout(resolve, ms);
+      }),
+    ]);
+  } catch {
+    /* ensureSession never rejects; keep the contract anyway */
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Inline badge edit: store the new name and re-bootstrap the session with it. */
 export async function changeAnalystName(name: string): Promise<boolean> {
   const n = cleanAnalystName(name);
   if (!n) return false;
+  markUserIntent();
   useSession.getState().setAnalystName(n);
   nameLoad = Promise.resolve(n);
   const db = appDb();

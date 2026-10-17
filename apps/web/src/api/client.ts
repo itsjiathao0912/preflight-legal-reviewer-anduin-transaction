@@ -1,7 +1,7 @@
 import type { MemoryApi } from './memoryApi';
 import { IS_E2E } from '../e2e-flag';
 import { e2eRealMemory } from '../e2e-hook';
-import { hasTurnstileProvider, turnstileToken } from '../features/ai/turnstile';
+import { hasTurnstileProvider, onUserIntent, turnstileToken } from '../features/ai/turnstile';
 import { appDb } from '../storage/db';
 import { apiEnabled, onApiBaseChange } from './base';
 import { RealMemoryApi } from './realMemoryApi';
@@ -21,6 +21,10 @@ import { StubMemoryApi } from './stubMemoryApi';
  */
 let api: MemoryApi | null = null;
 let unsubscribe: (() => void) | null = null;
+// an explicit user action re-arms the session bootstrap after a cached verification failure
+onUserIntent(() => {
+  if (api instanceof RealMemoryApi) api.clearBootFailure();
+});
 
 export function memoryApi(): MemoryApi | null {
   if (!unsubscribe) {

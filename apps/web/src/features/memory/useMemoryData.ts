@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { memoryApi } from '../../api/client';
 import type { MemoryApi } from '../../api/memoryApi';
 import { ensureSession } from '../../state/memory-sync';
+import { markUserIntent } from '../ai/turnstile';
 import { useReview } from '../../state/review';
 import { useSession } from '../../state/session';
 
@@ -61,6 +62,8 @@ export function useMemoryData(): MemoryData {
         return;
       }
       if (!quiet) setStatus('loading');
+      // opening the Firm memory page or Retry is explicit intent: verification may be interactive
+      markUserIntent();
       const api = memoryApi();
       if (!api) {
         setStatus('unavailable');

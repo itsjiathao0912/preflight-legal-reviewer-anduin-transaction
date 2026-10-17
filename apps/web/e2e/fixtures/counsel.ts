@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { analyzeHtml, fingerprintFor, runDeterministic, type Finding } from '@aduin/core';
 import { expect, type Page } from '@playwright/test';
 import mammoth from 'mammoth';
-import { openDialog, row } from './app';
+import { memorySettled, openDialog, row } from './app';
 import { seedMemory, type SeedDecision } from './seedMemory';
 
 /**
@@ -102,6 +102,7 @@ export async function openFund(page: Page, fund: FundId, firmOverride?: string):
   await expect(page.getByTestId('stage-status-button')).toContainText('Checks done', {
     timeout: 30_000,
   });
+  await memorySettled(page);
   await expect(page.getByTestId('loading-state')).toHaveCount(0);
 }
 
