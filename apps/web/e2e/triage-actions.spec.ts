@@ -1,42 +1,48 @@
 import { expect, test } from '@playwright/test';
-import { chooseReasonAndSave, gotoApp, openSample, row, rowsLoc } from './fixtures/app';
+import { gotoApp, openSample, row, rowsLoc } from './fixtures/app';
+import { acceptRow, askCounsel, closeWithReason } from './fixtures/findings-actions';
 
 test.describe('triage-actions', () => {
   test('accept and needs-counsel persist across reload and are undoable', async ({ page }) => {
     await gotoApp(page);
     await openSample(page, '03');
-    const [a, b] = await rowsLoc(page).evaluateAll((els) =>
-      els.map((e) => e.getAttribute('data-finding-id')!),
+    // v2 bar (E-B5): a = first row made `accepted`, b = first other non-blocking row sent to counsel
+    const ids = await rowsLoc(page).evaluateAll((els) =>
+      els.map(
+        (e) => [e.getAttribute('data-finding-id')!, e.getAttribute('data-severity')!] as const,
+      ),
     );
-    await row(page, a!).click();
-    await page.getByTestId('action-accept').click();
-    await expect(row(page, a!)).toHaveAttribute('data-status', 'accepted');
-    await expect(page.getByTestId('undo-toast')).toContainText('Finding accepted.');
+    const [a, aSev] = ids[0]!;
+    const b = ids.find(([id, sev]) => id !== a && sev !== 'block')![0];
+    const aBlock = aSev === 'block';
+    await acceptRow(page, a);
+    await expect(page.getByTestId('undo-toast')).toContainText(
+      aBlock ? 'Sent to counsel · Counsel questions now' : 'Closed as a real issue · Gate',
+    );
     await page.getByTestId('undo-button').click();
-    await expect(row(page, a!)).toHaveAttribute('data-status', 'open');
-    await page.getByTestId('action-accept').click();
-    await expect(row(page, a!)).toHaveAttribute('data-status', 'accepted');
+    await expect(row(page, a)).toHaveAttribute('data-status', 'open');
+    await acceptRow(page, a);
 
-    await row(page, b!).click();
-    await page.getByTestId('action-counsel').click();
-    await expect(row(page, b!)).toHaveAttribute('data-status', 'counsel');
+    expect(await askCounsel(page, b)).toBe('counsel');
+    await expect(page.getByTestId('undo-toast')).toContainText(
+      'Sent to counsel · Counsel questions now',
+    );
+    // the badge counts Needs-counsel rows only (a blocking accept is not one)
     await expect(page.getByTestId('nav-badge-counsel')).toContainText('1');
 
     await page.reload();
     await openSample(page, '03');
-    await expect(row(page, a!)).toHaveAttribute('data-status', 'accepted');
-    await expect(row(page, b!)).toHaveAttribute('data-status', 'counsel');
+    await expect(row(page, a)).toHaveAttribute('data-status', 'accepted');
+    await expect(row(page, b)).toHaveAttribute('data-status', 'counsel');
   });
 
   test('dismiss with a reason, then restore', async ({ page }) => {
     await gotoApp(page);
     await openSample(page, '01');
     const id = (await rowsLoc(page).first().getAttribute('data-finding-id'))!;
-    await row(page, id).click();
-    await page.getByTestId('action-dismiss').click();
-    await chooseReasonAndSave(page, 'no_form_impact');
+    await closeWithReason(page, id, 'no_form_impact');
     await expect(row(page, id)).toHaveCount(0);
-    await expect(page.getByTestId('undo-toast')).toContainText('Dismissed.');
+    await expect(page.getByTestId('undo-toast')).toContainText('Closed · Gate');
     await page.getByTestId('filter-button').click();
     await page.getByTestId('filter-status').selectOption('dismissed');
     await page.keyboard.press('Escape');

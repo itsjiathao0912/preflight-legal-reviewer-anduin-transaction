@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { gotoApp, openSample, rowsLoc, sidebarWidth } from './fixtures/app';
+import { closeAsRealIssue } from './fixtures/findings-actions';
 import { railMaxWidth, shellWidths } from '../test/support/mockupCss';
 
 const W = shellWidths();
@@ -76,8 +77,12 @@ test.describe('app-shell', () => {
     const n = await rowsLoc(page).count();
     expect(n).toBeGreaterThan(0);
     await expect(page.getByTestId('nav-badge-findings')).toHaveText(new RegExp(`${n}$`));
-    await rowsLoc(page).first().click();
-    await page.getByTestId('action-accept').click();
+    // v2: Close issue then Real issue on a non-blocking row (a blocking Ask counsel adds a question)
+    const id = (await page
+      .locator('[data-testid="finding-row"]:not([data-severity="block"])')
+      .first()
+      .getAttribute('data-finding-id'))!;
+    await closeAsRealIssue(page, id);
     await expect(page.getByTestId('nav-badge-findings')).toHaveText(
       n - 1 ? new RegExp(`${n - 1}$`) : /^$/,
     );
