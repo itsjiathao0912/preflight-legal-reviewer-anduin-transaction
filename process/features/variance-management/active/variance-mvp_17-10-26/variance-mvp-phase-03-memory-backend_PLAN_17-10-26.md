@@ -19,7 +19,7 @@ metadata:
 **Phase status:** ⏳ PLANNED
 **Report destination:** process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-03-memory-backend_REPORT_17-10-26.md (flat in the program task folder)
 **Risk class:** HIGH (schema/data migration on a live D1; public API contract change; trust-boundary logic: cross-firm and cross-workspace isolation; append-only guards). Manual-first evidence pack required (vc-risk-evidence-pack, 5 artifacts) under `process/features/variance-management/active/variance-mvp_17-10-26/harness/phase-03/`.
-**Depends on:** Phase 01 (VERIFIED; supplies the assertion kind, rules caps, `questionKey`). Parallel-safe with Phase 02 (disjoint file sets). External: Intake feature closed before EXECUTE (Step 0).
+**Depends on:** Phase 01 (VERIFIED; supplies the assertion kind, rules caps, `questionKey`). Parallel-safe with Phase 02 (disjoint file sets). External: the Intake feature is CLOSED (live Worker 3d2c7301); Step 0 re-sync done 2026-10-17 (see Step 0 status below).
 **Context routers read:** `process/context/all-context.md`, `process/context/worker/all-worker.md`, `process/context/engine/all-engine.md`, `process/context/tests/all-tests.md`.
 
 ---
@@ -30,15 +30,17 @@ Gives variance the minimum server-side storage it needs and nothing else: owner 
 
 Locked inputs: DECISION D5 (one migration, additive columns plus one table, recreated guard triggers, additive contracts, `scope_exists` only, regression checks returned inside the lookup response, no new route, no Dexie bump), D7 (firm). Read the DECISION file first. Frozen v1 rules: contracts are additive only; the contracts snapshot is regenerated only with a change note.
 
-**Firm ownership deviation from DECISION D7 (observed reason):** `apps/worker/test/memory/firm-list-parity.test.ts` asserts that D1 `law_firm` rows and aliases equal `fixtures/memory/law-firms.json` exactly. Adding the firm to the JSON in Phase 01 would turn that test red until the migration lands. So the firm is added ATOMICALLY here: JSON entry, the migration `INSERT OR IGNORE` rows, and the parity test, in one commit. Core `LAW_FIRMS` follows the JSON automatically (it imports it). Entry (byte-identical to what Intake may add): id `hartwell-crane`, name "Hartwell & Crane LLP", aliases "Hartwell & Crane", "H&C". Observed in Intake's INNOVATE: Intake does NOT add this firm (it tags its demo package to the existing firm `firm-x` because adding a firm touches frozen memory fixtures), so V3 is the sole owner; if that ever changes, the JSON edit is a no-op and the migration insert is `INSERT OR IGNORE`. V2 e2e must not depend on this firm; V4 and V5 do.
+**Firm ownership deviation from DECISION D7 (observed reason):** `apps/worker/test/memory/firm-list-parity.test.ts` asserts that D1 `law_firm` rows and aliases equal `fixtures/memory/law-firms.json` exactly. Adding the firm to the JSON in Phase 01 would turn that test red until the migration lands. So the firm is added ATOMICALLY here: JSON entry, the migration `INSERT OR IGNORE` rows, and the parity test, in one commit. Core `LAW_FIRMS` follows the JSON automatically (it imports it). Entry (byte-identical to what Intake may add): id `hartwell-crane`, name "Hartwell & Crane LLP", aliases "Hartwell & Crane", "H&C". OBSERVED-IN-CODE (Step 0, 2026-10-17; Intake closed): Intake did NOT add this firm (its `hartwell` demo package is tagged `firm-x` and the three design demo packages are `firmId: null`), `law-firms.json` still has 3 firms (partners-group, firm-x, firm-y), so V3 is the sole owner; if that ever changes, the JSON edit is a no-op and the migration insert is `INSERT OR IGNORE`. V2 e2e must not depend on this firm; V4 and V5 do.
 
 ## Step 0 - Precondition: re-sync with Intake before EXECUTE
 
 Re-sync with Intake's landed code (inner R+I refresh) before EXECUTE: read Intake's final PLAN and closeout and its landed diff; update the `## Dependencies on Intake` section of the umbrella (observed vs assumed to observed); re-allocate the migration number; re-check the collision files in the phase-blast-radius registry; write an `## Inner Loop Refresh Note` in this plan. EXECUTE may not start until the Intake feature is closed.
 
-Phase-specific Step 0 checks: (a) **Migration number:** list `apps/worker/migrations/` at Step 0 and allocate the next free number. Observed in Intake's INNOVATE and Phase 4 plan: Intake adds NO D1 migration and keeps `schema_version` 5 (browser-only persistence), so the expected number is 0006 and the expected `schema_version` is 6; still list the folder, never assume. File name `00NN_variance.sql`; never edit a landed migration. Record the number in the umbrella and in the registry. (b) `app_meta.schema_version` handling: bump from the then-current value (expected 5 to 6); update `apps/worker/src/memory/health.ts` expectations and `scripts/src/dev-seed.ts` `EXPECTED_MIGRATIONS` together. (c) Diff Intake's changes to `contracts/memory.ts`, `routes/memory/*`, `memory/repo/*`, `api/{memoryApi,stubMemoryApi,realMemoryApi,outbox}.ts`, `contracts snapshot`; Intake states the frozen contracts and the snapshot stay unmodified and there is no Worker code change, so expect no overlap (verify at Step 0); the snapshot is one file, whoever lands second regenerates. (d) Re-check `demo_ro_*` trigger conventions Intake used for its new tables.
+Phase-specific Step 0 checks: (a) **Migration number:** list `apps/worker/migrations/` at Step 0 and allocate the next free number. OBSERVED-IN-CODE (2026-10-17): `apps/worker/migrations/` = 0001..0005 (`0005_...sql:55` sets `schema_version` '5'; `scripts/src/dev-seed.ts:27` `EXPECTED_MIGRATIONS` = 0001..0005); Intake added no migration (browser-only persistence), so the expected number is 0006 and the expected `schema_version` is 6; still list the folder at EXECUTE, never assume. File name `00NN_variance.sql`; never edit a landed migration. Record the number in the umbrella and in the registry. (b) `app_meta.schema_version` handling: bump from the then-current value (expected 5 to 6); update `apps/worker/src/memory/health.ts` expectations and `scripts/src/dev-seed.ts` `EXPECTED_MIGRATIONS` together. (c) Diff Intake's changes to `contracts/memory.ts`, `routes/memory/*`, `memory/repo/*`, `api/{memoryApi,stubMemoryApi,realMemoryApi,outbox}.ts`, `contracts snapshot`; OBSERVED-IN-CODE: Intake did not change `contracts/memory.ts`, the contracts snapshot, `routes/memory/*`, `memory/repo/*`, `api/*`, the migrations, `law-firms.json` or `seed/demo.sql` (it touched only `apps/worker/src/proxy/pipeline.ts`, `upstream/openrouter.ts` and three proxy tests, none of them P03 files), so there is no overlap; the snapshot is one file, whoever lands second regenerates. (d) OBSERVED-IN-CODE: Intake added no D1 table or trigger (its new tables are Dexie), so there is no new `demo_ro_*` convention to follow beyond the existing ones.
 
 **Step 0 additions (PVL cycle 1):** (e) **Phase 01 normalizer (C10):** confirm the ONE exported pure label normalizer that Phase 01 landed (expected: the named export `normalizeAssertionLabel` in `packages/core/src/variance/label.ts`, barrel-exported from the core index (NOT in `regression.ts`), which maps a scope label such as "Appendix C" to the lower-cased, whitespace-collapsed key of at most 80 chars). V3 IMPORTS it in the route and the web preview and NEVER writes a second normalizer; if the export is absent or differently named, record the real name here and stop (route back to PLAN-SUPPLEMENT). (f) **Hard-coded `schema_version` sites:** grep the repo for `'5'`-pinned schema_version at Step 0 and update every hit in the same commit as the migration; known sites are listed in Touchpoints (dev-seed self-check, `memory-endpoint-contract.test.ts`, `stack-memory-smoke.spec.ts`).
+
+**Step 0 status (resolved 2026-10-17, PLAN-SUPPLEMENT; basis `variance-mvp_STEP0-RESYNC_17-10-26.md`, git HEAD 8a9398c).** Intake is CLOSED. This phase is clean against Intake: no overlap in contracts, snapshot, routes, repo, api, migrations, `law-firms.json` or the demo seed; the `schema_version` pin sites are unchanged (`scripts/src/dev-seed.ts:27`, `apps/worker/src/memory/health.ts`, `memory-endpoint-contract.test.ts`, `stack-memory-smoke.spec.ts`). Decisions recorded (orchestrator defaults, reversible): **D-S0-7** this phase still adds `hartwell-crane` ("Hartwell & Crane LLP", aliases "Hartwell & Crane", "H&C") atomically with the migration; V5 retags the Northgate demo package to it afterwards (the retag is not in this phase). New consumer check: the 4th firm reaches the Upload modal's firm combobox (it offers the firms in the generated `firms.json`) and Intake specs that enumerate firms, so the regression block gains the e2e tokens `intake-firm-tagging` and `intake-baseline-role-same-firm`, the web unit `package-confirm-table` and the core test `package-baseline-eligibility`. No web variance pass exists in this phase, so the Intake regression tokens `intake-demo-packages`, `package-gate-ui` and `gate-pill` live in the P02, P04 and P05 blocks. **D-S0-8** never git push in any phase. **D-S0-9** `.playwright-mcp/` and `.DS_Store` are not Variance's: never touch or commit them. Hook-filtered word rule: the Test Gates tokens contain neither hook-filtered word (the production output directory and installed-packages directory names).
 
 ## Phase Completion Rules
 
@@ -111,7 +113,7 @@ Not touched in V3: `apps/web/src/{features,state,shell,engine}/**` (V2 and V4), 
 
 ## Blast Radius
 
-Files directly modified or created: the Touchpoints list (1 migration, about 6 new tests, 1 stack spec, 8 core/worker/web source edits, 9 extended tests, evidence pack). Collision files with Intake: `contracts/memory.ts` and its snapshot, `apps/worker/migrations/`, `routes/memory/*`, `memory/repo/*`, `api/*`, `fixtures/memory/law-firms.json`, `scripts/src/dev-seed.ts` (see registry). Guarded surfaces: `contracts`, `migrations`, `triggers`, `firm-list-parity`, `api-contract`, `memory-no-cross-firm`.
+Files directly modified or created: the Touchpoints list (1 migration, about 6 new tests, 1 stack spec, 8 core/worker/web source edits, 9 extended tests, evidence pack). Collision files with Intake: `contracts/memory.ts` and its snapshot, `apps/worker/migrations/`, `routes/memory/*`, `memory/repo/*`, `api/*`, `fixtures/memory/law-firms.json`, `scripts/src/dev-seed.ts` (Step 0 observed NO Intake change in any of them; see registry). Guarded surfaces: `contracts`, `migrations`, `triggers`, `firm-list-parity`, `api-contract`, `memory-no-cross-firm`.
 
 ## Implementation Checklist
 
@@ -198,6 +200,10 @@ Snapshot regeneration (Section B3 only, never in a gate loop): `pnpm --filter @a
 Regression block:
 
 ```bash
+# firm-list consumers added at the 2026-10-17 Step 0 (4th firm); preview project first, never together with stack-memory
+for t in intake-firm-tagging intake-baseline-role-same-firm; do pnpm --filter @aduin/web test:e2e "$t" || exit 1; done
+pnpm --filter @aduin/web test package-confirm-table
+pnpm --filter @aduin/core test package-baseline-eligibility
 pnpm --filter @aduin/worker test
 pnpm --filter @aduin/scripts test
 pnpm --filter @aduin/core test
@@ -241,13 +247,13 @@ Failing stubs: each Fully-automated row starts as `test("should <scenario>", ...
 
 ## Blockers That Would Justify BLOCKED Status
 
-- Intake landed a migration or contract change that conflicts structurally with the recreated guard triggers (needs the Intake owner's trigger text; resolve in Step 0, not at EXECUTE).
+- Intake landed a migration or contract change that conflicts structurally with the recreated guard triggers (needs the Intake owner's trigger text; resolve in Step 0, not at EXECUTE). Step 0 observed none.
 - A SINGLE worst-case variance finding cannot pass `FindingWireSchema`, or alone exceeds `FINDINGS_BODY_CAP` (131,072 bytes) (a multi-finding chunk over the cap is NOT a blocker; the byte-aware split in `realMemoryApi.storeFindings` handles it; stop; this is a V1 provenance-size defect, route to a Phase 01 PLAN-SUPPLEMENT; V3 adds no clip).
 - Any need to touch the remote D1 before V5 (not allowed here).
 
 ## Phase Loop Progress
 
-- [ ] 0. PRECONDITION - Intake feature closed; Step 0 re-sync done; migration number allocated; Inner Loop Refresh Note written
+- [x] 0. PRECONDITION - Intake feature closed; Step 0 re-sync done; migration number allocated (expected 0006, re-listed at EXECUTE entry); Inner Loop Refresh Note written (2026-10-17)
 - [ ] 1. RESEARCH - research-agent: Phase 01 report read in full; test context loaded; drift checked
 - [ ] 2. INNOVATE - innovate-agent: approach decided (n/a if the DECISION still holds)
 - [ ] 3. PLAN-SUPPLEMENT - plan-agent: existing phase plan updated (or "n/a - research clean")
@@ -276,6 +282,7 @@ Strategy (vc-agent-strategy-compare, PLAN-end): signals S1 (core+worker+web), S2
 | `seed:check`, `firms-and-rules`, scripts tests, `memory-endpoint-contract`, `stack-memory-smoke` | Fully-Automated | NFR safety (firm list and schema_version dependents) |
 | `variance-label-call-sites` | Fully-Automated | D5 scope rule at the real call sites |
 | `outbox` (scrub) | Fully-Automated | AC-V14 privacy (AC58 masking carried) |
+| `intake-firm-tagging`, `intake-baseline-role-same-firm`, web `package-confirm-table`, core `package-baseline-eligibility` (4th-firm consumers) | Fully-Automated | NFR safety (firm list dependents; Intake surfaces stay green) |
 
 ## Test Infra Improvement Notes
 
@@ -286,11 +293,15 @@ Strategy (vc-agent-strategy-compare, PLAN-end): signals S1 (core+worker+web), S2
 
 - Selected plan file path: `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-03-memory-backend_PLAN_17-10-26.md`
 - Umbrella plan: `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-umbrella_PLAN_17-10-26.md`
-- Last completed step: Step 4 PVL (outer-pvl, cycle 2 re-validate, Gate: PASS); phase not started otherwise (EXECUTE held until the Intake feature closes; V1 must be VERIFIED first)
-- Validate-contract status: written 17-10-26 (outer-pvl, PVL cycle 2 re-validate: Gate: PASS, 0 FAIL, 0 CONCERN; N1-N5 from cycle 1 verified closed against the repo; the cycle-1 CONDITIONAL and first-pass BLOCKED contracts are superseded; Step 0 re-sync with Intake and Phase 01 symbol re-verification remain the pre-EXECUTE known-gaps)
-- Next step: after Phase 01 is VERIFIED and Intake is closed, spawn vc-research-agent for Step 0 plus RESEARCH (allocate the migration number there). EXECUTE receives this one exact plan path.
+- Last completed step: Step 4 PVL (outer-pvl, cycle 2 re-validate, Gate: PASS); phase not started otherwise (V1 must be VERIFIED first); Step 0 PLAN-SUPPLEMENT applied 2026-10-17 (Intake closed)
+- Validate-contract status: INVALIDATED by the 2026-10-17 Inner Loop Refresh Note (inner PVL must re-run before EXECUTE); prior state: written 17-10-26 (outer-pvl, PVL cycle 2 re-validate: Gate: PASS, 0 FAIL, 0 CONCERN; N1-N5 from cycle 1 verified closed against the repo; the cycle-1 CONDITIONAL and first-pass BLOCKED contracts are superseded; Step 0 re-sync with Intake and Phase 01 symbol re-verification remain the pre-EXECUTE known-gaps)
+- Next step: after Phase 01 is VERIFIED (Intake is closed), spawn vc-research-agent for RESEARCH (list `apps/worker/migrations/` and allocate the migration number there), then INNOVATE (n/a if the DECISION holds), PLAN-SUPPLEMENT and inner PVL. EXECUTE receives this one exact plan path.
 - Validators: `node .claude/skills/vc-generate-plan/scripts/validate-plan-artifact.mjs <this plan>`; `node .claude/skills/vc-generate-phase-program/scripts/validate-phase-stub.mjs <this plan>`.
 - Hard rules for every agent prompt: never git stash, checkout, reset or restore; commit on main with conventional prefixes; never run git push in any phase (the user pushes); no remote D1 or deploy in this phase; execution commits separate from process commits.
+
+## Inner Loop Refresh Note: 2026-10-17 — changed sections: header (Depends on), Overview (firm ownership observation), Step 0 (checks a, c, d observed; new status paragraph with D-S0-7/8/9), Test Gates (regression block: 4th-firm consumers), Blockers, Phase Loop Progress, Verification Evidence, Resume and Execution Handoff. Invalidates prior validate-contract.
+
+Written by the Step 0 PLAN-SUPPLEMENT at 2026-10-17 22:11 local, after this plan's outer-pvl contract (written 17:49 the same day). Basis `variance-mvp_STEP0-RESYNC_17-10-26.md`. P03 stays valid as written: no Intake change in contracts, snapshot, routes, repo, api, migrations, `law-firms.json`, seed; migration still 0006 and `schema_version` 5 to 6; Dexie is `version(2)` (unrelated to P03). New: regression tokens for the 4th firm's consumers (`intake-firm-tagging`, `intake-baseline-role-same-firm`, `package-confirm-table`, `package-baseline-eligibility`); D-S0-7 (V5 retags the Northgate demo package; not this phase). Push rule restated (D-S0-8); `.playwright-mcp/` and `.DS_Store` are not Variance's (D-S0-9). PVL-new concern to check: whether adding `hartwell-crane` changes any Intake spec that enumerates firms (UNVERIFIED until a run).
 
 ## Validate Contract
 

@@ -13,7 +13,7 @@ metadata:
 
 **Date**: 17-10-26
 **Complexity**: COMPLEX
-**Status**: ⏳ PLANNED (EXECUTE held until the Intake feature is closed)
+**Status**: ⏳ PLANNED (Intake CLOSED 17-10-26; Step 0 re-sync applied; inner PVL re-validation required before any EXECUTE)
 
 - Program type: PHASE PROGRAM (5 phases; V2 and V3 parallel-safe, other joins gated)
 - Feature folder: `process/features/variance-management/`
@@ -27,11 +27,11 @@ metadata:
 
 The app finds defects inside one document. This program adds the question analysts ask on every new fund: what is different from what we already know, what does it do to the form, and who must confirm it. A new document is compared to the same law firm's earlier document (the baseline). Every change is classified `new`, `changed_logic` or `changed_cosmetic`; cosmetic noise is hidden (214 raw changes become 7 shown plus one regression); impact on the form is computed from the logic graph; each change is routed to counsel, GP or fund admin (overridable); questions group per owner with one DOCX export per owner; answers keep option, note, intent and scope; one regression check (R-01, "Appendix C must exist") proves memory can re-check an old answer. No new screens, no sidebar items, gate stays two states, AI never gates, 0 live AI calls.
 
-Fixtures: the authored `fixtures/variance/hartwell-crane` corpus (V1, pinned 214 to 7) is the primary proof. The design session's `samples/packages/` (3 fictional DOCX packages with answer keys) is OBSERVED-IN-MESSAGE and not yet on disk; V1 Step 0 (c) decides reuse as extra same-firm-pair and no-baseline cases and maps the answer keys' AC-V* rows to tests.
+Fixtures: the authored `fixtures/variance/hartwell-crane` corpus (V1, pinned 214 to 7) is the primary proof. The design session's `samples/packages/` (3 fictional DOCX packages with answer keys) is OBSERVED-IN-CODE: committed in c1c5fe0 and already consumed by Intake (DOCX copies in `fixtures/package/design/<id>/` with `checksums.json`). Decision D-S0-5: the authored corpus keeps the exact 214/7/207 pin and the R-01 Fund I/II/III chain; P01 ADDS a package-01 (Northgate) test pinning 7 shown (3 new + 4 changed_logic) with the raw count measured at EXECUTE, reading only `fixtures/package/design/northgate-iii/*.docx` (never the read-only `samples/packages/`).
 
 Chosen approach (DECISION): an additive `variance/` module in `packages/core`; change rows are ordinary frozen-v1 `Finding`s (`issue_class 'version_drift'`, metadata in `detail.facts`) through an adapter; gate and sheet change through optional fields only; one forward-only migration plus additive contract fields for memory; one adapter file couples to Intake.
 
-Execution is HELD: the Intake feature (`process/features/fund-package-intake/`) is a prerequisite and has no code yet at planning time. Every phase begins with Step 0 (below).
+The Intake feature (`process/features/fund-package-intake/`) is CLOSED (program COMPLETE with known gaps; live Worker version `3d2c7301-a4a5-487c-bd7d-2f2c0800be6f`). The 2026-10-17 Step 0 re-sync is applied to this umbrella and all five phase plans (see `## Dependencies on Intake`, `## Step 0 Design Decisions` and `variance-mvp_STEP0-RESYNC_17-10-26.md`). The `## Inner Loop Refresh Note` invalidates the earlier validate-contracts: inner PVL re-runs before any EXECUTE.
 
 ## Implementation Checklist (program level)
 
@@ -39,7 +39,7 @@ Atomic program steps; the per-phase checklists live in each phase plan.
 
 1. Run the outer PVL: one read-only vc-validate-agent per phase plan; fix gaps through PVL-supplement cycles until `Gate: PASS`.
 2. Orchestrator fills `## Pre-PVL Conflict Resolution` and emits the post-VALIDATE /goal block.
-3. Wait for the Intake feature to close (hard precondition); then run Step 0 plus the 7-step inner loop for Phase 01.
+3. Intake is CLOSED and Step 0 (R + I + P) is done for the whole program (2026-10-17); next run the inner PVL for Phase 01, then EXECUTE it. Later phases run their own 7-step loop (each re-researches against the then-current HEAD).
 4. Phase 01, then Phase 02 and Phase 03 (either order, default sequential), then Phase 04, then Phase 05; each phase commits its execution changes before the next starts.
 5. Phase 05 deploys (remote migration, then Worker) only under the validate-contract's explicit instruction; program closeout updates context docs and commits locally on main (no git push in any phase; the user pushes).
 
@@ -52,6 +52,8 @@ Context routers for every agent: `process/context/all-context.md`, then `process
 Re-sync with Intake's landed code (inner R+I refresh) before EXECUTE: read Intake's final PLAN and closeout and its landed diff; update the `## Dependencies on Intake` section of this umbrella (observed vs assumed to observed); re-allocate the migration number; re-check the collision files in `phase-blast-radius-registry.md`; write an `## Inner Loop Refresh Note` in the phase plan. EXECUTE may not start until the Intake feature is closed.
 
 The same sentence, plus phase-specific checks, is the first section of each phase plan. Under a standing /goal the orchestrator must not spawn vc-execute-agent for any phase while the Intake feature folder still has an open plan (not closed and deployed) - this is a hard precondition, not a pause.
+
+**Step 0 status (2026-10-17, PLAN-SUPPLEMENT): DONE for the program.** The Intake feature is CLOSED: program COMPLETE with known gaps (process commit 8a9398c, code HEAD a4d7a34 plus Intake Phase 4 commits through 6fb34fb), live Worker version `3d2c7301-a4a5-487c-bd7d-2f2c0800be6f`. Its folder `process/features/fund-package-intake/` intentionally stays in `active/` until the operator residuals run; that is NOT an open plan and does NOT hold Variance (the hard precondition above is satisfied; the orchestrator must not read the leftover active folder as an open plan). Research evidence: `variance-mvp_STEP0-RESYNC_17-10-26.md`. Each later phase re-verifies only its own seam lines against the then-current HEAD at its RESEARCH step.
 
 ---
 
@@ -114,7 +116,7 @@ AUTONOMY: before ANY spawn read umbrella ## Current Execution State and the phas
 
 PER-PHASE LOOP (R>I>P>PVL>E>EVL>UP, SKIPS SPEC, never skip/reorder):
 1 RESEARCH 2 INNOVATE 3 PLAN-SUPPLEMENT 4 PVL 5 EXECUTE 6 EVL 7 UPDATE-PROCESS
-- STEP 0 first in every phase: EXECUTE may not start until the Intake feature is closed; re-sync with Intake's landed code, update Dependencies on Intake, re-allocate migration no., write Inner Loop Refresh Note
+- STEP 0 DONE 2026-10-17 (Intake closed, live 3d2c7301; umbrella Dependencies on Intake + Step 0 Design Decisions D-S0-1..9); each phase re-checks only its own seam lines and re-allocates the migration no. at its RESEARCH
 - PVL never skipped; placeholder or partial contract = blocked
 - every subagent FIRST ACTION: vc-context-discovery + vc-plan-discovery
 - every phase-END: vc-agent-strategy-compare
@@ -130,6 +132,7 @@ SAFETY (never override):
 - deploy only aduin-transaction-web.giathaowork.workers.dev; aduin-transaction-* only; no routes/domains; never touch the protected zone
 - forward-only migration; migration then deploy; never git push (user pushes)
 - never git stash/checkout/reset/restore; commit on main, conventional prefixes
+- never touch or commit .playwright-mcp/ or .DS_Store
 - "13 detectors / 15 issue classes" wording unchanged
 
 TEST GATES (every phase exit; no -- token; one token per call):
@@ -138,7 +141,7 @@ TEST GATES (every phase exit; no -- token; one token per call):
 
 VALIDATE CONTRACT: per-phase, written by vc-validate-agent into each phase plan before EXECUTE.
 
-START: Phase 1, Step 0 + RESEARCH (pending Intake close). Spawn vc-research-agent for Phase 1.
+START: Phase 1, loop step 4 PVL (inner re-validate; the 2026-10-17 Refresh Note invalidates prior contracts). Spawn vc-validate-agent for Phase 1.
 ```
 
 ---
@@ -190,36 +193,53 @@ Planner pre-analysis (single author, no cross-author coordination needed; the or
 
 ## Dependencies on Intake
 
-Interface boundary: the SINGLE coupling point is `apps/web/src/features/variance/baseline-source.ts` (V2). Everything else in Variance is independent of Intake's data model. EXECUTE of every phase is held until the Intake feature is closed; each Step 0 converts the "assumed" rows below to "observed" by reading Intake's landed code and closeout, then rewrites this table.
+Interface boundary: the SINGLE coupling point is `apps/web/src/features/variance/baseline-source.ts` (V2), plus ONE additive pure exported accessor in `apps/web/src/state/package.ts` (D-S0-1). Everything else in Variance is independent of Intake's data model. Intake is CLOSED; this table was rewritten on 2026-10-17 from Intake's landed code (Step 0, evidence `variance-mvp_STEP0-RESYNC_17-10-26.md`, row numbers match that report's section 1).
 
-Status vocabulary: OBSERVED = read in this repository today (code or config); OBSERVED-IN-PLAN = stated in Intake's locked INNOVATE or phase plans (Intake code has NOT landed, so it can still change); ASSUMED = no Intake artifact says it. Step 0 of each phase converts OBSERVED-IN-PLAN and ASSUMED rows to OBSERVED from the landed code and rewrites this table.
+Status vocabulary: OBSERVED-IN-CODE = read in landed code at the cited file:line (HEAD 8a9398c process, a4d7a34 code plus Intake Phase 4 commits through 6fb34fb); CHANGED = the earlier plan statement was wrong or incomplete and is corrected here; STILL-ASSUMED = needs a run to prove (nothing was built or run at Step 0).
 
-Planning-time observation basis: `git log` HEAD 025d589 (spec commits); at the last check the Intake folder `process/features/fund-package-intake/active/intake-mvp_17-10-26/` held the SPEC, an autopilot goal block, `intake-mvp_INNOVATE_17-10-26.md` and four phase plans (`PHASE-1-core-package-engine`, `PHASE-2-web-data-plane`, `PHASE-3-web-surfaces`, `PHASE-4-closeout-deploy`), all untracked, no Intake code; Dexie `version(1)` only; migrations 0001 to 0005 only; `law-firms.json` has 3 firms.
+Observation basis (2026-10-17): `git log f791b97..HEAD` = 33 commits, 225 files. Intake landed `packages/core/src/package/**` (16 files), small edits to `detectors/{flow,ref-label-coherence}.ts` and `structure/{headings,conditionals}.ts`, one barrel line, web `state/{package,last-doc}.ts`, `features/{package,open-document,gate,counsel,structure,review}`, `engine/{client,engine.worker,types}.ts`, `storage/db.ts`, `App.tsx`, `shell/{GateButton,DocSwitcher}.tsx`, `features/ai/ai-lane.ts`, scripts and 24 `intake-*` e2e specs. NOT touched by Intake: `packages/core/src/{counsel,diff,contracts}`, the contracts snapshot, `apps/worker/{migrations,src/routes,src/memory}`, `fixtures/memory/law-firms.json`, `scripts/src/fixtures/build-seeded.ts`, `scripts/src/dev-seed.ts`. Working tree: only `.DS_Store` and `.playwright-mcp/` are untracked (not Variance's; D-S0-9).
 
 | # | Assumption | Source | Status | Where it bites / fallback |
 |---|---|---|---|---|
-| 1 | Enumerate the package's documents with role, firm, fund, version and creation time | DECISION D6 item 1 | OBSERVED-IN-PLAN: `usePackageView()` returns a `PackageView` with `firmId`, `documents[]` (id, name, type, role, confidence, ...) and `baselines: {docId, name}[]`; it is `null` unless the open document is the package primary in the ready phase (null for sample opens and the classic path) (Intake Phase 2 plan, contract items 1 and 2) | `baseline-source.ts` only. Resolution order: package baselines first, then a firm pointer in `uiState` |
-| 2 | A setter changes a document's role to baseline, same firm only, rejecting cross-firm | D6 item 2 | OBSERVED-IN-PLAN: `usePackage.getState().setRole(docId, role)` returns `{ok}` or `unknown_doc`, `primary_locked`, `cross_firm`, `role_not_allowed`; `baselineDocs()`; `addEarlierDocument(storedDocId)` refuses cross-firm; core `eligibleBaselines(pkg, candidates)` is same-firm only | `baseline-source.ts` `setBaseline`; the pointer path writes `uiState` |
-| 3 | Document bytes are readable in the browser within 24 h; `bytesAvailable=false` is surfaced and the analyst re-adds the document | D6 item 3 | OBSERVED (`storage/db.ts` `RETENTION_MS` 24 h, Dexie `documents`); OBSERVED-IN-PLAN (Intake: `documents` rows gain optional `packageId`, `purgeExpired` covers packages, bundled demo members store a `sampleRef` instead of bytes) | muted "text no longer in the browser" line (V2 B1); sample-ref members resolved through the samples loader |
-| 4 | A package-scoped event fires when roles are confirmed; otherwise variance triggers on open-document | D6 item 4 | OBSERVED-IN-PLAN: roles are confirmed in the Upload confirmation table, `runDraft` then calls `useReview.openDocument` with `package: {id, defs}`; `setRole` re-opens the primary through the normal render-first path | V2 C2: variance triggers after `openDocument` renders findings, which covers both Intake and classic opens |
-| 5 | The role UI is Intake's confirmation table; Variance adds only the Findings header baseline control, which edits the same role | D6 item 5; Intake SPEC U4, AC-I9 | OBSERVED-IN-PLAN (role is chosen with the confirmation table's role select; baseline is never auto-assigned) | V2 E1 |
-| 6 | Intake owns package metadata persistence; Variance persists nothing about the baseline server-side | D6 item 6 | OBSERVED-IN-PLAN: Intake persistence is browser-only (Dexie `version(2)` `packages` table); no D1 migration, no Worker route | V3 adds no baseline table |
-| 7 | `computeGate` co-edit: whoever lands second rebases | D6 item 7 | OBSERVED-IN-PLAN: Intake leaves core `computeGate` and its 2400-cell matrix untouched; it merges `packageGateReasons` in the web view-model (`use-review-view.ts` exposes `pkg` and `pkgGate` next to `gate`); `GateButton` blocks on the core gate OR any package block reason. Legacy 3-argument `computeGate` OBSERVED today | V1 gate edit has no expected overlap; V2 edits only how `gate` is computed in `use-review-view.ts`/`model.ts` and keeps Intake's additions |
-| 8 | Firm ownership (D7): the `hartwell-crane` entry (id `hartwell-crane`, name "Hartwell & Crane LLP", aliases "Hartwell & Crane", "H&C") | D7 | OBSERVED absent in `law-firms.json`; OBSERVED-IN-PLAN: Intake does NOT add it (its demo package is tagged to `firm-x`). Variance (V3) is the sole owner and adds it atomically with the migration because `firm-list-parity` couples the JSON to D1 | V3 Step 0 and C3 |
-| 9 | Migration number | D5 | OBSERVED: 0001 to 0005 exist. OBSERVED-IN-PLAN: Intake adds no D1 migration and keeps `schema_version` 5 (Intake INNOVATE item 7, Phase 4 plan). Expected Variance number 0006, `schema_version` 6; allocate by listing the folder at V3 Step 0, never assume | V3 Step 0 (a); `dev-seed.ts` `EXPECTED_MIGRATIONS`; `memory/health.ts` |
-| 10 | Dexie version | D5 | OBSERVED `version(1)` only. OBSERVED-IN-PLAN: Intake adds `version(2)` with a `packages` table and optional `documents.packageId`. Variance adds NO bump (client state in the `uiState` key-value table) | V2 B2 |
-| 11 | Questions screen and counsel sheet overlap | Intake SPEC U9; Intake Phase 3 plan track 3c | OBSERVED-IN-PLAN: `features/counsel/GpRequestGroup.tsx` rendered once in `CounselScreen.tsx` (below the gate line, above the questions list, only for packages) with its own `exportRequestDocx.ts`; requests are not Findings; the counsel export is unchanged. Reconciliation rule fixed in V4 Step 0 (a): tabs and per-owner export act on the question list; `GpRequestGroup` is untouched and visible on every tab with its own count and export | V4 |
-| 12 | `DocMeta`/`openDocument` changes and how a package review is represented | RESEARCH Q8 | OBSERVED-IN-PLAN: `DocMeta.packageId?`, `openDocument` option `package`, one `result` for the to-digitize primary; only ONE to-digitize document per package run is the primary | V2 Step 0 (b); variance diffs the primary against the one baseline |
-| 13 | Several baselines allowed by Intake AC-I9; Variance uses ONE baseline per review (A8): the most recently marked, tie-break `createdAt` descending then document id ascending, with a muted "N other baseline(s) ignored" line | D6 | OBSERVED-IN-PLAN: Intake allows one or more baseline-role documents ("one or more documents can carry role baseline") | `baseline-source.ts` B1 |
-| 14 | Hartwell and Crane demo documents: ONE set or two | Intake Phase 1 plan; D7 | OBSERVED-IN-PLAN: Intake authors its own small set in `fixtures/package/hartwell/` (Fund III subscription agreement, LPA definitions DOCX, Fund II prior), tagged `firm-x`, via `scripts/src/fixtures/build-package.ts`. Variance keeps a SEPARATE self-contained corpus in `fixtures/variance/hartwell-crane/` (firm `hartwell-crane`, pinned 214/7) with distinct file names; Intake's pins are never changed by Variance; the live sample list labels the variance entries "(variance demo)" | V1 Step 0 (b); V5 Step 0 (b) |
-| 15 | `scripts/src/fixtures/{build-seeded,check}.ts` | D7 | OBSERVED-IN-PLAN: Intake adds `build-package.ts` and extends `check.ts` (drift gate and stray-file scan for `fixtures/package`); Variance appends one line to `build-seeded.ts` and an additive `fixtures/variance` scan to `check.ts`: both additive, rebase at V1 Step 0 | V1 H2 |
-| 16 | Shared single-line seams (core `index.ts` barrel, `import-graph` ALLOWED, contracts snapshot) | RESEARCH | OBSERVED as single-file merge points; OBSERVED-IN-PLAN: Intake appends to the barrel and to `ALLOWED` (a long list) and leaves the snapshot unmodified; whoever lands second rebases | registry seam list |
-| 17 | Intake may not edit `README.md`, `docs/README.md`, `docs/architecture/**`, `design/mockups/**` | Intake goal block | OBSERVED (goal block); Variance honors the same and also leaves `docs/**` to a handoff note | V5 decision 2 |
-| 18 | Intake e2e specs that load a package WITH a baseline role will now also run variance (changes rows, gate pending, possibly Blocked) | derived from rows 1, 4, 14 | OBSERVED-IN-PLAN: Intake spec set (`intake-*`, `stack-memory-package-privacy`) and its demo package with a Fund II baseline; Variance regression blocks include the relevant `intake-*` tokens | V2, V4, V5 regression blocks; narrow derived repairs only, each logged |
-| 20 | Design-session fixtures: 3 FICTIONAL fund packages as DOCX under `samples/packages/` (`01-northgate-infrastructure-iii` baseline Fund II; `02-lotus-bay-asia-growth-ii` baseline prior draft v1, master + feeder; `03-redwood-ridge-credit-i` no baseline), each with `README.md`, `answer-key.md` (seeded defects, exact quotes, expected class/severity, AC-V* mapping) and `_build/build.py` | design-session message to this PLAN-supplement | OBSERVED-IN-MESSAGE, not yet on disk, design-owned, read-only, not committed | V1 Step 0 (c): if committed, read answer keys and map AC-V* rows to tests; reuse Northgate as a second same-firm pair and Redwood Ridge as the no-baseline case; the authored `fixtures/variance` corpus keeps the exact 214 to 7 pin unless an answer key pins equivalent counts; V5 may reuse for demo/e2e where they fit |
-| 19 | Intake Phase 4 redeploys static assets and records the live Worker version (rollback target for V5) and a live smoke script `scripts/src/live/smoke-package.ts` | Intake Phase 4 plan | OBSERVED-IN-PLAN | V5 Step 0 (a), A4 |
+| 1 | Enumerate the package's documents with role, firm, fund, version and creation time | DECISION D6 item 1 | OBSERVED-IN-CODE + CHANGED: `usePackageView(): PackageView \| null` (`apps/web/src/features/package/package-view.ts:90`); `PackageView` has `firmId`, `documents[]`, `baselines: PackageBaselineView[]` (`features/package/contract.ts:34-61`); `PackageBaselineView` is `{docId, name}` ONLY (contract.ts:34-37): no per-document firm, no marked time, no bytes flag (firm, fund and version exist only per package, contract.ts:42). Null rule: non-null only when `phase === 'ready' && doc.packageId === current.id`, or while refreshing (package-view.ts:28-33). CHANGED: a classic single-file upload that detects as a high-confidence subscription agreement becomes a ONE-document package after findings render (`open-document/open-actions.ts:98-107`, `state/package.ts:798-859`), so the view is non-null there with `baselines: []`; sample opens clear the package (`open-actions.ts:17`, `:134`), so it is null for samples | `baseline-source.ts` only. Resolution order: package baselines first (core `eligibleBaselines` order, D-S0-3), then a firm pointer in `uiState` |
+| 2 | A setter changes a document's role to baseline, same firm only, rejecting cross-firm | D6 item 2 | OBSERVED-IN-CODE + CHANGED: `usePackage.getState().setRole(docId, 'baseline' \| 'reference')` returns `{ok:true}` or `{ok:false, reason}` with `unknown_doc`, `primary_locked`, `cross_firm`, `role_not_allowed` (contract.ts:66-70, `state/package.ts:872-888`); `baselineDocs()` (package.ts:910-914) sorts by NAME, not marked time. `addEarlierDocument(storedDocId)` (package.ts:651-702) works on the DRAFT only (before Run) and needs the doc in `draft.earlier`; after a run no store API adds an earlier stored document. Only `sub_agreement` can be baseline (package.ts:679-680, 879); `to_digitize` cannot be set by `setRole` (:877). Core `eligibleBaselines(pkg, candidates)` (`packages/core/src/package/baseline.ts:1-25`): same-firm only; a candidate with a non-null firm differing from `pkg.firmId` is rejected; a null-firm package sees within-package candidates only; order createdAt desc, name, docId | `baseline-source.ts` `setBaseline` calls `setRole`; the pointer path writes `uiState` |
+| 3 | Document bytes are readable in the browser within 24 h; unavailable bytes are surfaced and the analyst re-adds the document | D6 item 3 | OBSERVED-IN-CODE (retention) + CHANGED: 24 h `RETENTION_MS` (`storage/db.ts:118`); `documents` rows gain optional `packageId` (db.ts:27); `purgeExpired` covers `packages` (db.ts:123-136); bundled members store `sampleRef`, not bytes (`StoredPackageDoc.sampleRef`, db.ts:55). There is NO `bytesAvailable` concept and NO public bytes accessor: member bytes live in the module-private `sources` Map (`state/package.ts:147`); restore silently omits a non-primary member whose bytes are gone (package.ts:473-498) and fails only when the PRIMARY is missing (:524). `PackageDocument.id` and `PackageBaselineView.docId` are the 64-hex content hash (`packages/core/src/package/types.ts:29-32`), not a Dexie id. DECIDED D-S0-1 (additive accessor) | `baseline-source.ts` B1; muted "text no longer in the browser" line |
+| 4 | A package-scoped event fires when roles are confirmed; otherwise variance triggers on open-document | D6 item 4 | CHANGED: there is no package-scoped "roles confirmed" event. `runDraft` calls `useReview.openDocument` with `package: {id, defs}` (package.ts:442-446); `commit` re-opens the primary ONLY when `sourceKey(definition sources)` changed (package.ts:530-534; `definitionSources` = role `reference` + type lpa/ppm + not needsOcr, `packages/core/src/package/terms.ts:186-190`). A baseline role change does NOT re-open the primary and does NOT re-run `openDocument`; the store sets `analysis` synchronously in `commit`. DECIDED D-S0-2 | V2 C2: Variance subscribes to `usePackageView().baselines` and to openDocument completion |
+| 5 | The role UI is Intake's confirmation table; Variance adds only the Findings header baseline control, which edits the same role | D6 item 5; Intake SPEC U4, AC-I9 | OBSERVED-IN-CODE: pre-run table `features/open-document/PackageConfirmTable.tsx` (`setDraftField`, :34); post-run Structure screen Package lens `features/package/PackageDocuments.tsx:55` calls `setRole`. A baseline is never auto-assigned (`resolveRoles` gives sub agreements `to_digitize`, low confidence when two: `packages/core/src/package/detect.ts:259-261`) | V2 E1 |
+| 6 | Intake owns package metadata persistence; Variance persists nothing about the baseline server-side | D6 item 6 | OBSERVED-IN-CODE: browser-only Dexie `packages` table (db.ts:97, 111-114); no D1 migration, no Worker route | V3 adds no baseline table |
+| 7 | `computeGate` co-edit: whoever lands second rebases | D6 item 7 | OBSERVED-IN-CODE + CHANGED (location of the merge): core `computeGate` is untouched (`packages/core/src/counsel/gate.ts:43`, still 3 args; `ComputeGate` type `counsel/types.ts:39`). `use-review-view.ts:38` returns `gate: { ...computeGate(rows), unreadable: hasNoText(result) }` and NOTHING about packages (it does NOT expose `pkg`/`pkgGate`). The package merge is inside `shell/GateButton.tsx`: it calls `usePackageView()`, builds `merged = {...gate, status: blocked if core blocked or any package block reason, reasons: [...gate.reasons, ...pkgBlocks]}`, passes it to `gatePillView`, then renders `GateReasons`, `PackageGateReasons`, `CoverageLine`; `GatePillState` gained `'unreadable'` (`features/gate/gate-pill.ts`); the badge uses `merged.reasons.length`. The gate matrix is now 2406 cells. `state/review.ts` gate call sites (`gateLine` 537-541; dismiss next-selection about 735 and 749-755; dismiss `computeGate` 757; dismiss toast 759) still call the PLAIN web `computeGate`: they ignore package block reasons and `unreadable`. DECIDED D-S0-4 | V1 gate edit is core-only (no overlap); V2 edits only how `gate` is computed (variance policy) keeping the `unreadable` spread; V2 F2 and V4 grouping keep GateButton's `merged` object and three-part render |
+| 8 | Firm ownership (D7): the `hartwell-crane` entry (id `hartwell-crane`, name "Hartwell & Crane LLP", aliases "Hartwell & Crane", "H&C") | D7 | OBSERVED-IN-CODE (still ABSENT): `law-firms.json` has 3 firms (partners-group, firm-x, firm-y). Intake's `hartwell` demo package is tagged `firm-x`; the three design demo packages (northgate-iii, lotus-bay-asia-ii, redwood-ridge-i) are tagged `firmId: null` in `fixtures/package/demo-packages.json`. Variance (V3) is the sole owner of the firm add, atomic with the migration (`firm-list-parity`). DECIDED D-S0-7: V5 retags the Northgate demo package to `hartwell-crane` | V3 Step 0 and C3; V5 B3 |
+| 9 | Migration number | D5 | OBSERVED-IN-CODE: `apps/worker/migrations/` = 0001..0005; `0005_...sql:55` sets `schema_version` '5'; `scripts/src/dev-seed.ts:27` `EXPECTED_MIGRATIONS` = 0001..0005; Intake added none. Expected Variance number 0006, `schema_version` 5 to 6; still list the folder at V3 Step 0, never assume | V3 Step 0 (a); `dev-seed.ts`; `apps/worker/src/memory/health.ts` |
+| 10 | Dexie version | D5 | OBSERVED-IN-CODE: `version(2)` (`storage/db.ts:111`): `packages: '&id, firmId, createdAt'`, `documents: '&id, createdAt, packageId'`. `uiState '&key'` still exists and is not purged; Intake uses key `session:lastDoc` (`state/last-doc.ts:9`), so Variance keys stay namespaced `variance:*`. Variance adds NO bump | V2 B2 |
+| 11 | Questions screen and counsel sheet overlap | Intake SPEC U9; Intake Phase 3 plan track 3c | OBSERVED-IN-CODE: `<GpRequestGroup />` at `features/counsel/CounselScreen.tsx:271`, inside the non-empty branch directly above `<ul className="rows" data-testid="counsel-list">`; own `exportRequestDocx.ts`; `<h1 id="h-counsel">` at :160 unchanged; `features/registry.ts` unchanged (two `id: 'counsel'` rows, :29 and :75). Reconciliation rule stands (V4 Step 0 (a)) | V4 |
+| 12 | `DocMeta`/`openDocument` changes and how a package review is represented | RESEARCH Q8 | OBSERVED-IN-CODE: `DocMeta.packageId?` and `OpenPackageOption {id, defs, reopen?}` in `state/review.ts`; `openDocument` options `package`/`packageFacts`; one `result` for the primary; `attachPackage(docId, packageId)` was added (not in the earlier plan); `doc.id` stays the content hash. `App.tsx` restores the last document and its package on start (`state/last-doc.ts`), so a reload calls `openDocument` and therefore triggers the Variance pass | V2 Step 0 (b); C2 |
+| 13 | Several baselines allowed by Intake AC-I9; Variance uses ONE baseline per review (A8) | D6 | OBSERVED-IN-CODE + CHANGED: `setRole` has no uniqueness rule; `baselineDocs()` is name-sorted. The earlier "most recently marked / `roleMarkedAt`" rule has no data source (only package-level `CurrentPackage.createdAt` and stored-upload `StoredDocument.createdAt` exist). DECIDED D-S0-3: tie-break = core `eligibleBaselines` order (createdAt desc, name, docId) over the view's baselines, with the muted "N other baseline(s) ignored" line; the firm-pointer fallback builds candidates from exported `listUploads(limit, firmId)` (package-persist.ts:184-200) + `eligibleBaselines`, filtering out null-firm rows that `listUploads` admits | `baseline-source.ts` B1 |
+| 14 | Hartwell and Crane demo documents: ONE set or two | Intake Phase 1 plan; D7 | OBSERVED-IN-CODE + NAME CHANGED: Intake's set is `fixtures/package/hartwell/{fund-iii-subscription-agreement.html, northgate-lpa-definitions.docx, fund-ii-subscription-agreement-prior.html}`, firm-x, built by `scripts/src/fixtures/make-package.ts` (the earlier plan name `build-package.ts` does not exist); Intake pins live in `fixtures/package/expected.json`. Variance keeps a SEPARATE self-contained corpus `fixtures/variance/hartwell-crane/` (firm `hartwell-crane`, pinned 214/7) with distinct file names; Intake's pins are never changed; variance sample entries are labelled "(variance demo)" | V1 Step 0 (b); V5 Step 0 (b) |
+| 15 | `scripts/src/fixtures/{build-seeded,check}.ts` | D7 | OBSERVED-IN-CODE + CHANGED: Intake did NOT touch `build-seeded.ts` (still exports `DIFF_DIR`, `SEEDED_DIR`). It extended `check.ts` (+41 lines: imports `buildPackageFixtures`, `PACKAGE_DIR`, `REAL_FACTS_KEYS` from `make-package`; `walkPkg` stray scan; ends just before the final `if (problems.length)` block, about line 168) and added `make-package.ts` and `package-facts-extract.ts`. V1 H2 appends one line to `build-seeded.ts` and slots an additive `fixtures/variance` scan before that block | V1 H2 |
+| 16 | Shared single-line seams (core `index.ts` barrel, `import-graph` ALLOWED, contracts snapshot) | RESEARCH | OBSERVED-IN-CODE + CHANGED: the barrel now ends with `export * from './package/index';` (`packages/core/src/index.ts:172`); a named explicit list for `./variance/index` cannot collide (Step 0 grep: zero hits in core, web and worker for every planned name plus `Owner`, `RuleId`, `ChangeClass`). `apps/web/test/import-graph.test.ts` `ALLOWED` gained 18 Intake names (analyzePackage, packageRunReadiness, packageGateReasons, coverageLineText, buildDocumentRequests, eligibleBaselines, detectDocument, resolveRoles, mergeSuggestion, checkPackageLimits, definitionSources, DEFAULT_PACKAGE_POLICY, PACKAGE_LIMITS, PACKAGE_DOC_TYPES, PACKAGE_DOC_ROLES, PackageAnalysisSchema, PackageDocumentSchema, PackageFactsSchema), so `eligibleBaselines` is already allowed on the main thread. The contracts snapshot has no diff | registry seam list; V2 and V4 `import-graph` appends |
+| 17 | Intake may not edit `README.md`, `docs/README.md`, `docs/architecture/**`, `design/mockups/**` | Intake goal block | OBSERVED-IN-CODE (superseded premise): `README.md` (+14), `docs/architecture/status.md` and `docs/walkthrough/demo-walkthrough.vi.md` WERE edited by the Intake closeout (57043fc). Variance's own rule (leave README and `docs/**` to a handoff note) is a Variance decision and is unchanged | V5 decision 2 |
+| 18 | Intake e2e specs that load a package WITH a baseline role will now also run variance (changes rows, gate pending, possibly Blocked) | derived from rows 1, 4, 14 | STILL-ASSUMED (behavior): code level only. The `hartwell` demo package and the design demo packages carry a baseline, so a Variance pass WILL trigger on them once Variance exists; which `intake-*` specs change is UNVERIFIED until a run. Regression blocks of P02, P04 and P05 carry `intake-demo-packages`, `package-gate-ui` and `gate-pill` (plus the earlier `intake-*` tokens) | V2, V4, V5 regression blocks; narrow derived repairs only, each logged |
+| 19 | Intake Phase 4 redeploys static assets and records the live Worker version (rollback target for V5) and a live smoke script | Intake Phase 4 plan | OBSERVED-IN-CODE: `scripts/src/live/smoke-package.ts` exists (383 lines; it exits 1 on third-party Turnstile iframe console noise, backlog stub `intake-live-smoke-turnstile-console`). Live Worker version `3d2c7301-a4a5-487c-bd7d-2f2c0800be6f` (static assets only; Worker code 994ea54 unchanged; rollback chain `3d2c7301` -> `cde74507` -> `328ca295` -> `09e7a579` -> `47d98295` -> `23612b12`). The V5 rollback target is therefore `3d2c7301` (re-read read-only at EXECUTE entry; never assume) | V5 Step 0 (a), A4 |
+| 20 | Design-session fixtures: 3 FICTIONAL fund packages as DOCX under `samples/packages/` (`01-northgate` baseline Fund II; `02-lotus-bay` baseline prior draft v1; `03-redwood` no baseline) with `README.md` and `answer-key.md` | design-session message | OBSERVED-IN-CODE: committed in c1c5fe0 (README and answer-key 01 edited in 57043fc); design-owned and read-only. Intake copied the DOCX into `fixtures/package/design/<id>/` with `checksums.json` and builds them into `public/samples/packages/` (`build-samples.ts` `buildPackages`). Package 01 has the same 3 new + 4 changed_logic split as the authored pin but about 50 raw hunks (not 214); its README firm is Hartwell & Crane LLP (not in `law-firms.json`), and the shipped demo entry has `firmId: null`. Package 01 answer key owner for V7 (Counsel) differs from SPEC A9 (GP); D-S0-6 | V1 H4 (D-S0-5); V5 Fictional Sample Packages |
 
-Final reconciliation rule: if Step 0 finds an Intake interface that contradicts a row, the row is rewritten, the affected phase plan gets an `## Inner Loop Refresh Note`, and (only if a section of a plan changes) a PLAN-SUPPLEMENT cycle runs; EXECUTE never works from an assumption that Step 0 could have observed.
+Final reconciliation rule: if a later Step 0 or RESEARCH finds an Intake interface that contradicts a row, the row is rewritten, the affected phase plan gets an `## Inner Loop Refresh Note`, and (only if a section of a plan changes) a PLAN-SUPPLEMENT cycle runs; EXECUTE never works from an assumption that Step 0 could have observed.
+
+---
+
+## Step 0 Design Decisions (2026-10-17, orchestrator defaults, reversible)
+
+Made at the Step 0 PLAN-SUPPLEMENT from the research report; each is written again in the affected phase plan.
+
+- **D-S0-1 Baseline bytes (P02).** Add ONE additive, pure exported accessor to `apps/web/src/state/package.ts`, for example `readPackageMemberSource(docId): Promise<{bytes, format, name} | {unavailable: true}>` (an optional `reason` of `scan` or `missing` is allowed so the muted lines can differ), reusing the private `sources` Map, `fetchBundled` and `readMemberBytes` paths; `baseline-source.ts` is its only caller. Intake is closed, so this is no longer a collision. Unit-tested next to the package-store tests with fake-indexeddb (`apps/web/test/package-member-source.test.ts`, token `package-member-source`).
+- **D-S0-2 Re-run trigger (P02).** Variance subscribes to `usePackageView().baselines` and to openDocument completion; a baseline role change re-runs the variance pass without re-opening the primary (stale-run drop by run id still applies).
+- **D-S0-3 One-baseline tie-break (P02).** Drop `roleMarkedAt` (no data source); use core `eligibleBaselines` order (createdAt desc, name, docId) over the view's baselines; the firm-pointer fallback builds candidates from exported `listUploads(limit, firmId)` plus `eligibleBaselines`, excluding null-firm rows.
+- **D-S0-4 Gate seams (P02, P04).** Every variance-policy gate call (`state/review.ts` `gateLine`, dismiss toast, dismiss next-selection, and `GateButton.tsx`) keeps the `unreadable` spread (`use-review-view.ts:38`) and preserves `GateButton`'s `merged` object (core gate plus package block reasons) and its three-part render (`GateReasons`, `PackageGateReasons`, `CoverageLine`). The baseline control and the All/Errors/Changes segment coexist with `<CoverageLine placement="header" />` in `FindingsScreen`.
+- **D-S0-5 Fixtures (P01).** Keep the authored `fixtures/variance` corpus for the exact 214/7/207 pin and the R-01 Fund I/II/III chain. ADD a package-01 (Northgate) test in P01 from `fixtures/package/design/northgate-iii/*.docx` (never from read-only `samples/packages/`), pinning 7 shown (3 new + 4 changed_logic); the raw count is measured at EXECUTE and then pinned; V2 (table row), V6 and V7 classification is verified there, and a class that differs from the key is recorded as a finding, never bent silently.
+- **D-S0-6 V7 trust-split owner (P01, P04).** The user-approved SPEC A9 governs (GP). The package-01 answer key says Counsel for V7: recorded as a note for the design session; no rule change.
+- **D-S0-7 Firm (P03, P05).** P03 still adds `hartwell-crane` ("Hartwell & Crane LLP"). P05 retags the Northgate demo package (`fixtures/package/demo-packages.json`, `firmId` null today) to `hartwell-crane` so the live demo walk has memory, owners and R-01; Intake is closed so the edit is allowed; Intake's demo-package specs are re-run after.
+- **D-S0-8 Push rule (all phases).** Never git push in any phase (the user pushes); commits are local on main only.
+- **D-S0-9 Untracked files (all phases).** `.playwright-mcp/` and `.DS_Store` are not Variance's; never touch or commit them.
+- **Hook-filtered word rule (all phases).** The kit's scout-block hook rejects any Bash command containing the substrings for the production output directory or the installed-packages directory (it blocked a read-only grep during Step 0). Gate commands and agent prompts must not contain those words; the existing precedent token is `no-e2e-hook-in-d`. All `variance-*` gate token lists in the five plans were scanned token by token at this supplement and contain neither word.
 
 ---
 
@@ -229,17 +249,17 @@ Strategy tags: FA Fully-Automated, H Hybrid, AP Agent-Probe. Known-Gap is never 
 
 | AC | Statement (short) | Phase(s) | proven by | strategy | Residual / note |
 |---|---|---|---|---|---|
-| AC-V1 | baseline from package role, same firm only | 2, 5 | `variance-baseline-from-package`, `variance-baseline-same-firm-only` (e2e) | FA | CONDITIONAL until both resolution paths (package role via Intake's store, firm pointer) are exercised and the Intake names used are recorded at V2 Step 0 |
+| AC-V1 | baseline from package role, same firm only | 2, 5 | `variance-baseline-from-package`, `variance-baseline-same-firm-only` (e2e), `package-member-source` (unit, D-S0-1) | FA | CONDITIONAL until both resolution paths (package role via Intake's store, firm pointer) are exercised; the Intake names used are now recorded in `## Dependencies on Intake` rows 1-4 and 13; a baseline role change must re-run the pass without re-opening (D-S0-2) |
 | AC-V2 | every change classified with evidence | 1 | `variance-classification-contract` | FA | |
 | AC-V3 | cosmetic hidden by default, grouped on request | 2 | `variance-cosmetic-hidden-default` (e2e) | FA | |
-| AC-V4 | demo 214 to 7 (3 new, 4 logic) plus R-01 | 1, 5 | `variance-demo-count` (core), `variance-demo-214-to-7` (e2e) | FA | SPEC governs the mockup: 207 cosmetic, not 206 |
+| AC-V4 | demo 214 to 7 (3 new, 4 logic) plus R-01 | 1, 5 | `variance-demo-count` (core), `variance-package-01-northgate` (core, D-S0-5), `variance-demo-214-to-7` (e2e) | FA | SPEC governs the mockup: 207 cosmetic, not 206; package 01 pins 7 shown (3 new + 4 logic), raw measured at EXECUTE; its table-row and option-text classes are verified there |
 | AC-V5 | recall 100% on seeded | 1 | `variance-seeded-recall-matrix` | FA | |
 | AC-V6 | cosmetic-as-logic at most 10% | 1 | `variance-precision-measure` | FA | |
 | AC-V7 | real pair #5 to #6 | 1 | `variance-golden-05-06` | FA (classification); H AI wording not used | |
 | AC-V8 | no baseline: Errors only, becomes baseline | 2 | `variance-no-baseline-errors-only` (e2e) | FA | text kept only 24 h |
 | AC-V9 | changes never AI-gated | 1, 2 | `variance-ai-never-gates-core`, `variance-ai-never-gates` (e2e) | H | recorded/stubbed AI, no live call |
 | AC-V10 | impact from the logic graph | 1 | `variance-impact-from-graph-fixtures`, `variance-impact-demo-4-2` | FA | real-sample impact precision: named residual (backlog stub `variance-impact-real-sample-ground-truth`), labelled "uncertain" |
-| AC-V11 | owner from routing table, overridable | 1, 3, 4 | `variance-routing-table-matrix`, `variance-owner-persisted` (worker), `variance-owner-override` (e2e) | FA | |
+| AC-V11 | owner from routing table, overridable | 1, 3, 4 | `variance-routing-table-matrix`, `variance-owner-persisted` (worker), `variance-owner-override` (e2e) | FA | trust split owner is GP per SPEC A9; the package-01 answer key says Counsel: note for the design session, no rule change (D-S0-6) |
 | AC-V12 | two owners = two questions | 1, 4 | `variance-question-key-matrix`, `variance-two-owner-two-questions` (e2e) | FA | |
 | AC-V13 | per-owner Questions and export | 4 | `variance-questions-by-owner-export` (e2e), `variance-counsel-export-contents` | FA | |
 | AC-V14 | answer records option, note, intent, scope | 3, 4 | `variance-answer-intent-rule`, `variance-answer-append-only` (worker), `variance-answer-record-intent-scope` (e2e) | FA | |
@@ -279,7 +299,7 @@ Program-level checklist (the per-phase boxes live in each phase plan; the orches
 
 - [x] 0. Program planning (this PLAN session): DECISION copied, umbrella, 5 phase plans, registry written; validators run
 - [ ] Outer PVL: parallel read-only validators, one per phase plan, then V7 verdicts per plan (placeholder `## Validate Contract` sections are filled per phase by vc-validate-agent)
-- [ ] Intake feature closed (hard precondition; checked by the orchestrator before any EXECUTE)
+- [x] Intake feature closed (hard precondition; satisfied 17-10-26: program COMPLETE, live 3d2c7301; Step 0 R+I+P done, Refresh Note written in the umbrella and all 5 phase plans; the Intake `active/` folder is not an open plan)
 - [ ] Phase 01 loop: 0 Step 0, 1 R, 2 I, 3 P, 4 PVL, 5 E, 6 EVL, 7 UP
 - [ ] Phase 02 loop: same 8 boxes
 - [ ] Phase 03 loop: same 8 boxes
@@ -306,6 +326,8 @@ Program-level checklist (the per-phase boxes live in each phase plan; the orches
 - One baseline per review, same firm only; the only regression kind is `scope_exists`.
 - Run Playwright serially, one agent at a time (port 4317; stack-memory afterwards, never together). Select tests as `pnpm --filter <pkg> test <token>`; never the `--` token; one token per call; an unmatched token exits 1 and counts as a failure.
 - After any diff-adjacent change run `pnpm --filter @aduin/scripts record:author --check`.
+- Hook-filtered word rule: no command or agent prompt may contain the words for the production output directory or the installed-packages directory; use the token `no-e2e-hook-in-d`. Untracked `.playwright-mcp/` and `.DS_Store` are not Variance's: never touch or commit them (D-S0-9). Any variance-policy gate call keeps the `unreadable` spread and GateButton's `merged` object (D-S0-4).
+- Intake regression tokens now see a variance pass: P02, P04 and P05 regression blocks carry `intake-demo-packages` (load-sensitive, run alone), `package-gate-ui` and `gate-pill`.
 - Commit each phase's execution changes before starting the next phase. Keep process/plan/context commits separate from execution commits. Commit directly on main (conventional prefixes), never run git push in any phase (the user pushes), never git stash, checkout, reset or restore.
 
 ---
@@ -315,6 +337,7 @@ Program-level checklist (the per-phase boxes live in each phase plan; the orches
 | Phase | Report path (inside task folder) |
 |---|---|
 | 0 (pre-program) | `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-00-planning_REPORT_17-10-26.md` (written only if the orchestrator wants a PLAN report) |
+| Step 0 (Intake re-sync research, 17-10-26) | `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp_STEP0-RESYNC_17-10-26.md` (written) |
 | 1 - V1 | `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-01-core-engine_REPORT_17-10-26.md` |
 | 2 - V2 | `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-02-web-findings_REPORT_17-10-26.md` |
 | 3 - V3 | `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-03-memory-backend_REPORT_17-10-26.md` |
@@ -352,6 +375,7 @@ PLAN-time additions (new facts found while planning):
 5. `scripts/src/dev-seed.ts` `EXPECTED_MIGRATIONS` and `memory/health.ts` schema version must move with the migration or local stacks and writes break; added to V3.
 6. Wire limit (corrected): the Worker never persists finding `detail` (detail_json is always NULL), so there is no 2000/1800 clip. Real limits are `FindingDetailSchema` (`facts` scalar-only: string up to 1000 chars, number, boolean, null), the 128 KB body cap and the 25-finding chunk cap; lists and the assertion candidate are encoded as strings or flat keys, decoded only by `varianceMetaOf`. `normalizeAssertionLabel` is owned by V1 and imported by the V3 server.
 7. Intake collision on the Questions screen and gate popover is the top coordination risk; handled by Step 0 and the single-adapter rule.
+8. (Step 0, 2026-10-17) Landed-code facts that changed the plan: baseline bytes have no public accessor (D-S0-1); a baseline role change does not re-open the primary (D-S0-2); no marked-time exists (D-S0-3); the gate merge lives in `GateButton.tsx` and review.ts gate sites ignore package and `unreadable` state (D-S0-4); package 01 has about 50 raw hunks, not 214 (D-S0-5); the V7 owner differs between the answer key and SPEC A9 (D-S0-6); `listUploads` admits null-firm rows (same-firm rule must filter them). Mitigations are in P02 B0/B1/C2/C2b/F1/F2, P01 H4 and P05 B3.
 
 Verdict: CAUTION, proceed with the mitigations in the phase plans.
 
@@ -360,8 +384,8 @@ Verdict: CAUTION, proceed with the mitigations in the phase plans.
 ## Touchpoints
 
 - `packages/core/src/variance/**` (new), `packages/core/src/counsel/{gate,sheet,types,template-draft}.ts`, `packages/core/src/{index.ts,contracts/memory.ts,config/limits.ts,memory/label.ts}`, core snapshot, `fixtures/variance/**`, `fixtures/memory/law-firms.json`, `scripts/src/fixtures/{build-variance,build-seeded,check}.ts`
-- `apps/web/src/features/{variance,review,counsel,gate}/**`, `apps/web/src/{engine,state,shell,api,styles}/**` (additive), `apps/web/e2e/variance-*.spec.ts`, `apps/web/test/variance-*.test.ts`
-- `apps/worker/migrations/00NN_variance.sql`, `apps/worker/src/{routes/memory,memory,platform}/**`, `apps/worker/test/memory/variance-*`, `scripts/src/{dev-seed.ts,build-samples.ts,live/probe-live-variance.ts}`
+- `apps/web/src/features/{variance,review,counsel,gate}/**`, `apps/web/src/{engine,state,shell,api,styles}/**` (additive), `apps/web/e2e/variance-*.spec.ts`, `apps/web/test/variance-*.test.ts`, `apps/web/src/state/package.ts` (ONE additive accessor, D-S0-1) with `apps/web/test/package-member-source.test.ts`
+- `apps/worker/migrations/00NN_variance.sql`, `apps/worker/src/{routes/memory,memory,platform}/**`, `apps/worker/test/memory/variance-*`, `scripts/src/{dev-seed.ts,build-samples.ts,live/probe-live-variance.ts}`, `fixtures/package/demo-packages.json` (V5 one-field retag, D-S0-7), `packages/core/test/unit/variance-package-01-northgate.test.ts` (V1, D-S0-5)
 - Full per-phase lists: each phase plan's `## Touchpoints` and `phase-blast-radius-registry.md`.
 
 ---
@@ -370,7 +394,7 @@ Verdict: CAUTION, proceed with the mitigations in the phase plans.
 
 - Frozen v1 `Finding`, `DiffResultSchema`, `issue_class` enum (15), detector registry (13), `AI_TASK_IDS`: unchanged.
 - `contracts/memory.ts` moves additively (optional owner, owner_source, intent, scope, assertion, regression_checks; one new audit action); snapshot regenerated once with a change note.
-- `computeGate` without the new optional policy is byte-identical to today (2400-cell matrix).
+- `computeGate` without the new optional policy is byte-identical to today (2406-cell matrix, `gate-state-matrix`).
 - No new screen, route or sidebar item; hash routes unchanged; the counsel nav label becomes "Questions".
 - Deployed surface: only `https://aduin-transaction-web.giathaowork.workers.dev`; no route, custom domain or zone change.
 
@@ -378,7 +402,7 @@ Verdict: CAUTION, proceed with the mitigations in the phase plans.
 
 ## Blast Radius
 
-Files directly modified or created across the program: about 35 new source files, about 45 new tests and specs, 1 migration, generated fixtures, about 40 additive edits (listed per phase). Operational: one additive migration on the live D1 and one Worker deploy (V5). Collision files with Intake are listed in the registry.
+Files directly modified or created across the program: about 35 new source files, about 45 new tests and specs, 1 migration, generated fixtures, about 40 additive edits (listed per phase). Operational: one additive migration on the live D1 and one Worker deploy (V5). Collision files with Intake are listed in the registry (Step 0 additions: `state/package.ts` accessor, `state/last-doc.ts`, `App.tsx`, `features/ai/ai-lane.ts`, `FindingsScreen` CoverageLine, `GateButton` merged gate, `fixtures/package/demo-packages.json`).
 
 ---
 
@@ -388,6 +412,8 @@ Files directly modified or created across the program: about 35 new source files
 |---|---|---|
 | per-phase Exit Gates (see phase plans) | Fully-Automated | AC-V2, V4, V5, V6, V7, V10, V11, V12, V17, V19, V20 (V1); AC-V1, V3, V8, V9 (V2); AC-V14, V16, V19 (V3); AC-V11 to V17 (V4) |
 | `variance-demo-214-to-7`, `variance-demo-gate-walk` | Fully-Automated | AC-V4, AC-V18 |
+| `variance-package-01-northgate` (3 new + 4 logic on the design package, raw measured then pinned) | Fully-Automated | AC-V4 (package-01 corroboration), AC-V2 |
+| `package-member-source` (baseline bytes accessor, fake-indexeddb) | Fully-Automated | AC-V1 |
 | `variance-ai-never-gates-core`, `variance-ai-never-gates` | Hybrid | AC-V9 |
 | `stack-memory-variance-regression-no-cross-firm` | Hybrid | AC-V16 |
 | keyboard and design probes, `probe:live-variance` | Agent-Probe | NFR UI, deployed render-first |
@@ -409,11 +435,11 @@ Plan artifact validators (run at PLAN end and again after any supplement): `node
 ## Resume and Execution Handoff
 
 - Selected plan file path: `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-umbrella_PLAN_17-10-26.md`
-- Last completed phase: Phase 0 (this umbrella plus 5 phase plans, DECISION copy and registry are the Phase 0 artifacts)
-- Validate-contract status: pending (vc-validate-agent writes per phase; the outer PVL runs first)
-- First phase to enter EXECUTE (only after the outer PVL passes AND the Intake feature is closed): `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-01-core-engine_PLAN_17-10-26.md`
+- Last completed phase: Phase 0 (this umbrella plus 5 phase plans, DECISION copy and registry are the Phase 0 artifacts); Step 0 PLAN-SUPPLEMENT applied 2026-10-17 (Intake closed)
+- Validate-contract status: per-phase outer-pvl contracts exist (Gate: PASS) but are INVALIDATED by the 2026-10-17 Inner Loop Refresh Note; inner PVL re-runs per phase before its EXECUTE
+- First phase to enter EXECUTE (Intake is CLOSED; only after the inner PVL re-validates it): `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-01-core-engine_PLAN_17-10-26.md`
 - Each later phase must re-run research (and Step 0) before execution. EXECUTE receives exactly ONE selected plan file path.
-- Current phase: none started. Next action: orchestrator runs the outer PVL (one read-only vc-validate-agent per phase plan), fills `## Pre-PVL Conflict Resolution`, then waits for the Intake close.
+- Current phase: none started. Next action: orchestrator fills `## Pre-PVL Conflict Resolution` if still a placeholder and runs the inner PVL (vc-validate-agent) for Phase 01 against the refreshed plan; then EXECUTE Phase 01.
 - Execute-agent start instruction: read this file, read the Phase 1 plan, complete Step 0 and RESEARCH first.
 - Hard rules for every agent prompt: never git stash, checkout, reset or restore; commit locally on main; never run git push in any phase (the user pushes); never touch the protected zone.
 
@@ -421,24 +447,28 @@ Plan artifact validators (run at PLAN end and again after any supplement): `node
 
 ## Current Execution State
 
-Last updated: 17-10-26 (PLAN)
-Current phase: none started - 0 of 5 (status: planned; EXECUTE held until the Intake feature closes)
+Last updated: 17-10-26 (PLAN-SUPPLEMENT, Step 0 inner-loop refresh after Intake closed)
+Current phase: none started - 0 of 5 (status: planned; Intake CLOSED, Step 0 re-sync applied; inner PVL required before EXECUTE)
 Phase name: n/a (next: Phase 01 - Core engine + corpus)
-Phase status: planned - Phase 00 planning COMPLETE; Phases 01 to 05 PLANNED; outer PVL pending
+Phase status: planned - Phase 00 planning COMPLETE; Phases 01 to 05 PLANNED; Step 0 refresh applied to the umbrella and all 5 phase plans
 Phase EVL: n/a (no phase executed)
-Phase report: none yet (destinations listed under Durable Report Destinations)
-Next phase: Phase 01 - `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-01-core-engine_PLAN_17-10-26.md` (Step 0 Intake re-sync, then RESEARCH)
-Current loop step: PLAN done; next is outer PVL (then Step 0 + RESEARCH for Phase 01 once Intake is closed)
-Validate-contract status: pending (not written for any phase)
+Phase report: none yet (destinations listed under Durable Report Destinations); Step 0 research report `variance-mvp_STEP0-RESYNC_17-10-26.md`
+Next phase: Phase 01 - `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-01-core-engine_PLAN_17-10-26.md` (loop step 4 PVL: inner re-validate; then 5 EXECUTE)
+Current loop step: 4-validate for Phase 01 (Step 0 R+I+P done 2026-10-17; Inner Loop Refresh Note written in all 6 plans)
+Validate-contract status: written per phase (outer-pvl, Gate: PASS) but INVALIDATED by the 2026-10-17 Inner Loop Refresh Note; inner PVL must re-run for each phase before its EXECUTE
 Program Net Gate: PENDING
-Latest validator run: 17-10-26 - plan artifact validators on the umbrella and 5 phase plans (results in the PLAN handoff)
+Latest validator run: 17-10-26 PLAN-SUPPLEMENT - validate-plan-artifact on the umbrella and 5 phase plans, validate-phase-stub on 5 phase plans, validate-umbrella-artifact on the umbrella (results in the supplement report)
 
 Loop step values: RESEARCH | INNOVATE | PLAN-SUPPLEMENT | PVL | EXECUTE | EVL | UPDATE-PROCESS
-Orchestrator rule: read "Current loop step" and "validate-contract status" before spawning any subagent. Never spawn execute-agent when loop step is RESEARCH, INNOVATE, PLAN-SUPPLEMENT, or PVL, and never before the Intake feature is closed.
+Orchestrator rule: read "Current loop step" and "validate-contract status" before spawning any subagent. Never spawn execute-agent when loop step is RESEARCH, INNOVATE, PLAN-SUPPLEMENT, or PVL (the Intake feature is closed; that precondition is satisfied).
 
 Note: The Stable Program Goal above is fixed. This section is the only part that changes - update-process-agent rewrites it after every phase closeout (overwrite, not append - git history is the audit log).
 
 ---
+
+## Inner Loop Refresh Note: 2026-10-17 — changed sections: Overview, Step 0 (status paragraph), Stable Program Goal (Step 0 line, SAFETY, START), Dependencies on Intake (rewritten), Step 0 Design Decisions (new), Acceptance Criteria Traceability Matrix (AC-V1, AC-V4, AC-V11 rows), Public Contracts, Touchpoints, Risk Predictions (item 8), Blast Radius, Verification Evidence, Global Constraints, Durable Report Destinations, Phase Loop Progress, Resume and Execution Handoff, Current Execution State. Invalidates prior validate-contract.
+
+Written by the Step 0 PLAN-SUPPLEMENT at 2026-10-17 22:11 local, after the per-phase outer-pvl contracts (last written 17:49 the same day; the contracts carry a date without a time). Basis: `variance-mvp_STEP0-RESYNC_17-10-26.md` (git HEAD 8a9398c; nothing built or run). What changed: the Intake dependency table is now OBSERVED-IN-CODE / CHANGED with file:line (rows 1-4, 7, 13-16, 19, 20 corrected); rollback target 3d2c7301; gate matrix 2406 cells; stale "Intake not landed / HEAD 025d589 / Dexie v1" text removed. Decisions D-S0-1..9 recorded above (reversible orchestrator defaults). The umbrella has no validate-contract of its own; each phase plan carries its own Refresh Note, and the orchestrator must re-run inner PVL per phase. Push rule restated (D-S0-8): never git push in any phase. `.playwright-mcp/` and `.DS_Store` are not Variance's (D-S0-9).
 
 ## Validate Contract
 

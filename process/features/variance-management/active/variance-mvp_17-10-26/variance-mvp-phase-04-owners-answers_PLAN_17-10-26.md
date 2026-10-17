@@ -19,7 +19,7 @@ metadata:
 **Phase status:** ⏳ PLANNED
 **Report destination:** process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-04-owners-answers_REPORT_17-10-26.md (flat in the program task folder)
 **Risk class:** medium-high (trust-boundary client logic: forged scope/assertion must also be impossible from the UI; shared-collision zone with Intake on the Questions screen and the gate popover; no schema, no deploy)
-**Depends on:** Phase 02 (web Findings, VERIFIED) AND Phase 03 (memory backend, VERIFIED). External: Intake feature closed before EXECUTE (Step 0).
+**Depends on:** Phase 02 (web Findings, VERIFIED) AND Phase 03 (memory backend, VERIFIED). External: the Intake feature is CLOSED (live Worker 3d2c7301); Step 0 re-sync done 2026-10-17 (see Step 0 status below).
 **Context routers read:** `process/context/all-context.md`, `process/context/ui/all-ui.md`, `process/context/worker/all-worker.md`, `process/context/tests/all-tests.md`.
 
 ---
@@ -36,7 +36,9 @@ Decisions made at PLAN time (reversible, recorded): (1) the owner override is al
 
 Re-sync with Intake's landed code (inner R+I refresh) before EXECUTE: read Intake's final PLAN and closeout and its landed diff; update the `## Dependencies on Intake` section of the umbrella (observed vs assumed to observed); re-allocate the migration number; re-check the collision files in the phase-blast-radius registry; write an `## Inner Loop Refresh Note` in this plan. EXECUTE may not start until the Intake feature is closed.
 
-Phase-specific Step 0 checks: (a) **Questions screen / counsel sheet overlap:** observed in Intake's Phase 3 plan (track 3c, code not yet landed): `features/counsel/GpRequestGroup.tsx` is rendered ONCE in `CounselScreen.tsx` below the gate line and above the questions list, only when a package exists, with its own `exportRequestDocx.ts` (a separate missing-documents request DOCX; the counsel export is unchanged) and its requests are not Findings. Reconciliation rule (default, reversible): the owner tabs and per-owner counsel exports operate on the question list only; `GpRequestGroup` stays where Intake put it, unchanged and visible on every tab, with its own count and export; the GP tab badge and the gate popover owner groups count variance questions only (they equal the core gate reasons), and Intake's package reasons stay in Intake's own popover section; nothing is counted twice. Re-read the landed component and adjust only if its structure differs. (b) Intake's `GateButton.tsx` computes `blocked` as the core gate OR any package block reason and renders core `GateReasons`, then `PackageGateReasons`, then `CoverageLine`; V4 changes only the core `GateReasons` grouping (owner groups) and must keep that order and Intake's expression intact. (c) Re-read V2's final `ChangeRow.tsx`, `select.ts`, `variance-store.ts`, `baseline-source.ts` (landed code) and V3's final contracts. (d) Re-confirm `hartwell-crane` is present in the web firm list (V3).
+Phase-specific Step 0 checks: (a) **Questions screen / counsel sheet overlap:** OBSERVED-IN-CODE (2026-10-17): `features/counsel/GpRequestGroup.tsx` is rendered ONCE at `CounselScreen.tsx:271`, inside the non-empty branch directly above `<ul className="rows" data-testid="counsel-list">`, only when a package exists (`<h1 id="h-counsel">` at :160 and the two `id: 'counsel'` rows of `features/registry.ts` at :29 and :75 are unchanged), with its own `exportRequestDocx.ts` (a separate missing-documents request DOCX; the counsel export is unchanged) and its requests are not Findings. Reconciliation rule (default, reversible): the owner tabs and per-owner counsel exports operate on the question list only; `GpRequestGroup` stays where Intake put it, unchanged and visible on every tab, with its own count and export; the GP tab badge and the gate popover owner groups count variance questions only (they equal the core gate reasons), and Intake's package reasons stay in Intake's own popover section; nothing is counted twice. The landed component was re-read at Step 0 and its structure matches this rule; re-check at EXECUTE entry. (b) OBSERVED-IN-CODE: Intake's `GateButton.tsx` builds `merged = {...gate, status, reasons: [...gate.reasons, ...pkgBlocks]}` (blocked when the core gate OR any package block reason blocks), passes it to `gatePillView`, renders core `GateReasons`, then `PackageGateReasons`, then `CoverageLine`, and its badge uses `merged.reasons.length`; V4 changes only the core `GateReasons` grouping (owner groups) and must keep the `merged` object, that order and the badge expression intact; every variance-policy gate input (including the `Triage.ownerAnswers` path into `computeGate`) keeps the `unreadable` spread from `use-review-view.ts:38` (D-S0-4). (c) Re-read V2's final `ChangeRow.tsx`, `select.ts`, `variance-store.ts`, `baseline-source.ts` (landed code) and V3's final contracts. (d) Re-confirm `hartwell-crane` is present in the web firm list (V3).
+
+**Step 0 status (resolved 2026-10-17, PLAN-SUPPLEMENT; basis `variance-mvp_STEP0-RESYNC_17-10-26.md`, git HEAD 8a9398c).** Intake is CLOSED. Check (a) and (b) are answered from landed code above: `CounselScreen.tsx` gained only an import and `<GpRequestGroup />` at :271 (+2 lines); `GateReasons.tsx`, `ExportDialog.tsx`, `ai-draft.ts` and `registry.ts` are unchanged by Intake; Intake added `PackageGateReasons.tsx` and `CoverageLine.tsx`. Decisions recorded (orchestrator defaults, reversible): **D-S0-4** every variance-policy gate call and `GateButton.tsx` keep the `unreadable` spread and Intake's `merged` object with its three-part render; the GP tab badge and popover owner groups count variance questions only (they equal the core gate reasons) and Intake's package reasons stay in Intake's popover section, as before. **D-S0-6** the V7 trust-split owner stays GP per the user-approved SPEC A9 (the package-01 answer key says Counsel: recorded as a note for the design session; no rule change; the owner override stays available). **D-S0-8** never git push in any phase. **D-S0-9** `.playwright-mcp/` and `.DS_Store` are not Variance's: never touch or commit them. Regression tokens added (Intake surfaces that now see a variance pass): e2e `intake-demo-packages` (load-sensitive 30 s wait, run alone) and the web unit tokens `package-gate-ui`, `gate-pill` and `gp-request-group` (`gate-pill` is also already an e2e token below). Hook-filtered word rule: the tokens in Test Gates contain neither hook-filtered word (the production output directory and installed-packages directory names).
 
 ## Phase Completion Rules
 
@@ -72,8 +74,8 @@ Create (V4-owned):
 
 Modify (additive; each file's owner in parentheses):
 - `apps/web/src/features/counsel/{CounselScreen.tsx,QuestionRow.tsx,AnswerForm.tsx,sheet-model.ts,question-ids.ts,export-flow.ts,exportDocx.ts,counsel-store.ts,ExportDialog.tsx,ai-draft.ts}` (Phase 08; tabs, owner sections, per-owner export opening `ExportDialog` with that owner's sheet (owner in title and filename), composite keys via the single core `questionKey`, answer fields; `toggleAi` and `ai-draft.ts` exclude change questions so 0 live AI calls are made for them; `sheet-model.ts` `gateInputs` receives `ownerAnswers`)
-- `apps/web/src/features/review/model.ts` (V2-owned, Intake collision file; NARROW edit only: add the optional `ownerAnswers?: Partial<Record<Owner, CounselOption | null>>` field to the `Triage` interface (defined in this file) and pass it into the `states[id]` object inside `computeGate`; no other change or behavior in the file; V2 and Intake must be committed first)
-- `apps/web/src/features/gate/GateReasons.tsx` (Phase 08; group by owner, list only, "You" group for the analyst's own items, "Earlier funds" group for prior-fund items)
+- `apps/web/src/features/review/model.ts` (V2-owned, Intake collision file; NARROW edit only: add the optional `ownerAnswers?: Partial<Record<Owner, CounselOption | null>>` field to the `Triage` interface (defined in this file) and pass it into the `states[id]` object inside `computeGate`; no other change or behavior in the file, and the `unreadable` spread added by Intake at `use-review-view.ts:38` stays; V2 must be committed first and Intake is closed)
+- `apps/web/src/features/gate/GateReasons.tsx` (Phase 08; group by owner, list only (`GateButton.tsx` is not edited by V4: its `merged` object, badge and three-part render stay; D-S0-4), "You" group for the analyst's own items, "Earlier funds" group for prior-fund items)
 - `apps/web/src/features/variance/{ChangeRow.tsx,select.ts,variance-store.ts}` (V2-owned; narrow edits after V2 landed: mount `OwnerChip`, add owner counts to the shared selector, receive the regression finding; V2 must be committed first)
 - `apps/web/src/state/review.ts` (additive: `recordAnswer` and `persistAnswer` gain an `owner` argument, answer action carries owner/intent/scope/assertion; the optional `Triage.ownerAnswers` map (owner to answer) lives INSIDE the persisted triage JSON, so `saveTriage` and the Dexie schema need no change (A1 confirms by reading `saveTriage`); regression arrival action recomputes the gate; edit scope limited to those actions)
 - `apps/web/src/features/registry.ts` (rename the LAST (effective, last-wins) `counsel` row label to "Questions"; optionally sync the earlier placeholder row label; ONE logical rename; seam)
@@ -97,7 +99,7 @@ Not touched in V4: `packages/core/**` (all variance, gate and sheet logic landed
 
 ## Blast Radius
 
-Files directly modified or created: the Touchpoints list (about 5 new source files, 6 unit tests, 7 e2e specs plus 1 fixture, 13 additive edits to existing files, up to 8 derived spec repairs). Collision files with Intake: `features/counsel/*`, `features/gate/GateReasons.tsx`, `features/review/model.ts` (narrow `computeGate` input only; V2-owned), `state/review.ts`, `features/registry.ts`, `import-graph.test.ts` (see registry). Guarded surfaces: `counsel-*`, `gate-pill`, `memory-*`, `export-flow`, `import-graph`, `layout-vs-mockup`.
+Files directly modified or created: the Touchpoints list (about 5 new source files, 6 unit tests, 7 e2e specs plus 1 fixture, 13 additive edits to existing files, up to 8 derived spec repairs). Collision files with Intake: `features/counsel/*`, `features/gate/GateReasons.tsx`, `features/review/model.ts` (narrow `computeGate` input only; V2-owned), `state/review.ts`, `features/registry.ts`, `import-graph.test.ts` (see registry; Step 0 observed `CounselScreen.tsx` +2 lines only, and `GateReasons.tsx`, `ExportDialog.tsx`, `ai-draft.ts`, `registry.ts` unchanged by Intake). Guarded surfaces: `counsel-*`, `gate-pill`, `memory-*`, `export-flow`, `import-graph`, `layout-vs-mockup`.
 
 ## Implementation Checklist
 
@@ -162,8 +164,8 @@ for t in variance-owner-override variance-two-owner-two-questions variance-quest
 Regression block (preview e2e serially, one agent at a time, port 4317 shared; stack-memory afterwards, never together):
 
 ```bash
-for t in counsel-sheet counsel-answer counsel-export counsel-gate gate-pill memory-no-reflag memory-prior-answer memory-edit-is-new memory-blocking-never-hidden memory-no-cross-firm a11y-keyboard layout-vs-mockup app-shell placeholder-routes no-llm-corpus intake-missing-docs-request-export intake-gp-group-absent-without-package intake-gate-warning-policy; do pnpm --filter @aduin/web test:e2e "$t" || exit 1; done
-for t in export-flow counsel-export-contents counsel-draft gate-reexport api-contract review-sync; do pnpm --filter @aduin/web test "$t" || exit 1; done
+for t in counsel-sheet counsel-answer counsel-export counsel-gate gate-pill memory-no-reflag memory-prior-answer memory-edit-is-new memory-blocking-never-hidden memory-no-cross-firm a11y-keyboard layout-vs-mockup app-shell placeholder-routes no-llm-corpus intake-missing-docs-request-export intake-gp-group-absent-without-package intake-gate-warning-policy intake-demo-packages; do pnpm --filter @aduin/web test:e2e "$t" || exit 1; done
+for t in export-flow counsel-export-contents counsel-draft gate-reexport api-contract review-sync package-gate-ui gate-pill gp-request-group; do pnpm --filter @aduin/web test "$t" || exit 1; done
 for t in gate-state-matrix sheet-contents variance-gate-state-matrix variance-question-key-matrix; do pnpm --filter @aduin/core test "$t" || exit 1; done
 pnpm --filter @aduin/web test
 pnpm --filter @aduin/web typecheck
@@ -171,7 +173,7 @@ pnpm lint
 pnpm typecheck
 ```
 
-Never use the e2e token `gate` alone. Each one-token e2e call rebuilds the preview (3 to 6 s).
+Intake regression notes: `intake-demo-packages` is load-sensitive (30 s wait; run it alone); `gate-pill` exists as both a unit token and an e2e token; `package-gate-ui` and `gp-request-group` are web unit tests. Never use the e2e token `gate` alone. Each one-token e2e call rebuilds the preview (3 to 6 s).
 
 ## Test Coverage Plan (routing chain loaded: all-tests.md)
 
@@ -203,7 +205,7 @@ Failing stubs: each Fully-automated row starts as `test("should <scenario>", ...
 
 ## Phase Loop Progress
 
-- [ ] 0. PRECONDITION - Intake feature closed; Step 0 re-sync done (Questions overlap reconciled); Inner Loop Refresh Note written
+- [x] 0. PRECONDITION - Intake feature closed; Step 0 re-sync done (Questions overlap reconciled from landed code); Inner Loop Refresh Note written (2026-10-17)
 - [ ] 1. RESEARCH - research-agent: V2 and V3 reports read in full; V1 Forward Preview read; test context loaded
 - [ ] 2. INNOVATE - innovate-agent: approach decided (n/a if the DECISION still holds)
 - [ ] 3. PLAN-SUPPLEMENT - plan-agent: existing phase plan updated (or "n/a - research clean")
@@ -241,11 +243,15 @@ Strategy (vc-agent-strategy-compare, PLAN-end): signals S2 (contract consumption
 
 - Selected plan file path: `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-04-owners-answers_PLAN_17-10-26.md`
 - Umbrella plan: `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-umbrella_PLAN_17-10-26.md`
-- Last completed step: not started (EXECUTE held until the Intake feature closes; V2 and V3 must be VERIFIED first)
-- Validate-contract status: PASS written (outer-pvl, PVL cycle 2 re-validation, 17-10-26); EXECUTE still held until Intake closes and Step 0 re-sync is done
-- Next step: after Phases 02 and 03 are VERIFIED and Intake is closed, spawn vc-research-agent for Step 0 plus RESEARCH. EXECUTE receives this one exact plan path.
+- Last completed step: Step 0 PLAN-SUPPLEMENT 2026-10-17 (Intake closed; Refresh Note written; not started otherwise; V2 and V3 must be VERIFIED first)
+- Validate-contract status: INVALIDATED by the 2026-10-17 Inner Loop Refresh Note (inner PVL must re-run before EXECUTE); prior state: PASS written (outer-pvl, PVL cycle 2 re-validation, 17-10-26); EXECUTE still waits for V2 and V3 to be VERIFIED
+- Next step: after Phases 02 and 03 are VERIFIED (Intake is closed), spawn vc-research-agent for RESEARCH (read the V2 and V3 reports in full), then INNOVATE (n/a if the DECISION holds), PLAN-SUPPLEMENT and inner PVL. EXECUTE receives this one exact plan path.
 - Validators: `node .claude/skills/vc-generate-plan/scripts/validate-plan-artifact.mjs <this plan>`; `node .claude/skills/vc-generate-phase-program/scripts/validate-phase-stub.mjs <this plan>`.
 - Hard rules for every agent prompt: never git stash, checkout, reset or restore; commit on main with conventional prefixes; never run git push in any phase (the user pushes); execution commits separate from process commits.
+
+## Inner Loop Refresh Note: 2026-10-17 — changed sections: header (Depends on), Step 0 (checks a and b observed from landed code; new status paragraph with D-S0-4/6/8/9), Touchpoints (model.ts and GateReasons bullets), Blast Radius, Test Gates (regression: intake-demo-packages, package-gate-ui, gate-pill, gp-request-group), Phase Loop Progress, Resume and Execution Handoff. Invalidates prior validate-contract.
+
+Written by the Step 0 PLAN-SUPPLEMENT at 2026-10-17 22:11 local, after this plan's outer-pvl contract (written 17:49 the same day). Basis `variance-mvp_STEP0-RESYNC_17-10-26.md`. Landed facts: `<GpRequestGroup />` at `CounselScreen.tsx:271` directly above `<ul data-testid="counsel-list">`; `<h1 id="h-counsel">` at :160; `registry.ts` rows :29 and :75 unchanged; `GateButton.tsx` merged object and badge on `merged.reasons.length`; `use-review-view.ts:38` `unreadable` spread. The reconciliation rule from Step 0 (a) is confirmed unchanged. V7 owner stays GP (D-S0-6). Push rule restated (D-S0-8); `.playwright-mcp/` and `.DS_Store` are not Variance's (D-S0-9). PVL-new concern to check: the added regression tokens exist (an unmatched token exits 1) and `intake-demo-packages` stays green with the Questions rename.
 
 ## Validate Contract
 

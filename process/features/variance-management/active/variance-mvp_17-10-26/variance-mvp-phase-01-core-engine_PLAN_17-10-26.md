@@ -19,7 +19,7 @@ metadata:
 **Phase status:** ⏳ PLANNED
 **Report destination:** process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-01-core-engine_REPORT_17-10-26.md (flat in the program task folder)
 **Risk class:** medium (frozen-contract-adjacent: gate and sheet change through optional fields only; no schema, no deploy)
-**Depends on:** none inside the program. External: the Intake feature must be closed before EXECUTE (Step 0).
+**Depends on:** none inside the program. External: the Intake feature is CLOSED (live Worker 3d2c7301); Step 0 re-sync done 2026-10-17 (see Step 0 status below).
 **Context routers read:** `process/context/all-context.md`, `process/context/engine/all-engine.md`, `process/context/tests/all-tests.md`, `process/context/planning/all-planning.md`.
 
 ---
@@ -41,9 +41,13 @@ Locked inputs: DECISION D1 (raw change = one word-level hunk recomputed from ful
 
 Re-sync with Intake's landed code (inner R+I refresh) before EXECUTE: read Intake's final PLAN and closeout and its landed diff; update the `## Dependencies on Intake` section of the umbrella (observed vs assumed to observed); re-allocate the migration number; re-check the collision files in the phase-blast-radius registry; write an `## Inner Loop Refresh Note` in this plan. EXECUTE may not start until the Intake feature is closed.
 
-Phase-specific Step 0 checks: (a) `git diff` of Intake for `packages/core/src/counsel/{gate,sheet,types}.ts`, `packages/core/src/index.ts`, `scripts/src/fixtures/{build-seeded,check}.ts`, `fixtures/memory/law-firms.json`; rebase this plan's additive edits on Intake's landed `computeGate` (coverage reason kinds, policy data). (b) Observed in Intake's INNOVATE (item 9 and the demo-packages note): Intake does NOT add `hartwell-crane`; it tags its demo package to the existing firm `firm-x` and builds its own synthetic set in `fixtures/package/hartwell/` via `scripts/src/fixtures/build-package.ts`. V1 does not touch firms (V3 adds the firm). The variance corpus stays a SEPARATE self-contained set in `fixtures/variance/hartwell-crane/` with distinct file names (Intake's Fund II/III files are small package seeds with their own pins, which V1 must not change). Re-read Intake's landed `scripts/src/fixtures/check.ts` (Intake extends the drift gate for `fixtures/package`) and rebase the additive `fixtures/variance` scan on it. Intake states `computeGate` and its 2400-cell matrix are untouched (it merges `packageGateReasons` in the web view-model), so the V1 gate edit has no expected overlap; verify at Step 0.
+Phase-specific Step 0 checks: (a) `git diff` of Intake for `packages/core/src/counsel/{gate,sheet,types}.ts`, `packages/core/src/index.ts`, `scripts/src/fixtures/{build-seeded,check}.ts`, `fixtures/memory/law-firms.json`; rebase this plan's additive edits on Intake's landed `computeGate` (coverage reason kinds, policy data). (b) Observed in Intake's INNOVATE (item 9 and the demo-packages note): Intake does NOT add `hartwell-crane`; it tags its demo package to the existing firm `firm-x` and builds its own synthetic set in `fixtures/package/hartwell/` via `scripts/src/fixtures/make-package.ts` (OBSERVED-IN-CODE; the earlier plan name `build-package.ts` does not exist). V1 does not touch firms (V3 adds the firm). The variance corpus stays a SEPARATE self-contained set in `fixtures/variance/hartwell-crane/` with distinct file names (Intake's Fund II/III files are small package seeds with their own pins, which V1 must not change). Intake's landed `scripts/src/fixtures/check.ts` (+41 lines: `buildPackageFixtures`, `PACKAGE_DIR`, `REAL_FACTS_KEYS` from `make-package`, a `walkPkg` stray scan, ending just before the final `if (problems.length)` block at about line 168) is the base the additive `fixtures/variance` scan rebases onto. OBSERVED-IN-CODE (Step 0, 2026-10-17): core `computeGate` is untouched (`counsel/gate.ts:43`, still 3 args; `counsel/types.ts:39`), the `gate-state-matrix` is now 2406 cells, and Intake merges package reasons inside the web `shell/GateButton.tsx`, so the V1 gate edit has no overlap.
 
-Step 0 check (c), design-session fixtures (OBSERVED-IN-MESSAGE, not yet on disk at supplement time): the design session is generating 3 FICTIONAL fund packages as DOCX under `samples/packages/` (`01-northgate-infrastructure-iii` with Fund II as baseline; `02-lotus-bay-asia-growth-ii` with baseline = prior draft v1, master plus feeder; `03-redwood-ridge-credit-i` with no baseline), each with `README.md`, `answer-key.md` (seeded defects, exact quotes, expected class and severity, AC-V* mapping) and `_build/build.py`. They are design-owned and read-only. At Step 0 check: is `samples/packages/` committed? If yes, read each `answer-key.md` and map every AC-V* row to a test in this phase (reuse Northgate as a second same-firm pair and Redwood Ridge as the no-baseline case, as extra Fully-Automated cases next to the authored corpus). The authored `fixtures/variance/hartwell-crane` corpus stays the pin for the exact 214 to 7 count UNLESS an answer key pins equivalent counts (then record that in the report; do not replace silently). If the folder is still absent at EXECUTE, skip (c), record it as not available, and the authored corpus alone proves V1. Never edit `samples/packages/`.
+Step 0 check (c), design-session fixtures (OBSERVED-IN-CODE, committed in c1c5fe0; the conditional wording below is SUPERSEDED by D-S0-5 in the Step 0 status paragraph): the design session is generating 3 FICTIONAL fund packages as DOCX under `samples/packages/` (`01-northgate-infrastructure-iii` with Fund II as baseline; `02-lotus-bay-asia-growth-ii` with baseline = prior draft v1, master plus feeder; `03-redwood-ridge-credit-i` with no baseline), each with `README.md`, `answer-key.md` (seeded defects, exact quotes, expected class and severity, AC-V* mapping) and `_build/build.py`. They are design-owned and read-only. At Step 0 check: is `samples/packages/` committed? If yes, read each `answer-key.md` and map every AC-V* row to a test in this phase (reuse Northgate as a second same-firm pair and Redwood Ridge as the no-baseline case, as extra Fully-Automated cases next to the authored corpus). The authored `fixtures/variance/hartwell-crane` corpus stays the pin for the exact 214 to 7 count UNLESS an answer key pins equivalent counts (then record that in the report; do not replace silently). If the folder is still absent at EXECUTE, skip (c), record it as not available, and the authored corpus alone proves V1. Never edit `samples/packages/`.
+
+**Step 0 status (resolved 2026-10-17, PLAN-SUPPLEMENT; basis `variance-mvp_STEP0-RESYNC_17-10-26.md`, git HEAD 8a9398c).** Intake is CLOSED (live Worker `3d2c7301-a4a5-487c-bd7d-2f2c0800be6f`; its `active/` folder is not an open plan). Check (a): `counsel/{gate,sheet,types}.ts` have NO Intake change (`computeGate` at gate.ts:43 still 3 args, matrix now 2406 cells); `index.ts` ends with `export * from './package/index';` (index.ts:172) and a named list cannot collide (grep: zero hits for all planned names); `build-seeded.ts` is untouched; `check.ts` was extended; `law-firms.json` is untouched. Intake also edited `structure/headings.ts` (+53: `Section 4.`, `Article I.` forms), `structure/conditionals.ts` (+16: Annex and Question targets) and `detectors/{flow,ref-label-coherence}.ts`; the hunker uses `buildUnits` keys from `diff/` and impact uses `Structure.conditionals`, both downstream of those edits, so `variance-golden-05-06`, the impact cases and the D1 renumber and cover/header cases are UNVERIFIED against them until run (Intake reports `golden-05-06-drift` green).
+
+Decisions recorded (orchestrator defaults, reversible): **D-S0-5** keep the authored `fixtures/variance` corpus for the exact 214/7/207 pin and the R-01 Fund I/II/III chain, and ADD checklist H4 (a package-01 Northgate test read from `fixtures/package/design/northgate-iii/*.docx`, never from the read-only `samples/packages/`; 7 shown = 3 new + 4 changed_logic; raw count measured at EXECUTE then pinned; V2 table row, V6 option text and V7 table rows verified there; a class that differs from the answer key is a finding in the report, never bent silently). **D-S0-6** the V7 trust-split owner stays GP per the user-approved SPEC A9 (the package-01 answer key says Counsel: a note for the design session, no rule change). **D-S0-8** never git push in any phase. **D-S0-9** `.playwright-mcp/` and `.DS_Store` are not Variance's: never touch or commit them. Hook-filtered word rule: the Test Gates tokens below contain neither hook-filtered word (the production output directory and installed-packages directory names).
 
 ## Phase Completion Rules
 
@@ -56,13 +60,13 @@ Step 0 check (c), design-session fixtures (OBSERVED-IN-MESSAGE, not yet on disk 
 | AC | Statement (short) | proven by | strategy |
 |---|---|---|---|
 | AC-V2 | every raw change is exactly one class with old/new passage and rule id | `variance-classification-contract` (property: one class, evidence present) | Fully-Automated |
-| AC-V4 (core part) | demo pair: raw 214, 7 shown (3 new, 4 logic), 207 cosmetic in 5 groups; full UI proof is V5 `variance-demo-214-to-7-e2e` | `variance-demo-count` | Fully-Automated |
+| AC-V4 (core part) | demo pair: raw 214, 7 shown (3 new, 4 logic), 207 cosmetic in 5 groups; full UI proof is V5 `variance-demo-214-to-7-e2e`; package 01 (design Northgate DOCX pair) also shows 7 (3 new, 4 logic) with its raw count measured then pinned (D-S0-5) | `variance-demo-count`, `variance-package-01-northgate` | Fully-Automated |
 | AC-V5 | recall 100% on seeded new/logic changes, none classified cosmetic | `variance-seeded-recall-matrix` | Fully-Automated |
 | AC-V6 | cosmetic shown as logic at most 10% of logic rows (seeded traps plus #5/#6) | `variance-precision-measure` | Fully-Automated |
 | AC-V7 | #5 to #6: Units to Shares cosmetic; class fees logic; Appendix C removed shown | `variance-golden-05-06` | Fully-Automated (classification); AI wording is not used |
 | AC-V9 (core part) | contradicting AI findings change nothing: classes, owners, impact, gate byte-equal; AI never gates even when asked; web e2e is V2 | `variance-ai-never-gates-core` | Hybrid (recorded AI input, runs in CI) |
 | AC-V10 | impact from the logic graph; demo 4.2 case | `variance-impact-from-graph-fixtures`, `variance-impact-demo-4-2` | Fully-Automated |
-| AC-V11 (core part) | routing table matrix (7A fund admin; Singapore GP+counsel; sanctions counsel; 4.2 counsel; Class A minimum GP; tax status counsel; trust split GP) | `variance-routing-table-matrix` | Fully-Automated |
+| AC-V11 (core part) | routing table matrix (7A fund admin; Singapore GP+counsel; sanctions counsel; 4.2 counsel; Class A minimum GP; tax status counsel; trust split GP per SPEC A9; the package-01 answer key says Counsel for V7: note for the design session, D-S0-6) | `variance-routing-table-matrix` | Fully-Automated |
 | AC-V12 (core part) | `<findingId>@<owner>` key; error findings keep the plain id; per-owner sheet filter and template draft | `variance-question-key-matrix`, `variance-sheet-owner-and-template` | Fully-Automated |
 | AC-V17 (core part) | gate policy off = legacy; policy on counts untriaged changes, regression, asked-unanswered; two states only | `variance-gate-state-matrix` (extends `gate-state-matrix`) | Fully-Automated |
 | AC-V19 | versioned schema-validated config; invalid fails fast; hash in finding provenance | `variance-rules-config-schema-and-provenance` | Fully-Automated |
@@ -71,7 +75,7 @@ Step 0 check (c), design-session fixtures (OBSERVED-IN-MESSAGE, not yet on disk 
 
 ## Entry Gate
 
-- Intake feature closed (Step 0). No other program phase must precede V1.
+- Intake feature CLOSED (Step 0 done 2026-10-17); inner PVL re-validated this plan against the Refresh Note. No other program phase must precede V1.
 - Working tree free of unrelated uncommitted changes in the blast radius; HEAD recorded in the report.
 
 ## Touchpoints
@@ -84,22 +88,23 @@ Create (all new):
 - `fixtures/variance/**` (generated: `hartwell-crane/{fund-I,fund-II,fund-III,fund-III-with-appendix-c}.html`, `seeded/*.html`, `expected/*.json`)
 - `scripts/src/fixtures/build-variance.ts`
 - `packages/core/test/unit/variance-sheet-owner-and-template.test.ts` (new gate, see G4)
+- `packages/core/test/unit/variance-package-01-northgate.test.ts` (new gate, see H4; D-S0-5)
 
 Modify (additive only):
 - `packages/core/src/counsel/gate.ts` (optional `policy` 4th parameter, optional `gates?: boolean` on `GateFinding`, optional `owner` on `GateReason`, optional `ownerAnswers` on `GateState`; the `ComputeGate` function type in `counsel/types.ts` gains the optional 4th `policy` parameter in the same edit)
 - `packages/core/src/counsel/sheet.ts`, `packages/core/src/counsel/types.ts` (optional `CounselSheet.meta.owner`; `buildCounselSheet` option to filter per owner)
 - `packages/core/src/counsel/template-draft.ts` (deterministic `version_drift` plus `change_type` path: old text, new text, A/B/C options; intent is human-only)
 - `.prettierignore` (ONE appended line `fixtures/variance/`; precedent `fixtures/diff/`; registry note: add `.prettierignore` to the V1 claim in `phase-blast-radius-registry.md`, owned by the orchestrator, not edited by this plan)
-- `packages/core/src/index.ts` (append-only EXPLICIT NAMED export line for `./variance/index`; seam, serialized; never `export *`, so it cannot collide with Intake's appended `export * from './package/index'`)
+- `packages/core/src/index.ts` (append-only EXPLICIT NAMED export line for `./variance/index`; seam, serialized; never `export *`, so it cannot collide with Intake's landed `export * from './package/index'` at `index.ts:172`)
 - `packages/core/src/diff/index.ts` ONLY IF check A1 shows a needed symbol is not exported (one additive export line, no behavior change)
-- `scripts/src/fixtures/build-seeded.ts` (ONE appended line invoking `build-variance`), `scripts/src/fixtures/check.ts` (extend the stray-file scan to `fixtures/variance`, additive)
+- `scripts/src/fixtures/build-seeded.ts` (ONE appended line invoking `build-variance`), `scripts/src/fixtures/check.ts` (extend the stray-file scan to `fixtures/variance`, additive; rebased on Intake's landed `check.ts`: slot the scan before the final `if (problems.length)` block, reuse its `walkPkg` pattern, never touch `fixtures/package/**`)
 
 Not touched in V1: `contracts/*` and the contracts snapshot, `findings/*`, `taxonomy.ts`, `detectors/registry.ts`, `fixtures/memory/law-firms.json` and `memory/firms.ts` (firm is added atomically in V3, see registry), anything under `apps/**`, README and `docs/**`.
 
 ## Public Contracts
 
 - Frozen v1 `Finding`/`FindingSchema` unchanged; no new `issue_class` (variance uses the declared `version_drift`); `DiffResultSchema` and `SectionDiff` unchanged.
-- `computeGate(rows, ...)` with `policy` undefined returns exactly the legacy result for all 2400 `gate-state-matrix` cells.
+- `computeGate(rows, ...)` with `policy` undefined returns exactly the legacy result for all 2406 `gate-state-matrix` cells.
 - "13 detectors / 15 issue classes" stays literally true: variance is a diff-derived producer, not a registered detector; `version_drift` becomes emitted (the README phrase "1 from version diff" becomes true). No README or `docs/**` edit.
 - New public core exports (appended as an explicit named list, never `export *`): `runVariance`, `varianceMetaOf`, `loadVarianceRules`, `questionKey`, `parseQuestionKey`, `runRegressionChecks`, `describeAssertion`, `assertionCandidateOf`, `normalizeAssertionLabel`, `VarianceResult` and related types.
 - Facts contract: `detail.facts` values are scalars only (string up to 1000 chars, number, boolean, null). `varianceMetaOf` is the sole decoder and returns the typed shape; V2, V3 and V4 never read raw `detail.facts`.
@@ -107,7 +112,7 @@ Not touched in V1: `contracts/*` and the contracts snapshot, `findings/*`, `taxo
 
 ## Blast Radius
 
-Files directly modified or created: the Touchpoints list above (about 15 new source files, about 14 new test files, generated fixtures, 6 additive edits). Collision files with Intake: `counsel/{gate,sheet,types}.ts`, `index.ts`, `build-seeded.ts`, `check.ts` (see registry). Frozen surfaces guarded: `diff-contract`, `diff-determinism`, `gate-state-matrix`, `sheet-contents`, `contracts`, `golden-05-06-drift`.
+Files directly modified or created: the Touchpoints list above (about 15 new source files, about 14 new test files, generated fixtures, 6 additive edits). Collision files with Intake (Step 0 observed): `index.ts` (star export landed at :172), `check.ts` (extended, +41 lines); `counsel/{gate,sheet,types}.ts` and `build-seeded.ts` have NO Intake change (see registry). Frozen surfaces guarded: `diff-contract`, `diff-determinism`, `gate-state-matrix`, `sheet-contents`, `contracts`, `golden-05-06-drift`.
 
 ## Implementation Checklist
 
@@ -160,9 +165,11 @@ Files directly modified or created: the Touchpoints list above (about 15 new sou
 
 ### Section H - Barrel, corpus, generator
 
-- [ ] H1. Append ONE explicit named export line to `packages/core/src/index.ts` (`export { runVariance, varianceMetaOf, loadVarianceRules, questionKey, parseQuestionKey, runRegressionChecks, describeAssertion, assertionCandidateOf, normalizeAssertionLabel } from './variance/index'` plus `export type {...}`; never `export *`; serialized seam). Intake appends `export * from './package/index'`; verify no name collision at Step 0.
-- [ ] H2. `scripts/src/fixtures/build-variance.ts` generates the corpus deterministically (no timestamps, fixed seed): Hartwell and Crane docs per the Overview design, `seeded/` trap pairs (cosmetic traps: renumbering with moved target, fund name, cover date, Units to Shares, format; logic items: the 7 demo items; edge traps: date in operative text, single-occurrence name, reference whose target did not move, number/negation/modal/condition guards, truncated), and `expected/*.json` (class, rule id, owners, impact per seeded change). `expected/*.json` is HAND-AUTHORED, never computed from the engine, and includes the demo item table (item to class to rule id to owners). The 7 demo items sit in SEPARATE alignment units (lettered Parts or separate sections for Singapore, tax status and trust split): 3 `new` (7A new section; Singapore list item inserted as a sentence of 12 words or more; 8(f) sanctions paragraph of 12 words or more) and 4 `changed_logic` (4.2 with 7 inserted words; Class A minimum amount; tax status; trust split). In `build-variance.ts` import `html`/`json` from `build-seeded.ts` ONLY lazily inside functions (circular import: `build-seeded.ts` imports `build-variance.ts`), or move the shared helpers into a small new module. `variance-demo-count` asserts the table. Append ONE line to `build-seeded.ts`; extend `check.ts` stray-file scan.
+- [ ] H1. Append ONE explicit named export line to `packages/core/src/index.ts` (`export { runVariance, varianceMetaOf, loadVarianceRules, questionKey, parseQuestionKey, runRegressionChecks, describeAssertion, assertionCandidateOf, normalizeAssertionLabel } from './variance/index'` plus `export type {...}`; never `export *`; serialized seam). Intake's `export * from './package/index'` is LANDED (`index.ts:172`); Step 0 grep found zero collisions with every planned name (also `Owner`, `RuleId`, `ChangeClass`, `VarianceResult`, `CosmeticGroup`, `RegressionCheck`); re-grep at EXECUTE entry.
+- [ ] H2. `scripts/src/fixtures/build-variance.ts` generates the corpus deterministically (no timestamps, fixed seed): Hartwell and Crane docs per the Overview design, `seeded/` trap pairs (cosmetic traps: renumbering with moved target, fund name, cover date, Units to Shares, format; logic items: the 7 demo items; edge traps: date in operative text, single-occurrence name, reference whose target did not move, number/negation/modal/condition guards, truncated), and `expected/*.json` (class, rule id, owners, impact per seeded change). `expected/*.json` is HAND-AUTHORED, never computed from the engine, and includes the demo item table (item to class to rule id to owners). The 7 demo items sit in SEPARATE alignment units (lettered Parts or separate sections for Singapore, tax status and trust split): 3 `new` (7A new section; Singapore list item inserted as a sentence of 12 words or more; 8(f) sanctions paragraph of 12 words or more) and 4 `changed_logic` (4.2 with 7 inserted words; Class A minimum amount; tax status; trust split). In `build-variance.ts` import `html`/`json` from `build-seeded.ts` ONLY lazily inside functions (circular import: `build-seeded.ts` imports `build-variance.ts`), or move the shared helpers into a small new module. `variance-demo-count` asserts the table. Append ONE line to `build-seeded.ts`; extend `check.ts` stray-file scan (slotted before its final `if (problems.length)` block; Intake's `make-package.ts` and `fixtures/package/**` are not touched).
 - [ ] H3. Append `fixtures/variance/` to `.prettierignore` (one line), then gate: `pnpm --filter @aduin/scripts fixtures:build` then `pnpm --filter @aduin/scripts fixtures:check` (twice in a row, second run produces no diff) and `pnpm lint` (prettier must not see generated fixtures).
+
+- [ ] H4. Package-01 test (D-S0-5, 2026-10-17): add `packages/core/test/unit/variance-package-01-northgate.test.ts`. Inputs: Fund III `fixtures/package/design/northgate-iii/01-NG3-Subscription-Agreement.docx` against the Fund II baseline `fixtures/package/design/northgate-iii/04-NG2-Subscription-Agreement-2024.docx`, both parsed through the shipped DOCX adapter (`@aduin/core/docx` subpath, as the existing `ingest-all-formats-docx` test does); NEVER read `samples/packages/` (design-owned, read-only; Intake's `fixtures:check` already guards the copy through `checksums.json`). Pins: shown = 7 with 3 `new` and 4 `changed_logic`; the RAW count is MEASURED at EXECUTE (the answer key says about 60 differing paragraphs and about 50 token-level hunks, not pinned) and then hand-pinned in the test and reported; cosmetic count and group count are recorded, not asserted beyond the 3 + 4 split. Row checks against answer key section B: V1 new 7A Source of Funds Verification (new); V2 4.3 table row Singapore (new); V3 new 10.4 Sanctions (new); V4 4.2 Beneficial Owners, 7 added words (changed_logic); V5 1.2 minimum Capital Commitment (changed_logic); V6 6.2 Tax Status "(select all that apply)" vs "(check one)" (changed_logic); V7 6.1 Investor Type trust rows (changed_logic). V2 (a DOCX table row), V6 (option text) and V7 (table rows) are UNVERIFIED against the engine; if a class or the 3 + 4 split differs from the key, record it as a finding in the phase report and a backlog note and keep that row's gate CONDITIONAL; never bend a rule or an expected value silently. Owner for V7 follows SPEC A9 (GP, D-S0-6): the key's Counsel expectation is a note, not an assertion. Gate: `pnpm --filter @aduin/core test variance-package-01-northgate` (added to Test Gates below). The authored corpus keeps the exact 214/7/207 pin and the R-01 chain.
 
 ### Section I - Wrap-up
 
@@ -175,7 +182,7 @@ Files directly modified or created: the Touchpoints list above (about 15 new sou
 1. Hunk count pin: merge granularity changes the count - test with a pair whose adjacent edits are 0, 1 and 2 tokens apart; the fixture count is pinned to the config, not to the algorithm default.
 2. Cosmetic misclassified: renumber whose target did not move = logic; date in operative text = logic; fund-name swap with 1 occurrence = logic; Units to Shares in a sentence that also adds a number = logic (guard wins).
 3. Facts shape: list and assertion encodings round-trip through `varianceMetaOf`; a nested array or object in facts must fail the adapter contract; a label with odd casing or a plural normalizes identically through `normalizeAssertionLabel`.
-4. Key leakage and gate off-equality: finding ids containing `@`, error findings must keep the plain key, gate with policy undefined byte-equal to legacy on all 2400 cells.
+4. Key leakage and gate off-equality: finding ids containing `@`, error findings must keep the plain key, gate with policy undefined byte-equal to legacy on all 2406 cells.
 
 ## Test Gates (exact commands; no `--` token; one token per call)
 
@@ -183,13 +190,13 @@ Files directly modified or created: the Touchpoints list above (about 15 new sou
 cd /Users/itsjiathao_/Skylab/itsjiathao/aduin-transaction
 pnpm --filter @aduin/scripts fixtures:build
 pnpm --filter @aduin/scripts fixtures:check
-for t in variance-rules-config-schema-and-provenance variance-classification-contract variance-seeded-recall-matrix variance-precision-measure variance-golden-05-06 variance-impact-from-graph-fixtures variance-impact-demo-4-2 variance-routing-table-matrix variance-demo-count variance-finding-adapter-contract variance-regression-scope-exists variance-ai-never-gates-core variance-gate-state-matrix variance-question-key-matrix variance-sheet-owner-and-template variance-determinism-repeat-run variance-no-llm-full-run; do pnpm --filter @aduin/core test "$t" || exit 1; done
+for t in variance-rules-config-schema-and-provenance variance-classification-contract variance-seeded-recall-matrix variance-precision-measure variance-golden-05-06 variance-impact-from-graph-fixtures variance-impact-demo-4-2 variance-routing-table-matrix variance-demo-count variance-package-01-northgate variance-finding-adapter-contract variance-regression-scope-exists variance-ai-never-gates-core variance-gate-state-matrix variance-question-key-matrix variance-sheet-owner-and-template variance-determinism-repeat-run variance-no-llm-full-run; do pnpm --filter @aduin/core test "$t" || exit 1; done
 ```
 
 Regression block (overlapping earlier surfaces):
 
 ```bash
-for t in diff-contract diff-determinism diff-pairs diff-perf gate-state-matrix sheet-contents contracts golden-05-06-drift sibling-clause-common-vs-differing security; do pnpm --filter @aduin/core test "$t" || exit 1; done
+for t in diff-contract diff-determinism diff-pairs diff-perf gate-state-matrix sheet-contents contracts golden-05-06-drift sibling-clause-common-vs-differing security package-gate-policy-matrix package-baseline-eligibility; do pnpm --filter @aduin/core test "$t" || exit 1; done
 pnpm --filter @aduin/core test:golden
 pnpm --filter @aduin/core test:corpus
 pnpm --filter @aduin/core typecheck
@@ -212,6 +219,7 @@ Note: the token `gate-state-matrix` also matches `variance-gate-state-matrix` (s
 | core/variance | Hybrid | contradicting recorded AI input changes nothing | `variance-ai-never-gates-core` (precondition: a hand-built or existing recorded AI findings array) | AC-V9 core | the browser flow (V2 e2e) |
 | core/counsel | Fully-automated | per-owner sheet filter unchanged without owner; masked `version_drift` template (G3) | `variance-sheet-owner-and-template` | AC-V12 and AC-V4 sheet path (core part) | web per-owner export (V4) |
 | scripts/fixtures | Fully-automated | generator deterministic, no stray files | `fixtures:build` then `fixtures:check` | corpus integrity | demo realism to a human (V5 agent-probe) |
+| core/variance (package 01) | Fully-automated | design Northgate III vs Fund II (real DOCX): 7 shown = 3 new + 4 changed_logic, raw measured then pinned; V2 table row, V6 option text, V7 table rows classified per the answer key or recorded as findings (a differing row stays CONDITIONAL with a backlog note, never a silent pass) | `pnpm --filter @aduin/core test variance-package-01-northgate` | AC-V4 corroboration on a real DOCX pair, AC-V2 | cosmetic group count (not pinned by the key); V7 owner (key says Counsel, SPEC A9 says GP: note only); other firms |
 | impact on real samples | Known-gap (named residual) | impact precision on real documents is unproven (investor-path ground truth backlog P2-2) | none | - | labelled "uncertain" in output; backlog stub `variance-impact-real-sample-ground-truth_NOTE_17-10-26.md` in `process/features/variance-management/backlog/`; gate for AC-V10 stays pinned by the authored fixtures, not claimed for real data |
 
 Failing stubs (TDD red-first, consumed by EXECUTE from the validate-contract): each Fully-automated scenario above starts as `test("should <scenario>", () => { throw new Error("NOT IMPLEMENTED - TDD stub for: <scenario>") })` in its named file.
@@ -224,7 +232,7 @@ Failing stubs (TDD red-first, consumed by EXECUTE from the validate-contract): e
 
 ## Blockers That Would Justify BLOCKED Status
 
-- Intake changed `computeGate` in a way that cannot take an optional 4th policy parameter additively (needs an Intake-owner decision).
+- Intake changed `computeGate` in a way that cannot take an optional 4th policy parameter additively (needs an Intake-owner decision). Step 0 observed NO change (`counsel/gate.ts:43`), so this is now only an EXECUTE-entry re-check.
 - Check A1 shows the alignment cannot supply an old-to-new number map and `keyA`/`keyB` derivation is unsound (renumber rule cannot be made positive); then VAR-COS-RENUMBER is dropped, renumber stays logic, and AC-V4 counts are re-pinned in a PLAN-SUPPLEMENT.
 - `record:author --check` reports drift caused by this phase (must not happen; stop and route to RESEARCH).
 
@@ -232,7 +240,7 @@ Failing stubs (TDD red-first, consumed by EXECUTE from the validate-contract): e
 
 Orchestrator reads this before deciding which subagent to spawn next. The canonical 7-step inner loop `R → I → P → PVL → E → EVL → UP` SKIPS SPEC.
 
-- [ ] 0. PRECONDITION - Intake feature closed; Step 0 re-sync done; Inner Loop Refresh Note written
+- [x] 0. PRECONDITION - Intake feature closed; Step 0 re-sync done; Inner Loop Refresh Note written (2026-10-17; Step 0 research, D-S0 decisions and this supplement also cover steps 1-3 for Phase 01: the orchestrator ticks 1-3 on receipt of `PHASE_COMPLETE: PLAN-SUPPLEMENT`)
 - [ ] 1. RESEARCH - research-agent: prior reports read; test context loaded; drift since plan checked
 - [ ] 2. INNOVATE - innovate-agent: approach decided (n/a if the DECISION still holds after Step 0)
 - [ ] 3. PLAN-SUPPLEMENT - plan-agent: existing phase plan updated (or "n/a - research clean")
@@ -251,6 +259,7 @@ Strategy (vc-agent-strategy-compare, PLAN-end): signals S2 (frozen-adjacent cont
 |---|---|---|
 | `variance-classification-contract` | Fully-Automated | AC-V2 |
 | `variance-demo-count` | Fully-Automated | AC-V4 (core part) |
+| `variance-package-01-northgate` | Fully-Automated | AC-V4 (package-01 corroboration), AC-V2 |
 | `variance-seeded-recall-matrix` | Fully-Automated | AC-V5 |
 | `variance-precision-measure` | Fully-Automated | AC-V6 |
 | `variance-golden-05-06` | Fully-Automated | AC-V7 |
@@ -267,7 +276,7 @@ Strategy (vc-agent-strategy-compare, PLAN-end): signals S2 (frozen-adjacent cont
 
 ## Test Infra Improvement Notes
 
-- Design-session packages under `samples/packages/` (answer keys with AC-V* mapping) are a candidate extra test input; Step 0 (c) decides reuse. Read-only.
+- Design-session packages: Step 0 (c) DECIDED (D-S0-5): package 01 becomes the extra core test `variance-package-01-northgate` (read from `fixtures/package/design/northgate-iii/`, never `samples/packages/`); packages 02 and 03 stay V5 inputs.
 - A shared Hartwell and Crane fixture builder is created here (`build-variance.ts`); Intake's synthetic package should reuse its output rather than author a second set (record in the umbrella dependency note).
 - Concurrent Playwright on port 4317 is not relevant in V1 (no browser), but this phase must not be EXECUTEd in parallel with another agent that edits `packages/core/src/index.ts`.
 
@@ -275,11 +284,15 @@ Strategy (vc-agent-strategy-compare, PLAN-end): signals S2 (frozen-adjacent cont
 
 - Selected plan file path: `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-phase-01-core-engine_PLAN_17-10-26.md`
 - Umbrella plan: `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp-umbrella_PLAN_17-10-26.md`
-- Last completed step: not started (EXECUTE held until the Intake feature closes)
-- Validate-contract status: pending
-- Next step: when Intake is closed, spawn vc-research-agent for Step 0 plus RESEARCH; then follow Phase Loop Progress. EXECUTE receives this one exact plan path.
+- Last completed step: Step 0 PLAN-SUPPLEMENT 2026-10-17 (Intake closed; Refresh Note written; not started otherwise)
+- Validate-contract status: outer-pvl contract below is INVALIDATED by the 2026-10-17 Inner Loop Refresh Note; inner PVL must re-run before EXECUTE
+- Next step: spawn vc-validate-agent for the inner PVL of this plan (loop step 4); then EXECUTE. EXECUTE receives this one exact plan path.
 - Validators for the plan artifact: `node .claude/skills/vc-generate-plan/scripts/validate-plan-artifact.mjs <this plan>` and `node .claude/skills/vc-generate-phase-program/scripts/validate-phase-stub.mjs <this plan>`.
 - Hard rules for every agent prompt: never run git stash, checkout, reset or restore; commit directly on main with conventional prefixes; never run git push in any phase (the user pushes); execution commits separate from process commits.
+
+## Inner Loop Refresh Note: 2026-10-17 — changed sections: header (Depends on), Step 0 (corrected names, new status paragraph with D-S0-5/6/8/9), Acceptance Criteria (AC-V4, AC-V11 rows), Entry Gate, Touchpoints, Public Contracts, Blast Radius, Implementation Checklist (H1, H2, new H4, edge case 4), Test Gates, Test Coverage Plan, Blockers, Phase Loop Progress, Verification Evidence, Test Infra Improvement Notes, Resume and Execution Handoff. Invalidates prior validate-contract.
+
+Written by the Step 0 PLAN-SUPPLEMENT at 2026-10-17 22:11 local, after this plan's outer-pvl contract (written 17:49 the same day). Basis `variance-mvp_STEP0-RESYNC_17-10-26.md`. New in this plan: checklist H4 and gate `variance-package-01-northgate` (D-S0-5); gate matrix wording 2400 -> 2406 cells; `build-package.ts` -> `make-package.ts`; Intake `check.ts` and star barrel observed in code; regression block gains `package-gate-policy-matrix` and `package-baseline-eligibility`; V7 owner stays GP (D-S0-6). Push rule restated (D-S0-8); untracked `.playwright-mcp/` and `.DS_Store` are not Variance's (D-S0-9). PVL-new concerns to check: the three package-01 rows that are UNVERIFIED against the DOCX table handling, and whether Intake's `structure/{headings,conditionals}.ts` edits moved unit keys used by `variance-golden-05-06`.
 
 ## Validate Contract
 
