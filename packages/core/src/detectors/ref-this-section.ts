@@ -3,6 +3,7 @@ import { buildFinding, patternKey } from '../findings/make-finding';
 import type { Finding } from '../findings/schema';
 import { labelOf } from '../structure/headings';
 import type { Detector, ExplainFacts } from './registry';
+import { fact } from './util';
 
 /**
  * R. ref-this-section (AC11): "this Section N" whose cited N differs from the
@@ -12,7 +13,7 @@ import type { Detector, ExplainFacts } from './registry';
 export const REF_THIS_SECTION_ID = 'ref-this-section';
 
 function explain(f: ExplainFacts): string {
-  return `The text says "${f.reference}" but it sits in Section ${f.enclosing_section} (${f.enclosing_title}); a self-reference should cite Section ${f.expected}.`;
+  return `The text says "${fact(f, 'reference', 'this Section')}" but it sits in Section ${fact(f, 'enclosing_section', '(unknown)')} (${fact(f, 'enclosing_title', 'untitled')}); a self-reference should cite Section ${fact(f, 'expected', 'the enclosing section')}.`;
 }
 
 export const refThisSection: Detector = {

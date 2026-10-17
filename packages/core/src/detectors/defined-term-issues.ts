@@ -116,12 +116,69 @@ interface Issue {
   detail: string;
 }
 
-export function termIssues(g: DocGraph): Issue[] {
+const WORD_RE = /[A-Za-z0-9_]+/g;
+
+/**
+ * F4 (bounded scan): word index built once per document, so each term only scans the blocks that
+ * contain its first word (exact case for uses, lowercase for capitalization variants) instead of
+ * every block. `\bTerm\b` can only match where the term's first \w-run is a whole word, so the
+ * results are identical to the full scan.
+ */
+export interface WordIndex {
+  exact: Map<string, number[]>;
+  lower: Map<string, number[]>;
+}
+
+export function buildWordIndex(texts: readonly string[]): WordIndex {
+  const exact = new Map<string, number[]>();
+  const lower = new Map<string, number[]>();
+  texts.forEach((t, i) => {
+    for (const m of t.matchAll(WORD_RE)) {
+      const w = m[0];
+      const e = exact.get(w);
+      if (!e) exact.set(w, [i]);
+      else if (e[e.length - 1] !== i) e.push(i);
+      const lw = w.toLowerCase();
+      const l = lower.get(lw);
+      if (!l) lower.set(lw, [i]);
+      else if (l[l.length - 1] !== i) l.push(i);
+    }
+  });
+  return { exact, lower };
+}
+
+/** Ascending block indices that can hold the term (null = term has no leading word; scan all). */
+export function candidateBlocks(
+  idx: WordIndex,
+  term: string,
+  caseInsensitive: boolean,
+): number[] | null {
+  const m = /^[A-Za-z0-9_]+/.exec(term);
+  if (!m) return null;
+  return (caseInsensitive ? idx.lower.get(m[0].toLowerCase()) : idx.exact.get(m[0])) ?? [];
+}
+
+/** Optional instrumentation for the bounded-scan gate. */
+export interface TermScanStats {
+  blocksScanned: number;
+}
+
+export function termIssues(g: DocGraph, stats?: TermScanStats): Issue[] {
   const s = g.structure;
   const defs = s.definedTerms.filter((d) => !isLabelCitation(g, d));
   const byTerm = new Map<string, DefinedTerm[]>();
-  for (const d of defs) byTerm.set(d.term, [...(byTerm.get(d.term) ?? []), d]);
+  for (const d of defs) {
+    const l = byTerm.get(d.term);
+    if (l) l.push(d);
+    else byTerm.set(d.term, [d]);
+  }
   const texts = s.blocks.map((_, i) => textOf(g, i));
+  const idx = buildWordIndex(texts);
+  const all = texts.map((_, i) => i);
+  const scan = (blocks: number[]) => {
+    if (stats) stats.blocksScanned += blocks.length;
+    return blocks;
+  };
   const issues: Issue[] = [];
   for (const [term, list] of [...byTerm.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1))) {
     const first = list[0]!;
@@ -150,8 +207,10 @@ export function termIssues(g: DocGraph): Issue[] {
     const scope = s.info[first.blockIndex]!.scope;
     const lastOfScope = s.scopes[s.scopes.indexOf(scope) + 1]?.startBlock ?? s.blocks.length;
     const inlineDef = first.form === 'paren' && scope.kind !== 'appendix' && scope.kind !== 'terms';
+    const exactBlocks = candidateBlocks(idx, term, false) ?? all;
     if (inlineDef && first.blockIndex < lastOfScope - 1) {
-      for (let i = scope.startBlock; i < first.blockIndex; i++) {
+      const early = exactBlocks.filter((i) => i >= scope.startBlock && i < first.blockIndex);
+      for (const i of scan(early)) {
         if (s.blocks[i]!.kind === 'heading') continue;
         let m: RegExpExecArray | null = null;
         for (const x of texts[i]!.matchAll(re)) {
@@ -177,7 +236,8 @@ export function termIssues(g: DocGraph): Issue[] {
     // unused: no use outside the definition spans
     if (!ABBREVIATION_RE.test(term)) {
       let used = false;
-      for (let i = 0; i < texts.length && !used; i++) {
+      for (const i of scan(exactBlocks)) {
+        if (used) break;
         re.lastIndex = 0;
         for (const m of texts[i]!.matchAll(re)) {
           const inDef = list.some(
@@ -204,7 +264,8 @@ export function termIssues(g: DocGraph): Issue[] {
     if (/\s/.test(term)) {
       const ci = new RegExp(`\\b${escapeRe(term)}\\b`, 'gi');
       let hit: Issue | undefined;
-      for (let i = 0; i < texts.length && !hit; i++) {
+      for (const i of scan(candidateBlocks(idx, term, true) ?? all)) {
+        if (hit) break;
         for (const m of texts[i]!.matchAll(ci)) {
           const v = m[0];
           if (v === term || v === v.toLowerCase() || v === v.toUpperCase()) continue;

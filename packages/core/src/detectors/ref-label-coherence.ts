@@ -4,6 +4,7 @@ import type { Finding } from '../findings/schema';
 import { labelOf } from '../structure/headings';
 import type { RefInfo, Scope } from '../structure/types';
 import type { Detector, ExplainFacts } from './registry';
+import { fact } from './util';
 
 /**
  * L. ref-label-coherence (AC12): "<noun window> indicated|specified|set forth|described in
@@ -147,7 +148,7 @@ export function scoreReference(g: DocGraph, r: RefInfo): LabelScore | null {
 }
 
 function explain(f: ExplainFacts): string {
-  return `"${f.noun_window}" is said to be in ${f.reference}, but that target is "${f.cited_label}" (fit ${f.cited_overlap}); it fits ${f.expected_target} better (fit ${f.expected_overlap}).`;
+  return `"${fact(f, 'noun_window', 'the cited words')}" is said to be in ${fact(f, 'reference', 'the cited target')}, but that target is "${fact(f, 'cited_label', '(missing)')}" (fit ${fact(f, 'cited_overlap', 'n/a')}); it fits ${fact(f, 'expected_target', 'another target')} better (fit ${fact(f, 'expected_overlap', 'n/a')}).`;
 }
 
 export const refLabelCoherence: Detector = {

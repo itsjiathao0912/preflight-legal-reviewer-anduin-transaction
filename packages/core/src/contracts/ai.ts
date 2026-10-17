@@ -11,9 +11,17 @@ export const AiCandidateSchema = z.object({
   section_path: z.array(z.string().max(300)).max(8),
   issue_class_hint: IssueClassSchema.optional(),
 });
+export type AiCandidate = z.infer<typeof AiCandidateSchema>;
+
+/** LLM task ids (Phase 05, additive). Plain tuple; the enum schema stays module-private (G9). */
+export const AI_TASK_IDS = ['clause-judgment', 'counsel-draft'] as const;
+export type AiTaskId = (typeof AI_TASK_IDS)[number];
+const AiTask = z.enum(AI_TASK_IDS);
 
 export const AiRequestSchema = z.object({
   v: z.literal(1),
+  /** Phase 05 additive: which registered LLM task to run (default clause-judgment). */
+  task: AiTask.default('clause-judgment'),
   law_firm_id: z.string().min(1).max(64).nullable(),
   candidates: z.array(AiCandidateSchema).min(1).max(limits.aiCandidates),
   settings: z.object({ model_tier: z.string().max(40).optional() }),
@@ -34,9 +42,17 @@ export const AiFindingSchema = z.object({
 });
 export type AiFinding = z.infer<typeof AiFindingSchema>;
 
+/** Counsel-question draft (Phase 05 additive; module-private, G9). */
+const AiDraft = z.object({
+  candidate_id: z.string().min(1).max(64),
+  text: z.string().min(1).max(1500),
+});
+
 export const AiResultSchema = z.object({
   v: z.literal(1),
   findings: z.array(AiFindingSchema),
+  /** Phase 05 additive: counsel-draft task output. */
+  drafts: z.array(AiDraft).max(limits.aiCandidates).optional(),
   usage: z
     .object({
       tokens_in: z.number().int().nonnegative().optional(),

@@ -126,6 +126,9 @@ export const EXCLUSIVITY_CUES: ReadonlyArray<RegExp> = [
   /check one box only/i,
   /\(circle one\)/i,
   /check all that apply/i,
+  // P2-4 (Phase 05): "(check one)" / "check one of the following" is an exclusivity cue too
+  // ("check one or more" is not).
+  /\(?\bcheck one\b\)?(?!\s+or\b)/i,
 ];
 
 export interface NoiseRemoval {

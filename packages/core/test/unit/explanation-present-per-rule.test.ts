@@ -31,4 +31,22 @@ describe('explanation-present-per-rule (AC9)', () => {
       }
     }
   });
+
+  it('P2-3: explain() is total on sparse facts for every detector (Phase 01 included)', () => {
+    const sparse: Array<Record<string, string | number | boolean | null>> = [
+      {},
+      { kind: null },
+      { reference: null, used_term: null, noun_window: '' },
+      { carve_out: 'Prospectus' },
+    ];
+    for (const d of detectors) {
+      for (const f of sparse) {
+        const s = d.explain(f);
+        expect(s.length, `${d.id} ${JSON.stringify(f)}`).toBeGreaterThan(10);
+        expect(s, `${d.id} ${JSON.stringify(f)}`).not.toMatch(
+          /\bundefined\b(?! terms)|\bnull\b|NaN/,
+        );
+      }
+    }
+  });
 });

@@ -71,3 +71,6 @@ export {
   type InvestorTypeRow,
   type InvestorGapRow,
 } from './structure-view/build';
+
+// --- Phase 05: LLM task framework (tasks registry, rules injection, verify chain, candidates) ---
+export * from './llm/index';

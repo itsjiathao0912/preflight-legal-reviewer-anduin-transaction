@@ -203,6 +203,14 @@
         },
         "type": "object"
       },
+      "task": {
+        "default": "clause-judgment",
+        "enum": [
+          "clause-judgment",
+          "counsel-draft"
+        ],
+        "type": "string"
+      },
       "v": {
         "const": 1,
         "type": "number"
@@ -219,6 +227,29 @@
   "ai.AiResultSchema": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "properties": {
+      "drafts": {
+        "items": {
+          "properties": {
+            "candidate_id": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            "text": {
+              "maxLength": 1500,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "candidate_id",
+            "text"
+          ],
+          "type": "object"
+        },
+        "maxItems": 40,
+        "type": "array"
+      },
       "ext": {
         "additionalProperties": {},
         "propertyNames": {
@@ -1171,6 +1202,29 @@
               },
               "data": {
                 "properties": {
+                  "drafts": {
+                    "items": {
+                      "properties": {
+                        "candidate_id": {
+                          "maxLength": 64,
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "text": {
+                          "maxLength": 1500,
+                          "minLength": 1,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "candidate_id",
+                        "text"
+                      ],
+                      "type": "object"
+                    },
+                    "maxItems": 40,
+                    "type": "array"
+                  },
                   "ext": {
                     "additionalProperties": {},
                     "propertyNames": {
@@ -1504,6 +1558,29 @@
           },
           "data": {
             "properties": {
+              "drafts": {
+                "items": {
+                  "properties": {
+                    "candidate_id": {
+                      "maxLength": 64,
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "text": {
+                      "maxLength": 1500,
+                      "minLength": 1,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "candidate_id",
+                    "text"
+                  ],
+                  "type": "object"
+                },
+                "maxItems": 40,
+                "type": "array"
+              },
               "ext": {
                 "additionalProperties": {},
                 "propertyNames": {

@@ -79,7 +79,13 @@ describe('structure-view-build (AC17)', () => {
     expect(overlap.options[0]!.findingId).not.toBeNull();
     expect(overlap.options[0]!.issue).toBe(true);
     const stated = view(seeded('option-gap-overlap/clean.html')).options.find((o) => o.cueStated)!;
-    expect(stated.cueText).toBe('check only one');
+    // P2-4 (Phase 05): "(check one)" is now a stated cue, so the first stated group is "Annual income"
+    expect(stated.cueText).toBe('(check one)');
+    expect(
+      view(seeded('option-gap-overlap/clean.html'))
+        .options.filter((o) => o.cueStated)
+        .map((o) => o.cueText),
+    ).toEqual(['(check one)', 'check only one']);
     expect(stated.howMany).toBe('one');
     const peer = view(seeded('investor-path-missing-item/peer-item.html'));
     const pship = peer.investors.types.find((t) => t.type === 'partnership')!;

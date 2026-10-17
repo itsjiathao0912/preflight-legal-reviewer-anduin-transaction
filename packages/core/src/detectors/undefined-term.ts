@@ -2,6 +2,7 @@ import type { DocGraph } from '../graph/graph';
 import { buildFinding, patternKey } from '../findings/make-finding';
 import type { Finding } from '../findings/schema';
 import type { Detector, ExplainFacts } from './registry';
+import { fact } from './util';
 
 /**
  * U. undefined-term (AC13): an offering-security noun used in an offering context that
@@ -33,9 +34,10 @@ export function family(term: string): string {
 }
 
 function explain(f: ExplainFacts): string {
-  const base = `"${f.used_term}" is used for the offered security (${f.contexts} place(s)), but the document defines the offered security as "${f.defined_term}" and never defines "${f.used_term}".`;
+  const used = fact(f, 'used_term', 'the term');
+  const base = `"${used}" is used for the offered security (${fact(f, 'contexts', 'some')} place(s)), but the document defines the offered security as "${fact(f, 'defined_term', 'another term')}" and never defines "${used}".`;
   return f.carve_out
-    ? `${base} The document says undefined terms take their meaning from the ${f.carve_out}, so it may be defined there.`
+    ? `${base} The document says undefined terms take their meaning from the ${fact(f, 'carve_out', 'referenced document')}, so it may be defined there.`
     : base;
 }
 
