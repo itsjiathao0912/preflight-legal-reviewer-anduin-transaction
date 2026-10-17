@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { limits } from '../config/limits';
 import { FindingWireSchema } from '../findings/schema';
 import { IssueClassSchema } from '../findings/taxonomy';
+import { OWNERS } from '../variance/types';
 import { ErrorDetailSchema } from './errors';
 
 /** Memory API contracts v1 (frozen at Phase 01 exit). */
@@ -43,6 +44,28 @@ export type ReasonCode = z.infer<typeof ReasonCodeSchema>;
 export const CounselOptionSchema = z.enum(['A', 'B', 'C', 'unclear']);
 export type CounselOption = z.infer<typeof CounselOptionSchema>;
 
+/** Variance (Phase 03): who should answer a question, and how that owner was chosen. */
+export const QuestionOwnerSchema = z.enum(OWNERS);
+export const OwnerSourceSchema = z.enum(['suggested', 'override']);
+/** Variance (Phase 03): `fund` = this fund only; `firm_template` = the firm's standard template. */
+export const AnswerScopeSchema = z.enum(['fund', 'firm_template']);
+export type AnswerScope = z.infer<typeof AnswerScopeSchema>;
+/** Variance (Phase 03): the one MVP regression assertion (label normalized server-side). */
+export const AnswerAssertionSchema = z.object({
+  kind: z.literal('scope_exists'),
+  label: z.string().min(1).max(80),
+});
+export type AnswerAssertion = z.infer<typeof AnswerAssertionSchema>;
+/** Variance (Phase 03): an active regression check returned inside the lookup response. */
+export const RegressionCheckSummarySchema = z.object({
+  id: Id,
+  assertion_kind: z.literal('scope_exists'),
+  assertion_key: z.string().min(1).max(80),
+  statement_text: z.string().min(1).max(300),
+  source_fund_name: z.string().max(200),
+});
+export type RegressionCheckSummary = z.infer<typeof RegressionCheckSummarySchema>;
+
 export const DecisionKindSchema = z.enum(['dismissed', 'accepted', 'answered']);
 export const DecisionStatusSchema = z.enum(['active', 'superseded', 'revoked']);
 
@@ -61,6 +84,8 @@ export const ActiveDecisionSchema = z.object({
   pattern_key: z.string().max(80).optional(),
   fund_name: z.string().max(200),
   doc_version_label: z.string().max(120).optional(),
+  intent: z.string().max(limits.intentMaxChars).optional(),
+  scope: AnswerScopeSchema.optional(),
   decided_by_name: Name,
   decided_at: z.number().int().nonnegative(),
 });
@@ -71,7 +96,13 @@ export const MemoryLookupRequestSchema = z.object({
   law_firm_id: z.string().min(1).max(64),
   fingerprints: z.array(HEX64).min(1).max(limits.memoryLookupMax),
 });
-export const MemoryLookupResponseSchema = z.object({ decisions: z.array(ActiveDecisionSchema) });
+export const MemoryLookupResponseSchema = z.object({
+  decisions: z.array(ActiveDecisionSchema),
+  regression_checks: z
+    .array(RegressionCheckSummarySchema)
+    .max(limits.regressionChecksPerFirm)
+    .optional(),
+});
 export type MemoryLookupRequest = z.infer<typeof MemoryLookupRequestSchema>;
 export type MemoryLookupResponse = z.infer<typeof MemoryLookupResponseSchema>;
 
@@ -147,6 +178,8 @@ export const CounselQuestionRequestSchema = z.object({
   finding_ref: Id,
   fingerprint: HEX64,
   interpretations: z.array(z.string().min(1).max(500)).min(1).max(6),
+  owner: QuestionOwnerSchema.optional(),
+  owner_source: OwnerSourceSchema.optional(),
 });
 export const CounselQuestionResponseSchema = z.object({ question_id: Id });
 export type CounselQuestionRequest = z.infer<typeof CounselQuestionRequestSchema>;
@@ -160,7 +193,18 @@ export const CounselAnswerRequestSchema = z.object({
   note: z.string().max(1000).optional(),
   quote_text: z.string().min(1).max(limits.quoteMaxChars),
   fingerprint: HEX64,
-});
+  intent: z.string().max(limits.intentMaxChars).optional(),
+  scope: AnswerScopeSchema.optional(),
+  assertion: AnswerAssertionSchema.optional(),
+})
+  .refine((a) => a.scope !== 'firm_template' || (a.intent ?? '').trim().length > 0, {
+    message: 'firm_template requires a non-blank intent',
+    path: ['intent'],
+  })
+  .refine((a) => a.assertion === undefined || a.scope === 'firm_template', {
+    message: 'assertion requires scope firm_template',
+    path: ['assertion'],
+  });
 export const CounselAnswerResponseSchema = z.object({
   answer_id: Id,
   decision: ActiveDecisionSchema,
@@ -216,6 +260,7 @@ export const AUDIT_ACTIONS = [
   'rule_rejected',
   'rule_revoked',
   'counsel_sheet_exported',
+  'regression_check_created',
 ] as const;
 export const AuditEventSchema = z.object({
   id: Id,

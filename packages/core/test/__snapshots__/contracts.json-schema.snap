@@ -1890,6 +1890,10 @@
         "minLength": 1,
         "type": "string"
       },
+      "intent": {
+        "maxLength": 500,
+        "type": "string"
+      },
       "issue_class": {
         "enum": [
           "broken_cross_reference",
@@ -1931,6 +1935,13 @@
         ],
         "type": "string"
       },
+      "scope": {
+        "enum": [
+          "fund",
+          "firm_template"
+        ],
+        "type": "string"
+      },
       "section_path": {
         "items": {
           "maxLength": 300,
@@ -1959,6 +1970,33 @@
     ],
     "type": "object"
   },
+  "memory.AnswerAssertionSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+      "kind": {
+        "const": "scope_exists",
+        "type": "string"
+      },
+      "label": {
+        "maxLength": 80,
+        "minLength": 1,
+        "type": "string"
+      }
+    },
+    "required": [
+      "kind",
+      "label"
+    ],
+    "type": "object"
+  },
+  "memory.AnswerScopeSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "enum": [
+      "fund",
+      "firm_template"
+    ],
+    "type": "string"
+  },
   "memory.AuditEventSchema": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "properties": {
@@ -1973,7 +2011,8 @@
           "rule_approved",
           "rule_rejected",
           "rule_revoked",
-          "counsel_sheet_exported"
+          "counsel_sheet_exported",
+          "regression_check_created"
         ],
         "type": "string"
       },
@@ -2059,7 +2098,8 @@
                 "rule_approved",
                 "rule_rejected",
                 "rule_revoked",
-                "counsel_sheet_exported"
+                "counsel_sheet_exported",
+                "regression_check_created"
               ],
               "type": "string"
             },
@@ -2177,6 +2217,10 @@
                 "minLength": 1,
                 "type": "string"
               },
+              "intent": {
+                "maxLength": 500,
+                "type": "string"
+              },
               "issue_class": {
                 "enum": [
                   "broken_cross_reference",
@@ -2215,6 +2259,13 @@
                   "no_form_impact",
                   "tool_false_alarm",
                   "other"
+                ],
+                "type": "string"
+              },
+              "scope": {
+                "enum": [
+                  "fund",
+                  "firm_template"
                 ],
                 "type": "string"
               },
@@ -2302,6 +2353,24 @@
   "memory.CounselAnswerRequestSchema": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "properties": {
+      "assertion": {
+        "properties": {
+          "kind": {
+            "const": "scope_exists",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "label"
+        ],
+        "type": "object"
+      },
       "client_op_id": {
         "maxLength": 64,
         "minLength": 8,
@@ -2309,6 +2378,10 @@
       },
       "fingerprint": {
         "pattern": "^[0-9a-f]{64}$",
+        "type": "string"
+      },
+      "intent": {
+        "maxLength": 500,
         "type": "string"
       },
       "note": {
@@ -2332,6 +2405,13 @@
       "quote_text": {
         "maxLength": 1000,
         "minLength": 1,
+        "type": "string"
+      },
+      "scope": {
+        "enum": [
+          "fund",
+          "firm_template"
+        ],
         "type": "string"
       }
     },
@@ -2402,6 +2482,10 @@
             "minLength": 1,
             "type": "string"
           },
+          "intent": {
+            "maxLength": 500,
+            "type": "string"
+          },
           "issue_class": {
             "enum": [
               "broken_cross_reference",
@@ -2440,6 +2524,13 @@
               "no_form_impact",
               "tool_false_alarm",
               "other"
+            ],
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "fund",
+              "firm_template"
             ],
             "type": "string"
           },
@@ -2514,6 +2605,21 @@
         "maxItems": 6,
         "minItems": 1,
         "type": "array"
+      },
+      "owner": {
+        "enum": [
+          "counsel",
+          "gp",
+          "fund_admin"
+        ],
+        "type": "string"
+      },
+      "owner_source": {
+        "enum": [
+          "suggested",
+          "override"
+        ],
+        "type": "string"
       }
     },
     "required": [
@@ -2682,6 +2788,10 @@
             "minLength": 1,
             "type": "string"
           },
+          "intent": {
+            "maxLength": 500,
+            "type": "string"
+          },
           "issue_class": {
             "enum": [
               "broken_cross_reference",
@@ -2720,6 +2830,13 @@
               "no_form_impact",
               "tool_false_alarm",
               "other"
+            ],
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "fund",
+              "firm_template"
             ],
             "type": "string"
           },
@@ -2859,7 +2976,8 @@
                 "rule_approved",
                 "rule_rejected",
                 "rule_revoked",
-                "counsel_sheet_exported"
+                "counsel_sheet_exported",
+                "regression_check_created"
               ],
               "type": "string"
             },
@@ -2963,6 +3081,10 @@
               "minLength": 1,
               "type": "string"
             },
+            "intent": {
+              "maxLength": 500,
+              "type": "string"
+            },
             "issue_class": {
               "enum": [
                 "broken_cross_reference",
@@ -3001,6 +3123,13 @@
                 "no_form_impact",
                 "tool_false_alarm",
                 "other"
+              ],
+              "type": "string"
+            },
+            "scope": {
+              "enum": [
+                "fund",
+                "firm_template"
               ],
               "type": "string"
             },
@@ -3190,6 +3319,10 @@
               "minLength": 1,
               "type": "string"
             },
+            "intent": {
+              "maxLength": 500,
+              "type": "string"
+            },
             "issue_class": {
               "enum": [
                 "broken_cross_reference",
@@ -3228,6 +3361,13 @@
                 "no_form_impact",
                 "tool_false_alarm",
                 "other"
+              ],
+              "type": "string"
+            },
+            "scope": {
+              "enum": [
+                "fund",
+                "firm_template"
               ],
               "type": "string"
             },
@@ -3418,6 +3558,10 @@
               "minLength": 1,
               "type": "string"
             },
+            "intent": {
+              "maxLength": 500,
+              "type": "string"
+            },
             "issue_class": {
               "enum": [
                 "broken_cross_reference",
@@ -3459,6 +3603,13 @@
               ],
               "type": "string"
             },
+            "scope": {
+              "enum": [
+                "fund",
+                "firm_template"
+              ],
+              "type": "string"
+            },
             "section_path": {
               "items": {
                 "maxLength": 300,
@@ -3488,12 +3639,68 @@
           "type": "object"
         },
         "type": "array"
+      },
+      "regression_checks": {
+        "items": {
+          "properties": {
+            "assertion_key": {
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            "assertion_kind": {
+              "const": "scope_exists",
+              "type": "string"
+            },
+            "id": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            "source_fund_name": {
+              "maxLength": 200,
+              "type": "string"
+            },
+            "statement_text": {
+              "maxLength": 300,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "assertion_kind",
+            "assertion_key",
+            "statement_text",
+            "source_fund_name"
+          ],
+          "type": "object"
+        },
+        "maxItems": 20,
+        "type": "array"
       }
     },
     "required": [
       "decisions"
     ],
     "type": "object"
+  },
+  "memory.OwnerSourceSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "enum": [
+      "suggested",
+      "override"
+    ],
+    "type": "string"
+  },
+  "memory.QuestionOwnerSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "enum": [
+      "counsel",
+      "gp",
+      "fund_admin"
+    ],
+    "type": "string"
   },
   "memory.ReasonCodeSchema": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3504,6 +3711,42 @@
       "other"
     ],
     "type": "string"
+  },
+  "memory.RegressionCheckSummarySchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+      "assertion_key": {
+        "maxLength": 80,
+        "minLength": 1,
+        "type": "string"
+      },
+      "assertion_kind": {
+        "const": "scope_exists",
+        "type": "string"
+      },
+      "id": {
+        "maxLength": 64,
+        "minLength": 1,
+        "type": "string"
+      },
+      "source_fund_name": {
+        "maxLength": 200,
+        "type": "string"
+      },
+      "statement_text": {
+        "maxLength": 300,
+        "minLength": 1,
+        "type": "string"
+      }
+    },
+    "required": [
+      "id",
+      "assertion_kind",
+      "assertion_key",
+      "statement_text",
+      "source_fund_name"
+    ],
+    "type": "object"
   },
   "memory.RevokeDecisionRequestSchema": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3580,6 +3823,10 @@
                 "minLength": 1,
                 "type": "string"
               },
+              "intent": {
+                "maxLength": 500,
+                "type": "string"
+              },
               "issue_class": {
                 "enum": [
                   "broken_cross_reference",
@@ -3618,6 +3865,13 @@
                   "no_form_impact",
                   "tool_false_alarm",
                   "other"
+                ],
+                "type": "string"
+              },
+              "scope": {
+                "enum": [
+                  "fund",
+                  "firm_template"
                 ],
                 "type": "string"
               },

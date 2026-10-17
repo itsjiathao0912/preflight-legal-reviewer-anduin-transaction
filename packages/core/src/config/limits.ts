@@ -48,6 +48,10 @@ export const limits = Object.freeze({
   quoteMaxChars: 1000,
   snippetMaxChars: 300,
   detailMaxChars: 2000,
+  /** Variance (Phase 03): active regression checks per firm per workspace (= rules config cap). */
+  regressionChecksPerFirm: 20,
+  /** Variance (Phase 03): analyst intent text on an answer or decision. */
+  intentMaxChars: 500,
   /** OCR page confidence below this is low-confidence. */
   ocrLowConfidence: 0.6,
   /** Session cookie. */
