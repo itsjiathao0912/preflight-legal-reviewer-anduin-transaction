@@ -40,6 +40,7 @@ V2 edits only `apps/web/src/{features/variance,features/review,state,engine,shel
 ## Phase 1
 Owns (creates): `packages/core/src/variance/**`, `packages/core/test/{unit,property,golden}/variance-*`, `fixtures/variance/**`, `scripts/src/fixtures/build-variance.ts`. Edits (additive): `packages/core/src/counsel/{gate,sheet,types,template-draft}.ts`, `packages/core/src/index.ts` (append), `packages/core/src/diff/index.ts` (ONLY if check A1 needs one export line), `scripts/src/fixtures/{build-seeded,check}.ts`. NOT touched: contracts, findings, taxonomy, detectors registry, firms, `apps/**`.
 status: planned
+status: DONE (2026-10-17; EVL green, commits 42b3ecb 7f0f355 d954511 789eb8f 0ee9fca; append-only, earlier line kept for history)
 
 ## Phase 2
 Owns (creates): `apps/web/src/features/variance/{types,baseline-source,variance-store,select,ChangeRow,ChangeDiff,ImpactLines,BaselineControl,BaselineModal,CosmeticGroups,NoBaselineLine}`, `apps/web/src/styles/variance.css`, `apps/web/test/variance-*`, `apps/web/e2e/variance-{baseline-from-package,baseline-same-firm-only,cosmetic-hidden-default,no-baseline-errors-only,ai-never-gates,render-first}.spec.ts`, `apps/web/e2e/fixtures/variance.ts`. Edits (additive): `apps/web/src/engine/{engine.worker,types,client}.ts`, `apps/web/src/state/{review,filters}.ts`, `apps/web/src/features/review/{FindingsScreen,use-review-view,model}`, `apps/web/src/shell/GateButton.tsx`, `apps/web/test/import-graph.test.ts` (append). NOT touched: counsel, gate, compare, memory, open-document, structure, api, storage, packages, worker.

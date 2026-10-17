@@ -1,6 +1,6 @@
 # aduin-transaction - All Context
 
-Last updated: 2026-10-17 (Fund Package Intake UPDATE PROCESS; code HEAD a4d7a34, process HEAD 6fb34fb)
+Last updated: 2026-10-17 (Variance Phase 01 UPDATE PROCESS; code HEAD 0ee9fca)
 
 This file is the root context entrypoint for the repo.
 
@@ -255,6 +255,7 @@ Secrets live outside the repo (see `CLAUDE.md` credentials table). Env var names
 
 Resolved: persistence is D1 (real `aduin-transaction-db`, live); Turnstile is live; the demo needs no account (read-only sandbox plus a sandbox copy per session).
 
+- **Variance program (feature `variance-management`, in progress):** Phase 01 core engine VERIFIED (17-10-26; `packages/core/src/variance/`, see `process/context/engine/all-engine.md`); Phases 02-05 pending; core suite now 3158 (+3 skip).
 - **Program status:** all phases are DONE (00-07, 08, 08b, 09, 10); Milestone 1 closed and live. No further phase is planned. Fund Package Intake (4 phases, `process/features/fund-package-intake/`) is also COMPLETE and live; its folder stays in `active/` until the operator residuals run. Test counts after Intake: core 3084 (+3 skip), web unit 298, preview e2e 217 (+1 skip), stack-memory 11, worker 526, scripts 162.
 - **Operator run (residual R2, backlog `process/general-plans/backlog/phase10-*_NOTE_17-10-26.md`):** with a human in a real browser, run the AC51 `rules_hash8` echo, the live AI/OCR sweep (max 3 AI per UTC day), AI timing at `max_tokens` 10000, and the D4 `rows_written` burst. Also capture demo screenshots 13-memory and 14-audit and record a manual keyboard pass. Residual R4: Turnstile iframe CSP with a human-solved challenge is unevidenced. Residual R-CSP-STYLE: `style-src 'unsafe-inline'` for Radix. Worker CPU p99 16 ms is above the 10 ms Free limit (observation).
 - **Open questions:** does Docxodus WASM run on Cloudflare Workers (not needed for the shipped DOCX path)? Which free OpenRouter vision model is good enough for live OCR (unproven, R2)? OpenRouter credits are not topped up; the paid fallback is unavailable.

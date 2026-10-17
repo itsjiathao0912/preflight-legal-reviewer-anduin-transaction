@@ -293,6 +293,15 @@ Whole suites, serial EVL: core 3084 (+3 skip), web unit 298, preview e2e 217 pas
 - **Flake hardening:** `intake-demo-packages` runs seven packages back to back (about 10 s alone) and is load-sensitive; its visibility wait is 30 s. Serialize e2e as before (one invocation, port 4317).
 - **Known gaps:** package Blocked path (no sub agreement) is unit-proven only (`package-gate-block-e2e-reach`); no live AI/OCR on packages (needs human Turnstile, `intake-operator-live-sweep`); `package-db-v2` proves the Dexie upgrade in fake-indexeddb only. Evidence pack: `process/features/fund-package-intake/active/intake-mvp_17-10-26/harness/phase-4`.
 
+## Variance Phase 01 gate tokens (core, HEAD 0ee9fca)
+
+Whole suites after Variance Phase 01, independent EVL: core 3158 (+3 skip; 118 files before the fix cycle), scripts 162, `test:golden` 98 (+3 skip), `test:corpus` 13. One token per call, no `--`.
+
+- **Core tokens (18, all `pnpm --filter @aduin/core test <token>`):** `variance-rules-config-schema-and-provenance`, `variance-classification-contract`, `variance-seeded-recall-matrix`, `variance-precision-measure`, `variance-golden-05-06`, `variance-impact-from-graph-fixtures`, `variance-impact-demo-4-2`, `variance-routing-table-matrix`, `variance-demo-count`, `variance-package-01-northgate`, `variance-finding-adapter-contract`, `variance-regression-scope-exists`, `variance-ai-never-gates-core` (Hybrid), `variance-gate-state-matrix`, `variance-question-key-matrix`, `variance-sheet-owner-and-template`, `variance-determinism-repeat-run`, `variance-no-llm-full-run`.
+- **Regression tokens to keep green:** `diff-contract`, `diff-determinism`, `diff-pairs`, `diff-perf`, `gate-state-matrix` (2415 = 2406 legacy + 9 variance), `sheet-contents`, `contracts`, `golden-05-06-drift`, `sibling-clause-common-vs-differing`, `security`, `package-gate-policy-matrix`, `package-baseline-eligibility`; plus `fixtures:check` (run after `fixtures:build`), `record:author --check`, `pnpm lint`, `pnpm typecheck`.
+- **Precision is asserted strictly:** `variance-precision-measure` counts page-label rows still shown as logic (limit 10%); measured 2.9% overall, 6.7% on #5 -> #6. Measured pins: demo 214 / 7 / 207, package 01 64 / 9, real #5 -> #6 163 raw / 15 shown.
+- **Reading printed measurements:** `pnpm --filter @aduin/core test <token>` hides vitest `console.log` lines; run `npx vitest run <file> --reporter=verbose --silent=false` inside `packages/core` to see recall/precision output.
+
 ## Debugging Quick Reference
 
 - **Worker tests fail to find bindings:** bindings come from `apps/worker/wrangler.jsonc`; the plugin config points at it.
