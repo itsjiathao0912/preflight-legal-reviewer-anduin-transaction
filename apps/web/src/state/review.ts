@@ -63,6 +63,24 @@ import {
 import { useSession } from './session';
 import { markUserIntent } from '../features/ai/turnstile';
 
+/** Why an Accept/Dismiss was not written to firm memory ('' when nothing to say). */
+export function memoryNotSavedNote(doc: { firmId: string | null } | null): string {
+  if (doc && !doc.firmId)
+    return 'Saved for this document only. Pick a law firm to remember this decision.';
+  if (writesDisabled()) return 'Read-only demo: not saved to memory.';
+  if (memoryDown()) return 'Memory unavailable: saved in this browser only.';
+  return '';
+}
+
+function withNote(
+  base: string,
+  created: string | null,
+  doc: { firmId: string | null } | null,
+): string {
+  const note = created === null ? memoryNotSavedNote(doc) : '';
+  return note ? `${base.trimEnd()} ${note}` : base;
+}
+
 export interface DocMeta {
   id: string;
   name: string;
@@ -718,7 +736,7 @@ export const useReview = create<ReviewState>((set, get) => {
         await writeTriage(id, { ...(prev ?? {}), status: 'accepted', decisionId: created });
       }
       get().showToast(
-        was ? 'Accept removed.' : 'Finding accepted.',
+        was ? 'Accept removed.' : withNote('Finding accepted.', created, get().doc),
         () => void restoreSnapshot(id, prev, created),
       );
     },
@@ -757,8 +775,14 @@ export const useReview = create<ReviewState>((set, get) => {
       const left = computeGate(buildRows(get().result?.findings ?? [], get().memory, get().triage))
         .reasons.length;
       get().showToast(
-        (wasRe ? 'Re-confirmed. ' : 'Dismissed. ') +
-          (left ? `${left} blocking reason${left > 1 ? 's' : ''} left.` : 'The gate is now Ready.'),
+        withNote(
+          (wasRe ? 'Re-confirmed. ' : 'Dismissed. ') +
+            (left
+              ? `${left} blocking reason${left > 1 ? 's' : ''} left.`
+              : 'The gate is now Ready.'),
+          created,
+          get().doc,
+        ),
         () => void restoreSnapshot(id, prev, created),
       );
       return next;

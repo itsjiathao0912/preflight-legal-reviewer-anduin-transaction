@@ -1,11 +1,23 @@
+import { readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
-import { gotoApp, openDialog, openSample } from './fixtures/app';
+import { gotoApp, openDialog, openSample, rowsLoc } from './fixtures/app';
 
-async function fill(page: Page, firm: string) {
+const RICH = readFileSync(
+  join(
+    resolve(import.meta.dirname, '..', '..', '..'),
+    'samples',
+    'sub-docs',
+    'raw',
+    '03-partners-group-pe-master-2019.htm',
+  ),
+);
+
+async function fill(page: Page, firm: string, html: string | Buffer = '<p>Section 1. Tagged.</p>') {
   await page.getByTestId('upload-input').setInputFiles({
     name: 'tagged.htm',
     mimeType: 'text/html',
-    buffer: Buffer.from('<p>Section 1. Tagged.</p>'),
+    buffer: typeof html === 'string' ? Buffer.from(html) : html,
   });
   await page.getByTestId('firm-combobox').fill(firm);
   await page.getByTestId('fund-input').fill('Growth Fund II');
@@ -38,11 +50,24 @@ test.describe('upload-firm-tagging', () => {
   test('"Other / no firm" opens with memory not applied', async ({ page }) => {
     await gotoApp(page);
     await openDialog(page);
-    await fill(page, 'Other / no firm');
+    await fill(page, 'Other / no firm', RICH);
     await expect(page.getByTestId('firm-hint')).toContainText('memory not applied');
     await page.getByTestId('open-submit').click();
     await expect(page.getByTestId('memory-not-applied')).toBeVisible();
+    await expect(page.getByTestId('memory-not-applied')).toContainText(
+      'open it again and pick a law firm',
+    );
     await expect(page.getByTestId('doc-switcher')).toContainText('No firm');
+    // Accept on a no-firm document is local only, and the toast says so
+    await expect(page.getByTestId('stage-status-button')).toContainText('Checks done', {
+      timeout: 60_000,
+    });
+    await expect(rowsLoc(page).first()).toBeVisible();
+    await rowsLoc(page).first().click();
+    await page.getByTestId('action-accept').click();
+    await expect(page.getByTestId('undo-toast')).toContainText(
+      'Pick a law firm to remember this decision.',
+    );
   });
 
   test('samples #3-#6 are pre-tagged to one firm', async ({ page }) => {
