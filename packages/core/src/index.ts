@@ -139,3 +139,6 @@ export {
   type OutlineDraft,
   type OutlineDraftOptions,
 } from './outline/index';
+
+// --- Phase 08 (S0): counsel gate + query sheet types (frozen; gate.ts / sheet.ts land in S1) ---
+export type * from './counsel/types';
