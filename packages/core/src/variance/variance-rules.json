@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.1",
+  "version": "2026.10.2",
   "tokenizer": "word-punct",
   "hunk": { "merge_gap_tokens": 1, "max_edit_length": 1500 },
   "new_min_words": 12,
@@ -50,6 +50,11 @@
       "label": "Case, spacing or punctuation"
     },
     { "id": "VAR-COS-MOVED", "class": "changed_cosmetic", "label": "Moved without change" },
+    {
+      "id": "VAR-COS-PAGE-LABEL",
+      "class": "changed_cosmetic",
+      "label": "Page label or page number on its own line"
+    },
     { "id": "VAR-REG-SCOPE-EXISTS", "class": "regression", "label": "Required scope is missing" }
   ],
   "guards": {

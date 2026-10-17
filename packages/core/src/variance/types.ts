@@ -39,6 +39,7 @@ export const RULE_IDS = [
   'VAR-COS-RENAME',
   'VAR-COS-FORMAT',
   'VAR-COS-MOVED',
+  'VAR-COS-PAGE-LABEL',
   'VAR-REG-SCOPE-EXISTS',
 ] as const;
 export type RuleId = (typeof RULE_IDS)[number];

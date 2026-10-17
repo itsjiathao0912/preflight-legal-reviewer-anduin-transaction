@@ -62,6 +62,41 @@ export function acceptsRenumber(h: Hunk, ctx: CosmeticContext): boolean {
   return before !== undefined && ctxWords.includes(before);
 }
 
+/** A page label ("B-1", "D-12"): EDGAR page footers. */
+const PAGE_LABEL = /^[A-Z]{1,2}-\d{1,3}$/;
+
+/** `text[start..end)` is one whole line: only blanks between it and a line break / the text edge. */
+function isOwnLine(text: string | undefined, start: number, end: number): boolean {
+  if (!text || start < 0 || end > text.length || start >= end) return false;
+  const before = text.slice(0, start);
+  const after = text.slice(end);
+  return /(?:^|\n)[ \t]*$/.test(before) && /^[ \t]*(?:\n|$)/.test(after);
+}
+
+/**
+ * Page label (EVL fix cycle 1): every changed side is exactly one page-label token standing alone
+ * on its own line (a footer like "B-1" dropped or re-lettered). Bare page numbers are
+ * already removed by the adapter page-noise pass, so they are not matched here. A label inside a sentence
+ * ("see Annex B-1") or next to other changed words is never accepted: unknown means logic.
+ */
+export function acceptsPageLabel(h: Hunk, ctx: CosmeticContext): boolean {
+  if (h.whole || h.kind === 'move' || h.truncated) return false;
+  if (h.oldTokens.length > 1 || h.newTokens.length > 1) return false;
+  if (h.oldTokens.length + h.newTokens.length === 0) return false;
+  const side = (tokens: string[], text: string | undefined, start: number, end: number) => {
+    if (tokens.length === 0) return true;
+    const tok = tokens[0]!;
+    if (!PAGE_LABEL.test(tok) || !text) return false;
+    if (text.slice(start, end).trim() !== tok) return false;
+    const at = text.indexOf(tok, start);
+    return isOwnLine(text, at, at + tok.length);
+  };
+  return (
+    side(h.oldTokens, ctx.textA.get(h.unitKeyA ?? ''), h.oldStart, h.oldEnd) &&
+    side(h.newTokens, ctx.textB.get(h.unitKeyB ?? ''), h.newStart, h.newEnd)
+  );
+}
+
 /** Cover / header date (G2): unit is a scope preamble; changed tokens are date parts only. */
 export function acceptsDate(h: Hunk, ctx: CosmeticContext): boolean {
   if (h.kind !== 'replace' || h.whole) return false;

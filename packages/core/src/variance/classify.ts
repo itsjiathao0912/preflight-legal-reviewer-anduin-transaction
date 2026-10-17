@@ -3,6 +3,7 @@ import {
   acceptsDate,
   acceptsFormat,
   acceptsName,
+  acceptsPageLabel,
   acceptsRename,
   acceptsRenumber,
   nameSwapShape,
@@ -17,8 +18,9 @@ import type { ClassifiedHunk, Hunk, RuleId } from './types';
  *     `new_min_words` words -> new (VAR-NEW-INSERTION)
  *  2. logic guards on the CHANGED tokens only. G2: a hunk whose only digits are a section number
  *     mapped by the alignment (VAR-COS-RENUMBER) or a cover/header date (VAR-COS-DATE) has those
- *     digits removed from the guarded set first; every other guard still wins
- *  3. positive cosmetic rules: renumber / date (if accepted above), format, name, rename
+ *     digits removed from the guarded set first; every other guard still wins. The same exemption
+ *     applies to a lone page label on its own line (VAR-COS-PAGE-LABEL, EVL fix cycle 1)
+ *  3. positive cosmetic rules: renumber / date / page label (if accepted above), format, name, rename
  *  4. default -> changed_logic (VAR-LOGIC-DEFAULT). Unknown means logic.
  */
 
@@ -67,7 +69,9 @@ export function classifyHunk(h: Hunk, ctx: CosmeticContext): ClassifiedHunk {
     ? 'VAR-COS-RENUMBER'
     : acceptsDate(h, ctx)
       ? 'VAR-COS-DATE'
-      : undefined;
+      : acceptsPageLabel(h, ctx)
+        ? 'VAR-COS-PAGE-LABEL'
+        : undefined;
   const guard = guardHit(h, ctx, digitRule !== undefined);
   if (guard) return out('changed_logic', guard);
   // step 3
