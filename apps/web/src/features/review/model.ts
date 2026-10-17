@@ -1,7 +1,9 @@
 import type {
   ActiveDecision,
+  AnswerScope,
   CounselOption,
   MemoryLabel,
+  Owner,
   ReasonCode,
   VarianceGatePolicy,
 } from '@aduin/core';
@@ -26,6 +28,26 @@ export interface Triage {
   decisionId?: string | null;
   /** Phase 08: memory decision written by the recorded counsel answer (revoked on undo). */
   answerId?: string | null;
+  /**
+   * Variance P04 (change findings): per-owner answers. A key PRESENT = that owner was asked (written
+   * at the Ask click); `null` = asked, no answer yet. Authoritative for the gate; `counselAnswer` is
+   * never written for a change finding.
+   */
+  ownerAnswers?: Partial<Record<Owner, CounselOption | null>>;
+  /** Variance P04 (H7): each owner's `pending:` or real answer decision id (revoked per owner). */
+  ownerAnswerIds?: Partial<Record<Owner, string | null>>;
+  /** Variance P04: who / when / note / intent / scope recorded with each owner's answer. */
+  ownerAnswerInfo?: Partial<Record<Owner, OwnerAnswerInfo>>;
+  /** Variance P04: `override` when the analyst changed the suggested owner before asking. */
+  ownerSource?: 'suggested' | 'override';
+}
+
+export interface OwnerAnswerInfo {
+  by: string;
+  at: number;
+  note?: string;
+  intent?: string;
+  scope?: AnswerScope;
 }
 
 export interface Row {
@@ -127,7 +149,12 @@ export function counselCount(rows: readonly Row[]): number {
 export function computeGate(rows: readonly Row[], policy?: VarianceGatePolicy): GateResult {
   const states: Record<
     string,
-    { status: TriageStatus; reasonCode?: string | null; counselAnswer?: CounselOption | null }
+    {
+      status: TriageStatus;
+      reasonCode?: string | null;
+      counselAnswer?: CounselOption | null;
+      ownerAnswers?: Partial<Record<Owner, CounselOption | null>>;
+    }
   > = {};
   const labels: Record<string, MemoryLabel> = {};
   for (const r of rows) {
@@ -135,6 +162,7 @@ export function computeGate(rows: readonly Row[], policy?: VarianceGatePolicy): 
       status: r.status,
       reasonCode: r.triage?.reasonCode ?? null,
       counselAnswer: r.triage?.counselAnswer ?? null,
+      ...(r.triage?.ownerAnswers ? { ownerAnswers: r.triage.ownerAnswers } : {}),
     };
     labels[r.f.id] = r.label;
   }

@@ -27,7 +27,7 @@ export const features: readonly FeatureModule[] = [
   { id: 'findings', label: 'Findings', group: 'review', icon: 'list', component: FindingsScreen },
   {
     id: 'counsel',
-    label: 'Counsel questions',
+    label: 'Questions',
     group: 'review',
     icon: 'counsel',
     component: placeholder('counsel', 'Counsel questions'),
@@ -71,9 +71,10 @@ export const features: readonly FeatureModule[] = [
     component: CompareScreen,
   },
   // Phase 08: the real #counsel view replaces the placeholder (last entry with an id wins)
+  // Variance P04: label renamed "Questions" (route hash unchanged, deep links keep working)
   {
     id: 'counsel',
-    label: 'Counsel questions',
+    label: 'Questions',
     group: 'review',
     icon: 'counsel',
     component: CounselScreen,

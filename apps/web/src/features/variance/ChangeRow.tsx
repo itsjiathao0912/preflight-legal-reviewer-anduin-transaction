@@ -5,6 +5,8 @@ import type { Row } from '../review/model';
 import { reasonLabel } from '../review/reasons';
 import { ChangeDiff } from './ChangeDiff';
 import { ImpactLines } from './ImpactLines';
+import { CHANGE_OWNER_FIRST, OwnerChip, OwnerSelect, useRowOwners } from './OwnerChip';
+import { useVariance } from './variance-store';
 import '../../styles/variance.css';
 
 const OWNER_LABEL: Record<Owner, string> = {
@@ -24,7 +26,7 @@ export function ownerLabel(owners: readonly Owner[]): string {
  */
 export function ChangeRow({
   r,
-  meta,
+  meta: passMeta,
   selected,
   baselineLabel,
   currentLabel,
@@ -41,8 +43,13 @@ export function ChangeRow({
   const needsCounsel = useReview((s) => s.needsCounsel);
   const restore = useReview((s) => s.restore);
   const f = r.f;
+  // Variance P04: regression findings carry their meta in the regression slot (no baseline needed)
+  const regMeta = useVariance((s) => s.regression?.meta[r.f.id]);
+  const meta = passMeta ?? regMeta;
   const isNew = meta?.change_type === 'new';
-  const owners = meta?.owners ?? [];
+  const isReg = meta?.kind === 'regression';
+  const own = useRowOwners(r, meta);
+  const youOnly = own.owners.length === 0 && r.status !== 'counsel';
   return (
     <li className={`row${selected ? ' sel' : ''}${r.status === 'dismissed' ? ' done' : ''}`}>
       <button
@@ -57,16 +64,14 @@ export function ChangeRow({
         onClick={() => select(f.id)}
       >
         <span className={isNew ? 'ct ct-new' : 'ct ct-logic'} data-testid="change-type">
-          {isNew ? 'New' : 'Logic'}
+          {isNew ? 'New' : isReg ? 'Regression' : 'Logic'}
           <span className="sr">: change vs baseline. </span>
         </span>
         <span className="t" title={f.title} data-testid="finding-title">
           {f.title}
         </span>
         <span className="rm">
-          <span className="ochip" data-testid="owner-chip">
-            {ownerLabel(owners)}
-          </span>
+          <OwnerChip r={r} meta={meta} />
           {r.status === 'counsel' ? (
             <span title="Asked owner">
               <Icon name="counsel" />
@@ -85,7 +90,8 @@ export function ChangeRow({
       {selected ? (
         <div className="rbody" data-testid="finding-body">
           <p className="sub2">
-            <b>{isNew ? 'New' : 'Changed logic'}</b> · Change vs baseline · {f.loc}
+            <b>{isNew ? 'New' : isReg ? 'Regression' : 'Changed logic'}</b> ·{' '}
+            {isReg ? 'Firm-template check' : 'Change vs baseline'} · {f.loc}
           </p>
           <ChangeDiff
             oldText={meta?.old_text ?? ''}
@@ -94,11 +100,7 @@ export function ChangeRow({
             currentLabel={currentLabel}
           />
           <ImpactLines impact={meta?.impact ?? null} />
-          {meta?.owner_reason ? (
-            <p className="mut" data-testid="owner-reason">
-              Suggested owner: {ownerLabel(owners)}. {meta.owner_reason}
-            </p>
-          ) : null}
+          <OwnerSelect r={r} meta={meta} />
           <div className="prov">
             <span data-testid="change-provenance">
               <Icon name="rule" />
@@ -137,7 +139,9 @@ export function ChangeRow({
                 type="button"
                 data-testid="action-counsel"
                 aria-pressed={r.status === 'counsel'}
-                onClick={() => void needsCounsel(f.id)}
+                disabled={youOnly}
+                title={youOnly ? CHANGE_OWNER_FIRST : undefined}
+                onClick={() => void needsCounsel(f.id, { owners: own.owners, source: own.source })}
               >
                 <Icon name="counsel" />
                 Ask owner

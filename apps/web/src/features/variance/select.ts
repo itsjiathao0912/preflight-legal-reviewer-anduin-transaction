@@ -1,7 +1,8 @@
-import type { CosmeticGroup, VarianceGatePolicy } from '@aduin/core';
+import type { CosmeticGroup, Owner, VarianceGatePolicy, VarianceMeta } from '@aduin/core';
 import type { FindingView } from '../../engine/types';
 import { computeGate, hasNoText, type Row } from '../review/model';
 import type { SevKey } from '../review/severity';
+import { askedOwners, ownerCounts, questionItems } from './owner-groups';
 
 /**
  * Variance Phase 02: the ONE counts selector shared by the Findings segment, the header counts, the
@@ -26,6 +27,29 @@ export function setVarianceSource(fn: () => VarianceSlice): void {
 
 export function varianceSlice(): VarianceSlice {
   return source();
+}
+
+/** Variance P04 (E1): regression findings of one document (local; never sent as new findings). */
+export interface RegressionSlice {
+  docId: string;
+  findings: readonly FindingView[];
+  meta: Readonly<Record<string, VarianceMeta>>;
+}
+
+/**
+ * Change-kind rows of the open document: the variance pass rows (only when the pass for THIS
+ * document is ready) plus the regression findings of THIS document (independent of a baseline).
+ */
+export function changeFindings(
+  pass: readonly FindingView[] | null,
+  regression: RegressionSlice | null,
+  docId: string | null,
+): FindingView[] {
+  const reg = regression && docId && regression.docId === docId ? regression.findings : [];
+  const out = [...(pass ?? [])];
+  const seen = new Set(out.map((f) => f.id));
+  for (const f of reg) if (!seen.has(f.id)) out.push(f);
+  return out;
 }
 
 export function isChange(r: Row): boolean {
@@ -81,7 +105,13 @@ export interface ReviewCounts {
   changesOpen: number;
   /** Sidebar Findings badge: open rows (errors + changes). */
   open: number;
+  /**
+   * Sidebar Questions badge: error findings marked Needs counsel (unchanged rule) plus one per asked
+   * owner of each change finding (question keys, P04).
+   */
   counsel: number;
+  /** Variance P04: unanswered questions per owner (Questions tabs). */
+  owners: Record<Owner, number>;
   /** Gate reasons (header "block digitization", pill badge before package reasons). */
   blocked: number;
 }
@@ -117,7 +147,17 @@ export function reviewCounts(
     errorsOpen,
     changesOpen,
     open: errorsOpen + changesOpen,
-    counsel: rows.filter((r) => r.status === 'counsel').length,
+    counsel: rows.reduce(
+      (n, r) =>
+        n +
+        (isChange(r)
+          ? Math.max(askedOwners(r.triage).length, r.status === 'counsel' ? 1 : 0)
+          : r.status === 'counsel'
+            ? 1
+            : 0),
+      0,
+    ),
+    owners: ownerCounts(questionItems(rows)),
     blocked: gate.reasons.length,
   };
 }

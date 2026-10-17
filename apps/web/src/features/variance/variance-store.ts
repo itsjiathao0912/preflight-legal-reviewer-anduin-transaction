@@ -3,6 +3,7 @@ import { e2eVarianceSettings } from '../../e2e-hook';
 import { runVarianceInWorker } from '../../engine/client';
 import type { EngineResult } from '../../engine/types';
 import { usePackage } from '../../state/package';
+import { startRegression } from './regression-client';
 import { useReview, type DocMeta } from '../../state/review';
 import {
   becomeFirmBaseline,
@@ -12,7 +13,12 @@ import {
   setBaseline,
   type SetBaselineResult,
 } from './baseline-source';
-import { setVarianceSource, type VarianceSlice } from './select';
+import {
+  changeFindings,
+  setVarianceSource,
+  type RegressionSlice,
+  type VarianceSlice,
+} from './select';
 import {
   BYTES_GONE_LINE,
   ERROR_LINE,
@@ -45,6 +51,10 @@ export interface VarianceState {
   line: string | null;
   result: VarianceView | null;
   candidates: BaselineRef[];
+  /** Variance P04 (E1): regression findings of the open document (independent of a baseline). */
+  regression: RegressionSlice | null;
+  /** Store the regression findings of a document (dropped when another document is open). */
+  setRegression: (r: RegressionSlice) => void;
   /** Start a pass for the open document (normally called by the review subscription). */
   run: (doc: DocMeta, result: EngineResult) => Promise<void>;
   /** Change the baseline from the header modal, then re-run. */
@@ -83,6 +93,7 @@ const IDLE = {
   line: null,
   result: null,
   candidates: [] as BaselineRef[],
+  regression: null as RegressionSlice | null,
 };
 
 export const useVariance = create<VarianceState>((set, get) => {
@@ -100,16 +111,25 @@ export const useVariance = create<VarianceState>((set, get) => {
     run: async (doc, engineResult) => {
       const id = ++runSeq;
       clearTimer();
+      // a re-run (baseline change) keeps this document's regression findings
+      const keepReg = get().regression?.docId === doc.id ? get().regression : null;
       // unknown firm means no baseline: settle synchronously (no pending display at all)
       if (!doc.firmId) {
-        set({ ...IDLE, runId: id, docId: doc.id, status: 'none' });
+        set({ ...IDLE, regression: keepReg, runId: id, docId: doc.id, status: 'none' });
         return;
       }
       if (isScanResult(engineResult) || engineResult.blocks.length === 0) {
-        set({ ...IDLE, runId: id, docId: doc.id, status: 'none', line: SCAN_CURRENT_LINE });
+        set({
+          ...IDLE,
+          regression: keepReg,
+          runId: id,
+          docId: doc.id,
+          status: 'none',
+          line: SCAN_CURRENT_LINE,
+        });
         return;
       }
-      set({ ...IDLE, runId: id, docId: doc.id, status: 'resolving' });
+      set({ ...IDLE, regression: keepReg, runId: id, docId: doc.id, status: 'resolving' });
       timer = setTimeout(() => {
         if (live(id) && isPending(get())) {
           runSeq++;
@@ -193,6 +213,11 @@ export const useVariance = create<VarianceState>((set, get) => {
       return candidates;
     },
 
+    setRegression: (r) => {
+      if (useReview.getState().doc?.id !== r.docId) return;
+      set({ regression: r });
+    },
+
     reset: () => {
       runSeq++;
       clearTimer();
@@ -212,9 +237,11 @@ export function varianceLines(s: Pick<VarianceState, 'line' | 'ignored'>): strin
 function slice(): VarianceSlice {
   const s = useVariance.getState();
   const doc = useReview.getState().doc;
-  if (s.status !== 'ready' || !s.result || !doc || s.docId !== doc.id)
-    return { findings: [], policy: undefined };
-  return { findings: s.result.findings, policy: s.result.gatePolicy };
+  const ready = s.status === 'ready' && !!s.result && !!doc && s.docId === doc.id;
+  return {
+    findings: changeFindings(ready ? s.result!.findings : null, s.regression, doc?.id ?? null),
+    policy: ready ? s.result!.gatePolicy : undefined,
+  };
 }
 setVarianceSource(slice);
 
@@ -236,6 +263,10 @@ useReview.subscribe((next, prev) => {
   if (next.phase === 'ready' && prev.phase !== 'ready' && next.doc && next.result) {
     lastBaselineKey = baselineKey();
     void useVariance.getState().run(next.doc, next.result);
+    // Variance P04 (E1): firm regression checks, in the background (never blocks first paint)
+    void startRegression(next.doc, next.result.findings, (r) =>
+      useVariance.getState().setRegression(r),
+    );
   }
 });
 

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useFilters } from '../../state/filters';
 import { useReview } from '../../state/review';
-import { mergeFindings, reviewCounts, reviewGate } from '../variance/select';
+import { changeFindings, mergeFindings, reviewCounts, reviewGate } from '../variance/select';
 import { isPending, useVariance } from '../variance/variance-store';
 import { buildRows, placement, visibleRows } from './model';
 
@@ -21,10 +21,12 @@ export function useReviewView() {
   const vStatus = useVariance((s) => s.status);
   const vResult = useVariance((s) => s.result);
   const vDoc = useVariance((s) => s.docId);
+  const vReg = useVariance((s) => s.regression);
   return useMemo(() => {
     // Variance P02: change rows join only when the pass for THIS document is ready
     const ready = vStatus === 'ready' && vResult !== null && vDoc === docId;
-    const changes = ready ? vResult.findings : [];
+    // Variance P04: regression findings of this document join with or without a baseline
+    const changes = changeFindings(ready ? vResult.findings : null, vReg, docId);
     const policy = ready ? vResult.gatePolicy : undefined;
     const rows = buildRows(mergeFindings(result?.findings ?? [], changes), memory, triage);
     const { main, previous } = placement(rows);
@@ -42,6 +44,7 @@ export function useReviewView() {
       counsel: counts.counsel,
       counts,
       hasChanges: changes.length > 0,
+      regressionMeta: vReg && vReg.docId === docId ? vReg.meta : {},
       variance: ready ? vResult : null,
       variancePending: isPending({ status: vStatus }) && vDoc === docId,
       gate,
@@ -61,5 +64,6 @@ export function useReviewView() {
     vStatus,
     vResult,
     vDoc,
+    vReg,
   ]);
 }

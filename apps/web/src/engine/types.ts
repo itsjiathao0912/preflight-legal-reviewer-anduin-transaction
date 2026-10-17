@@ -10,6 +10,7 @@ import type {
   OutlineDraft,
   PackageFacts,
   PrimaryFacts,
+  RegressionCheck,
   Region,
   StructureView,
   VarianceMeta,
@@ -243,6 +244,23 @@ export interface RunVarianceInput {
   currentSide: VarianceSideRef;
 }
 
+/**
+ * Variance Phase 04 (E2, H4): regression checks against the open document. `docHash` selects the
+ * retained graph (LRU of 2); `input` is the remembered analyze input used only when the graph was
+ * evicted (text formats).
+ */
+export interface RunRegressionRef {
+  docHash: string;
+  input?: Exclude<AnalyzeInput, { kind: 'ocr' }>;
+}
+
+/** Violated checks as change-kind views plus their worker-decoded meta; code-only failure. */
+export type RunRegressionResponse =
+  | { ok: true; findings: FindingView[]; meta: Record<string, VarianceMeta> }
+  | { ok: false; code: 'doc_not_retained' | 'invalid_request' | string };
+
+export type { RegressionCheck };
+
 /** Plain JSON variance result (structured-clone safe); the rules fields are loaded in the worker. */
 export interface VarianceView {
   findings: FindingView[];
@@ -300,4 +318,12 @@ export interface EngineApi {
    * memory; never throws across Comlink.
    */
   runVariance(input: RunVarianceInput, settings: EngineSettings): Promise<RunVarianceResponse>;
+  /**
+   * Variance Phase 04 (E2): run firm regression checks (core runRegressionChecks) on the retained
+   * graph of `ref.docHash`, else on `ref.input`; `doc_not_retained` when neither exists. Never throws.
+   */
+  runRegression(
+    ref: RunRegressionRef,
+    checks: readonly RegressionCheck[],
+  ): Promise<RunRegressionResponse>;
 }

@@ -7,6 +7,9 @@ import type {
   EngineResult,
   EngineSettings,
   ReadPackageDocResponse,
+  RegressionCheck,
+  RunRegressionRef,
+  RunRegressionResponse,
   RunVarianceInput,
   RunVarianceResponse,
   StageReport,
@@ -43,12 +46,37 @@ export async function analyzeInWorker(
 ): Promise<EngineResult> {
   let send: AnalyzeInput | Uint8Array = input;
   if (ArrayBuffer.isView(input)) send = inputOf.get(input) ?? input;
-  return engine().analyze(send, settings, Comlink.proxy(onStage));
+  const result = await engine().analyze(send, settings, Comlink.proxy(onStage));
+  // Variance P04 (E1): remember what this document was read from (regression re-read)
+  rememberDocInput(result.docHash, send);
+  return result;
 }
 
 /** Remember which analyze input a byte buffer stands for (re-analysis after LRU eviction). */
 export function rememberInput(bytes: Uint8Array, input: AnalyzeInput): void {
   inputOf.set(bytes, input);
+}
+
+/**
+ * Variance Phase 04 (E1): the analyze input of the last few opened documents by docHash, so a
+ * regression check can re-read a document whose graph the worker evicted (LRU of 2). Text formats
+ * only (an OCR input cannot be re-read without the OCR pass); bounded to 4 documents.
+ */
+const DOC_INPUTS = 4;
+const inputByDoc = new Map<string, Exclude<AnalyzeInput, { kind: 'ocr' }>>();
+
+export function rememberDocInput(docHash: string, from: AnalyzeInput | Uint8Array): void {
+  const input: AnalyzeInput = ArrayBuffer.isView(from)
+    ? (inputOf.get(from) ?? { kind: 'html', bytes: from })
+    : from;
+  if (!docHash || input.kind === 'ocr') return;
+  inputByDoc.delete(docHash);
+  inputByDoc.set(docHash, input);
+  while (inputByDoc.size > DOC_INPUTS) inputByDoc.delete(inputByDoc.keys().next().value!);
+}
+
+export function docInputOf(docHash: string): Exclude<AnalyzeInput, { kind: 'ocr' }> | undefined {
+  return inputByDoc.get(docHash);
 }
 
 /** Phase 05: verify an AI result against a retained document (plain strings in, FindingViews out). */
@@ -97,5 +125,17 @@ export async function runVarianceInWorker(
     return await engine().runVariance(input, settings);
   } catch {
     return { ok: false, side: 'pass', code: 'unknown' };
+  }
+}
+
+/** Variance Phase 04 (E2): regression checks in the engine worker (code-only failure, never throws). */
+export async function runRegressionInWorker(
+  ref: RunRegressionRef,
+  checks: readonly RegressionCheck[],
+): Promise<RunRegressionResponse> {
+  try {
+    return await engine().runRegression(ref, checks);
+  } catch {
+    return { ok: false, code: 'unknown' };
   }
 }

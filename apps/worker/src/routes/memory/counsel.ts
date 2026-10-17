@@ -17,6 +17,7 @@ import {
   IssueClassSchema,
   limits,
   normalizeAssertionLabel,
+  parseQuestionKey,
   quoteHash,
 } from '@aduin/core';
 import type { Handler } from '../../app';
@@ -55,16 +56,19 @@ export function intentIsBlank(masked: string | null): boolean {
 export function counselQuestionHandler(deps: MemoryDeps): Handler {
   return handle(deps, 'counsel_questions', async (request, env) => {
     const { ctx, raw } = await postEntry(request, env, deps.now(), { write: true });
-    const body = parseWith(CounselQuestionRequestSchema, raw);
+    const body = parseWith(CounselQuestionRequestSchema, raw, { questionKey: true });
+    // Variance (H2(d)): `finding_ref` may be a question key `<findingId>@<owner>`; the finding, run
+    // and issue class resolve from the plain finding id, the key itself stays the question key.
+    const findingId = parseQuestionKey(body.finding_ref).findingId;
     const withFinding = await ctx.db
       .prepare(RUN_SQL.latestWithFinding)
-      .bind(ctx.workspaceId, body.finding_ref)
+      .bind(ctx.workspaceId, findingId)
       .first<{ id: string; issue_class: string }>();
     let runId = withFinding?.id ?? null;
     if (!runId) {
       const byDecision = await ctx.db
         .prepare(RUN_SQL.latestByDecisionOrigin)
-        .bind(ctx.workspaceId, body.finding_ref)
+        .bind(ctx.workspaceId, findingId)
         .first<{ id: string }>();
       runId = byDecision?.id ?? null;
     }

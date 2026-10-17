@@ -3,6 +3,7 @@ import {
   describeAssertion,
   limits,
   normalizeAssertionLabel,
+  parseQuestionKey,
   REASON_CODES,
   type ActiveDecision,
   type AuditEvent,
@@ -391,7 +392,8 @@ export class StubMemoryApi implements MemoryApi {
       });
     const out: CreatedQuestion[] = [];
     for (const it of items) {
-      if (!run.stored.includes(it.finding_ref))
+      // Variance P04 (H2(d) parity): a question key `<findingId>@<owner>` needs its plain finding
+      if (!run.stored.includes(parseQuestionKey(it.finding_ref).findingId))
         throw new MemoryApiError('invalid_request', 'finding not stored', {
           reason: 'finding_ref',
         });

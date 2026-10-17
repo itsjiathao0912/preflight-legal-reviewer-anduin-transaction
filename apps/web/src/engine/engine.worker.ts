@@ -24,8 +24,10 @@ import {
   ocrToLines,
   pdfToLines,
   runDeterministic,
+  runRegressionChecks,
   selectInjectedRules,
   sensitiveSpans,
+  varianceMetaOf,
   verifyAiResult,
   type AiCandidateSite,
   type DiffStage,
@@ -34,6 +36,7 @@ import {
   type Line,
   type PackageDocFormat,
   type SideInput,
+  type VarianceMeta,
   type SuppressedTerm,
 } from '@aduin/core';
 import { IS_E2E } from '../e2e-flag';
@@ -49,6 +52,9 @@ import type {
   EngineSettings,
   FindingLocator,
   FindingView,
+  RegressionCheck,
+  RunRegressionRef,
+  RunRegressionResponse,
   RunVarianceInput,
   RunVarianceResponse,
   SectionView,
@@ -535,6 +541,69 @@ async function runVarianceImpl(
   }
 }
 
+/** Plain, bounded regression checks from the main thread (scope_exists only). */
+function plainChecks(xs: unknown): RegressionCheck[] {
+  if (!Array.isArray(xs)) return [];
+  const out: RegressionCheck[] = [];
+  for (const c of xs.slice(0, 50)) {
+    if (!c || typeof c !== 'object') continue;
+    const o = c as Record<string, unknown>;
+    if (o.kind !== 'scope_exists' || typeof o.label !== 'string' || !o.label) continue;
+    out.push({
+      kind: 'scope_exists',
+      label: o.label.slice(0, 80),
+      statement: typeof o.statement === 'string' ? o.statement.slice(0, 300) : '',
+      sourceFundName: typeof o.sourceFundName === 'string' ? o.sourceFundName.slice(0, 200) : '',
+    });
+  }
+  return out;
+}
+
+// Variance Phase 04 (E2, H4): regression checks; views built exactly like runVarianceImpl.
+async function runRegressionImpl(
+  ref: RunRegressionRef,
+  checks: readonly RegressionCheck[],
+): Promise<RunRegressionResponse> {
+  try {
+    const list = plainChecks(checks);
+    const docHash = typeof ref?.docHash === 'string' ? ref.docHash : '';
+    if (!docHash) return { ok: false, code: 'invalid_request' };
+    let g: DocGraph;
+    let blocks: BlockView[];
+    let idx: Map<string, number>;
+    let numberingNote: ((issueClass: string) => string | undefined) | undefined;
+    const kept = touch(docHash);
+    if (kept) {
+      g = kept.g;
+      blocks = kept.blocks;
+      idx = kept.idx;
+      numberingNote = kept.numberingNote;
+    } else {
+      // evicted (LRU of 2): re-read the remembered input when the client still holds it
+      const ci = sideAnalyzeInput(ref?.input);
+      if (!ci) return { ok: false, code: 'doc_not_retained' };
+      const b = await prepare(ci, {});
+      if (!b.ok) return { ok: false, code: b.code };
+      g = b.graph;
+      const v = viewOf(g);
+      blocks = v.blocks;
+      idx = new Map(v.blocks.map((x, i) => [x.id, i] as const));
+    }
+    if (!list.length) return { ok: true, findings: [], meta: {} };
+    const found = runRegressionChecks(g.structure, list, loadVarianceRules());
+    const meta: Record<string, VarianceMeta> = {};
+    const findings: FindingView[] = found.map((f) => {
+      const m = varianceMetaOf(f);
+      if (m) meta[f.id] = m;
+      const view = toView(f, blocks, idx, g, numberingNote);
+      return { ...view, ...(m?.title ? { title: m.title } : {}), kind: 'change' as const };
+    });
+    return { ok: true, findings, meta };
+  } catch (e) {
+    return { ok: false, code: codeOf(e) };
+  }
+}
+
 export const api: EngineApi = {
   async analyze(input, settings, onStage) {
     const stages: StageReport[] = [];
@@ -768,6 +837,7 @@ export const api: EngineApi = {
   },
 
   runVariance: runVarianceImpl,
+  runRegression: runRegressionImpl,
 };
 
 Comlink.expose(api);

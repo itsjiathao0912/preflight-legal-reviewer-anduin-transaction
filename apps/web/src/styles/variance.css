@@ -173,3 +173,30 @@ aside.fp:has(> .fkind) {
   font-size: 14px;
   padding: 4px 2px;
 }
+
+/* Variance P04: gate popover owner groups (list only) */
+.gpgroups .gh {
+  margin: 8px 0 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  display: flex;
+  justify-content: space-between;
+}
+.gpgroups .gh span {
+  font-weight: 400;
+}
+.ghd {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0 4px;
+  list-style: none;
+}
+.ghd h2 {
+  margin: 0;
+  font-size: 14px;
+}
+.ghd .btn {
+  margin-left: auto;
+}
