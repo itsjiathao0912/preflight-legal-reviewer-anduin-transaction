@@ -89,7 +89,11 @@ export function requestHash(r: RecordedRequest): string {
   return inputHash(forwardedMessages(r));
 }
 
-/** Upstream chat-completions body, same template and key order as the Worker `buildBody`. */
+/**
+ * Upstream chat-completions body, same template and key order as the Worker `buildBody`, MINUS
+ * the Worker's trailing `"stream":true` (the recorder stays non-streaming; the prefix is
+ * byte-identical, and `record-body-parity` pins the Worker body as this body plus that key).
+ */
 export function upstreamBody(r: RecordedRequest, model: string = TEXT_MODEL): string {
   const messages = JSON.stringify(
     forwardedMessages(r).map((m) => ({ role: m.role, content: m.content })),

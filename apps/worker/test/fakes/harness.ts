@@ -100,6 +100,7 @@ export function makeHarness(
     fakeTimers?: boolean;
     heartbeatMs?: number;
     upstreamTimeoutMs?: number;
+    upstreamIdleMs?: number;
     down?: boolean;
     breaker?: BreakerPort;
   } = {},
@@ -133,7 +134,9 @@ export function makeHarness(
   } as unknown as ExecutionContext;
   h.app = createApp({
     fetch: or.fetch,
-    now: () => clock.now,
+    // one clock for the idle check and the activity timestamps: FakeTimers time is added on top
+    // of the wall clock (which `send` moves 11 s per call), so `advance()` moves `ctx.now` too
+    now: () => clock.now + (timers?.now ?? 0),
     proxy: {
       platform,
       log: (l) => logs.push(l),
@@ -143,6 +146,7 @@ export function makeHarness(
       ...(opts.upstreamTimeoutMs !== undefined
         ? { upstreamTimeoutMs: opts.upstreamTimeoutMs }
         : {}),
+      ...(opts.upstreamIdleMs !== undefined ? { upstreamIdleMs: opts.upstreamIdleMs } : {}),
     },
   });
   return h;

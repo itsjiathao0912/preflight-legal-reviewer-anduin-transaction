@@ -1,10 +1,10 @@
 import { parseFrameLine, parseFrameStream } from '@aduin/core';
 import { describe, expect, test } from 'vitest';
 import { createApp } from '../../src/app';
-import { okAi } from '../fakes/openrouter-stub';
+import { okAi, type SseController } from '../fakes/openrouter-stub';
 import { baseEnv, bodyText, makeHarness, req, T0, type Harness } from '../fakes/harness';
 import { keys } from '../../src/limits/policy';
-import { UPSTREAM_TIMEOUT_MS } from '../../src/proxy/pipeline';
+import { UPSTREAM_IDLE_MS, UPSTREAM_TIMEOUT_MS } from '../../src/proxy/pipeline';
 import { HEARTBEAT_MS } from '../../src/proxy/stream';
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -19,16 +19,38 @@ describe('stream-holdopen (AC26)', () => {
     expect(res.headers.get('cache-control')).toBe('no-store');
     const text = bodyText(res);
     await flush();
-    h.timers!.advance(UPSTREAM_TIMEOUT_MS); // reaches the upstream timeout
+    h.timers!.advance(UPSTREAM_IDLE_MS); // a silent upstream reaches the idle timeout
     const body = await text;
     const lines = body.split('\n').filter(Boolean);
     for (const l of lines) parseFrameLine(l); // every emitted line is a valid frame
     const { heartbeats, terminal } = parseFrameStream(body); // exactly one terminal, last
-    expect(heartbeats).toBe(1 + UPSTREAM_TIMEOUT_MS / HEARTBEAT_MS); // at open + every interval through the timeout (hb is due just before the timeout)
+    expect(heartbeats).toBe(1 + UPSTREAM_IDLE_MS / HEARTBEAT_MS); // at open + every interval through the idle timeout (hb is due just before it)
     expect(terminal).toMatchObject({ t: 'error', code: 'upstream_failed', reason: 'timeout' });
     expect(h.or.aborted).toBe(1);
     expect(h.waitUntilCalls).toBe(0);
     expect(h.timers!.pending).toBe(0); // heartbeat interval and timeout cleared
+  });
+
+  test('heartbeats continue to the ceiling while an SSE stream keeps producing comments', async () => {
+    const h = makeHarness({ fakeTimers: true });
+    let ctl!: SseController;
+    h.or.reply({ sseLive: (c) => (ctl = c) });
+    const res = await run(h);
+    const text = bodyText(res);
+    await flush();
+    for (let t = 0; t < UPSTREAM_TIMEOUT_MS; t += HEARTBEAT_MS) {
+      h.timers!.advance(HEARTBEAT_MS);
+      ctl.push(': OPENROUTER PROCESSING\n\n');
+      await flush();
+    }
+    const body = await text;
+    for (const l of body.split('\n').filter(Boolean)) parseFrameLine(l);
+    const { heartbeats, terminal } = parseFrameStream(body);
+    expect(heartbeats).toBe(1 + UPSTREAM_TIMEOUT_MS / HEARTBEAT_MS);
+    expect(terminal).toMatchObject({ t: 'error', code: 'upstream_failed', reason: 'timeout' });
+    expect(h.or.aborted).toBe(1);
+    expect(h.waitUntilCalls).toBe(0);
+    expect(h.timers!.pending).toBe(0);
   });
 
   test('heartbeats, then exactly one result frame when upstream answers at 54 s', async () => {

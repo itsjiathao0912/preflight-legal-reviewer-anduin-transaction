@@ -33,7 +33,8 @@ function expectedBody(r: RecordingFile): string {
     `{"model":${JSON.stringify(m)},"models":${JSON.stringify([m])},` +
     `"messages":${JSON.stringify(expectedMessages(r))},"temperature":0,` +
     `"max_tokens":${AI_MAX_TOKENS},` +
-    `"response_format":${JSON.stringify(responseFormat(TASKS[r.request.task], r.request.mode))}}`
+    `"response_format":${JSON.stringify(responseFormat(TASKS[r.request.task], r.request.mode))},` +
+    `"stream":true}`
   );
 }
 

@@ -5,6 +5,8 @@ import {
   defaultTurnstile,
   memoryBreaker,
   realTimers,
+  UPSTREAM_IDLE_MS,
+  UPSTREAM_OCR_TIMEOUT_MS,
   UPSTREAM_TIMEOUT_MS,
   type ProxyContext,
 } from '../../proxy/pipeline';
@@ -26,6 +28,8 @@ export function mountProxyRoutes(app: App, deps: AppDeps): void {
     timers: p.timers ?? realTimers,
     heartbeatMs: p.heartbeatMs,
     upstreamTimeoutMs: p.upstreamTimeoutMs ?? UPSTREAM_TIMEOUT_MS,
+    upstreamIdleMs: p.upstreamIdleMs ?? UPSTREAM_IDLE_MS,
+    upstreamOcrTimeoutMs: p.upstreamOcrTimeoutMs ?? UPSTREAM_OCR_TIMEOUT_MS,
     preLimiter: createPreLimiter(),
     logger: (cfg) => createLogger(sink, [cfg?.apiKey, cfg?.turnstileSecret]),
     breaker: p.breaker ?? memoryBreaker(),
