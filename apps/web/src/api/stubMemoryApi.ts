@@ -1,11 +1,14 @@
 import {
   ActiveDecisionSchema,
+  describeAssertion,
   limits,
+  normalizeAssertionLabel,
   REASON_CODES,
   type ActiveDecision,
   type AuditEvent,
   type FindingWire,
   type FirmMemoryResponse,
+  type RegressionCheckSummary,
   type Rule,
 } from '@aduin/core';
 import { e2eFirmRules } from '../e2e-hook';
@@ -13,7 +16,9 @@ import type { AppDb, DecisionRow } from '../storage/db';
 import {
   AUDIT_PAGE_SIZE,
   MemoryApiError,
+  varianceAnswerError,
   type AnswerInput,
+  type LookupWithChecks,
   type AuditPage,
   type CreatedQuestion,
   type DecideInput,
@@ -44,6 +49,13 @@ interface StubQuestion {
   fingerprint: string;
   law_firm_id: string;
   interpretations: string[];
+  owner?: QuestionItem['owner'];
+  owner_source?: QuestionItem['owner_source'];
+}
+/** Stub regression check (Variance Phase 03), kept in uiState (no Dexie version bump). */
+interface StubCheck extends RegressionCheckSummary {
+  law_firm_id: string;
+  status: 'active' | 'revoked';
 }
 interface StubRule extends Rule {
   law_firm_id: string;
@@ -54,6 +66,7 @@ const K = {
   run: (id: string) => `stub:run:${id}`,
   question: (id: string) => `stub:question:${id}`,
   rules: 'stub:rules',
+  checks: 'stub:checks',
   audit: 'stub:audit',
   session: 'stub:session',
 } as const;
@@ -80,6 +93,38 @@ export class StubMemoryApi implements MemoryApi {
         `1..${limits.memoryLookupMax} fingerprints per lookup`,
       );
     }
+    return (await this.lookupWithChecks(lawFirmId, fingerprints)).decisions;
+  }
+
+  async lookupWithChecks(lawFirmId: string, fingerprints: string[]): Promise<LookupWithChecks> {
+    if (!lawFirmId) throw new MemoryApiError('invalid_request', 'law_firm_id required');
+    const fps = [...new Set(fingerprints)];
+    const decisions: ActiveDecision[] = [];
+    const checks = new Map<string, RegressionCheckSummary>();
+    for (let i = 0; i < fps.length; i += limits.memoryLookupMax) {
+      decisions.push(
+        ...(await this.lookupChunk(lawFirmId, fps.slice(i, i + limits.memoryLookupMax))),
+      );
+      for (const c of await this.activeChecks(lawFirmId))
+        if (!checks.has(c.id)) checks.set(c.id, c);
+    }
+    return { decisions, regression_checks: [...checks.values()] };
+  }
+
+  private async activeChecks(lawFirmId: string): Promise<RegressionCheckSummary[]> {
+    return ((await this.get<StubCheck[]>(K.checks)) ?? [])
+      .filter((c) => c.law_firm_id === lawFirmId && c.status === 'active')
+      .slice(0, limits.regressionChecksPerFirm)
+      .map((c) => ({
+        id: c.id,
+        assertion_kind: c.assertion_kind,
+        assertion_key: c.assertion_key,
+        statement_text: c.statement_text,
+        source_fund_name: c.source_fund_name,
+      }));
+  }
+
+  private async lookupChunk(lawFirmId: string, fingerprints: string[]): Promise<ActiveDecision[]> {
     if (fingerprints.some((f) => !HEX64.test(f)))
       throw new MemoryApiError('invalid_request', 'bad fingerprint');
     const rows = await this.db.decisions.where('fingerprint').anyOf(fingerprints).toArray();
@@ -175,11 +220,39 @@ export class StubMemoryApi implements MemoryApi {
       throw new MemoryApiError('invalid_request', 'bad fingerprint');
     if (input.counsel_note !== undefined && input.counsel_note.length > 1000)
       throw new MemoryApiError('invalid_request', 'note length');
+    const varianceError = varianceAnswerError(input);
+    if (varianceError)
+      throw new MemoryApiError('invalid_request', `invalid ${varianceError}`, {
+        reason: varianceError,
+      });
+    let check: StubCheck | null = null;
+    if (input.assertion) {
+      const key = normalizeAssertionLabel(input.assertion.label);
+      if (key.length < 1)
+        throw new MemoryApiError('invalid_request', 'invalid assertion_label', {
+          reason: 'assertion_label',
+        });
+      if ((await this.activeChecks(firm)).length >= limits.regressionChecksPerFirm)
+        throw new MemoryApiError('invalid_request', 'regression check cap reached', {
+          reason: 'regression_check_cap',
+        });
+      check = {
+        id: rid('rc'),
+        law_firm_id: firm,
+        assertion_kind: 'scope_exists',
+        assertion_key: key,
+        statement_text: describeAssertion({ kind: 'scope_exists', label: key }),
+        source_fund_name: input.fund_name ?? '',
+        status: 'active',
+      };
+    }
     const d = await this.append(firm, {
       fingerprint: input.fingerprint,
       decision: 'answered',
       counsel_option: input.counsel_option,
       ...(input.counsel_note ? { counsel_note: input.counsel_note } : {}),
+      ...(input.intent !== undefined && input.intent.length > 0 ? { intent: input.intent } : {}),
+      ...(input.scope ? { scope: input.scope } : {}),
       issue_class: input.issue_class,
       ...(input.quote_snippet
         ? { quote_snippet: input.quote_snippet.slice(0, limits.snippetMaxChars) }
@@ -188,6 +261,10 @@ export class StubMemoryApi implements MemoryApi {
       decided_by_name: input.decided_by_name,
     });
     await this.audit_(input.decided_by_name, 'answer_recorded', firm, d.id);
+    if (check) {
+      await this.put(K.checks, [...((await this.get<StubCheck[]>(K.checks)) ?? []), check]);
+      await this.audit_(input.decided_by_name, 'regression_check_created', firm, check.id);
+    }
     return d;
   }
 
@@ -332,6 +409,7 @@ export class StubMemoryApi implements MemoryApi {
         fingerprint: it.fingerprint,
         law_firm_id: run.law_firm_id,
         interpretations: [...it.interpretations],
+        ...(it.owner ? { owner: it.owner, owner_source: it.owner_source ?? 'suggested' } : {}),
       };
       await this.put(K.question(q.question_id), q);
       out.push({ finding_ref: q.finding_ref, question_id: q.question_id });

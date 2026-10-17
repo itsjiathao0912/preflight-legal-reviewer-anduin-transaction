@@ -1,5 +1,7 @@
 import type {
   ActiveDecision,
+  AnswerAssertion,
+  AnswerScope,
   AuditEvent,
   CounselOption,
   CreateSessionResponse,
@@ -7,6 +9,7 @@ import type {
   FirmMemoryResponse,
   IssueClass,
   ReasonCode,
+  RegressionCheckSummary,
   Rule,
 } from '@aduin/core';
 
@@ -76,6 +79,41 @@ export interface AnswerInput {
   fund_name?: string;
   quote_snippet?: string;
   decided_by_name: string;
+  /** Variance (Phase 03): analyst intent (<= 500 chars, human text; masked server-side). */
+  intent?: string;
+  /** Variance: `fund` (this fund only) or `firm_template` (needs a non-blank intent). */
+  scope?: AnswerScope;
+  /** Variance: a regression assertion; only with scope `firm_template`. */
+  assertion?: AnswerAssertion;
+}
+
+/**
+ * Variance answer rule shared by the stub and the real client (the Worker re-checks it after
+ * masking): intent <= 500; scope firm_template needs a non-blank intent; an assertion needs scope
+ * firm_template, kind `scope_exists` and a 1-80 char label. Returns the refusal reason or null.
+ */
+export function varianceAnswerError(
+  input: Pick<AnswerInput, 'intent' | 'scope' | 'assertion'>,
+): string | null {
+  if (input.intent !== undefined && input.intent.length > 500) return 'intent';
+  if (input.scope !== undefined && input.scope !== 'fund' && input.scope !== 'firm_template')
+    return 'scope';
+  if (input.scope === 'firm_template' && (input.intent ?? '').trim().length === 0)
+    return 'intent_required';
+  if (input.assertion !== undefined) {
+    if (input.scope !== 'firm_template') return 'assertion_scope';
+    const a = input.assertion as { kind?: unknown; label?: unknown };
+    if (a.kind !== 'scope_exists' || typeof a.label !== 'string') return 'assertion';
+    if (a.label.length < 1 || a.label.length > 80) return 'assertion_label';
+  }
+  return null;
+}
+
+/** Variance (Phase 03): lookup plus the active regression checks of the same firm. */
+export interface LookupWithChecks {
+  decisions: ActiveDecision[];
+  /** Deduplicated by check id across 200-fingerprint chunks; [] when no fingerprint was given. */
+  regression_checks: RegressionCheckSummary[];
 }
 
 /** POST /api/session response (CreateSessionResponse, claims contract). */
@@ -98,6 +136,10 @@ export interface QuestionItem {
   fingerprint: string;
   /** 1-6 items of 1-500 chars. */
   interpretations: string[];
+  /** Variance (Phase 03): who should answer; written once at ask time. */
+  owner?: 'counsel' | 'gp' | 'fund_admin';
+  /** Variance: `suggested` (rules default) or `override` (analyst changed it). */
+  owner_source?: 'suggested' | 'override';
 }
 export interface CreatedQuestion {
   finding_ref: string;
@@ -135,6 +177,8 @@ export interface MemoryHealth {
 export const AUDIT_PAGE_SIZE = 100;
 /** Client chunk size for `storeFindings` (Worker FINDINGS_CHUNK_MAX). */
 export const FINDINGS_CHUNK = 25;
+/** Worker findings body cap in bytes (FINDINGS_BODY_CAP = limits.aiBodyBytes, 128 KB). */
+export const FINDINGS_BODY_CAP = 128 * 1024;
 
 export type MemoryApiErrorCode =
   | 'invalid_request'
@@ -267,6 +311,12 @@ export interface MemoryApi {
   bootstrap(name: string): Promise<SessionInfo>;
   /** Active decisions for these fingerprints (at most limits.memoryLookupMax per call). */
   lookup(lawFirmId: string, fingerprints: string[]): Promise<ActiveDecision[]>;
+  /**
+   * Variance (Phase 03, additive): lookup in chunks of limits.memoryLookupMax, each chunk also
+   * returning the firm's active regression checks (deduplicated by id). No fingerprints -> no
+   * request and no checks. `lookup()` keeps its array result and delegates here.
+   */
+  lookupWithChecks(lawFirmId: string, fingerprints: string[]): Promise<LookupWithChecks>;
   /** POST /api/runs (lazy: first write action only). */
   ensureRun(input: EnsureRunInput): Promise<{ run_id: string }>;
   /** POST /api/runs/:id/findings in chunks of FINDINGS_CHUNK; returns the total newly stored. */

@@ -12,6 +12,9 @@ const ALLOWED = new Set([
   'resolveLabel',
   // Variance Phase 03: D5 scope rule shared with the Worker label call site
   'scopeMismatch',
+  // Variance Phase 03: stub regression checks (same normalizer and statement as the Worker)
+  'normalizeAssertionLabel',
+  'describeAssertion',
   'mask',
   'limits',
   // firm list functions

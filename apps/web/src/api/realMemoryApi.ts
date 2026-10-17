@@ -4,17 +4,21 @@ import {
   type AuditEvent,
   type FindingWire,
   type FirmMemoryResponse,
+  type RegressionCheckSummary,
   type Rule,
 } from '@aduin/core';
 import type { AppDb } from '../storage/db';
 import { apiUrl } from './base';
 import { clientHeaders, TURNSTILE_HEADER } from './http';
 import {
+  FINDINGS_BODY_CAP,
   FINDINGS_CHUNK,
   AUDIT_PAGE_SIZE,
   MemoryApiError,
   toMemoryApiError,
+  varianceAnswerError,
   type AnswerInput,
+  type LookupWithChecks,
   type AuditPage,
   type CreatedQuestion,
   type DecideInput,
@@ -103,6 +107,28 @@ function sessionOf(raw: unknown): SessionInfo {
     throw new MemoryApiError('unavailable', 'malformed session response', { reason: 'malformed' });
   }
   return raw as unknown as SessionInfo;
+}
+
+/** UTF-8 size of a findings request body, sized with the longest allowed op id (64 chars). */
+function findingsBodyBytes(findings: readonly FindingWire[]): number {
+  const body = JSON.stringify({ client_op_id: 'x'.repeat(64), findings });
+  return new TextEncoder().encode(body).length;
+}
+
+/**
+ * N3: split a chunk into parts whose request bodies are each at most FINDINGS_BODY_CAP bytes by
+ * halving. One finding that is over the cap on its own is never clipped or split: it throws a typed
+ * error (a V1 provenance-size defect, not a transport problem).
+ */
+export function splitByBytes(findings: readonly FindingWire[]): FindingWire[][] {
+  if (findings.length === 0) return [];
+  if (findingsBodyBytes(findings) <= FINDINGS_BODY_CAP) return [[...findings]];
+  if (findings.length === 1)
+    throw new MemoryApiError('invalid_request', 'a single finding exceeds the findings body cap', {
+      reason: 'finding_too_large',
+    });
+  const mid = Math.ceil(findings.length / 2);
+  return [...splitByBytes(findings.slice(0, mid)), ...splitByBytes(findings.slice(mid))];
 }
 
 function field<T>(raw: unknown, key: string): T {
@@ -342,17 +368,26 @@ export class RealMemoryApi implements MemoryApi, RunCacheControl {
   // ---------------------------------------------------------------- memory
 
   async lookup(lawFirmId: string, fingerprints: string[]): Promise<ActiveDecision[]> {
+    return (await this.lookupWithChecks(lawFirmId, fingerprints)).decisions;
+  }
+
+  async lookupWithChecks(lawFirmId: string, fingerprints: string[]): Promise<LookupWithChecks> {
     const fps = [...new Set(fingerprints)];
-    if (fps.length === 0) return [];
-    const out: ActiveDecision[] = [];
+    const decisions: ActiveDecision[] = [];
+    const checks = new Map<string, RegressionCheckSummary>();
+    // no fingerprints -> no request at all (the contract keeps fingerprints.min(1))
     for (let i = 0; i < fps.length; i += limits.memoryLookupMax) {
       const raw = await this.request('POST', '/api/memory/lookup', {
         law_firm_id: lawFirmId,
         fingerprints: fps.slice(i, i + limits.memoryLookupMax),
       });
-      out.push(...field<ActiveDecision[]>(raw, 'decisions'));
+      decisions.push(...field<ActiveDecision[]>(raw, 'decisions'));
+      // an older Worker omits the optional array
+      const rc = isObj(raw) ? raw['regression_checks'] : undefined;
+      if (Array.isArray(rc))
+        for (const c of rc as RegressionCheckSummary[]) if (!checks.has(c.id)) checks.set(c.id, c);
     }
-    return out;
+    return { decisions, regression_checks: [...checks.values()] };
   }
 
   async ensureRun(input: EnsureRunInput): Promise<{ run_id: string }> {
@@ -387,14 +422,16 @@ export class RealMemoryApi implements MemoryApi, RunCacheControl {
     });
     let stored = 0;
     for (let i = 0; i < todo.length; i += FINDINGS_CHUNK) {
-      const chunk = todo.slice(i, i + FINDINGS_CHUNK);
-      const raw = await this.request('POST', `/api/runs/${encodeURIComponent(runId)}/findings`, {
-        client_op_id: this.opId(),
-        findings: chunk,
-      });
-      stored += Number(field<number>(raw, 'stored')) || 0;
-      for (const f of chunk) done.add(f.id);
-      await this.setCache(setKey, [...done]);
+      // N3: a 25-finding chunk is halved until every UTF-8 body fits FINDINGS_BODY_CAP
+      for (const part of splitByBytes(todo.slice(i, i + FINDINGS_CHUNK))) {
+        const raw = await this.request('POST', `/api/runs/${encodeURIComponent(runId)}/findings`, {
+          client_op_id: this.opId(),
+          findings: part,
+        });
+        stored += Number(field<number>(raw, 'stored')) || 0;
+        for (const f of part) done.add(f.id);
+        await this.setCache(setKey, [...done]);
+      }
     }
     return { stored };
   }
@@ -443,6 +480,8 @@ export class RealMemoryApi implements MemoryApi, RunCacheControl {
         finding_ref: it.finding_ref,
         fingerprint: it.fingerprint,
         interpretations: it.interpretations,
+        ...(it.owner ? { owner: it.owner } : {}),
+        ...(it.owner && it.owner_source ? { owner_source: it.owner_source } : {}),
       });
       out.push({ finding_ref: it.finding_ref, question_id: field<string>(raw, 'question_id') });
     }
@@ -452,6 +491,8 @@ export class RealMemoryApi implements MemoryApi, RunCacheControl {
   async answer(input: AnswerInput): Promise<ActiveDecision> {
     if (!input.question_id) throw bad('question_required', 'a counsel question is required');
     if (!input.quote_text) throw bad('quote_text', 'quote_text is required');
+    const varianceError = varianceAnswerError(input);
+    if (varianceError) throw bad(varianceError);
     const raw = await this.request('POST', '/api/counsel/answers', {
       client_op_id: input.client_op_id,
       question_id: input.question_id,
@@ -459,6 +500,9 @@ export class RealMemoryApi implements MemoryApi, RunCacheControl {
       ...(input.counsel_note ? { note: input.counsel_note.slice(0, 1000) } : {}),
       quote_text: input.quote_text,
       fingerprint: input.fingerprint,
+      ...(input.intent !== undefined ? { intent: input.intent } : {}),
+      ...(input.scope ? { scope: input.scope } : {}),
+      ...(input.assertion ? { assertion: input.assertion } : {}),
     });
     return field<ActiveDecision>(raw, 'decision');
   }
