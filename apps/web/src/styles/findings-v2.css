@@ -32,7 +32,7 @@
 
 /* ---------- progress header ---------- */
 .fv2-head {
-  padding: 16px 16px 8px;
+  padding: 16px 16px 4px;
   display: grid;
   gap: 8px;
   min-width: 0;
@@ -65,6 +65,8 @@
 .fv2-prog-counts {
   display: flex;
   gap: 8px;
+  margin: 0;
+  flex: none;
   font-size: 13px;
   font-weight: 400;
   color: var(--ink-3);
@@ -108,6 +110,35 @@
 }
 .fv2-chips button[aria-pressed='true'] svg {
   color: inherit;
+}
+
+/* "To review N" on the chips row (the group heading below stays for screen readers) */
+.fv2-fhead {
+  padding: 4px 12px 8px 16px;
+  gap: 8px;
+}
+.fv2-fhead .fv2-chips {
+  padding: 0;
+  margin-left: auto;
+}
+.fv2-fhead-l {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.fv2-fhead-l .n {
+  margin-left: 4px;
+}
+.fv2-fhead:has(.fv2-fhead-l) + .flist .fv2-group[data-group='review'] > .fv2-group-h {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 /* ---------- groups and list ---------- */
@@ -277,6 +308,69 @@
   font-size: 14px;
   line-height: 1.55;
   color: var(--ink-2);
+}
+/* severity line: icon, label, location and tags spaced like the mockup */
+.fv2-sevline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ink-2);
+}
+.fv2-sevline > b {
+  font-weight: 600;
+  color: var(--ink);
+}
+.fv2-sevline > [class^='sv-'] {
+  display: inline-flex;
+}
+.fv2-sevline svg {
+  width: 16px;
+  height: 16px;
+}
+/* Question for counsel: one chevron (no native marker), grows with its content */
+.fv2 details.fv2-sec {
+  border-top: 1px solid var(--step);
+  padding: 8px 0 0;
+  gap: 8px;
+}
+.fv2 details.fv2-sec > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 32px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  border-radius: var(--r);
+}
+.fv2 details.fv2-sec > summary::-webkit-details-marker {
+  display: none;
+}
+.fv2 details.fv2-sec > summary svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  color: var(--ink-3);
+  transition: transform 0.2s var(--ease);
+}
+.fv2 details.fv2-sec[open] > summary svg {
+  transform: rotate(90deg);
+}
+.fv2 summary .hint {
+  color: var(--ink-3);
+  font-weight: 400;
+  font-size: 13px;
+}
+.fv2 details.fv2-sec .fv2-qfc {
+  background: none;
+  padding: 0;
+  font: 400 17px/1.5 var(--serif);
+  overflow-wrap: anywhere;
 }
 .fv2-details {
   border-top: 1px solid var(--step);
@@ -517,6 +611,14 @@
 /* ---------- work grid: panel width from --fpw (set by usePanelWidth) ---------- */
 .work.fv2-work {
   grid-template-columns: minmax(0, 1fr) calc(var(--fpw, 50) * 1%);
+  /* containing block for absolutely positioned helpers (.sr spans) inside the scrollers, so
+     they cannot extend the page and let scrollIntoView scroll the app shell */
+  position: relative;
+  overflow: hidden;
+}
+.work.fv2-work .flist,
+.docscroll[data-dz] {
+  position: relative;
 }
 
 /* ---------- D15 zoom overrides: the whole page scales with --dz ---------- */
@@ -528,6 +630,10 @@
 .docscroll[data-dz] .paper {
   width: calc(700px * var(--dz));
   max-width: calc(700px * var(--dz));
+  /* the white page on the grey reading area: centered when it fits, framed when it is wider */
+  margin: 0 auto;
+  background: var(--paper);
+  border: 1px solid var(--step);
   padding: calc(52px * var(--dz)) calc(60px * var(--dz)) calc(72px * var(--dz));
   font-size: calc(16px * var(--dz));
 }

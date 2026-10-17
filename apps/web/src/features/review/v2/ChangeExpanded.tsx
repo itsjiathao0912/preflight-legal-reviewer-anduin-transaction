@@ -22,7 +22,7 @@ export function ChangeExpanded({ row, meta }: { row: Row; meta: VarianceMeta | u
   const currentLabel = doc ? [doc.fund, doc.version].filter(Boolean).join(' ') || doc.name : '';
   return (
     <>
-      <p className="fv2-sec-h">
+      <p className="fv2-sec-h fv2-sevline">
         <b>{isNew ? 'New' : isReg ? 'Regression' : 'Changed logic'}</b> ·{' '}
         {isReg ? 'Firm-template check' : 'Change vs baseline'} · {f.loc}
       </p>

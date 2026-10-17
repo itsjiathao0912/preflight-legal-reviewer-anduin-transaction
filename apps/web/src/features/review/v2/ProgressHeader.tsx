@@ -1,6 +1,6 @@
 import type { Progress } from './groups';
 
-/** D8: "N of M reviewed", a thin bar and Counsel · Closed · Left counts (P-1: from `view.main`). */
+/** D8: "N of M reviewed", a thin bar and Counsel · Closed · Left counts on one row (P-1: from `view.main`). */
 export function ProgressHeader({ progress }: { progress: Progress }) {
   const { total, reviewed, sent, closed, left } = progress;
   const width = `${total ? Math.round((reviewed / total) * 100) : 0}%`;
@@ -21,20 +21,20 @@ export function ProgressHeader({ progress }: { progress: Progress }) {
         >
           <i style={{ width }} />
         </div>
+        <p className="fv2-prog-counts" data-testid="progress-counts">
+          <span>
+            Counsel <span className="n">{sent}</span>
+          </span>
+          {' · '}
+          <span>
+            Closed <span className="n">{closed}</span>
+          </span>
+          {' · '}
+          <span>
+            Left <span className="n">{left}</span>
+          </span>
+        </p>
       </div>
-      <p className="fv2-prog-counts" data-testid="progress-counts">
-        <span>
-          Counsel <span className="n">{sent}</span>
-        </span>
-        {' · '}
-        <span>
-          Closed <span className="n">{closed}</span>
-        </span>
-        {' · '}
-        <span>
-          Left <span className="n">{left}</span>
-        </span>
-      </p>
     </div>
   );
 }

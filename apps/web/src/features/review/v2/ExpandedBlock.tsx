@@ -47,7 +47,7 @@ export function ExpandedBlock({ row, twin }: { row: Row; twin?: FindingView | un
   const dismissedReason = row.status === 'dismissed' ? row.triage?.reasonCode : undefined;
   return (
     <>
-      <p className="fv2-sec-h">
+      <p className="fv2-sec-h fv2-sevline">
         <span className={`sv-${row.sev}`}>
           <Icon name={sev.icon} />
         </span>

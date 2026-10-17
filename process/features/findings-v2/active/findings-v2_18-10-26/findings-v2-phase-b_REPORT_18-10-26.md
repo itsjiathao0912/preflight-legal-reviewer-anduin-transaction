@@ -156,3 +156,17 @@ None in this step.
 - Blast radius: unchanged (E-B6 paths only).
 - Next: B8 EVL (vc-tester re-run of this table) and code review, then UPDATE PROCESS; B-deploy after both. A stack-memory run overwrote the web bundle output: the deploy recipe must re-make the plain bundle right before deploy (as planned).
 - Dependencies: none changed.
+
+## B7 follow-up: visual fixes (18-10-26)
+
+Compared design-probe PNGs with `mockup-findings-v2-1440.png`; fixed 5 defects (all within the E-B6 edit set; base.css untouched).
+
+1. App shell scrolled on row click / J (root cause): the visually hidden `.sr` spans in the rows are `position: absolute` with no positioned ancestor inside the scrollers, so they hung off the viewport and made the page 1083px tall on a 900px viewport; `scrollIntoView` then scrolled `html` by 48px (header gone, grey strip). Fix: `.work.fv2-work { position: relative; overflow: hidden }` plus `position: relative` on `.flist` and `.docscroll[data-dz]`. New e2e (zoom 100 and 150): after row click + J, html/body/.app scrollTop and `window.scrollY` are 0, the header is in view, the mark is inside `.docscroll`. Red before (48), green after.
+2. Question for counsel: native marker hidden, one chevron that rotates on open, mockup summary type (14px ink + grey hint), serif question text; auto-open rule (blocking or A/B) unchanged; the card grows (the list scrolls).
+3. Severity line: new `fv2-sevline` flex row with 8px gaps between icon, label, location and tags (class kept alongside `fv2-sec-h`, text nodes unchanged for locator-chip spec).
+4. Paper: `.docscroll[data-dz] .paper` now sets white background, 1px step border and `margin: 0 auto`, so the page is a framed, centered card on the grey area (no shadow: layout-vs-mockup bans shadows).
+5. Progress: counts moved into the progress row (one row); "To review N" label on the chips row with chips + Filter right-aligned; the To review group heading is visually hidden (still read by screen readers, tests unchanged). Variance segment and no-baseline line stay between.
+
+Gates: tsc 0; web vitest 73 files / 531 tests; `test:e2e findings-v2` 10/10; layout-vs-mockup 5/5; design probe refreshed; full preview e2e 252 passed + 1 skip (first full run had 2 parallel flakes in intake-demo-packages and memory-ui-decisions, both green in isolation and in the second full run).
+
+Residuals: at 100% on 1440 the 700px page is wider than the reading area, so no grey margin shows (mockup default is Fit width 90%); at 150% the doc auto-scrolls horizontally to the mark, hiding the page left edge; counts keep the " · " separators (pinned by e2e) where the mockup uses spacing only; mockup's "Section 3" right-aligned location on the row title is not in the app.

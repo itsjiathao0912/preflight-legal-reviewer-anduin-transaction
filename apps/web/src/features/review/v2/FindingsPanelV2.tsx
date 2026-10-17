@@ -128,7 +128,12 @@ export function FindingsPanelV2({ view }: { view: ReviewView }) {
           <NoBaselineLine lines={lines} />
         </div>
       ) : null}
-      <div className="fhead">
+      <div className="fhead fv2-fhead">
+        {groups.review.length && !empty ? (
+          <span className="fv2-fhead-l" aria-hidden="true">
+            To review <span className="n">{groups.review.length}</span>
+          </span>
+        ) : null}
         <SeverityChips chips={view.chips} />
         <FilterMenu rows={view.main} />
       </div>

@@ -281,6 +281,34 @@ test.describe('findings-v2', () => {
     await expect.poll(async () => (await dz(page)) === (await expectedFit())).toBe(true);
   });
 
+  for (const z of [100, 150] as const) {
+    test(`row click and J scroll only the document and the list, never the app shell (zoom ${z})`, async ({
+      page,
+    }) => {
+      await gotoApp(page, { zoom: z });
+      await openSample(page, '03');
+      const list = await ids(page);
+      await row(page, list[Math.min(list.length - 1, 1)]!).click();
+      await page.keyboard.press('j');
+      await page.waitForTimeout(300);
+      const openId = await rowsLoc(page)
+        .nth(await openIdx(page))
+        .getAttribute('data-finding-id');
+      const shell = await page.evaluate(() => {
+        const els = [document.documentElement, document.body, document.querySelector('.app')];
+        return els.map((e) => (e ? e.scrollTop : 0)).concat(window.scrollY);
+      });
+      expect(shell).toEqual([0, 0, 0, 0]);
+      const head = (await page.getByTestId('findings-header').boundingBox())!;
+      expect(head.y).toBeGreaterThanOrEqual(0);
+      const mark = page.locator(`[data-testid="doc-highlight"][data-finding-id="${openId}"]`).first();
+      const p = (await zoomPane(page).boundingBox())!;
+      const m = (await mark.boundingBox())!;
+      expect(m.y).toBeGreaterThanOrEqual(p.y - 1);
+      expect(m.y + Math.min(m.height, p.height)).toBeLessThanOrEqual(p.y + p.height + 1);
+    });
+  }
+
   test('scroll-to-finding still centers the passage at 150% (D7, D15)', async ({ page }) => {
     await gotoApp(page, { zoom: 150 });
     await openSample(page, '01');
