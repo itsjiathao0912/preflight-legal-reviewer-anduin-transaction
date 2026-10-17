@@ -68,7 +68,7 @@
   },
   "design": {
     "northgate-iii": {
-      "firmId": null,
+      "firmId": "hartwell-crane",
       "acs": ["AC-I5", "AC-I9", "AC-I11", "AC-I14", "AC-I15", "AC-I16", "AC-I20"],
       "files": {
         "01-NG3-Subscription-Agreement.docx": {
@@ -138,7 +138,7 @@
       ]
     },
     "lotus-bay-asia-ii": {
-      "firmId": null,
+      "firmId": "ostrander-pell",
       "acs": ["AC-I5", "AC-I9", "AC-I12", "AC-I16", "AC-I20"],
       "files": {
         "01-LB2-Subscription-Agreement-Offshore-v2.docx": {

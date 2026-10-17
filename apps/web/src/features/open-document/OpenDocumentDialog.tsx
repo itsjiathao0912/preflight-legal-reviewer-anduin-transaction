@@ -214,7 +214,7 @@ export function OpenDocumentDialog() {
                   disabled={s.disabled || busy}
                   onClick={() => void pickSample(s)}
                 >
-                  <span className="od-num">#{Number(s.id)}</span>
+                  <span className="od-num">{/^\d+$/.test(s.id) ? `#${Number(s.id)}` : 'H&C'}</span>
                   <span className="od-t">{s.title}</span>
                   <span className="dim">
                     {s.disabled

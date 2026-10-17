@@ -3,7 +3,7 @@
   "packages": [
     {
       "id": "northgate-iii",
-      "firmId": null,
+      "firmId": "hartwell-crane",
       "members": [
         "fixtures/package/design/northgate-iii/01-NG3-Subscription-Agreement.docx",
         "fixtures/package/design/northgate-iii/02-NG3-LPA-Definitions-and-Key-Terms.docx",
@@ -15,7 +15,7 @@
     },
     {
       "id": "lotus-bay-asia-ii",
-      "firmId": null,
+      "firmId": "ostrander-pell",
       "members": [
         "fixtures/package/design/lotus-bay-asia-ii/01-LB2-Subscription-Agreement-Offshore-v2.docx",
         "fixtures/package/design/lotus-bay-asia-ii/02-LB2-Investor-Questionnaire-Standalone.docx",

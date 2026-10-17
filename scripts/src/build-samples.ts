@@ -167,6 +167,45 @@ const TAGS: Record<
 
 const HTML_IDS = ['01', '02', '03', '04', '05', '06', '07', '08', '10', '11', '12', '13'];
 
+/**
+ * Variance Phase 05 (B1): Hartwell & Crane demo documents (authored corpus fixtures/variance/
+ * hartwell-crane). Non-numeric ids, appended after the 12 originals; single documents only (a
+ * bundled sample never becomes a firm-pointer baseline: the 214-to-7 pair is the upload route).
+ */
+const VARIANCE_DIR = join(ROOT, 'fixtures', 'variance', 'hartwell-crane');
+const VARIANCE_DEMO: { id: string; file: string; title: string; fund: string; version: string }[] =
+  [
+    {
+      id: 'vh-fund-I',
+      file: 'fund-I.html',
+      title: 'Hartwell & Crane Fund I (variance demo)',
+      fund: 'Fund I',
+      version: 'v1',
+    },
+    {
+      id: 'vh-fund-II',
+      file: 'fund-II.html',
+      title: 'Hartwell & Crane Fund II (variance demo)',
+      fund: 'Fund II',
+      version: 'v1',
+    },
+    {
+      id: 'vh-fund-III',
+      file: 'fund-III.html',
+      title: 'Hartwell & Crane Fund III (variance demo)',
+      fund: 'Fund III',
+      version: 'v1',
+    },
+    {
+      id: 'vh-fund-III-appendix-c',
+      file: 'fund-III-with-appendix-c.html',
+      title: 'Hartwell & Crane Fund III with Appendix C (variance demo)',
+      fund: 'Fund III',
+      version: 'with Appendix C',
+    },
+  ];
+const ORIGINAL_HTML = 12;
+
 function fail(msg: string): never {
   console.error(`build-samples: ${msg}`);
   process.exit(1);
@@ -211,7 +250,27 @@ export function buildSamples(): SampleEntry[] {
     copyFileSync(join(RAW, file), join(OUT_SAMPLES, file));
     entries.push({ id, file, ...tag, kind: 'html', disabled: false });
   }
-  if (entries.filter((e) => e.kind === 'html').length !== 12) fail('expected 12 HTML samples');
+  if (entries.filter((e) => e.kind === 'html').length !== ORIGINAL_HTML)
+    fail(`expected ${ORIGINAL_HTML} HTML samples`);
+  for (const v of VARIANCE_DEMO) {
+    const from = join(VARIANCE_DIR, v.file);
+    if (!existsSync(from)) fail(`missing variance demo document ${v.file}`);
+    const file = `hartwell-crane-${v.file}`;
+    copyFileSync(from, join(OUT_SAMPLES, file));
+    entries.push({
+      id: v.id,
+      file,
+      title: v.title,
+      firmId: 'hartwell-crane',
+      fund: v.fund,
+      version: v.version,
+      kind: 'html',
+      disabled: false,
+    });
+  }
+  // explicit guard: 12 original HTML samples + N variance-demo documents (never a range)
+  if (entries.filter((e) => e.kind === 'html').length !== ORIGINAL_HTML + VARIANCE_DEMO.length)
+    fail(`expected ${ORIGINAL_HTML} + ${VARIANCE_DEMO.length} HTML samples`);
   writeFileSync(
     join(OUT_SAMPLES, 'manifest.json'),
     JSON.stringify({ version: 1, samples: entries }, null, 2) + '\n',

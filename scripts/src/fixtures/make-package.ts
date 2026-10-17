@@ -143,13 +143,23 @@ export function designCopies(): { files: Map<string, Buffer>; checksums: string 
   return { files, checksums: JSON.stringify(sums, null, 2) + '\n' };
 }
 
+/**
+ * Variance Phase 05 (D-S0-7 retag): the firm of each design demo package, from its README (only
+ * firms in fixtures/memory/law-firms.json; Redwood Ridge's firm is not listed, so it stays untagged).
+ */
+export const DESIGN_FIRMS: Record<string, string | null> = {
+  'northgate-iii': 'hartwell-crane',
+  'lotus-bay-asia-ii': 'ostrander-pell',
+  'redwood-ridge-i': null,
+};
+
 export function demoPackages(): string {
   const present = DESIGN_PACKAGES.filter((d) =>
     existsSync(join(ROOT, 'samples', 'packages', d.folder, 'docs')),
   );
   const design = present.map((d) => ({
     id: d.id,
-    firmId: null,
+    firmId: DESIGN_FIRMS[d.id] ?? null,
     members: readdirSync(join(ROOT, 'samples', 'packages', d.folder, 'docs'))
       .filter((f) => f.endsWith('.docx'))
       .sort()
@@ -246,7 +256,7 @@ export const EXPECTED = {
   },
   design: {
     'northgate-iii': {
-      firmId: null,
+      firmId: DESIGN_FIRMS['northgate-iii'],
       acs: ['AC-I5', 'AC-I9', 'AC-I11', 'AC-I14', 'AC-I15', 'AC-I16', 'AC-I20'],
       files: {
         '01-NG3-Subscription-Agreement.docx': {
@@ -316,7 +326,7 @@ export const EXPECTED = {
       ],
     },
     'lotus-bay-asia-ii': {
-      firmId: null,
+      firmId: DESIGN_FIRMS['lotus-bay-asia-ii'],
       acs: ['AC-I5', 'AC-I9', 'AC-I12', 'AC-I16', 'AC-I20'],
       files: {
         '01-LB2-Subscription-Agreement-Offshore-v2.docx': {
