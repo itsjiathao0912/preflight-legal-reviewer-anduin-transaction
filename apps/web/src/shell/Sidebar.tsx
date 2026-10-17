@@ -37,7 +37,7 @@ export function Sidebar() {
           <svg className="i brand-logo" aria-hidden="true">
             <use href="#logo" />
           </svg>
-          <span>Sub-doc QA</span>
+          <span>Preflight</span>
         </div>
         <button
           className="ibtn"

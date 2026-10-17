@@ -46,18 +46,24 @@ export function IconSprite() {
       <symbol id="logo" viewBox="0 0 28 28">
         <rect x="2" y="2" width="24" height="24" rx="5" fill="var(--ink)" />
         <path
-          d="M8 9.5h7M8 14h4.5M8 18.5h5"
+          d="M7 20.5h4M7 17h2.5"
           stroke="var(--ground)"
           strokeWidth="1.8"
           strokeLinecap="round"
           fill="none"
         />
         <path
-          d="M15.5 17l2.6 2.6L22 14.6"
+          d="M7.5 12.5L21 7l-4.6 13-3-5.2z"
           stroke="#8FD0C6"
-          strokeWidth="2"
-          strokeLinecap="round"
+          strokeWidth="1.8"
           strokeLinejoin="round"
+          fill="none"
+        />
+        <path
+          d="M13.4 14.8L21 7"
+          stroke="#8FD0C6"
+          strokeWidth="1.8"
+          strokeLinecap="round"
           fill="none"
         />
       </symbol>
