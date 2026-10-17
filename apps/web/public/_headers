@@ -1,0 +1,9 @@
+# Security headers for static assets served by Workers static assets (Phase 10, D2 / AC31).
+# /api/* is routed to the Worker first (run_worker_first) and does not use this file.
+# Parsed by test/headers-file.test.ts and injected verbatim by e2e/csp-headers.spec.ts.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; worker-src 'self' blob:; connect-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Cross-Origin-Opener-Policy: same-origin

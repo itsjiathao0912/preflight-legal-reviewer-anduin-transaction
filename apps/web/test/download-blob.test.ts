@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { downloadBlob } from '../src/lib/download';
+import { downloadBlob, REVOKE_DELAY_MS } from '../src/lib/download';
 
-/** AC63: downloadBlob clicks an anchor with the filename and mime, and revokes after a tick. */
+/** AC63: downloadBlob clicks an anchor with the filename and mime, and revokes after a delay (R3). */
 describe('download-blob', () => {
   let created: Blob[];
   let revoked: string[];
@@ -40,7 +40,7 @@ describe('download-blob', () => {
     vi.restoreAllMocks();
   });
 
-  test('should revoke the object URL after a tick', () => {
+  test('should revoke the object URL after a delay, not on the next tick', () => {
     downloadBlob('a.logic-outline.json', '{"x":1}', 'application/json');
     expect(clicks).toEqual([
       {
@@ -53,8 +53,16 @@ describe('download-blob', () => {
     expect(created[0]!.type).toBe('application/json');
     expect(revoked).toEqual([]);
     vi.advanceTimersByTime(0);
+    expect(revoked, 'not revoked on the next tick').toEqual([]);
+    vi.advanceTimersByTime(REVOKE_DELAY_MS - 1);
+    expect(revoked).toEqual([]);
+    vi.advanceTimersByTime(1);
     expect(revoked).toEqual(['blob:test/1']);
     expect(document.querySelectorAll('a').length).toBe(0);
+  });
+
+  test('revoke delay is at least 10 seconds', () => {
+    expect(REVOKE_DELAY_MS).toBeGreaterThanOrEqual(10_000);
   });
 
   test('wraps a string in a Blob with the given mime', async () => {

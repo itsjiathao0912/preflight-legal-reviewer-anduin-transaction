@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subscription Document QA - slides</title>
+<style>
+:root{
+  --ground:#E9ECE9; --panel:#F4F6F3; --card:#FBFCFA; --paper:#FDFEFD;
+  --ink:#15181B; --ink-2:#434A50; --ink-3:#5C646B;
+  --accent:#1D5C57; --accent-tint:#D9E8E5; --step:#DDE2DD;
+  --block-fg:#8A1C1C; --block-bg:#F7E2DF; --fix-fg:#734400; --fix-bg:#F5E8C8;
+  --note-fg:#38454F; --note-bg:#DFE6EA; --ok-fg:#1B5632; --ok-bg:#DAEEDF;
+  --r:4px;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Geist,sans-serif;
+  --serif:Newsreader,Georgia,"Times New Roman",serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--ground);color:var(--ink);font:400 22px/1.45 var(--sans)}
+.deck{height:100vh;width:100vw;position:relative;overflow:hidden}
+.slide{position:absolute;inset:0;padding:6vh 7vw;display:none;flex-direction:column;justify-content:center;gap:2.2vh;background:var(--ground)}
+.slide.on{display:flex}
+h1,h2{font-family:var(--serif);font-weight:500;letter-spacing:-.01em;margin:0}
+h1{font-size:64px;line-height:1.08}
+h2{font-size:44px;line-height:1.12}
+p{margin:0;max-width:62ch;color:var(--ink-2)}
+.kicker{font:600 14px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+ul{margin:0;padding-left:1.1em;color:var(--ink-2);display:flex;flex-direction:column;gap:.7vh;max-width:70ch}
+li::marker{color:var(--accent)}
+.card{background:var(--card);border-radius:var(--r);padding:2.2vh 1.6vw}
+.grid{display:grid;gap:1.4vw}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.card b{display:block;font-size:20px;color:var(--ink);margin-bottom:.6vh}
+.card span{font-size:18px;color:var(--ink-2)}
+.chip{display:inline-block;padding:.3vh .7vw;border-radius:var(--r);font:600 16px/1.4 var(--sans)}
+.c-block{background:var(--block-bg);color:var(--block-fg)}
+.c-fix{background:var(--fix-bg);color:var(--fix-fg)}
+.c-note{background:var(--note-bg);color:var(--note-fg)}
+.c-ok{background:var(--ok-bg);color:var(--ok-fg)}
+table{border-collapse:collapse;font-size:18px;max-width:80ch}
+td,th{text-align:left;padding:.7vh 1vw;background:var(--card)}
+tr+tr td{border-top:4px solid var(--ground)}
+th{background:var(--accent-tint);color:var(--ink)}
+.shot{background:var(--panel);border:2px dashed var(--step);border-radius:var(--r);min-height:34vh;display:grid;place-items:center;color:var(--ink-3);font-size:18px;overflow:hidden}
+.shot img{max-width:100%;max-height:44vh;display:block}
+.foot{position:absolute;left:7vw;right:7vw;bottom:2.5vh;display:flex;justify-content:space-between;font-size:14px;color:var(--ink-3)}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hint{position:fixed;right:1.2vw;top:1.2vh;font-size:13px;color:var(--ink-3)}
+@media print{
+  @page{size:landscape;margin:0}
+  html,body{height:auto;background:#fff}
+  .deck{height:auto;width:auto;overflow:visible;position:static}
+  .slide{position:static;display:flex !important;height:100vh;page-break-after:always;break-after:page;background:var(--ground);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .hint,.foot .nav{display:none}
+}
+</style>
+</head>
+<body>
+<div class="hint">Arrow keys, Space, Home, End. Print for PDF.</div>
+<main class="deck" id="deck" aria-label="Slides">
+
+<section class="slide" aria-label="Title">
+  <div class="kicker">Anduin Transactions - challenge build</div>
+  <h1>Review a fund subscription document before it is digitized.</h1>
+  <p>Find what would break the online form, show the evidence, and block digitization until counsel answers.</p>
+  <p>https://aduin-transaction-web.giathaowork.workers.dev</p>
+  <!-- P10:FILL slide-live-version: Worker version id on the title or closing slide -->
+</section>
+
+<section class="slide" aria-label="Problem">
+  <div class="kicker">The problem</div>
+  <h2>Errors in the paper carry into the digital flow.</h2>
+  <ul>
+    <li>A cross-reference points to a section that is not there.</li>
+    <li>A conditional skip jumps to the wrong place, or a section no investor can reach.</li>
+    <li>Every feeder, parallel and prior version has to be read again.</li>
+  </ul>
+  <p>Doing this by hand over forty pages is slow and uneven.</p>
+</section>
+
+<section class="slide" aria-label="User">
+  <div class="kicker">The user</div>
+  <h2>The Digitization Service Analyst.</h2>
+  <div class="grid g3">
+    <div class="card"><b>Reads</b><span>Sub docs in HTML, PDF, DOCX or scans.</span></div>
+    <div class="card"><b>Decides</b><span>What is a real defect, what is house style.</span></div>
+    <div class="card"><b>Asks</b><span>Counsel to confirm anything that changes the form.</span></div>
+  </div>
+</section>
+
+<section class="slide" aria-label="Approach">
+  <div class="kicker">Approach</div>
+  <h2>Deterministic first, language model second.</h2>
+  <div class="grid g2">
+    <div class="card"><b>Rules decide</b><span>A logic graph and 13 detectors check references, skips, flow, terms and investor paths. Every finding cites its text.</span></div>
+    <div class="card"><b>Models judge</b><span>Free models read only graph-selected passages for ambiguity, contradiction and typos. Output is checked; unlocatable quotes are dropped.</span></div>
+  </div>
+  <p>The app works with AI switched off.</p>
+</section>
+
+<section class="slide" aria-label="Findings">
+  <div class="kicker">Findings</div>
+  <h2>Document left, findings right.</h2>
+  <div class="shot" id="shot-findings">Screenshot: img/03-findings.png <!-- P10:FILL slide-img-findings: swap placeholder for the captured image --></div>
+  <p><span class="chip c-block">Blocks</span> <span class="chip c-fix">Fix</span> <span class="chip c-note">Note</span> Severity is an icon plus a word, never color alone.</p>
+</section>
+
+<section class="slide" aria-label="Triage">
+  <div class="kicker">Triage</div>
+  <h2>Keyboard-first, with a reason for every dismissal.</h2>
+  <ul>
+    <li>Accept, dismiss (reason required, undo available) or send to counsel.</li>
+    <li>Provenance on every row: rule id, or model plus fresh or cache.</li>
+    <li>A remembered decision never hides a blocking finding.</li>
+  </ul>
+</section>
+
+<section class="slide" aria-label="Compare">
+  <div class="kicker">Compare versions</div>
+  <h2>See drift between related documents.</h2>
+  <ul>
+    <li>Sections are aligned across feeder, parallel and prior versions.</li>
+    <li>Changes are classed, with a short narrative of what moved.</li>
+    <li>Not yet: scanned documents, and diff-only rows as counsel questions.</li>
+  </ul>
+</section>
+
+<section class="slide" aria-label="Counsel">
+  <div class="kicker">Counsel query sheet and gate</div>
+  <h2>Confirmed issues become questions. Critical ones gate the build.</h2>
+  <ul>
+    <li>Export the sheet as DOCX; record answers in the app.</li>
+    <li>The gate reads <span class="chip c-block">Blocked - N</span> until every blocking question is answered, then <span class="chip c-ok">Clear</span>.</li>
+  </ul>
+</section>
+
+<section class="slide" aria-label="Memory">
+  <div class="kicker">Firm memory</div>
+  <h2>The tool remembers how a firm decides.</h2>
+  <ul>
+    <li>Three matching dismissals propose a rule for that firm.</li>
+    <li>Approved rules feed the AI prompt; every change is in an audit trail.</li>
+    <li>Reached from the sidebar nav.</li>
+  </ul>
+  <!-- P10:FILL slide-memory-live: state whether shared memory is live on the deployed site -->
+</section>
+
+<section class="slide" aria-label="Architecture">
+  <div class="kicker">Architecture</div>
+  <h2>Parse in the browser; the Worker only proxies.</h2>
+  <table>
+    <tr><th>Part</th><th>What it does</th></tr>
+    <tr><td>packages/core</td><td>Parser, graph, detectors, diff, LLM task framework</td></tr>
+    <tr><td>apps/web</td><td>React SPA; engine in a Web Worker</td></tr>
+    <tr><td>apps/worker</td><td>Cloudflare Worker: assets, AI and OCR proxy, memory API, D1</td></tr>
+  </table>
+</section>
+
+<section class="slide" aria-label="Cost and privacy">
+  <div class="kicker">Cost, limits and privacy</div>
+  <h2>Free models, a hard cap, and documents that stay local.</h2>
+  <ul>
+    <li>Free OpenRouter models only; paid path disabled; circuit breaker on any billed use.</li>
+    <li>Per visitor per day: 3 fresh-AI documents, 8 AI requests, 6 OCR pages.</li>
+    <li>Only clause passages (or page images with AI on) leave the browser, after a disclosure.</li>
+    <li>Snippets and hashes only in the database; sandbox data purged after 30 days.</li>
+  </ul>
+</section>
+
+<section class="slide" aria-label="Tests">
+  <div class="kicker">Evidence</div>
+  <h2>Tested at every layer.</h2>
+  <ul>
+    <li>Core 2,914 tests, worker 525, web unit 196 at the last recorded closeout. <!-- P10:FILL slide-test-counts: final counts --></li>
+    <li>Golden corpus on real SEC documents, seeded-defect fixtures, property tests.</li>
+    <li>Browser tests, an accessibility scan, and a live smoke run against the deployed site.</li>
+  </ul>
+</section>
+
+<section class="slide" aria-label="Known misses">
+  <div class="kicker">Known misses</div>
+  <h2>What it does not do yet.</h2>
+  <ul>
+    <li>Structurer misses on a few samples; some statutory citations and sub-letter references (4B, 3A) are not resolved.</li>
+    <li>No missing-target cross-reference detector; no edit of finding text or severity.</li>
+    <li>No compare for scanned documents. Live AI quality is only lightly measured.</li>
+    <li>Not production: no accounts, no CI, sandbox tenancy only.</li>
+  </ul>
+</section>
+
+<section class="slide" aria-label="Close">
+  <div class="kicker">Thank you</div>
+  <h1>Faster, evidence-first review before digitization.</h1>
+  <p>Live site: https://aduin-transaction-web.giathaowork.workers.dev</p>
+  <p>Docs: README.md, docs/architecture/README.md, docs/DEPLOY.md</p>
+</section>
+
+<div class="foot"><span>Subscription Document QA</span><span class="nav" id="count"></span></div>
+</main>
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var count = document.getElementById('count');
+  var i = 0;
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function (s, k) { s.classList.toggle('on', k === i); });
+    count.textContent = (i + 1) + ' / ' + slides.length;
+    if (location.hash !== '#' + (i + 1)) { history.replaceState(null, '', '#' + (i + 1)); }
+  }
+  document.addEventListener('keydown', function (e) {
+    var k = e.key;
+    if (k === 'ArrowRight' || k === 'ArrowDown' || k === 'PageDown' || k === ' ' || k === 'Enter') { e.preventDefault(); show(i + 1); }
+    else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp' || k === 'Backspace') { e.preventDefault(); show(i - 1); }
+    else if (k === 'Home') { show(0); }
+    else if (k === 'End') { show(slides.length - 1); }
+  });
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('a')) { return; }
+    show(e.clientX < window.innerWidth / 3 ? i - 1 : i + 1);
+  });
+  var start = parseInt((location.hash || '').slice(1), 10);
+  show(isNaN(start) ? 0 : start - 1);
+})();
+</script>
+</body>
+</html>

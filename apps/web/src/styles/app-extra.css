@@ -211,3 +211,40 @@ body {
 .locrow {
   margin: 0;
 }
+
+/* Phase 10 a11y (AC30). Overrides on top of the ported app.html rules; token values only.
+   U2: a reviewed row is no longer dimmed with opacity (ink-3 captions at 0.7 measured 2.8-3.1:1);
+   its status icon and data-status carry the state, the text keeps AA contrast. */
+.row.done {
+  opacity: 1;
+}
+.row.done .rowb {
+  color: var(--ink-2);
+}
+/* U3: focus rings inside scroll containers are drawn inset so overflow never clips them, and the
+   focusable scrollers themselves show the ring inside their edge. */
+.scroll:focus-visible,
+.prevlist:focus-visible,
+.pgbody:focus-visible,
+.scroll :focus-visible,
+.prevlist :focus-visible {
+  outline-offset: -2px;
+}
+/* U4: the note underline was a thin dotted grey line; it is thicker and darker now (shape still
+   differs per severity: solid block, wavy fix, dotted note; the icon and chip repeat the level). */
+mark.q.sev-note {
+  text-decoration-thickness: 3px;
+  text-decoration-color: var(--note-fg);
+}
+/* U4: rail badges no longer cover the nav glyph: badged icons move left inside the 40px button and
+   the badge sits in the top-right corner. */
+.app.rail .ni:has(> .nc:not(:empty)) {
+  justify-items: start;
+  padding-left: 6px;
+}
+.app.rail .nc {
+  top: 0;
+  right: 0;
+  padding: 0 3px;
+  font-variant-numeric: tabular-nums;
+}

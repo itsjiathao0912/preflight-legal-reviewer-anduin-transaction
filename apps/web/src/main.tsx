@@ -1,3 +1,4 @@
+import './zod-jitless';
 import '@fontsource/geist/400.css';
 import '@fontsource/geist/500.css';
 import '@fontsource/geist/600.css';
@@ -9,6 +10,7 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import { memoryApi } from './api/client';
 import { App } from './App';
+import './features/ai/turnstile-register';
 import { installE2eHook } from './e2e-hook';
 import { loadAnalystName } from './state/memory-sync';
 import { useReview } from './state/review';

@@ -104,7 +104,7 @@ export function FindingsScreen() {
             </div>
             <FilterMenu rows={view.main} />
           </div>
-          <div className="scroll flist" tabIndex={-1}>
+          <div className="scroll flist" tabIndex={0} role="region" aria-label="Findings list">
             {phase === 'empty' || phase === 'error' ? (
               <div className="empty" data-testid="empty-state">
                 <p className="em-p">

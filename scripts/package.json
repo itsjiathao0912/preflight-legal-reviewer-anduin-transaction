@@ -22,7 +22,12 @@
     "precompute:ocr": "tsx src/precompute/precompute-ocr.ts",
     "record:ocr": "tsx src/record/record-ocr.ts",
     "ocr:cer": "tsx src/ocr/cer.ts",
-    "dev:seed": "tsx src/dev-seed.ts"
+    "dev:seed": "tsx src/dev-seed.ts",
+    "conformance:free-plan": "tsx src/conformance/free-plan.ts",
+    "probe:live-session": "tsx src/live/probe-session.ts",
+    "probe:live-ai": "tsx src/live/probe-ai.ts",
+    "shots:live": "tsx src/screenshots/shots-live.ts",
+    "deploy:preflight": "tsx src/deploy/preflight.ts"
   },
   "dependencies": {
     "@aduin/core": "workspace:*",

@@ -1,6 +1,7 @@
 import type { MemoryApi } from './memoryApi';
 import { IS_E2E } from '../e2e-flag';
 import { e2eRealMemory } from '../e2e-hook';
+import { hasTurnstileProvider, turnstileToken } from '../features/ai/turnstile';
 import { appDb } from '../storage/db';
 import { apiEnabled, onApiBaseChange } from './base';
 import { RealMemoryApi } from './realMemoryApi';
@@ -32,7 +33,7 @@ export function memoryApi(): MemoryApi | null {
   api = null;
   const db = appDb();
   if (wantReal) {
-    api = new RealMemoryApi({ db });
+    api = new RealMemoryApi({ db, turnstileToken, turnstileRequired: hasTurnstileProvider });
     return api;
   }
   if (!db) return null;

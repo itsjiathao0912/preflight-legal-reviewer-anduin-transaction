@@ -46,7 +46,9 @@ export function NavGroup({
                 <Icon name={m.icon} />
                 <span className="lbl">{text}</span>
                 {m.id === 'findings' || m.id === 'counsel' || m.id === 'structure' ? (
-                  <span className="nc" data-testid={`nav-badge-${m.id}`}>
+                  // aria-hidden: the visible count is announced by the sr suffix below so the
+                  // accessible name starts with the visible label (WCAG 2.5.3 label in name).
+                  <span className="nc" data-testid={`nav-badge-${m.id}`} aria-hidden="true">
                     {b && b.n > 0 ? (
                       <>
                         {m.id === 'structure' ? <Icon name="warn" /> : null}
@@ -54,6 +56,12 @@ export function NavGroup({
                         {b.n}
                       </>
                     ) : null}
+                  </span>
+                ) : null}
+                {b && b.n > 0 ? (
+                  <span className="sr">
+                    {' '}
+                    {b.n} {b.sr.toLowerCase()}
                   </span>
                 ) : null}
               </button>

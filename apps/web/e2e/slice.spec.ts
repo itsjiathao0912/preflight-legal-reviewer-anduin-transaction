@@ -12,8 +12,15 @@ test.describe('M1 slice through the Worker', () => {
   }) => {
     const outbound: string[] = [];
     const consoleErrors: string[] = [];
+    const failedPosts: string[] = [];
     page.on('request', (r: Request) => {
       if (/openrouter\.ai/i.test(r.url())) outbound.push(r.url());
+    });
+    // G16: with the site key compiled in and no Turnstile token, the client must not issue a
+    // failing POST (e.g. /api/session); any 4xx/5xx POST is a defect, never filtered away.
+    page.on('response', (r) => {
+      if (r.request().method() === 'POST' && r.status() >= 400)
+        failedPosts.push(`${r.status()} ${r.url()}`);
     });
     page.on('console', (m) => {
       if (m.type() === 'error') consoleErrors.push(m.text());
@@ -64,16 +71,24 @@ test.describe('M1 slice through the Worker', () => {
     if (blocks === 0) await expect(page.getByTestId('gate-button')).toHaveText(/Ready to digitize/);
     else await expect(page.getByTestId('gate-button')).toHaveText(/Blocked/);
 
-    // /api/quota answers via the Worker (no D1 in M1: fail-closed, global_ok false).
+    // /api/quota answers via the Worker. Local (SLICE_BASE_URL unset, no D1): fail-closed, false.
+    // Live (SLICE_BASE_URL set, real D1): a boolean; the observed value is recorded.
     const q = await request.get('/api/quota', { headers: { 'x-aduin-client': '1' } });
     expect(q.status()).toBe(200);
     expect(q.headers()['cache-control']).toBe('no-store');
     const body = (await q.json()) as { global_ok: unknown; ai: unknown; ocr_pages: unknown };
-    expect(body.global_ok).toBe(false);
+    if (process.env.SLICE_BASE_URL) {
+      expect(typeof body.global_ok).toBe('boolean');
+      test.info().annotations.push({ type: 'global_ok', description: String(body.global_ok) });
+      console.log(`[slice] live global_ok=${String(body.global_ok)}`);
+    } else {
+      expect(body.global_ok).toBe(false);
+    }
     expect(body.ai).toBeTruthy();
     expect(body.ocr_pages).toBeTruthy();
 
     expect(outbound, 'no browser request to openrouter.ai').toEqual([]);
+    expect(failedPosts, 'no failing POST (G16)').toEqual([]);
     expect(consoleErrors, 'no console errors').toEqual([]);
   });
 });

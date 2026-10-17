@@ -28,13 +28,12 @@ export function DocSwitcher() {
             className="docsw"
             type="button"
             data-testid="doc-switcher"
-            aria-label={`Switch document. Current: ${name}, ${firm}`}
+            aria-label={`${name} ${firm}, switch document`}
             title={rail ? `Switch document: ${name}` : undefined}
           >
             <Icon name="doc" />
             <span className="dt">
-              <span className="dn">{name}</span>
-              <span className="df">{firm}</span>
+              <span className="dn">{name}</span> <span className="df">{firm}</span>
             </span>
             <Icon name="chevd" />
           </button>

@@ -224,7 +224,14 @@ export function DocPane({ rows }: { rows: Row[] }) {
         <span>Reading view · text extracted from HTML</span>
         <JumpMenu sections={result?.sections ?? []} rows={rows} />
       </div>
-      <div className="scroll docscroll" ref={scrollRef} tabIndex={-1} data-testid="doc-pane">
+      <div
+        className="scroll docscroll"
+        ref={scrollRef}
+        tabIndex={0}
+        role="region"
+        aria-label="Document text"
+        data-testid="doc-pane"
+      >
         {result && doc ? (
           <article className="paper">
             <h1>{doc.name}</h1>

@@ -6,6 +6,7 @@ describe('@aduin/worker health (workerd)', () => {
     const res = await SELF.fetch('https://example.com/api/health');
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('application/json');
+    expect(res.headers.get('cache-control')).toBe('no-store');
     expect(await res.json()).toEqual({ ok: true });
   });
 

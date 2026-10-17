@@ -14,7 +14,13 @@ export default defineConfig(({ mode }) => ({
     'import.meta.env.VITE_API_BASE': JSON.stringify(mode === 'e2e' ? '' : '/'),
   },
   worker: { format: 'es' as const },
-  build: { outDir: 'dist', emptyOutDir: true },
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    // CSP font-src 'self' (Phase 10 D2): never inline fonts as data: URIs; other assets keep the default.
+    assetsInlineLimit: (file: string) =>
+      /\.(woff2?|ttf|otf|eot)$/i.test(file) ? false : undefined,
+  },
   preview: { host: '127.0.0.1' },
   test: {
     environment: 'jsdom',

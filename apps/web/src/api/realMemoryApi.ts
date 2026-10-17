@@ -49,8 +49,14 @@ export interface RealMemoryApiOptions {
   now?: () => number;
   /** Name used for an automatic bootstrap before the first call (default `Linh Tran`). */
   analystName?: () => string | null;
-  /** Turnstile token for POST /api/session when the Worker requires one. */
-  turnstileToken?: () => string | null;
+  /** Turnstile token for POST /api/session when the Worker requires one (sync or async). */
+  turnstileToken?: () => string | null | Promise<string | null>;
+  /**
+   * True when a token provider is registered (site key compiled in). Then a missing token means the
+   * challenge failed: bootstrap does NOT post (no failing request) and throws `unauthorized` /
+   * `turnstile_missing`; triage stays local. False (default) posts without a token as before.
+   */
+  turnstileRequired?: () => boolean;
   newOpId?: () => string;
 }
 
@@ -110,7 +116,8 @@ export class RealMemoryApi implements MemoryApi, RunCacheControl {
   private readonly db: AppDb | null;
   private readonly now: () => number;
   private readonly defaultName: () => string | null;
-  private readonly turnstile: () => string | null;
+  private readonly turnstile: () => string | null | Promise<string | null>;
+  private readonly turnstileRequired: () => boolean;
   private readonly opId: () => string;
   private session: SessionInfo | null = null;
   private name: string | null = null;
@@ -126,6 +133,7 @@ export class RealMemoryApi implements MemoryApi, RunCacheControl {
     this.now = opts.now ?? Date.now;
     this.defaultName = opts.analystName ?? (() => DEFAULT_ANALYST_NAME);
     this.turnstile = opts.turnstileToken ?? (() => null);
+    this.turnstileRequired = opts.turnstileRequired ?? (() => false);
     this.opId = opts.newOpId ?? newClientOpId;
   }
 
@@ -211,7 +219,17 @@ export class RealMemoryApi implements MemoryApi, RunCacheControl {
     if (n.length < 1 || n.length > 80) throw bad('analyst_name', 'analyst name must be 1-80 chars');
     if (this.booting) return this.booting;
     const run = (async () => {
-      const token = this.turnstile();
+      let token: string | null;
+      try {
+        token = await this.turnstile();
+      } catch {
+        token = null;
+      }
+      if (!token && this.turnstileRequired()) {
+        throw new MemoryApiError('unauthorized', 'Verification needed.', {
+          reason: 'turnstile_missing',
+        });
+      }
       const r = await this.send(
         'POST',
         '/api/session',

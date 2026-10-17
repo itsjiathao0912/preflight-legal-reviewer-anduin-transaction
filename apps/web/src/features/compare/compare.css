@@ -128,8 +128,9 @@
 .grp {
   margin: 0 0 16px;
 }
-.grp.muted {
-  opacity: 0.85;
+/* Phase 10 (U2): no opacity dimming; ink-3 headings at 0.85 fell below 4.5:1 on ground. */
+.grp.muted > h3 {
+  color: var(--ink-3);
 }
 .grp > h3 {
   margin: 0 0 6px 4px;

@@ -1,6 +1,7 @@
 .vibecode-backup*/
 .env
 .env.*
+!apps/web/.env.example
 .dev.vars
 .claude/hooks/.logs/
 .codex/hooks/.logs/

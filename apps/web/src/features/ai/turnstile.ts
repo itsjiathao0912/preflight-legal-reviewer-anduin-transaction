@@ -7,9 +7,16 @@
 export type TurnstileProvider = () => Promise<string | null>;
 
 let provider: TurnstileProvider = async () => null;
+let registered = false;
 
 export function setTurnstileProvider(p: TurnstileProvider): void {
   provider = p;
+  registered = true;
+}
+
+/** True once a real provider is registered (Phase 10: site key compiled in). */
+export function hasTurnstileProvider(): boolean {
+  return registered;
 }
 
 export async function turnstileToken(): Promise<string | null> {

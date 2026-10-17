@@ -5,6 +5,7 @@
 import { mountMemoryRoutes } from './routes/memory/index';
 import { mountProxyRoutes } from './routes/proxy/index';
 import type { ProxyDeps } from './proxy/pipeline';
+import { jsonNoStore } from './proxy/errors';
 
 export interface Env {
   ASSETS?: Fetcher;
@@ -114,7 +115,7 @@ export function createApp(deps: AppDeps): App {
     },
   };
 
-  app.route('GET', '/api/health', () => json({ ok: true }));
+  app.route('GET', '/api/health', () => jsonNoStore({ ok: true }));
   mountProxyRoutes(app, deps);
   mountMemoryRoutes(app, deps);
   return app;
