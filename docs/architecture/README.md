@@ -4,7 +4,7 @@ A browser-first QA tool for fund subscription documents. All parsing and checks 
 
 ## The problem
 
-Anduin Transactions digitizes fund subscription documents (sub docs) into online forms. Before digitization, an analyst must find typos, broken cross-references, broken skip instructions, unreachable sections, investor-type gaps and defined-term errors, then confirm unclear items with the law firm's counsel. Today this is manual. This app does the review: it parses a document into a logic graph, runs deterministic checks, uses an LLM only to judge a few graph-selected passages, compares related versions, and turns confirmed issues into a counsel query sheet. A gate blocks digitization until every critical item has a clear answer. A firm memory remembers earlier decisions so the same issue is not re-reviewed for the next fund.
+Anduin Transactions digitizes fund subscription documents (sub docs) into online forms. Before digitization, an analyst must find typos, broken cross-references, broken skip instructions, unreachable sections, investor-type gaps and defined-term errors, then confirm unclear items with the law firm's counsel. A sub doc rarely stands alone: it cites an LPA, a PPM, annexes, side letters and tax forms. Fund Package Intake reads those documents together, so a term defined in the LPA is not flagged and a document that is missing is requested from the GP. Today this is manual. This app does the review: it parses a document into a logic graph, runs deterministic checks, uses an LLM only to judge a few graph-selected passages, compares related versions, and turns confirmed issues into a counsel query sheet. A gate blocks digitization until every critical item has a clear answer. A firm memory remembers earlier decisions so the same issue is not re-reviewed for the next fund.
 
 ## Design principles
 
@@ -18,15 +18,15 @@ Anduin Transactions digitizes fund subscription documents (sub docs) into online
 
 ## Runtime map
 
-The browser holds the engine and the document. The Worker serves the static app and guards three things: AI/OCR proxy, memory API and a daily purge. D1 is the only datastore. OpenRouter is the only external service.
+The browser holds the engine, the document and, for a fund package, every document of the package (each file gets a light read in the Engine Web Worker; the pure package analysis of type and role, references, cross-document terms, coverage and GP request items then runs in the app state, with no network; packages are stored in IndexedDB). The Worker serves the static app and guards three things: AI/OCR proxy, memory API and a daily purge. It has no package route and D1 has no package table. D1 is the only datastore. OpenRouter is the only external service.
 
 ```mermaid
 flowchart LR
   subgraph BR["Browser"]
     direction TB
     UI["React app: sidebar, screens, gate"]
-    WW["Engine Web Worker: adapters, structurer, detectors, diff, verifyAi"]
-    IDB[("IndexedDB: uploads 24 h, drafts, outbox")]
+    WW["Engine Web Worker: adapters, structurer, detectors, package light read, diff, verifyAi"]
+    IDB[("IndexedDB: uploads and packages 24 h, drafts, outbox")]
     UI <-- "Comlink" --> WW
     UI --- IDB
   end
@@ -55,8 +55,8 @@ D1 (`aduin-transaction-db`) is bound and live on the deployed Worker (see [statu
 | Layer | Runs in | Owns | Never does |
 |---|---|---|---|
 | React app | Browser main thread | Screens, triage, gate display, DOCX export, PDF page rendering for OCR, memory outbox | Parse documents, call OpenRouter |
-| Engine Web Worker | Browser worker thread (Comlink) | Format adapters, structurer, logic graph, 13 detectors, diff, counsel template drafts, quote verification | Network calls |
-| IndexedDB (Dexie) | Browser | Uploaded bytes (24 h), parsed models, drafts, UI state, decision outbox, daily allowance | Long-term storage |
+| Engine Web Worker | Browser worker thread (Comlink) | Format adapters, structurer, logic graph, 13 detectors, light read of each package file (the package analysis itself is pure core code called from the app state), diff, counsel template drafts, quote verification | Network calls |
+| IndexedDB (Dexie) | Browser | Uploaded bytes (24 h), packages (24 h), parsed models, drafts, UI state, decision outbox, daily allowance | Long-term storage |
 | Static assets | Cloudflare Worker (assets binding) | SPA bundle, 12 HTML samples, the 22-page scan set, precomputed AI/OCR JSON | Dynamic logic |
 | Proxy | Cloudflare Worker | Header and body guards, pre-limit, visitor cookie, quota claims, cache read/write, Turnstile, OpenRouter streaming, spend ledger | Parse a document, store a document |
 | Memory API | Cloudflare Worker + D1 | Sessions, lookup, runs, decisions, counsel Q&A, rules, audit, export (19 routes) | Fuzzy matching, store full text |
@@ -70,7 +70,7 @@ Lookup order for AI results: static precomputed file, then D1 cache, then a live
 
 | Package | Role |
 |---|---|
-| [packages/core](../../packages/core/src/index.ts) | Pure TypeScript shared by browser and Worker: model, adapters, structurer, graph, detectors, diff, memory fingerprints, counsel gate, LLM task registry, contracts (zod) |
+| [packages/core](../../packages/core/src/index.ts) | Pure TypeScript shared by browser and Worker: model, adapters, structurer, graph, detectors, diff, [package intake](../../packages/core/src/package/index.ts), memory fingerprints, counsel gate, LLM task registry, contracts (zod) |
 | [apps/web](../../apps/web/src/main.tsx) | React 19 + Vite 8 + Tailwind 4 SPA, Zustand state, Dexie storage |
 | [apps/worker](../../apps/worker/src/index.ts) | Cloudflare Worker: hand-rolled route table, proxy pipeline, memory repo, D1 migrations |
 | [scripts](../../scripts/src/build-samples.ts) | Sample builder, seeded fixture builder, precompute and record tools, repo guards |

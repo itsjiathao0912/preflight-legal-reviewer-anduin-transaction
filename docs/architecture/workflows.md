@@ -26,7 +26,7 @@ flowchart LR
   R(["Demo reviewer"]):::who
   C(["Counsel, outside app"]):::ext
 
-  W1["W1 Open document"]:::b
+  W1["W1 Open document or package"]:::b
   W2["W2 Review and triage"]:::b
   W3["W3 AI lane"]:::b
   W4["W4 Counsel loop"]:::b
@@ -44,6 +44,7 @@ flowchart LR
   W2 -- "needs counsel" --> W4
   W5 -- "drift findings" --> W2
   W6 -- "same engine run" --> W2
+  W1 -- "package: missing documents" --> W4
   W4 -- "DOCX sheet" --> C
   C -- "A / B / C answer" --> W4
   W2 -- "accept, dismiss" --> M
@@ -65,19 +66,30 @@ flowchart LR
 
 Green workflows are built. W8 is amber because the demo session needs D1, which is not bound on the live Worker. The gate reads from both review (W2) and counsel (W4).
 
-## W1. Open a document (Partial)
+## W1. Open a document or a fund package (Partial)
 
-The analyst picks a bundled sample or uploads a file. Scans take the OCR branch and then join the same engine as every other format.
+The analyst picks a bundled sample, a demo package, or uploads one or many files. One file takes the classic path. Several files take the package path: each file is typed and given a role, the analyst confirms the uncertain rows, and the package is analyzed before the checks run. Scans take the OCR branch and then join the same engine as every other format.
 
 ```mermaid
 flowchart TD
-  S(["Doc switcher"]) --> Q{"Sample or upload?"}
+  S(["Doc switcher"]) --> Q{"Sample, demo package or upload?"}
   Q -- "sample" --> SM["Fetch /samples file, pre-tagged firm, fund, version"]
+  Q -- "demo package" --> DP["Load the package files from /samples/packages"]
   Q -- "upload" --> PV["Privacy notice, accept once"]
-  PV --> UP["Upload dialog: file, firm from list, fund, version"]
-  UP --> VL{"Type, 10 MB, 30 pages OK?"}
+  PV --> UP["Upload dialog: one or more files, firm from list, fund, version"]
+  UP --> VL{"Type, 10 MB per file, 12 files, 40 MB, 30 pages OK?"}
   VL -- "no" --> ER["Clear error, no AI spent"]
-  VL -- "yes" --> DX["Keep bytes 24 h in IndexedDB"]
+  VL -- "yes" --> N{"How many files?"}
+  N -- "one" --> DX["Keep bytes 24 h in IndexedDB"]
+  N -- "many" --> LR["Light read of each file: type and role by rules, reason shown"]
+  DP --> LR
+  LR --> CT["Confirmation table: type, role, high or low confidence, why"]
+  CT --> CF{"Low-confidence rows confirmed, one sub agreement to digitize?"}
+  CF -- "no" --> HOLD["Run checks stays disabled"]
+  HOLD --> CT
+  CF -- "yes" --> RUN["Run checks"]
+  RUN --> PA["Package analysis: references, cross-document terms, coverage"]
+  PA --> DX
   SM --> FT{"Format?"}
   DX --> FT
   FT -- "HTML, text PDF, DOCX" --> EN["Engine Web Worker: read, structure, checks"]
@@ -86,16 +98,31 @@ flowchart TD
   PC -- "no" --> RP["Render pages, POST /api/ocr per page"]
   RP --> OJ
   OJ --> EN
-  EN --> F(["W2 Findings"])
+  EN --> F(["W2 Findings with coverage line"])
+  PA -. "missing documents" .-> GP(["W4 For the GP request"])
+  PA -. "Package lens" .-> W6(["W6 Structure"])
   classDef d fill:#F5E8C8,stroke:#B98A2E,color:#6E4100
   class UP d
 ```
 
-- Upload checks: type (`.htm .html .pdf .docx .jpg .jpeg .png`), 10 MB, 30 scan pages. Failures show a clear error and spend no AI.
+- Upload checks: type (`.htm .html .pdf .docx .jpg .jpeg .png`), 10 MB per file, 30 scan pages. A package takes up to 12 files and 40 MB in total. Failures show a clear error and spend no AI.
+- Package path: type and role are chosen by a rule table (file name and text), never by a model; every row shows its confidence and the reason. A low-confidence row must be confirmed before Run checks enables. The baseline is chosen with the role select, and only an earlier document of the same firm is offered (a package with no firm sees only its own files). A package with no subscription agreement holds the run.
+- A single high-confidence subscription agreement uploaded alone opens as a one-document package, so it also gets a coverage line. Bundled samples show no package UI.
+- The package is kept in IndexedDB for 24 hours and is restored on reload ("Recent packages" in the Upload dialog). Nothing about a package goes to the server.
 - Samples open with zero calls to `/api/ai` or `/api/ocr`; precomputed AI and OCR JSON ship as static files.
 - Uploaded bytes stay in IndexedDB for 24 hours and are never sent to the server except scan page images for OCR.
-- Partial because the interim open-document dialog is built, but the full `#documents` screen from the mockup is still a placeholder route. Live OCR on uploads waits for the live D1 and Turnstile.
-- Key code: [open-actions.ts](../../apps/web/src/features/open-document/open-actions.ts), [validate-upload.ts](../../apps/web/src/features/open-document/validate-upload.ts), [engine.worker.ts](../../apps/web/src/engine/engine.worker.ts), [render-pages.ts](../../apps/web/src/engine/render-pages.ts), [ocr-queue.ts](../../apps/web/src/engine/ocr-queue.ts), [adapters](../../packages/core/src/adapters/format-detect.ts)
+- Partial because the interim open-document dialog is built, but the full `#documents` screen from the mockup is still a placeholder route. Live OCR on uploads waits for a human-solved Turnstile challenge.
+- Key code: [open-actions.ts](../../apps/web/src/features/open-document/open-actions.ts), [package-actions.ts](../../apps/web/src/features/open-document/package-actions.ts), [PackageConfirmTable.tsx](../../apps/web/src/features/open-document/PackageConfirmTable.tsx), [validate-upload.ts](../../apps/web/src/features/open-document/validate-upload.ts), [detect.ts](../../packages/core/src/package/detect.ts), [analyze.ts](../../packages/core/src/package/analyze.ts), [state/package.ts](../../apps/web/src/state/package.ts), [engine.worker.ts](../../apps/web/src/engine/engine.worker.ts), [render-pages.ts](../../apps/web/src/engine/render-pages.ts), [ocr-queue.ts](../../apps/web/src/engine/ocr-queue.ts), [adapters](../../packages/core/src/adapters/format-detect.ts)
+
+### Package intake: from upload to GP request
+
+| Step | What the analyst sees | Code |
+|---|---|---|
+| 1. Upload | Several files, firm, fund | [OpenDocumentDialog.tsx](../../apps/web/src/features/open-document/OpenDocumentDialog.tsx) |
+| 2. Type and role confirm | Table of file, type, role, confidence, reason; confirm low rows | [PackageConfirmTable.tsx](../../apps/web/src/features/open-document/PackageConfirmTable.tsx), [detect.ts](../../packages/core/src/package/detect.ts) |
+| 3. Package map | Structure > Package lens: documents, external references (Resolved, Not in package, Needs confirmation), cross-document terms ("Defined in LPA", "Unverified") | [PackageLens.tsx](../../apps/web/src/features/package/PackageLens.tsx), [references.ts](../../packages/core/src/package/references.ts), [terms.ts](../../packages/core/src/package/terms.ts) |
+| 4. Coverage | One coverage line in the Findings header and the gate popover; a table per check group in the lens; a missing sub agreement blocks, a missing LPA or PPM only warns | [coverage.ts](../../packages/core/src/package/coverage.ts), [policy.ts](../../packages/core/src/package/policy.ts), [CoverageLine.tsx](../../apps/web/src/features/gate/CoverageLine.tsx) |
+| 5. GP request | Counsel questions > "For the GP": one item per missing document with its quote, and one request DOCX | [request.ts](../../packages/core/src/package/request.ts), [GpRequestGroup.tsx](../../apps/web/src/features/counsel/GpRequestGroup.tsx), [exportRequestDocx.ts](../../apps/web/src/features/counsel/exportRequestDocx.ts) |
 
 ## W2. Review and triage (Built)
 
@@ -103,7 +130,7 @@ Deterministic results show first, memory labels each finding, and every decision
 
 ```mermaid
 flowchart TD
-  E["Engine: read, structure, 15 detectors"] --> FP["Fingerprint each finding: firm + class + quote hash"]
+  E["Engine: read, structure, 13 detectors"] --> FP["Fingerprint each finding: firm + class + quote hash"]
   FP --> FM{"Firm known?"}
   FM -- "no" --> NB["Banner: memory not applied, all New"]
   FM -- "yes" --> LK["POST /api/memory/lookup"]
@@ -132,6 +159,7 @@ flowchart TD
 - A dismissed finding of severity `critical` or `high` is never hidden: it stays in the list as "re-confirm".
 - Dismiss requires a reason code. Accept alone does not release a critical item from the gate.
 - Edit of finding text or severity (AC6) is not built (backlog B-EDIT).
+- In a package, a coverage line sits in the Findings header next to the gate pill, and a partial package never looks fully checked. A term defined in the package LPA is not flagged as undefined; with no LPA it is listed as "Unverified" and counted in coverage.
 - Key code: [engine.ts](../../packages/core/src/engine.ts), [fingerprintFindings.ts](../../apps/web/src/memory/fingerprintFindings.ts), [label.ts](../../packages/core/src/memory/label.ts), [FindingsScreen.tsx](../../apps/web/src/features/review/FindingsScreen.tsx), [outbox.ts](../../apps/web/src/api/outbox.ts), [decisions route](../../apps/worker/src/routes/memory/decisions.ts)
 
 ## W3. AI lane (Built; uploads closed on the live site)
@@ -196,6 +224,7 @@ flowchart LR
 - The DOCX contains only unanswered New and Accepted questions (decision D-1). Answers are shown in the app.
 - Awaiting-counsel items can be answered in the app (D-3). An answer on a "re-confirm" item counts as the re-confirmation (D-2).
 - `unclear` keeps the item blocking and re-includes it in the next sheet.
+- With a package open, the sheet gains a **For the GP** group: one item per document the sub agreement cites but the package lacks, each with the quote, plus one request DOCX. These are requests, not findings: they never touch memory or the gate.
 - Key code: [sheet.ts](../../packages/core/src/counsel/sheet.ts), [template-draft.ts](../../packages/core/src/counsel/template-draft.ts), [gate.ts](../../packages/core/src/counsel/gate.ts), [CounselScreen.tsx](../../apps/web/src/features/counsel/CounselScreen.tsx), [exportDocx.ts](../../apps/web/src/features/counsel/exportDocx.ts), [counsel route](../../apps/worker/src/routes/memory/counsel.ts)
 
 ## W5. Compare versions (Built)
@@ -235,6 +264,7 @@ flowchart LR
 ```
 
 - Structure is a reading aid on the same engine output. It creates no separate state.
+- With a package open, a seventh **Package** lens appears: the documents, external references with their quote and location, cross-document terms and coverage per check group. It is not a new screen or sidebar item, and it disappears when the open document has no package.
 - "Issues only" is the default; "Show everything" reveals full lists.
 - Investor paths: pick a type, see its ordered path through the form and any gap. Gaps feed the same findings list.
 - Key code: [structure-view/build.ts](../../packages/core/src/structure-view/build.ts), [investor](../../packages/core/src/investor/paths.ts), [outline/build.ts](../../packages/core/src/outline/build.ts), [StructureScreen.tsx](../../apps/web/src/features/structure/StructureScreen.tsx), [InvestorTypesLens.tsx](../../apps/web/src/features/investor-paths/InvestorTypesLens.tsx)

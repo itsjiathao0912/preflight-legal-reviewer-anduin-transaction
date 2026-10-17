@@ -1,6 +1,6 @@
 # Decision log
 
-Twelve architecture decisions in ADR form: what was chosen, why, what was rejected, and what it costs. Sources: the [INNOVATE decision summary](../../process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_INNOVATE_17-10-26.md), the umbrella plan, the [mockup notes](../../design/mockups/app_NOTES.md) and measured spike results. All decisions below are in force in the code on `main`.
+Thirteen architecture decisions in ADR form: what was chosen, why, what was rejected, and what it costs. Sources: the [INNOVATE decision summary](../../process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_INNOVATE_17-10-26.md), the umbrella plan, the [mockup notes](../../design/mockups/app_NOTES.md) and measured spike results. All decisions below are in force in the code on `main`.
 
 | # | Decision | Status |
 |---|---|---|
@@ -16,6 +16,7 @@ Twelve architecture decisions in ADR form: what was chosen, why, what was reject
 | ADR-10 | Vertical sidebar and "show less by default" UI | Built |
 | ADR-11 | Counsel stays outside the app (DOCX out, answer recorded in) | Built |
 | ADR-12 | Product defaults D-1 to D-9 | Built |
+| ADR-13 | Fund package intake folds into existing screens; browser-only package storage; rule-based type detection; LLM suggester deferred | Built; live (17 Oct 2026, version 3d2c7301) |
 
 ## ADR-1. Browser-first engine with a thin Worker proxy
 
@@ -113,6 +114,13 @@ Approved by the user in the design session (D-8 and D-9 were orchestrator decisi
 | D-7 | Sample corpus is 12 HTML files plus the 22-page scan set; the ILPA PDF stays local-only (copyright) | Only redistributable public filings are shipped |
 | D-8 | `axe-core` (MPL-2.0) allowed as a dev-only test dependency, not shipped | Accessibility checks without licence risk |
 | D-9 | Worker tests use `@cloudflare/vitest-plugin` instead of the deprecated pool package | Supported test runner |
+
+## ADR-13. Fund package intake folds into existing screens, browser-only storage, rule-based detection
+
+- **Decision.** A fund package (sub agreement plus LPA, PPM, baseline, side letters, tax forms) is handled with no new screen and no new sidebar item. Upload takes many files and shows a confirmation table; Structure gains a "Package" lens; the Findings header and gate popover gain a coverage line; Counsel questions gains a "For the GP" group with one request DOCX. A package is stored only in the browser (IndexedDB, 24 hours) and restored on reload. Document type and role are chosen by a rule table that shows its reason and confidence; low-confidence rows need the analyst's confirmation. An LLM document-type suggester exists only as a seam (it can propose, never override) and no model task ships. The missing-document gate policy is data: a missing sub agreement blocks, a missing LPA or PPM only warns.
+- **Context.** A sub doc cites an LPA, annexes, side letters and tax forms that are often not uploaded with it. Without them the tool either flags terms the LPA defines (false errors) or silently skips checks (false confidence). The product rule is to integrate new features into existing screens and keep the engine deterministic and free.
+- **Alternatives rejected.** Four separate screens as in the original PRD (intake, package map, coverage, requests): adds navigation the analyst does not need and fragments one flow. Server-side package storage (a D1 migration and a Worker route): nothing needs it, it adds privacy surface (full documents on the server) and Worker CPU, and the free D1 write budget is the known capacity risk. LLM classification of document type: rules reach the demo set with no wrong high-confidence type, a model call costs quota and adds a nondeterministic step in front of every check, and a wrong type would silently change coverage. Missing documents as ordinary findings: would need a new issue class, fingerprint and memory semantics and would change the gate matrix.
+- **Consequences.** Everything runs offline in the browser and costs $0 (0 live model calls). The gate, the 13 detectors and the 15 issue classes are unchanged; package-level checks sit beside them. Known costs: type detection is rules only, so two subscription agreements in one package always need the analyst to pick roles; reference and term extraction miss some forms (for example the "US Feeder Subscription Agreement" on package 02, and Schedule and Exhibit targets); the bundle grew by about 270 kB. See [status.md](status.md) and [data-model.md](data-model.md#fund-packages-are-browser-only).
 
 ## Related
 

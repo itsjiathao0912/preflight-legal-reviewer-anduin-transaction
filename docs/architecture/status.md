@@ -1,6 +1,6 @@
 # Status
 
-As of 17 Oct 2026 (live version `cde74507-7b92-4e43-99fa-754de2c5cf3b`, code `1f5cfa5` plus cherry-pick of `994ea54`, previous `328ca295`): Phases 00-10 are done and the site is live with its real database, Turnstile and an enforced CSP. Demo-readiness fixes and later fixes are live (see below). Live AI review works end to end (4 AI findings in about 199 s) since the worker AI upstream timeout was raised from 120 s to 240 s; it is slow, so demo with No AI or precomputed samples. A human-operator live AI sweep, the AC51 echo and the D4 burst are still pending.
+As of 17 Oct 2026 (live version `3d2c7301-a4a5-487c-bd7d-2f2c0800be6f`, deployed from `main` at `a4d7a34`, closeout commit `8a9398c`; previous `cde74507`): Phases 00-10 and Fund Package Intake are done and the site is live with its real database, Turnstile and an enforced CSP. Demo-readiness fixes and later fixes are live (see below). Variance management is planned next, with EXECUTE in another session. Live AI review works end to end (4 AI findings in about 199 s) since the worker AI upstream timeout was raised from 120 s to 240 s; it is slow, so demo with No AI or precomputed samples. A human-operator live AI sweep, the AC51 echo and the D4 burst are still pending.
 
 Status key: **Built / Partial / Planned / Not live yet**. Live in the table means built and running on the deployed Worker.
 
@@ -12,7 +12,7 @@ Status key: **Built / Partial / Planned / Not live yet**. Live in the table mean
 | Structurer and logic graph | Built | |
 | Deterministic detectors | Partial | 13 detectors built; missing-target cross-reference detector deferred (feasibility inconclusive) |
 | Review and triage (W2) | Built | Edit of finding text or severity not built (backlog B-EDIT) |
-| Open a document (W1) | Partial | Interim open dialog built; full `#documents` screen is still a placeholder route |
+| Open a document or package (W1) | Partial | Upload takes many files (12 files, 40 MB, 10 MB each) and shows a type and role confirmation table; interim open dialog built; full `#documents` screen is still a placeholder route |
 | AI lane (W3) | Built | Live on the Worker; live AI sweep pending a human-operator run |
 | Counsel sheet, gate, DOCX export (W4) | Built | Live AI draft quality not measured |
 | Compare versions (W5) | Built | No compare for scanned documents; diff-only rows cannot become counsel questions |
@@ -24,14 +24,14 @@ Status key: **Built / Partial / Planned / Not live yet**. Live in the table mean
 | AI/OCR proxy, limits, spend ledger | Built | Live with D1 quotas and cache |
 | Turnstile | Built | Managed widget live; automated browsers cannot pass it |
 | CSP and security headers | Built | Enforced; `style-src 'unsafe-inline'` residual |
-| Fund Package Intake | Partial | 4 phases. Phase 1 core is merged and live in the engine (heading and conditional-target fixes) but its UI is not wired; phases 2-4 not live. [process/features/fund-package-intake/](../../process/features/fund-package-intake/); fictional demo packages in [samples/packages/](../../samples/packages/) |
-| Variance management | Planned | 5 phases, EXECUTE after intake, not live yet. [process/features/variance-management/](../../process/features/variance-management/) |
+| Fund Package Intake | Built; live | 4 phases, 20 of 20 acceptance criteria met by passing automated gates (3 with a gap note). Multi-file upload with confirmation table, Package lens in Structure, coverage line in the Findings header and gate popover, "For the GP" group plus request DOCX, browser-only storage (24 h, restored on reload). No new screens, no new Worker route, no D1 change, no LLM task (0 live model calls, $0). Gaps: see Known gaps. [process/features/fund-package-intake/](../../process/features/fund-package-intake/); demo inputs in [samples/packages/](../../samples/packages/) |
+| Variance management | Planned | 5 phases, EXECUTE comes next in another session; not live. [process/features/variance-management/](../../process/features/variance-management/) |
 | CI pipeline | Planned | None today; every gate runs locally |
 | Deploy guide, README, demo script and slides | Built | [DEPLOY.md](../DEPLOY.md), root README, [demo](../demo/); 13-memory and 14-audit screenshots need manual capture |
 
 ## Live deployment
 
-URL: `https://aduin-transaction-web.giathaowork.workers.dev` (Worker `aduin-transaction-web`, `*.workers.dev` only). Version `cde74507-7b92-4e43-99fa-754de2c5cf3b`, code `1f5cfa5` plus cherry-pick of `994ea54` (previous `328ca295`, `47d98295`, `23612b12`). Deployed by the session "Test nhiều loop và debug" from a clean worktree.
+URL: `https://aduin-transaction-web.giathaowork.workers.dev` (Worker `aduin-transaction-web`, `*.workers.dev` only). Version `3d2c7301-a4a5-487c-bd7d-2f2c0800be6f`, deployed from `main` at `a4d7a34`. It is a static-assets deploy: the Worker code is the same as `994ea54`. Rollback chain: `3d2c7301`, `cde74507`, `328ca295`, `09e7a579`, `47d98295`, `23612b12`.
 
 A live probe on 17 Oct 2026: `/` returns 200, `/api/health` returns 200, and `/api/quota` with the `x-aduin-client` header returns `global_ok:true`. Response headers include `content-security-policy` with `script-src 'self' https://challenges.cloudflare.com` and a `style-src 'unsafe-inline'` residual, plus `referrer-policy: no-referrer`.
 
@@ -56,6 +56,17 @@ Plan: [Phase 10](../../process/general-plans/active/subdoc-qa-mvp_17-10-26/subdo
 | Quotas | `/api/quota` answered `global_ok:false` | `global_ok:true` |
 | Documents | Findings waited on memory | Findings first, memory and AI in the background |
 | Deliverables | Planned | Root README, DEPLOY.md, demo materials |
+
+## What version 3d2c7301 adds (Fund Package Intake)
+
+- Upload modal takes many files and shows a confirmation table (type, role, high or low confidence, reason). Run checks stays disabled until the low-confidence rows are confirmed. The baseline is chosen with the role select (same firm only).
+- A high-confidence subscription agreement uploaded alone opens as a one-document package with coverage. Bundled samples show no package UI.
+- Structure has a "Package" lens: documents, external references (Resolved, Not in package, Needs confirmation), cross-document terms ("Defined in LPA", "Unverified") and coverage per check group.
+- A coverage line appears in the Findings header and the gate popover. A missing subscription agreement blocks the gate; a missing LPA or PPM only warns (the policy is data).
+- Counsel questions has a "For the GP" group, one item per missing document with its quote, and one request DOCX.
+- The structurer reads "Section N." and "Article I." headings; `broken-conditional` resolves Annex X and Question N targets. Redwood Ridge I now catches "skip to Question 15" (F1).
+- Live checks on the demo packages: Northgate III shows 7 GP items matching the expected list, and its document 01 has 7 findings. The live package smoke passes 8 of 8 checks and runs to findings in about 229 ms.
+- Counts wording: 13 detectors and 15 issue classes, plus package-level checks (references, cross-document terms, coverage).
 
 ## What version cde74507 adds (code `1f5cfa5` + `994ea54`)
 
@@ -92,22 +103,32 @@ Plan: [Phase 10](../../process/general-plans/active/subdoc-qa-mvp_17-10-26/subdo
 | Live quality of AI counsel drafts and drift summaries untested | `process/general-plans/backlog/drift-narrative-live-quality_NOTE_17-10-26.md` |
 | Investor-path detectors lack a human-checked ground truth | `process/general-plans/backlog/investor-path-ground-truth_NOTE_17-10-26.md` |
 | Memory page polish items (P8b-1 to P8b-6) | `process/general-plans/backlog/core-followups_17-10-26/` |
-| Headings such as "Section N." / "Article I." and Annex / Question conditional targets | Fixed in core (Intake P1, live 328ca295); UI not wired; re-measure on packages 02/03 pending |
+| Headings such as "Section N." / "Article I." and Annex / Question conditional targets | Fixed in core and wired in the UI (Intake, live 3d2c7301); packages 02 and 03 re-measured, see [samples/packages/README.md](../../samples/packages/README.md) |
+| Intake: Lotus Bay II yields 2 of 3 GP requests ("US Feeder Subscription Agreement" not extracted) | `process/features/fund-package-intake/backlog/` |
+| Intake term misses: Excused Investor, Key Person Event, Plan Assets, Significant Participation, Hurdle Amount; some proper nouns listed as unverified | same folder |
+| Intake: Schedule and Exhibit targets and dash-style headings are not handled | same folder |
+| Intake: the package Blocked path (no subscription agreement) is proven by unit tests only | same folder |
+| Intake: two subscription agreements in one package always need the analyst to pick roles | By design |
+| Intake: the AI document-type suggester is a seam only (no model task ships) | same folder |
+| Intake: bundle grew by about 270 kB; Package lens has 1 serious contrast item and 4 label mismatches (axe) | same folder |
+| Intake operator residuals: live AI/OCR on packages, real-session memory writes, a manual keyboard pass | `intake-operator-live-sweep` stub; 12 backlog stubs in total |
 | Live AI is slow: a fresh review takes about 3-4 minutes (free model, 100-157 s of reasoning) | Known; timeout raised to 240 s, so it completes |
 | No CI; gates run locally | Planned |
 
 ## Test counts
 
-Source: the build session worktree for commit `1f5cfa5` ("Test nhiều loop và debug", 17 Oct 2026), as reported to this session; not re-run for this document. Total of the four suites below: 4,018. Scripts and stack-memory counts were not reported for this build (earlier: 152 and 10).
+Source: the Fund Package Intake program report (`process/features/fund-package-intake/active/intake-mvp_17-10-26/intake-mvp_REPORT_17-10-26.md`), as reported to this session; not re-run for this document. Total of the six suites below: 4,298.
 
-| Suite | Count |
-|---|---|
-| Core (Vitest) | 3,077 |
-| Worker (Vitest, local D1) | 526 |
-| Web unit (Vitest) | 233 |
-| Scripts | not reported |
-| Playwright end-to-end | 182 |
-| Stack-memory e2e (Worker plus local D1) | not reported |
+| Suite | Before Intake | After Intake |
+|---|---|---|
+| Core (Vitest) | 2,914 | 3,084 (plus 3 opt-in skips) |
+| Worker (Vitest, local D1) | 526 | 526 |
+| Web unit (Vitest) | 226 | 298 |
+| Playwright preview e2e | 175 | 217 (plus 1 opt-in skip) |
+| Stack-memory e2e (Worker plus local D1) | 10 | 11 |
+| Scripts | 152 | 162 |
+
+Live smoke on 3d2c7301: health, CSP (byte-identical to `_headers`) and the stack slice pass; the package smoke passes 8 of 8.
 
 Performance: largest sample 169 ms, a ~50 KB sample 104 ms. There is no CI workflow; run the gates with the root scripts in [package.json](../../package.json).
 

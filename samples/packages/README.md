@@ -16,17 +16,22 @@ Each package folder contains:
 - `answer-key.md`: every seeded defect with its exact quote, the expected issue class and severity, the acceptance criterion it exercises, and whether today's build catches it.
 - `_build/`: the generator. Run `python3 _build/build.py` inside the package folder to rebuild `docs/`.
 
-## Measured against today's build (core detectors run on the DOCX)
+## Measured against today's build (core detectors plus package intake, live version 3d2c7301)
 
-| Package | Seeded | Caught today | Waits for intake / variance / AI |
-|---|---|---|---|
-| 01 Northgate III | 10 | 7 (D1, D2, D3, D4, D5, D6, D10) | D7 term defined nowhere, D8 LPA-only terms, D9 cross-document minimum |
-| 02 Lotus Bay II | 9 | predicted 2 (E8, E9); not run | LPA-deferred terms, Annex C, contradiction, ambiguity, typo, currency |
-| 03 Redwood Ridge I | 10 | 4 (F7, F8, F10 ×2) | Question-target dead end, footnote row, xref coherence, LPA terms, option overlap, ambiguity |
+| Package | Seeded | Caught by the detectors | Package-level (intake, live) | Still missed |
+|---|---|---|---|---|
+| 01 Northgate III | 10 | 7 (D1, D2, D3, D4, D5, D6, D10); also 7 findings on the live site | D8 LPA-only terms shown "Defined in LPA" with 0 false errors; GP request has 7 items (Side Letter, Form W-9, Annex F, Form W-8BEN, Form W-8BEN-E, Form W-8EXP, Form W-8IMY) | D7 "Eligible Transferee Certificate" (not a reference family or listed term), D9 cross-document minimum (future) |
+| 02 Lotus Bay II | 9 | predicted 2 (E8, E9); detector run not repeated | E1 terms: 4 of 6 listed "Unverified"; Annex C and the LPA "not in package"; GP requests 2 of 3 | E1 Excused Investor and Key Person Event not listed; third GP request "US Feeder Subscription Agreement" not extracted; contradiction, ambiguity, typo, currency need AI |
+| 03 Redwood Ridge I | 10 | 4 (F1, F7, F8, F10); F1 "skip to Question 15" is newly caught | Side Letter and IRS forms requested; scanned guide flagged "needs OCR"; Subscription Facility "Defined in LPA" | F4 terms Plan Assets, Significant Participation, Hurdle Amount not listed; footnote row, xref coherence, option overlap, ambiguity |
 
-## Known engine gap these samples exposed (fixed in core)
+Package-level items (D8 LPA-only terms, E1, F4, the missing documents and the coverage line) are now handled by Fund Package Intake, with the misses named above. Schedule and Exhibit targets and dash-style headings are not handled either.
+
+## Use them as demo inputs
+
+On the live site, open Upload and pick a package under "Demo packages" (Northgate Capital III, Lotus Bay Asia II, Redwood Ridge I), or drag the six files of a package's `docs/` folder into the Upload dialog. The demo copies live in `fixtures/package/design/`. Steps: [docs/walkthrough/demo-walkthrough.vi.md](../../docs/walkthrough/demo-walkthrough.vi.md) (Vietnamese). Package 01 is the primary demo: its "For the GP" group shows 7 items.
+
+## Engine gap these samples exposed (fixed)
 
 - **The cause:** the structurer recognised section headings written as `4. Title`, but not `Section 4. Title` or `Article I.`, and conditional targets such as `Annex F` or `Question 3` were not resolved.
-- **Package 01** uses the `4. Title` form, so it was never affected by the heading gap; its D6 (Annex F) is now caught by the conditional-target fix (commit 28fe3d4).
-- **Packages 02 and 03** use `Section N.` headings. Both gaps are fixed in core (Intake Phase 1, live version 328ca295, commit 1f5cfa5), so they likely catch more now, but this is unmeasured: **re-measure pending**. The 02 and 03 rows above are the earlier numbers.
-- The fix is in core only; the intake UI is not wired yet.
+- **The fix:** both are fixed in core (Intake Phase 1; D6 on package 01 by commit 28fe3d4) and live in the app with the intake UI (version 3d2c7301). Package 03 F1 is now caught.
+- **Still open:** Schedule and Exhibit targets and dash-style headings are not handled.

@@ -135,6 +135,11 @@ Database `aduin-web` via Dexie ([db.ts](../../apps/web/src/storage/db.ts)). If I
 | `uiState` | Sidebar, filters, AI on/off | No |
 | `allowance` | Fresh-AI documents used today (display only; the Worker enforces the real quota) | No |
 | `decisions` | Local decision rows used by the stub memory API | No |
+| `packages` (Dexie v2, additive) | Fund Package Intake: one row per package with firm, fund, version, the primary document, each member's type, role, confidence, reason and confirmed flag, and the confirmed reference targets. Members point at a `documents` row (uploads) or a bundled sample path. `documents` gains a `packageId` index | Yes (24 h) |
+
+### Fund packages are browser-only
+
+A package is stored only in IndexedDB (the `packages` table above, plus the member bytes in `documents`) for 24 hours and is restored on reload. Package intake adds no D1 table, no migration and no Worker route: D1 stays at 20 tables and schema 5. References, cross-document terms, coverage and GP request items are recomputed from the stored members and are never persisted on the server. The GP request is a DOCX built in the browser; nothing about it is written to memory. A stored package row is treated as untrusted input and re-validated on load; a bad row falls back to the single-document path.
 
 ## Related
 

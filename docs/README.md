@@ -7,6 +7,7 @@ A reviewer's guide to this repository. Pick a reading path by time budget, then 
 - A web app that QA-reviews fund subscription documents before Anduin digitizes them into online forms.
 - It parses a document (HTML, text PDF, DOCX or scanned pages) into a logic graph, runs 13 deterministic checks, and uses free LLMs only to judge a few graph-selected passages.
 - It compares related versions, turns open items into a counsel query sheet (DOCX), tracks answers, and blocks digitization until every critical item is clear. A firm memory remembers earlier decisions.
+- Fund Package Intake: upload several documents of one fund (sub agreement, LPA, PPM, baseline, side letters). The app types each file, resolves references across them, reports which checks were not possible (coverage) and drafts one request for the missing documents. It adds no new screen: it lives in the Upload dialog, the Structure "Package" lens, the Findings header and the Counsel "For the GP" group.
 
 Live site: `https://aduin-transaction-web.giathaowork.workers.dev`. It runs with its real D1 database, Turnstile and an enforced CSP; shared memory is live and precomputed samples make zero upstream calls. Details in [architecture/status.md](architecture/status.md).
 
@@ -16,6 +17,7 @@ Live site: `https://aduin-transaction-web.giathaowork.workers.dev`. It runs with
 |---|---|---|
 | 5 min | This page, then [architecture/README.md](architecture/README.md) | The problem, five design principles, the runtime map |
 | 5 min | Open the live site or [design/mockups/app.html](../design/mockups/app.html), pick sample 5, then Compare 5 against 6 | The product in use |
+| 5 min | On the live site open Upload and pick the demo package "Northgate Capital III", then see Structure > Package and Counsel questions > For the GP | Fund Package Intake in use; steps in the [Vietnamese walkthrough](walkthrough/demo-walkthrough.vi.md) |
 | 20 min | [architecture/workflows.md](architecture/workflows.md), [architecture/status.md](architecture/status.md) | Who uses it, how each workflow runs, what is real today |
 | 20 min | [architecture/decisions.md](architecture/decisions.md) | Why it is built this way, and what was rejected |
 | Deep dive | [architecture/components.md](architecture/components.md), [architecture/data-model.md](architecture/data-model.md) | Components, routes, detectors, prompts, schema, fingerprints |
@@ -37,6 +39,8 @@ Live site: `https://aduin-transaction-web.giathaowork.workers.dev`. It runs with
 | [research/reusable-repos.md](research/reusable-repos.md) | Open-source candidates and licence rules for copied code |
 | [../design/mockups/app.html](../design/mockups/app.html) | Approved UI prototype (single file; open in a browser). Notes: [app_NOTES.md](../design/mockups/app_NOTES.md) |
 | [../samples/sub-docs/README.md](../samples/sub-docs/README.md) | The real public SEC sub docs used as test inputs, with known defects per file |
+| [../samples/packages/README.md](../samples/packages/README.md) | Three fictional fund packages (Northgate III, Lotus Bay II, Redwood Ridge I) used as demo inputs for Fund Package Intake, each with an answer key |
+| [walkthrough/demo-walkthrough.vi.md](walkthrough/demo-walkthrough.vi.md) | Vietnamese click-by-click demo guide, including the package demo |
 | [../THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) | Licences of code and data used |
 
 ## How the project was planned
@@ -62,10 +66,10 @@ aduin-transaction/
     web/        React 19 + Vite SPA: screens, engine Web Worker client, IndexedDB, e2e tests
     worker/     Cloudflare Worker: static assets, AI/OCR proxy, memory API, D1 migrations and seed
   packages/
-    core/       Shared pure TypeScript: adapters, structurer, graph, detectors, diff, memory, gate, LLM tasks
+    core/       Shared pure TypeScript: adapters, structurer, graph, detectors, diff, package intake, memory, gate, LLM tasks
   scripts/      Sample builder, fixture builders, precompute and record tools, repo guards
   fixtures/     Seeded-defect HTML, DOCX/PDF cases, memory seeds, recorded LLM responses, test vectors
-  samples/      Real public subscription documents (SEC filings) and the 22-page scan set
+  samples/      Real public subscription documents (SEC filings), the 22-page scan set, and fictional fund packages (samples/packages)
   design/       Approved HTML mockups and design notes
   docs/         This documentation
   process/      Planning trail, context docs, development protocols
