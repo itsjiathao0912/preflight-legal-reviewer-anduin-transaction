@@ -9,6 +9,7 @@ import { useReviewView } from '../review/use-review-view';
 import { fetchAiDrafts } from './ai-draft';
 import { useCounsel } from './counsel-store';
 import { ExportDialog } from './ExportDialog';
+import { GpRequestGroup } from './GpRequestGroup';
 import { exportCounselSheet } from './export-flow';
 import { PriorCard } from './PriorCard';
 import { QuestionRow, type RowMode } from './QuestionRow';
@@ -267,6 +268,7 @@ export function CounselScreen() {
           </div>
         ) : (
           <>
+            <GpRequestGroup />
             <ul className="rows" data-testid="counsel-list">
               {shown.length ? (
                 shown.map(([r, n]) => (
