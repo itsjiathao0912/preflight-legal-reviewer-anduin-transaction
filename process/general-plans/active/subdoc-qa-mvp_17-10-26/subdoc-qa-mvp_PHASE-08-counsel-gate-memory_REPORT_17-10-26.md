@@ -326,3 +326,57 @@ Backlog: `phase08-version-drift-questions` already exists (left unchanged). No n
 - **Blast radius changes:** new dirs `features/{counsel,gate,metrics,audit}`, `state/memory-sync.ts`, `styles/counsel.css`.
 - **Commands to stay green:** the gate table above.
 - **Dependency changes:** `mammoth` 1.13.0 devDependency in `@aduin/web`.
+
+## S3 - E2E specs (2026-10-17, HEAD dd086f4 + working tree, no commit)
+
+TL;DR: 11 new preview specs (22 tests) and 5 new stack-memory specs (6 tests) are green, one token per call, then whole preview (137 passed, 1 skipped) and whole stack-memory (9 passed). No stub extension was needed: an `accepted` decision with no answer already resolves to `awaiting_counsel` in core `resolveLabel`, so seeding it through the existing `seedMemory` covers every awaiting case. No product code changed.
+
+### Files (all in `apps/web/e2e/`)
+
+| File | Tests | Proves |
+|---|---|---|
+| `fixtures/counsel.ts` (new helper) | - | Fund I/II/Y fixtures from `fixtures/memory` (engine findings in Node, `seedFundI` asserts fixture fingerprint == `fingerprintFor`), `openFund` (upload + firm tag), counsel helpers, `exportDocxText` (`waitForEvent('download')` + mammoth), `trackOpenRouter` |
+| `fixtures/stack-memory.ts` (extended S1 helper) | - | `stackHome` (AI off), `openRouterHits`, `apiJson`, `firmDecisions`, `auditEvents` (all pages), `expectSynced`, `dismissSynced`, `cloneSession` (same cookie, clean IndexedDB) |
+| `counsel-sheet.spec.ts` | 3 | AC20: template draft, questions = Needs counsel + Accepted critical; AI-off fallback toast; wording edit/Esc/persist/reset; AI draft replayed from the committed `counsel-draft` recording (law_firm_id null, AI chip, model) |
+| `counsel-answer.spec.ts` | 3 | AC21/AC22: Accept on critical stays Blocked (`unanswered`), `unclear` keeps it, A opens it, memory write (stub lookup: answered A by Linh Tran); form validation; D-3 awaiting item answered in-app via the gate link |
+| `counsel-export.spec.ts` | 3 | AC21/D-1: DOCX parse-back lists only unanswered New/Accepted, citations, A/B readings, no recorded answer or note; masked quotes (`#8097`, raw number absent in preview and DOCX); failure (exportRun rejected via the e2e memory handle) shows the message, no download, no metrics, sheet editable |
+| `counsel-gate.spec.ts` | 4 | AC22/AC48: reasons carry `data-target` (findings / counsel) and navigate; AI-detector critical never gates (L4); high `dismissed_reconfirm` labelled, not gating; critical re-confirm flow lowers N |
+| `metrics.spec.ts` | 1 | AC64: defects = non-AI findings not dismissed as false alarm (7 of 8 + 1 AI), questions "1 in one round", time format; second export changes nothing |
+| `memory-no-reflag.spec.ts` | 1 | AC44 (UI dismissal at fund I -> Previously handled at fund II with reason, name, fund) |
+| `memory-prior-answer.spec.ts` | 3 | AC45 + interim AC59/AC60 (below); awaiting from fund I not re-sent (preview left-out + DOCX) |
+| `memory-edit-is-new.spec.ts` | 1 | AC46 (Section 4 -> 5 is New and gates) |
+| `memory-blocking-never-hidden.spec.ts` | 1 | AC48 (critical stays in main list labelled re-confirm, gates, survives reload) |
+| `memory-no-cross-firm.spec.ts` | 1 | AC47 preview twin (Firm X memory never applies to Firm Y; still applies to Firm X) |
+| `analyst-name.spec.ts` | 2 | Default Linh Tran, non-blocking inline edit, Esc keeps, trimmed name persists and signs decisions |
+| `stack-memory-sandbox-isolation.spec.ts` | 1 | AC56: two contexts/IPs -> two sandbox workspaces; B sees nothing of A (firm memory, lookup, audit, list); B's revoke of A's id is 4xx and A's decision stays active |
+| `stack-memory-demo-workspace.spec.ts` | 2 | AC57: seeded effects in a new sandbox (7 Avery decisions, #3 handled); another sandbox's write does not pollute the next visitor; read-only session -> read-only note, zero POST writes |
+| `stack-memory-audit-trail-append-only.spec.ts` | 1 | AC55: decide -> revoke (UI Reopen in a clean profile); earlier events unchanged, recorded before revoked, revoked decision no longer active |
+| `stack-memory-memory-no-cross-firm.spec.ts` | 1 | AC47 real Worker: Firm X dismissal invisible for Firm Y (UI, firm memory, lookup), applies at fund II |
+| `stack-memory-roundtrip.spec.ts` | 1 | AC49: dismiss -> 200, answer -> 200, export -> `sheet_exported_at` + audit `counsel_sheet_exported`; reload keeps local state with no unsynced; a clean profile with the same cookie gets `previously_dismissed` / `already_answered` from the Worker lookup |
+
+Every spec asserts zero browser requests to openrouter.ai (stack specs switch AI off; the stack has no OpenRouter key).
+
+### Interim AC59/AC60 (from `memory-prior-answer`, fixture `fund-expectations.json` summary)
+
+Fund II: 8 findings, 5 handled by Fund I memory (3 previously dismissed + 2 already answered), 3 need action, 62.5% fewer to review (>= 50%). The UI counts match (Previously handled = 5, main list = 3) and every expected label lands on the right finding. Final runs stay in Phase 10.
+
+### Gates (one token per call)
+
+| Gate | Result |
+|---|---|
+| `pnpm --filter @aduin/web test:e2e <token>` x 11 (counsel-sheet, counsel-answer, counsel-export, counsel-gate, metrics, memory-no-reflag, memory-prior-answer, memory-edit-is-new, memory-blocking-never-hidden, memory-no-cross-firm, analyst-name) | 3, 3, 3, 4, 1, 1, 3, 1, 1, 1, 2 passed |
+| `pnpm --filter @aduin/web test:e2e` (whole preview) | 137 passed, 1 skipped (design-probe) |
+| `pnpm --filter @aduin/web test:e2e:stack-memory <token>` x 5 (sandbox-isolation, demo-workspace, audit-trail-append-only, memory-no-cross-firm, roundtrip) | 1, 2, 1, 1, 1 passed |
+| `pnpm --filter @aduin/web test:e2e:stack-memory` (whole) | 9 passed (incl. S1 smoke 3) |
+| `pnpm slice:check` | PASS (full) |
+| `pnpm --filter @aduin/web test` | 25 files, 173 tests |
+| `pnpm typecheck`, `pnpm lint` | clean |
+
+Red evidence: tests were written against existing S2 code (Mode B, e2e). Real failures seen and fixed in the specs during authoring: AI-off assumption (button is enabled, shows the fallback toast), focus vs `aria-expanded` after a gate link, sample #3 fully covered by the demo seed (switched the stack roundtrip to #4), same-doc reload keeps local triage (added the clean-profile check), seeded audit history precedes `session_created`.
+
+### Deviations / gaps
+
+1. **Read-only demo cookie not minted for real.** A real `ro` cookie only comes from exhausting the global 300/day session cap, which would turn every other stack-memory spec in the same run read-only. The spec rewrites the POST /api/session response to `read_only: true` (the client trusts only the response) and proves the UI disables writes and sends zero POSTs. The server-side 403 `read_only_demo` stays proven by the worker test `test/memory/session-cookie-workerd.test.ts`. Classified test-infra limitation, not a product gap.
+2. **Audit trail viewer:** `AuditList` is not mounted in any route yet (08b consumes it), so the audit spec reads GET /api/audit with the page's cookie.
+3. **S3.3 (`no-llm-corpus` e2e + core corpus) and S3.4 not done in this stage:** outside this task's spec list. S3.4's backlog stub already exists (`process/general-plans/backlog/phase08-version-drift-questions_NOTE_17-10-26.md`); S3.3 remains open for the orchestrator.
+4. `fixtures/stack-memory.ts` (S1 file) was extended with helpers; within the e2e blast radius.
