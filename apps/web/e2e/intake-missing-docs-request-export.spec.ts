@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import mammoth from 'mammoth';
 import { gotoApp } from './fixtures/app';
-import { exportDocxText, gotoCounsel } from './fixtures/counsel';
+import { exportDocxText, gotoCounsel, gotoFindings, markCounsel } from './fixtures/counsel';
 import {
   confirmAllRows,
   hartwellFiles,
@@ -20,7 +20,10 @@ const EXPECTED = JSON.parse(
   readFileSync(resolve(ROOT, 'fixtures', 'package', 'expected.json'), 'utf8'),
 ) as {
   hartwell: { requests: string[] };
-  design: Record<string, { requests: string[] }>;
+  design: Record<
+    string,
+    { requests: string[]; files: Record<string, { type: string; finalRole: string }> }
+  >;
 };
 const LIST = resolve(import.meta.dirname, '..', 'public', 'samples', 'packages.json');
 const listed = (
@@ -69,7 +72,11 @@ test.describe('intake-missing-docs-request-export', () => {
     await confirmAllRows(page);
     await runPackage(page);
     await checkGroupAndExport(page, EXPECTED.hartwell.requests);
-    // the counsel query sheet export is unchanged
+    // the counsel query sheet export is unchanged (it needs one question to enable Download)
+    await gotoFindings(page);
+    const first = await page.getByTestId('finding-row').first().getAttribute('data-finding-id');
+    await markCounsel(page, first!);
+    await gotoCounsel(page);
     const sheet = await exportDocxText(page);
     expect(sheet.filename).toMatch(/^counsel-questions-.*\.docx$/);
     expect(sheet.text).not.toContain('Missing documents request');
@@ -85,6 +92,14 @@ test.describe('intake-missing-docs-request-export', () => {
       timeout: 60_000,
     });
     if (await table.isVisible()) {
+      // set every row to the type and role of the answer key (two sub agreements: one baseline)
+      const rows = page.getByTestId('package-row');
+      await expect(rows.first()).toBeVisible({ timeout: 60_000 });
+      for (const [name, f] of Object.entries(EXPECTED.design['northgate-iii']!.files)) {
+        const r = rows.filter({ hasText: name });
+        await r.getByTestId('package-row-type').selectOption(f.type);
+        await r.getByTestId('package-row-role').selectOption(f.finalRole);
+      }
       await confirmAllRows(page);
       const version = page.getByTestId('package-version-input');
       if (!(await version.inputValue())) await version.fill('v1');

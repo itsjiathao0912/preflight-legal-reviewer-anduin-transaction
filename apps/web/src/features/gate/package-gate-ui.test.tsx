@@ -82,7 +82,7 @@ afterEach(() => {
   act(() => root?.unmount());
   root = null;
   act(() => useGatePopover.setState({ open: false }));
-  document.body.innerHTML = '';
+  document.body.replaceChildren();
 });
 
 describe('package-gate-ui', () => {

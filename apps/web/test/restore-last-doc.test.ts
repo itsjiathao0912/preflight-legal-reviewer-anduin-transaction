@@ -115,3 +115,52 @@ describe('restore last document on reload', () => {
     expect(parseLastDoc({ ...upload, ref: 'https://x.y/a' })).toBeNull();
   });
 });
+
+describe('restore a remembered fund package on reload (intake R2)', () => {
+  const pkgDoc: LastDoc = { ...upload, packageId: 'pkg_0123456789abcdef0123' };
+
+  it('keeps a valid packageId and drops an invalid one without rejecting the row', () => {
+    expect(parseLastDoc(pkgDoc)?.packageId).toBe('pkg_0123456789abcdef0123');
+    for (const bad of ['single:up_abc123', '../etc', 'a b', 42, '']) {
+      const parsed = parseLastDoc({ ...upload, packageId: bad });
+      expect(parsed).toEqual(upload);
+      expect(parsed && 'packageId' in parsed).toBe(false);
+    }
+  });
+
+  it('uses the package branch when restorePackage returns true', async () => {
+    await saveLastDoc(pkgDoc, db);
+    const restorePackage = vi.fn(async () => true);
+    const d = deps({ restorePackage });
+    expect(await restoreLastDocument(d)).toBe(true);
+    expect(restorePackage).toHaveBeenCalledWith('pkg_0123456789abcdef0123');
+    expect(d.open).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the classic path when restorePackage returns false', async () => {
+    await db.documents.put({
+      id: 'up_abc123',
+      name: upload.name,
+      kind: 'upload',
+      bytes: new Uint8Array([7]),
+      firmId: null,
+      fund: 'RR1',
+      version: 'v1',
+      createdAt: NOW - 1000,
+    });
+    await saveLastDoc(pkgDoc, db);
+    const restorePackage = vi.fn(async () => false);
+    const d = deps({ restorePackage });
+    expect(await restoreLastDocument(d)).toBe(true);
+    expect(restorePackage).toHaveBeenCalledTimes(1);
+    // the classic open never carries the stale package id
+    expect(d.open).toHaveBeenCalledWith(new Uint8Array([7]), upload, { fileName: upload.name });
+  });
+
+  it('does not call restorePackage when something is already open', async () => {
+    await saveLastDoc(pkgDoc, db);
+    const restorePackage = vi.fn(async () => true);
+    expect(await restoreLastDocument(deps({ restorePackage, isEmpty: () => false }))).toBe(false);
+    expect(restorePackage).not.toHaveBeenCalled();
+  });
+});

@@ -34,6 +34,10 @@ export function parseLastDoc(v: unknown): LastDoc | null {
     source: o.source,
     ref,
     ...(typeof o.sampleId === 'string' ? { sampleId: o.sampleId } : {}),
+    // intake R2: keep a well-formed package id; a bad one is dropped, never rejects the row
+    ...(typeof o.packageId === 'string' && SAFE_REF.test(o.packageId) && !o.packageId.includes('..')
+      ? { packageId: o.packageId }
+      : {}),
   };
 }
 
@@ -79,14 +83,21 @@ export interface RestoreDeps {
       scan?: { pages: { n: number; url: string; sourceHash: string }[] };
     },
   ) => Promise<void>;
+  /** Intake R2: reopen the remembered fund package (false when its row is gone or expired). */
+  restorePackage?: (packageId: string) => Promise<boolean>;
 }
 
 /** Reopen the remembered document. Returns true when a document was reopened. */
 export async function restoreLastDocument(deps: RestoreDeps): Promise<boolean> {
   const { db } = deps;
   if (!db) return false;
-  const last = await loadLastDoc(db);
-  if (!last) return false;
+  const remembered = await loadLastDoc(db);
+  if (!remembered) return false;
+  const { packageId, ...last } = remembered;
+  if (packageId && deps.restorePackage && deps.isEmpty()) {
+    const ok = await deps.restorePackage(packageId).catch(() => false);
+    if (ok) return true;
+  }
   const now = deps.now ?? Date.now();
   if (last.source === 'upload') {
     let row;
