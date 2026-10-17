@@ -2,9 +2,9 @@ import { expect, test } from '@playwright/test';
 import { gotoApp } from './fixtures/app';
 
 // Phase 02: Structure (with its Investor types sub-view) is a real view now (structure-view.spec.ts).
+// Phase 07: Compare versions is a real view now (diff-pairs.spec.ts).
 const ROUTES: [string, string][] = [
   ['counsel', 'Counsel questions'],
-  ['compare', 'Compare versions'],
   ['memory', 'Firm memory'],
   ['documents', 'Documents'],
 ];
@@ -26,6 +26,13 @@ test.describe('placeholder-routes', () => {
     await gotoApp(page);
     await page.getByTestId('nav-structure').click();
     await expect(page.getByTestId('structure-view')).toBeVisible();
+    await expect(page.getByTestId('placeholder-view')).toHaveCount(0);
+  });
+  test('compare is no longer a placeholder', async ({ page }) => {
+    await gotoApp(page);
+    await page.getByTestId('nav-compare').click();
+    await expect(page.getByTestId('compare-view')).toBeVisible();
+    await expect(page.getByTestId('compare-view').locator('h1')).toHaveText('Compare versions');
     await expect(page.getByTestId('placeholder-view')).toHaveCount(0);
   });
 });

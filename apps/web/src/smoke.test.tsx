@@ -19,7 +19,11 @@ describe('@aduin/web smoke (jsdom)', () => {
       'documents',
       // Phase 02 append: the real Structure view (last entry per id wins over the placeholder)
       'structure',
+      // Phase 07 append: the real Compare view
+      'compare',
     ]);
+    expect(featureFor('compare')?.component.name).toBe('CompareScreen');
+    expect(featureFor('compare')?.label).toBe('Compare versions');
     expect(featureFor('structure')?.component.name).toBe('StructureScreen');
     expect(navModules().map((m) => m.id)).toEqual([
       'findings',

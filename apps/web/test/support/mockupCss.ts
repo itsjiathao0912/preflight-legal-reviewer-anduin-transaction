@@ -132,3 +132,17 @@ export function reasonsList(html: string = mockupHtml()): string[] {
   if (!m) throw new Error('no REASONS');
   return [...m[1]!.matchAll(/"([^"]+)"/g)].map((x) => x[1]!);
 }
+
+/**
+ * Phase 07: the Compare screen vocabulary = the shell + Findings CSS plus the shared "Screens beyond
+ * Findings" head (up to the first per-screen block) and the "===== Compare versions =====" block.
+ */
+export function compareCss(css: string = mockupCss()): string {
+  const shared = css.indexOf('/* ===== Screens beyond Findings');
+  const sharedEnd = css.indexOf('/* tables (Structure, Memory) */');
+  const start = css.indexOf('/* ===== Compare versions ===== */');
+  const end = css.indexOf('/* ===== Memory ===== */');
+  if (shared < 0 || sharedEnd < shared || start < 0 || end < start)
+    throw new Error('no "Compare versions" block in app.html');
+  return findingsCss(css) + '\n' + css.slice(shared, sharedEnd) + '\n' + css.slice(start, end);
+}

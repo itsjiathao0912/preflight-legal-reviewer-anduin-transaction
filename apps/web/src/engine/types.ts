@@ -1,11 +1,16 @@
 import type {
   AiCandidate,
   BlockKind,
+  DiffMode,
+  DiffResult,
+  DiffStage,
   Finding,
   OcrResult,
   Region,
   StructureView,
 } from '@aduin/core';
+
+export type { DiffMode, DiffResult, DiffStage } from '@aduin/core';
 
 /** Wire types between the engine worker and the main thread (structured-clone safe). */
 export type StageId = 'read' | 'structure' | 'checks' | 'ai' | 'done';
@@ -167,6 +172,29 @@ export type VerifyAiResponse =
     }
   | { ok: false; error: 'doc_not_retained' | 'schema' };
 
+/** Phase 07: one compare side on the wire (bytes copied, not transferred: both sides may be one file). */
+export interface DiffSideInput {
+  bytes: Uint8Array;
+  /** Display / file name. Uploads pass it so the worker checks extension + magic bytes. */
+  name?: string;
+  /** Format hint, as for analyze (absent = from the name's extension, else html). */
+  kind?: 'html' | 'pdf' | 'docx';
+}
+
+export interface DiffDocumentsInput {
+  a: DiffSideInput;
+  b: DiffSideInput;
+  mode: DiffMode;
+}
+
+/**
+ * Phase 07 outcome. `ms` is worker-measured (both prepares + diff) and lives OUTSIDE DiffResult
+ * (determinism). The error carries side + stage + code only: never message or document text.
+ */
+export type DiffDocumentsResponse =
+  | { result: DiffResult; ms: number }
+  | { error: { side: 'a' | 'b'; stage: DiffStage; code: string } };
+
 export interface EngineApi {
   analyze(
     input: AnalyzeInput | Uint8Array,
@@ -187,4 +215,9 @@ export interface EngineApi {
   rulesHash8(ruleTexts: string[]): Promise<string>;
   /** Drop every retained graph. */
   dispose(): Promise<void>;
+  /**
+   * Phase 07: version / sibling diff of two documents. Both go through the same prepare helper as
+   * analyze (format dispatch, parse, graph, deterministic checks). Never throws for a bad input.
+   */
+  diffDocuments(input: DiffDocumentsInput): Promise<DiffDocumentsResponse>;
 }

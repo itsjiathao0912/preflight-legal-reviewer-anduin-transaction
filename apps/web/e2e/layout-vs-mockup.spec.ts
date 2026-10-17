@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
+  compareCss,
   findingsCss,
   fontSizes,
   radii,
@@ -14,6 +15,9 @@ const W = shellWidths(CSS);
 const RAIL_AT = railMaxWidth();
 const FONTS = fontSizes(CSS);
 const RADII = radii(CSS);
+// Phase 07: the real Compare view is audited against the Compare vocabulary of app.html
+const CMP_FONTS = fontSizes(compareCss());
+const CMP_RADII = radii(compareCss());
 // Reference values the derivation must yield today (update the plan, never the assertion, if they differ).
 const REF_FONTS = [13, 14, 15, 16, 17, 20, 28];
 const REF_RADII = [0, 2, 3, 4, 999];
@@ -65,11 +69,15 @@ async function styleAudit(page: Page) {
   });
 }
 
-function checkAudit(a: Awaited<ReturnType<typeof styleAudit>>) {
-  for (const f of a.fonts) expect(FONTS, `font-size ${f}px`).toContain(f);
+function checkAudit(
+  a: Awaited<ReturnType<typeof styleAudit>>,
+  fonts: number[] = FONTS,
+  radiiSet: number[] = RADII,
+) {
+  for (const f of a.fonts) expect(fonts, `font-size ${f}px`).toContain(f);
   for (const r of a.radii) {
     const px = parseFloat(r);
-    expect(RADII.includes(px), `radius ${r}`).toBe(true);
+    expect(radiiSet.includes(px), `radius ${r}`).toBe(true);
   }
   expect(a.shadows).toEqual([]);
   expect(a.gradients).toEqual([]);
@@ -138,7 +146,7 @@ test.describe('layout-vs-mockup', () => {
     await expect(page.getByTestId('empty-state')).toBeVisible();
   });
 
-  test('computed styles stay inside the app.html vocabulary on Findings, a placeholder and overlays', async ({
+  test('computed styles stay inside the app.html vocabulary on Findings, overlays and Compare', async ({
     page,
   }) => {
     await gotoApp(page);
@@ -168,8 +176,14 @@ test.describe('layout-vs-mockup', () => {
     ).toBe('16px');
     await page.keyboard.press('Escape');
 
+    // Phase 07: Compare is a real view; audit it with a diff selected (clause diff, chips, badges)
     await page.getByTestId('nav-compare').click();
-    await expect(page.getByTestId('placeholder-view')).toBeVisible();
-    checkAudit(await styleAudit(page));
+    await expect(page.getByTestId('compare-view')).toBeVisible();
+    await expect(page.getByTestId('placeholder-view')).toHaveCount(0);
+    await page.getByTestId('cmp-base').selectOption({ label: 'PG NGI 2024' });
+    await page.getByTestId('cmp-compare').selectOption({ label: 'PG NGI 2026' });
+    await page.getByTestId('cmp-item').first().click({ timeout: 30_000 });
+    expect(CMP_FONTS).toEqual(expect.arrayContaining([...FONTS, 19]));
+    checkAudit(await styleAudit(page), CMP_FONTS, CMP_RADII);
   });
 });

@@ -16,7 +16,7 @@ async function audit(page: Page, label: string) {
 }
 
 test.describe('a11y-smoke', () => {
-  test('shell, Findings (expanded and rail), placeholder, Structure and every overlay have no critical violations', async ({
+  test('shell, Findings (expanded and rail), placeholder, Structure, Compare and every overlay have no critical violations', async ({
     page,
   }) => {
     test.setTimeout(120_000);
@@ -64,9 +64,17 @@ test.describe('a11y-smoke', () => {
     await page.getByTestId('sidebar-toggle').click();
     await audit(page, 'findings rail');
 
-    // Phase 02: Structure is a real view now; the placeholder audit moves to Compare versions
-    await page.getByTestId('nav-compare').click();
+    // Phase 07: Compare is a real view now; the placeholder audit moves to Counsel questions
+    await page.getByTestId('nav-counsel').click();
+    await expect(page.getByTestId('placeholder-view')).toBeVisible();
     await audit(page, 'placeholder');
+
+    await page.getByTestId('nav-compare').click();
+    await expect(page.getByTestId('compare-view')).toBeVisible();
+    await page.getByTestId('cmp-base').selectOption({ label: 'PG NGI 2024' });
+    await page.getByTestId('cmp-compare').selectOption({ label: 'PG NGI 2026' });
+    await page.getByTestId('cmp-item').first().click({ timeout: 30_000 });
+    await audit(page, 'compare');
 
     await page.getByTestId('nav-structure').click();
     await expect(page.getByTestId('structure-view')).toBeVisible();

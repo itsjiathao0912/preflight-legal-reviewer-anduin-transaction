@@ -3,6 +3,7 @@
 // the LAST one wins, so a later UI phase replaces a placeholder route by appending its real view.
 import type { ComponentType } from 'react';
 import type { IconName } from '../icons/sprite';
+import { CompareScreen } from './compare/CompareScreen';
 import { FindingsScreen } from './review/FindingsScreen';
 import { placeholder } from './placeholders/PlaceholderView';
 import { StructureScreen } from './structure/StructureScreen';
@@ -59,6 +60,14 @@ export const features: readonly FeatureModule[] = [
   },
   // Phase 02: the real #structure view replaces the placeholder (last entry with an id wins)
   { id: 'structure', label: 'Structure', group: 'check', icon: 'tree', component: StructureScreen },
+  // Phase 07: the real #compare view replaces the placeholder (last entry with an id wins)
+  {
+    id: 'compare',
+    label: 'Compare versions',
+    group: 'check',
+    icon: 'compare',
+    component: CompareScreen,
+  },
 ];
 
 /** Resolve the view for a route: the last registered module with that id. */

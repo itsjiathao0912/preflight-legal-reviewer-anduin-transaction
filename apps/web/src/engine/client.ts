@@ -1,6 +1,8 @@
 import * as Comlink from 'comlink';
 import type {
   AnalyzeInput,
+  DiffDocumentsInput,
+  DiffDocumentsResponse,
   EngineApi,
   EngineResult,
   EngineSettings,
@@ -59,4 +61,14 @@ export async function verifyAiInWorker(
 /** Phase 05: rulesHash8 for the precomputed lookup (computed in the worker, G12). */
 export async function rulesHash8InWorker(ruleTexts: string[]): Promise<string> {
   return engine().rulesHash8(ruleTexts);
+}
+
+/**
+ * Phase 07: diff two documents in the engine worker. Logs the worker-measured time as `diff-ms <n>`
+ * (AC29 e2e hook); never logs document text.
+ */
+export async function diffInWorker(input: DiffDocumentsInput): Promise<DiffDocumentsResponse> {
+  const out = await engine().diffDocuments(input);
+  if ('result' in out) console.info(`diff-ms ${out.ms}`);
+  return out;
 }

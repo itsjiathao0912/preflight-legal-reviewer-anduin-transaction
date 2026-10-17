@@ -71,3 +71,58 @@ All green: `golden-05-06-drift` 8, `golden-06-llc-agreement-lowconf` 2, `diff-pa
 - Commands to Stay Green: the 7 core tokens above, `pnpm --filter @aduin/core test:golden`, `pnpm --filter @aduin/scripts fixtures:check`.
 - Dependency Changes: none (`diff` 9.0.0 was already a dependency).
 - For 07b: the worker needs `diffDocuments`, `DiffStage`, `DiffResult` and `CoreError` (all exported from `@aduin/core`). The main thread imports types plus `mask` only.
+
+## 07b — Worker seam, Compare UI, e2e, Step G repairs (2026-10-17)
+
+Status: 07b and Step G are done and green; nothing committed. 07c (drift narrative, F1) is the next step.
+
+### What Was Done
+
+- Worker seam (D0): Phase 06's format dispatch (`readInput`) was present first. `engine.worker.ts` gains `graphOf(read)` (the stage-2 graph build, now shared by `analyze` and `prepare`; `analyze`'s stage reports, bare catches and imports are unchanged), `codeOf(e)` (CoreError code or `unknown`, never the message, E22), `prepare(input, settings)` returning core `SideInput` (`read` / `structure` / `detect` stages; a non-HTML read with no lines gives `scanned_document` / `no_text`), and `api.diffDocuments({a, b, mode})` → `{result, ms}` | `{error}` (side b is not parsed when side a fails). `types.ts`: `DiffSideInput`, `DiffDocumentsInput`, `DiffDocumentsResponse`, type re-exports `DiffMode`/`DiffResult`/`DiffStage`. `client.ts`: `diffInWorker` logs `diff-ms <n>`.
+- Formats in Compare: HTML samples (not the scan set), stored uploads named `.htm/.html/.pdf/.docx`. Scans and images are excluded (backlog stub).
+- Compare UI (`apps/web/src/features/compare/`): `CompareScreen.tsx`, `model.ts` (items, chip groups, groups), `sources.ts` (picker list + bytes, mirroring `open-actions.ts`), `compare.css` (tokens only). Registry append `id:'compare'`.
+- Testids: `compare-view` (`data-mode`), `cmp-meta`, `cmp-base`, `cmp-compare`, `cmp-swap`, `cmp-mode-version`, `cmp-mode-sibling`, `cmp-stats`, `cmp-chip` (`data-k`, `data-n`), `cmp-clear`, `cmp-list`, `cmp-item` (`data-id`, `data-kind`, `data-group`, `aria-current`), `cmp-empty`, `cmp-loading`, `cmp-nodiff`, `cmp-nostructure`, `cmp-error` (`data-side`), `cmp-detail`, `cmp-clause-diff`, `cmp-reveal`, `cmp-counsel`.
+- Masking: every excerpt and segment renders `mask(text, sensitiveSpans)` until Reveal (`useReview().revealed`); clipping happens after masking. Segments use the per-segment spans that core mapped from the whole block (E17).
+- Needs counsel: enabled only when the row's finding id is a finding of the open document (stillPresent/new → `findingIdB`, fixed → `findingIdA`); otherwise disabled with title "Available after counsel sheet (Phase 08)" plus visible text.
+- Step G: `placeholder-routes` (compare row removed; new "compare is no longer a placeholder"), `layout-vs-mockup` (real Compare view audited with a #5/#6 diff open, against `compareCss()` vocabulary), `a11y-smoke` (placeholder audit moved to Counsel questions; new "compare" audit with a diff open), `smoke.test.tsx` ('compare' appended after 'structure' + component/label asserts). `mockupCss.ts`: `compareCss()` slicer.
+- New e2e: `diff-pairs.spec.ts` (10 tests), `sibling-clauses.spec.ts` (1 test), helper `e2e/fixtures/compare.ts`. Seeded fixtures and the nested HTML go through `upload-input` (E19, E21).
+- Orchestrator request: `fixtures/diff/` added to `.prettierignore` (generator-owned output, like `fixtures/llm-recordings/`); `pnpm lint` is green and `fixtures:check` stays OK.
+- Backlog stubs: `process/general-plans/backlog/compare-ocr-documents_NOTE_17-10-26.md`, `process/general-plans/backlog/phase08-version-drift-questions_NOTE_17-10-26.md`.
+
+### Test Gate Outcomes
+
+| Gate | Result |
+|---|---|
+| web `test import-graph` | 4/4 |
+| web `test source-guard` | 4/4 |
+| web `test smoke` | 2/2 |
+| web unit (whole) | 17 files / 72 tests |
+| e2e `diff-pairs` | 10/10 (includes 8, 8b, 9, 10) |
+| e2e `sibling-clauses` | 1/1 (10 common, 2 differing, 2 only-in-one) |
+| e2e `placeholder-routes` / `layout-vs-mockup` / `a11y-smoke` | 5/5, 5/5, 1/1 (0 critical) |
+| e2e `app-shell` / `structure-view` / `engine-worker-split` | 8/8, 4/4, 2/2 |
+| e2e whole (`pnpm --filter @aduin/web test:e2e`) | 107 passed, 1 skipped (opt-in design-probe) |
+| core full | 70 files / 467 tests (two clean runs; one earlier run had 1 failure while the full e2e suite ran in parallel, most likely a timing test under CPU load) |
+| web typecheck, `pnpm lint`, `guard:cf`, `secrets:scan`, `fixtures:check` | OK |
+
+Perf (AC29, worker, measured in the browser): #5 vs #6 `diff-ms 343` (both prepares + diff), well below 3000 ms. #2 vs #2 is not measured in the browser because the UI short-circuits the same document to "No differences"; the Node figure (143 ms) stands.
+
+### Plan Deviations (within blast radius)
+
+1. The shared helper is `graphOf` + `prepare(input, settings)` (it takes an `AnalyzeInput`, not bare bytes). `analyze` keeps its own stage-reporting flow and calls the shared `readInput` + `graphOf`. Reason: a single helper would change `analyze`'s stage events. Behaviour is unchanged, as shown by the engine-worker-split and app-shell gates.
+2. The swap assertion compares section-level added/removed (they swap exactly, and Appendix C moves from removed to added). The chip totals also include rename-aware definition and requirement rows, which do not have to be symmetric in the reverse direction (the observed totals were 8 and 18).
+3. Same-document selection shows "No differences" without calling the worker, as in the mockup. Identical but distinct files go through the worker (`notice: no_differences`, tested with the identical-pair uploads).
+4. `compare.css` lives in `features/compare/` and uses tokens only: the mockup's `#fff` hover/pressed colour becomes `var(--paper)`. There is no side-by-side/inline layout toggle and no "Mark reviewed" control; clause diffs render inline segments, with two columns when there are no segments. No icon sprite edits were made, so existing icons are used.
+5. The Compare picker lists `.pdf`/`.docx` uploads; the worker does not run OCR, so partly scanned PDFs are compared on their text pages only.
+
+### What Was Skipped or Deferred
+
+- 07c / F1 (drift narrative): next step. The backlog stub `drift-narrative-live-quality_NOTE_17-10-26.md` is still to be written by 07c or UPDATE PROCESS.
+- CONTEXT_PARTIAL: none.
+
+### Forward Preview
+
+- Test Infra Found: `e2e/fixtures/compare.ts` (`upload`, `openCompare`, `pickPair`, `chip`, `chipN`, `waitDiff`); `compareCss()` in `test/support/mockupCss.ts`.
+- Blast Radius Changes: `.prettierignore` (one line, orchestrator request).
+- Commands to Stay Green: the gates in the table above, one token per call.
+- Dependency Changes: none.

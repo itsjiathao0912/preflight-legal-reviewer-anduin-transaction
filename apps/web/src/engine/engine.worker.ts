@@ -11,6 +11,7 @@ import {
   buildStructureView,
   CoreError,
   detectFormat,
+  diffDocuments,
   htmlToLines,
   ISSUE_CLASS_LABELS,
   ocrToLines,
@@ -20,14 +21,17 @@ import {
   sensitiveSpans,
   verifyAiResult,
   type AiCandidateSite,
+  type DiffStage,
   type DocGraph,
   type Finding,
   type Line,
+  type SideInput,
 } from '@aduin/core';
 import { IS_E2E } from '../e2e-flag';
 import type {
   AnalyzeInput,
   BlockView,
+  DiffSideInput,
   DocSource,
   OcrPageInput,
   OcrPageView,
@@ -360,6 +364,75 @@ async function readInput(
   };
 }
 
+/**
+ * Stage 2 core: lines -> DocGraph. Shared by analyze and prepare (Phase 07); throws when the
+ * structurer fails so both callers map it to their own failure shape.
+ */
+function graphOf(read: ReadOutcome): DocGraph {
+  const g = buildDocGraph(
+    read.docHash,
+    read.lines,
+    { bytes: read.bytes, adapter_ms: read.adapter_ms },
+    read.source,
+  );
+  if (g.doc.stage_failed === 'structure') throw new Error('structure failed');
+  return g;
+}
+
+/** CoreError code only (E22): never the message text. Anything else is the fixed token `unknown`. */
+function codeOf(e: unknown): string {
+  return e instanceof CoreError ? e.code : 'unknown';
+}
+
+/**
+ * Phase 07: the bytes -> (structure, graph, findings) helper. Same read dispatch, graph build and
+ * deterministic checks as analyze, but a failure is a code-only `{ok:false, stage, code}` side
+ * input for core diffDocuments (E21/E22) instead of stage reports.
+ */
+async function prepare(input: AnalyzeInput, settings: EngineSettings): Promise<SideInput> {
+  const failed = (stage: DiffStage, code: string): SideInput => ({ ok: false, stage, code });
+  let read: ReadOutcome;
+  try {
+    if (shouldFail(settings, 'read')) throw new Error('injected');
+    read = await readInput(input, () => {});
+  } catch (e) {
+    return failed('read', codeOf(e));
+  }
+  if (read.lines.length === 0 && read.source !== 'html') {
+    // scanned pages carry no text here (OCR runs on the main thread; Compare excludes scans)
+    return failed('read', read.scanPages?.length ? 'scanned_document' : 'no_text');
+  }
+  let g: DocGraph;
+  try {
+    if (shouldFail(settings, 'structure')) throw new Error('injected');
+    g = graphOf(read);
+  } catch (e) {
+    return failed('structure', codeOf(e));
+  }
+  try {
+    if (shouldFail(settings, 'checks')) throw new Error('injected');
+    return { ok: true, structure: g.structure, graph: g, findings: runDeterministic(g) };
+  } catch (e) {
+    return failed('detect', codeOf(e));
+  }
+}
+
+const EXT_KIND: Record<string, 'html' | 'pdf' | 'docx'> = {
+  htm: 'html',
+  html: 'html',
+  pdf: 'pdf',
+  docx: 'docx',
+};
+
+/** Wire side -> analyze input (Compare scope: HTML, PDF text layer, DOCX; no OCR inputs). */
+function sideAnalyzeInput(side: DiffSideInput | undefined): AnalyzeInput | null {
+  if (!side || !isBytes(side.bytes)) return null;
+  const ext = side.name?.match(/\.([A-Za-z0-9]{1,5})$/)?.[1]?.toLowerCase() ?? '';
+  const kind = side.kind && EXT_KIND[side.kind] ? side.kind : (EXT_KIND[ext] ?? 'html');
+  const name = typeof side.name === 'string' ? side.name.slice(0, 200) : undefined;
+  return name === undefined ? { kind, bytes: side.bytes } : { kind, bytes: side.bytes, name };
+}
+
 export const api: EngineApi = {
   async analyze(input, settings, onStage) {
     const stages: StageReport[] = [];
@@ -425,13 +498,7 @@ export const api: EngineApi = {
     let g: DocGraph;
     try {
       if (shouldFail(settings, 'structure')) throw new Error('injected');
-      g = buildDocGraph(
-        lines.docHash,
-        lines.lines,
-        { bytes: lines.bytes, adapter_ms: lines.adapter_ms },
-        read.source,
-      );
-      if (g.doc.stage_failed === 'structure') throw new Error('structure failed');
+      g = graphOf(read);
     } catch {
       result.blocks = lines.lines.map((l, i) => ({
         id: `l${i}`,
@@ -529,6 +596,22 @@ export const api: EngineApi = {
 
   async dispose() {
     retained.clear();
+  },
+
+  // Phase 07: both sides through prepare, then core diffDocuments; never throws for a bad input.
+  async diffDocuments(input) {
+    const t0 = performance.now();
+    const ia = sideAnalyzeInput(input?.a);
+    const ib = sideAnalyzeInput(input?.b);
+    const settings: EngineSettings = {};
+    const bad: SideInput = { ok: false, stage: 'read', code: 'invalid_request' };
+    const a = ia ? await prepare(ia, settings) : bad;
+    // side a failed: core reports a first, so side b need not be parsed
+    const b = !a.ok ? bad : ib ? await prepare(ib, settings) : bad;
+    const mode = input?.mode === 'sibling' ? 'sibling' : 'version';
+    const out = diffDocuments({ a, b, mode });
+    if ('error' in out) return { error: out.error };
+    return { result: out.result, ms: Math.round(performance.now() - t0) };
   },
 };
 
