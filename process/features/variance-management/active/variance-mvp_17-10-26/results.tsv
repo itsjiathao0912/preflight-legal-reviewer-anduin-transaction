@@ -1,0 +1,22 @@
+cycle	phase	domain	gate	fails	concerns	loop_status	note
+0	P01	plan	CONDITIONAL	0	6	BASELINE	outer-pvl first pass
+0	P02	plan	CONDITIONAL	0	7	BASELINE	outer-pvl first pass
+0	P03	plan	BLOCKED	2	12	BASELINE	outer-pvl first pass
+0	P04	plan	CONDITIONAL	0	7	BASELINE	outer-pvl first pass
+0	P05	plan	CONDITIONAL	0	2	BASELINE	outer-pvl first pass (9 concerns fixed inline)
+1	P04	plan	SUPPLEMENTED	0	7	CONTINUE	7 gaps applied; re-validate
+1	P02	plan	SUPPLEMENTED	0	7	CONTINUE	7 gaps applied; re-validate
+1	P05	plan	SUPPLEMENTED	0	2	CONTINUE	4 items applied; re-validate
+1	P01	plan	SUPPLEMENTED	0	6	CONTINUE	6 gaps applied; re-validate
+1	P03	plan	SUPPLEMENTED	2	12	CONTINUE	14 gaps applied; re-validate
+1	P04	plan	CONDITIONAL	0	4	CONTINUE	re-validate c1: 7 closed, 4 new low (N1-N4)
+1	P05	plan	PASS	0	0	HALTED_SUCCESS	re-validate c1 PASS (1 minor gap fixed inline)
+2	P04	plan	SUPPLEMENTED	0	4	CONTINUE	N1-N4 applied; re-validate
+1	P01	plan	PASS	0	0	HALTED_SUCCESS	re-validate c1 PASS (3 clarifications inline)
+1	P02	plan	CONDITIONAL	0	2	CONTINUE	re-validate c1: 7 closed, 2 new (gate token, policy transport)
+2	P02	plan	SUPPLEMENTED	0	2	CONTINUE	Gaps 8-9 applied; re-validate
+2	P04	plan	PASS	0	0	HALTED_SUCCESS	re-validate c2 PASS (N5 fixed inline)
+2	P02	plan	PASS	0	0	HALTED_SUCCESS	re-validate c2 PASS
+1	P03	plan	CONDITIONAL	0	5	CONTINUE	re-validate c1: 2 FAIL + 12 closed, 5 new low (N1-N5)
+2	P03	plan	SUPPLEMENTED	0	5	CONTINUE	N1-N5 applied; re-validate
+2	P03	plan	PASS	0	0	HALTED_SUCCESS	re-validate c2 PASS
