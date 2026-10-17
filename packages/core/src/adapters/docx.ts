@@ -14,9 +14,10 @@ import { htmlToLines, MAX_FRAME_DEPTH, type HtmlAdapterResult } from './html';
  * labels are a RECONSTRUCTION: callers must show `reconstructedNumbering` and label xref findings
  * with `RECONSTRUCTED_NUMBERING_LABEL`.
  *
- * Boundaries: 10 MB input cap, then a bounded zip inspection (central directory parse + streamed
- * inflate with a running byte budget) BEFORE mammoth/JSZip ever inflates the archive, so a zip
- * bomb is refused whatever sizes its headers claim. Empty / non-zip / corrupt -> CoreError.
+ * Boundaries: 10 MB input cap, then a bounded zip inspection (strict central directory parse +
+ * streamed inflate under a 20 MB per-entry and 64 MB total budget). The verified entries are
+ * re-packed into a canonical STORE zip and ONLY that is handed to mammoth/JSZip, so no ZIP64,
+ * gap or duplicate trick can make JSZip read different entries. Empty / corrupt -> CoreError.
  */
 
 export const RECONSTRUCTED_NUMBERING_LABEL = 'based on reconstructed numbering';
@@ -47,7 +48,9 @@ export const DOCX_LIMITS = {
   maxBytes: limits.maxUploadBytes,
   maxEntries: 2000,
   maxUncompressedBytes: 64 * 1024 * 1024,
-  /** Per-entry cap for the main document part (mammoth loads it whole into memory). */
+  /** Per-entry cap for EVERY part (mammoth/JSZip load each one whole into memory). */
+  maxEntryBytes: 20 * 1024 * 1024,
+  /** @deprecated alias of maxEntryBytes (the cap now applies to every entry). */
   maxDocumentXmlBytes: 20 * 1024 * 1024,
 } as const;
 
@@ -93,6 +96,35 @@ interface ZipEntry {
   localOffset: number;
 }
 
+/** ZIP64 / multi-disk signatures: a canonical DOCX never needs them and JSZip honours them. */
+const ZIP64_SIGS = [0x06064b50, 0x07064b50] as const;
+
+/** Name normalization used for duplicate detection (what any reader might treat as "the same"). */
+export function normalizeEntryName(name: string): string {
+  let n = name.replace(/\\/g, '/').replace(/\/{2,}/g, '/');
+  for (;;) {
+    if (n.startsWith('./')) n = n.slice(2);
+    else if (n.startsWith('/')) n = n.slice(1);
+    else break;
+  }
+  return n.toLowerCase();
+}
+
+function perEntryCapError(name: string): CoreError {
+  return new CoreError(
+    'payload_too_large',
+    name === DOCUMENT_XML
+      ? `The DOCX main document expands beyond ${DOCX_LIMITS.maxEntryBytes} bytes.`
+      : `A DOCX part expands beyond ${DOCX_LIMITS.maxEntryBytes} bytes.`,
+  );
+}
+function totalCapError(): CoreError {
+  return new CoreError(
+    'payload_too_large',
+    `DOCX content expands beyond ${DOCX_LIMITS.maxUncompressedBytes} bytes.`,
+  );
+}
+
 /** Bounded central-directory parse. Throws CoreError on any malformed or out-of-bounds field. */
 export function readZipDirectory(b: Uint8Array): ZipEntry[] {
   if (b.byteLength < 22) throw new CoreError('unsupported_type', ZIP_ERR);
@@ -106,11 +138,35 @@ export function readZipDirectory(b: Uint8Array): ZipEntry[] {
     }
   }
   if (eocd < 0) throw new CoreError('unsupported_type', ZIP_ERR);
+  const disk = u16(b, eocd + 4);
+  const cdDisk = u16(b, eocd + 6);
+  const onDisk = u16(b, eocd + 8);
   const count = u16(b, eocd + 10);
   const cdSize = u32(b, eocd + 12);
   const cdOff = u32(b, eocd + 16);
-  if (count === 0xffff || cdOff === 0xffffffff) {
+  // Review F1 bypass A: any 0xffff / 0xffffffff sentinel or a ZIP64 record switches JSZip into
+  // ZIP64 mode and it reads a central directory this guard never saw. Refuse them all.
+  if (
+    count === 0xffff ||
+    onDisk === 0xffff ||
+    disk === 0xffff ||
+    cdDisk === 0xffff ||
+    cdSize === 0xffffffff ||
+    cdOff === 0xffffffff
+  ) {
     throw new CoreError('unsupported_type', 'ZIP64 DOCX archives are not supported.');
+  }
+  // JSZip looks for the ZIP64 locator right before the EOCD; the directory region and the
+  // tail are scanned (not compressed data, where 4 random bytes could false-positive).
+  const scanFrom = Math.min(cdOff, Math.max(0, eocd - 20));
+  for (let i = scanFrom; i + 4 <= b.byteLength; i++) {
+    const sig = u32(b, i);
+    if (sig === ZIP64_SIGS[0] || sig === ZIP64_SIGS[1]) {
+      throw new CoreError('unsupported_type', 'ZIP64 DOCX archives are not supported.');
+    }
+  }
+  if (disk !== 0 || cdDisk !== 0 || onDisk !== count) {
+    throw new CoreError('unsupported_type', 'Multi-disk DOCX archives are not supported.');
   }
   if (count > DOCX_LIMITS.maxEntries) {
     throw new CoreError(
@@ -118,7 +174,9 @@ export function readZipDirectory(b: Uint8Array): ZipEntry[] {
       `DOCX archive has ${count} entries (limit ${DOCX_LIMITS.maxEntries}).`,
     );
   }
-  if (cdOff + cdSize > eocd) throw new CoreError('unsupported_type', ZIP_ERR);
+  // Review F1 bypass B: the central directory must end exactly at the EOCD. A gap makes JSZip
+  // shift every offset and read a hidden directory at eocd - cdSize.
+  if (cdOff + cdSize !== eocd) throw new CoreError('unsupported_type', ZIP_ERR);
   const entries: ZipEntry[] = [];
   const names = new Set<string>();
   let p = cdOff;
@@ -134,68 +192,72 @@ export function readZipDirectory(b: Uint8Array): ZipEntry[] {
     const localOffset = u32(b, p + 42);
     if (p + 46 + nameLen > eocd) throw new CoreError('unsupported_type', ZIP_ERR);
     const name = new TextDecoder().decode(b.subarray(p + 46, p + 46 + nameLen));
-    // Duplicate names let a JSZip-style reader pick a different entry than the one we inspected.
-    if (names.has(name)) {
+    // Duplicate names (after normalization) let another reader pick a different entry.
+    const norm = normalizeEntryName(name);
+    if (names.has(norm)) {
       throw new CoreError('unsupported_type', 'This DOCX archive has duplicate entry names.');
     }
-    names.add(name);
-    if (name === DOCUMENT_XML && uncompressed > DOCX_LIMITS.maxDocumentXmlBytes) {
-      throw new CoreError(
-        'payload_too_large',
-        `The DOCX main document expands beyond ${DOCX_LIMITS.maxDocumentXmlBytes} bytes.`,
-      );
-    }
+    names.add(norm);
+    if (uncompressed > DOCX_LIMITS.maxEntryBytes) throw perEntryCapError(name);
     declared += uncompressed;
-    if (declared > DOCX_LIMITS.maxUncompressedBytes) {
-      throw new CoreError(
-        'payload_too_large',
-        `DOCX content expands beyond ${DOCX_LIMITS.maxUncompressedBytes} bytes.`,
-      );
-    }
+    if (declared > DOCX_LIMITS.maxUncompressedBytes) throw totalCapError();
     entries.push({ name, method, compressed, uncompressed, localOffset });
     p += 46 + nameLen + extraLen + commentLen;
   }
-  // The EOCD count must describe the WHOLE central directory: a lower count would hide trailing
-  // entries from this guard while other readers (JSZip) still see and inflate them.
-  if (p !== cdOff + cdSize || (p + 4 <= b.byteLength && u32(b, p) === 0x02014b50)) {
-    throw new CoreError('unsupported_type', ZIP_ERR);
-  }
+  // The EOCD count must describe the WHOLE central directory.
+  if (p !== eocd) throw new CoreError('unsupported_type', ZIP_ERR);
   return entries;
 }
 
-async function inflatedSize(data: Uint8Array, budget: number): Promise<number> {
+/** Inflate fully, refusing past `budget` bytes. Returns null when the budget is exceeded. */
+async function inflateBounded(data: Uint8Array, budget: number): Promise<Uint8Array | null> {
   const ds = new DecompressionStream('deflate-raw');
   const writer = ds.writable.getWriter();
   const reader = ds.readable.getReader();
   // Errors surface through reader.read(); swallow the duplicate writer rejections.
   writer.write(data as Uint8Array<ArrayBuffer>).catch(() => {});
   writer.close().catch(() => {});
+  const chunks: Uint8Array[] = [];
   let total = 0;
   try {
     for (;;) {
       const { done, value } = await reader.read();
-      if (done) return total;
+      if (done) break;
       total += value.byteLength;
       if (total > budget) {
         await reader.cancel().catch(() => {});
-        return total;
+        return null;
       }
+      chunks.push(value);
     }
   } catch {
     throw new CoreError('unsupported_type', ZIP_ERR);
   }
+  const out = new Uint8Array(total);
+  let o = 0;
+  for (const c of chunks) {
+    out.set(c, o);
+    o += c.byteLength;
+  }
+  return out;
+}
+
+export interface VerifiedEntry {
+  name: string;
+  data: Uint8Array;
 }
 
 /**
- * Zip-bomb guard: inflate every entry with a streaming decoder and a shared byte budget, so the
- * archive is refused on what it ACTUALLY expands to, not on the (forgeable) header sizes.
- * Returns the real total uncompressed size.
+ * Zip-bomb guard: inflate every entry with a streaming decoder under a per-entry cap and a
+ * shared total budget, so the archive is refused on what it ACTUALLY expands to. Returns the
+ * verified entries (name -> bytes) in central-directory order; total bytes <= 64 MB.
  */
-export async function guardZip(b: Uint8Array): Promise<number> {
+export async function verifyZipEntries(b: Uint8Array): Promise<VerifiedEntry[]> {
   const entries = readZipDirectory(b);
   if (!entries.some((e) => e.name === DOCUMENT_XML)) {
     throw new CoreError('unsupported_type', 'This file is a zip but not a Word document.');
   }
+  const out: VerifiedEntry[] = [];
   let total = 0;
   for (const e of entries) {
     const lo = e.localOffset;
@@ -205,29 +267,102 @@ export async function guardZip(b: Uint8Array): Promise<number> {
     const start = lo + 30 + u16(b, lo + 26) + u16(b, lo + 28);
     const end = start + e.compressed;
     if (end > b.byteLength) throw new CoreError('unsupported_type', ZIP_ERR);
-    const isDoc = e.name === DOCUMENT_XML;
     const remaining = DOCX_LIMITS.maxUncompressedBytes - total;
-    const budget = isDoc ? Math.min(remaining, DOCX_LIMITS.maxDocumentXmlBytes) : remaining;
-    let size: number;
-    if (e.method === 0) size = e.compressed;
-    else if (e.method === 8) size = await inflatedSize(b.subarray(start, end), budget);
-    else
+    const budget = Math.min(remaining, DOCX_LIMITS.maxEntryBytes);
+    let data: Uint8Array | null;
+    if (e.method === 0) {
+      data = e.compressed <= budget ? b.slice(start, end) : null;
+    } else if (e.method === 8) {
+      data = await inflateBounded(b.subarray(start, end), budget);
+    } else {
       throw new CoreError('unsupported_type', `Unsupported DOCX compression method ${e.method}.`);
-    if (isDoc && size > DOCX_LIMITS.maxDocumentXmlBytes) {
-      throw new CoreError(
-        'payload_too_large',
-        `The DOCX main document expands beyond ${DOCX_LIMITS.maxDocumentXmlBytes} bytes.`,
-      );
     }
-    total += size;
-    if (total > DOCX_LIMITS.maxUncompressedBytes) {
-      throw new CoreError(
-        'payload_too_large',
-        `DOCX content expands beyond ${DOCX_LIMITS.maxUncompressedBytes} bytes.`,
-      );
+    if (data === null) {
+      throw remaining < DOCX_LIMITS.maxEntryBytes ? totalCapError() : perEntryCapError(e.name);
     }
+    total += data.byteLength;
+    if (total > DOCX_LIMITS.maxUncompressedBytes) throw totalCapError();
+    out.push({ name: e.name, data });
   }
-  return total;
+  return out;
+}
+
+/** Back-compat wrapper: verify and return the real total uncompressed size. */
+export async function guardZip(b: Uint8Array): Promise<number> {
+  const entries = await verifyZipEntries(b);
+  return entries.reduce((n, e) => n + e.data.byteLength, 0);
+}
+
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+export function crc32(d: Uint8Array): number {
+  let c = 0xffffffff;
+  for (let i = 0; i < d.byteLength; i++) c = CRC_TABLE[(c ^ d[i]!) & 0xff]! ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+
+/**
+ * Re-pack verified entries into a canonical zip: STORE only, fresh local headers + central
+ * directory + EOCD, CRC-32, no ZIP64, no extra fields, no comments, input order preserved.
+ * mammoth/JSZip only ever see these bytes, so no parser differential with the guard remains.
+ * Size <= 64 MB of content + small per-entry headers (entries <= 2000).
+ */
+export function repackZip(entries: readonly VerifiedEntry[]): Uint8Array {
+  const enc = new TextEncoder();
+  const names = entries.map((e) => enc.encode(e.name));
+  let size = 22;
+  entries.forEach((e, i) => (size += 30 + 46 + 2 * names[i]!.byteLength + e.data.byteLength));
+  const out = new Uint8Array(size);
+  const dv = new DataView(out.buffer);
+  const offsets: number[] = [];
+  const crcs: number[] = [];
+  let p = 0;
+  entries.forEach((e, i) => {
+    const nm = names[i]!;
+    const crc = crc32(e.data);
+    offsets.push(p);
+    crcs.push(crc);
+    dv.setUint32(p, 0x04034b50, true);
+    dv.setUint16(p + 4, 20, true); // version needed
+    dv.setUint16(p + 6, 0x0800, true); // UTF-8 names
+    dv.setUint16(p + 8, 0, true); // STORE
+    dv.setUint32(p + 14, crc, true);
+    dv.setUint32(p + 18, e.data.byteLength, true);
+    dv.setUint32(p + 22, e.data.byteLength, true);
+    dv.setUint16(p + 26, nm.byteLength, true);
+    out.set(nm, p + 30);
+    out.set(e.data, p + 30 + nm.byteLength);
+    p += 30 + nm.byteLength + e.data.byteLength;
+  });
+  const cdOff = p;
+  entries.forEach((e, i) => {
+    const nm = names[i]!;
+    dv.setUint32(p, 0x02014b50, true);
+    dv.setUint16(p + 4, 20, true);
+    dv.setUint16(p + 6, 20, true);
+    dv.setUint16(p + 8, 0x0800, true);
+    dv.setUint16(p + 10, 0, true);
+    dv.setUint32(p + 16, crcs[i]!, true);
+    dv.setUint32(p + 20, e.data.byteLength, true);
+    dv.setUint32(p + 24, e.data.byteLength, true);
+    dv.setUint16(p + 28, nm.byteLength, true);
+    dv.setUint32(p + 42, offsets[i]!, true);
+    out.set(nm, p + 46);
+    p += 46 + nm.byteLength;
+  });
+  dv.setUint32(p, 0x06054b50, true);
+  dv.setUint16(p + 8, entries.length, true);
+  dv.setUint16(p + 10, entries.length, true);
+  dv.setUint32(p + 12, p - cdOff, true);
+  dv.setUint32(p + 16, cdOff, true);
+  return out;
 }
 
 function roman(n: number): string {
@@ -389,13 +524,15 @@ export async function docxToLines(input: Uint8Array | ArrayBuffer): Promise<Docx
   if (bytes.byteLength > DOCX_LIMITS.maxBytes) {
     throw new CoreError('payload_too_large', `DOCX input exceeds ${DOCX_LIMITS.maxBytes} bytes`);
   }
-  await guardZip(bytes);
+  // Review F1: mammoth never sees the uploaded bytes, only a canonical re-pack of the entries
+  // the guard actually inflated and measured (no parser differential possible).
+  const canonical = repackZip(await verifyZipEntries(bytes));
 
   let converted: { value: string; messages: Array<{ type: string; message: string }> };
   try {
     // Node entry reads `buffer`; the browser entry (package.json "browser" field) reads
     // `arrayBuffer`. Pass both so one call works in vitest, the web worker and workerd.
-    const copy = bytes.slice();
+    const copy = canonical;
     const opts = { buffer: copy, arrayBuffer: copy.buffer } as unknown as {
       arrayBuffer: ArrayBuffer;
     };

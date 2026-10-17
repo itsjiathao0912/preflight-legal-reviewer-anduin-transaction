@@ -228,9 +228,10 @@ export interface OcrQueueOptions {
   signal?: AbortSignal;
   /**
    * AI review is off: never send page images (and skip the quota call). Precomputed static
-   * results and the local cache still apply - they are not egress.
+   * results and the local cache still apply - they are not egress. Read before EACH page, so
+   * switching AI off mid-run stops the remaining pages (review N3).
    */
-  aiOff?: boolean;
+  aiOff?: () => boolean;
   fetchFn?: typeof fetch;
   cache?: OcrCache | null;
   /** Precomputed key -> file map (default: fetched from /precomputed/ocr/index.json). */
@@ -264,7 +265,7 @@ export async function runOcrQueue(opts: OcrQueueOptions): Promise<OcrPageInput[]
   let freeLeft: number | null =
     opts.freePagesLeft !== undefined
       ? opts.freePagesLeft
-      : url && !opts.aiOff
+      : url && !opts.aiOff?.()
         ? await fetchQuota(fetchFn).then((q) =>
             q ? Math.max(0, q.ocrPages.limit - q.ocrPages.used) : null,
           )
@@ -294,7 +295,7 @@ export async function runOcrQueue(opts: OcrQueueOptions): Promise<OcrPageInput[]
     const cached = cache ? await cache.get(key) : null;
     if (cached) return set({ index: job.index, state: 'done', lines: cached });
 
-    if (opts.aiOff)
+    if (opts.aiOff?.())
       return set({ index: job.index, state: 'unavailable', reason: OCR_UNAVAILABLE_AI_OFF });
     if (!url) return set({ index: job.index, state: 'unavailable', reason: OCR_UNAVAILABLE_BUILD });
     if (freeLeft !== null && freeLeft <= 0)

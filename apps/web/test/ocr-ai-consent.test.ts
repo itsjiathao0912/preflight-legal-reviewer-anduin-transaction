@@ -68,7 +68,7 @@ describe('ocr-ai-consent (F2)', () => {
     const out = await runOcrQueue({
       sourceHash: HASH,
       jobs: jobs(3).map((j) => ({ ...j, render: async () => (rendered++, page(j.index)) })),
-      aiOff: true,
+      aiOff: () => true,
       fetchFn: r.fn,
       cache: null,
       precomputed: new Map(),
@@ -89,7 +89,7 @@ describe('ocr-ai-consent (F2)', () => {
     const out = await runOcrQueue({
       sourceHash: HASH,
       jobs: jobs(1),
-      aiOff: true,
+      aiOff: () => true,
       fetchFn: r.fn,
       cache: null,
       precomputed: new Map([[key, 'p1.json']]),
@@ -109,6 +109,28 @@ describe('ocr-ai-consent (F2)', () => {
       freePagesLeft: 6,
     });
     expect(r.ocr()).toHaveLength(1);
+  });
+});
+
+describe('ocr aiOff per page (N3)', () => {
+  it('switching AI off mid-run stops the remaining pages', async () => {
+    let aiOn = true;
+    const r = recorder(() => {
+      aiOn = false;
+    });
+    const out = await runOcrQueue({
+      sourceHash: HASH,
+      jobs: jobs(4),
+      concurrency: 1,
+      aiOff: () => !aiOn,
+      fetchFn: r.fn,
+      cache: null,
+      precomputed: new Map(),
+      freePagesLeft: 6,
+    });
+    expect(r.ocr()).toHaveLength(1);
+    expect(out.slice(1).map((p) => p.state)).toEqual(['unavailable', 'unavailable', 'unavailable']);
+    expect(out[1]).toMatchObject({ reason: OCR_UNAVAILABLE_AI_OFF });
   });
 });
 

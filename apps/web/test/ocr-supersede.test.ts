@@ -84,6 +84,6 @@ describe('ocr-supersede (F3)', () => {
     useSession.getState().setAi(false);
     void useReview.getState().openDocument(JPEG, meta, { fileName: 'c.jpg' });
     await flush();
-    expect(h.queue.at(-1)!.opts.aiOff).toBe(true);
+    expect(h.queue.at(-1)!.opts.aiOff?.()).toBe(true);
   });
 });

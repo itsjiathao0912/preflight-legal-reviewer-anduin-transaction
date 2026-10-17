@@ -432,3 +432,20 @@ Deferred: F4 image-coverage signal, F6 single pdf.js document reuse, F7 lower MP
 Deviation (within blast radius): `apps/worker/test/proxy/global-daily-cap-and-budget.test.ts` now sends a real PNG instead of `'AAAA'` (the new magic check correctly refuses it).
 
 Gates: core full 460/460 (one `size-cap` timeout on the first run under load, green on re-run), worker full 521/521, web unit 72/72 (incl. import-graph, source-guard), scripts ocr-live-guard 12/12, e2e ocr-unavailable 4, ocr-render-path 2, ocr-position-confidence 2, scan-set-smoke 1, privacy-notice 3, upload-limits 5; `pnpm typecheck` clean; `pnpm lint` eslint clean, prettier flags only `fixtures/diff/empty.html` (Phase 07a, not touched). Pending independent confirmation of F1/F2.
+
+## Review fix cycle 2
+
+Trigger: the independent confirmation review REJECTED F1. Two bypasses were confirmed with PoCs: (A) EOCD disk / CD-disk / entries-on-disk = 0xffff switches JSZip into ZIP64 mode, and it reads a second directory through the ZIP64 locator; (B) a gap between the CD end and the EOCD makes JSZip read a hidden directory at eocd - cdSize.
+
+Fix (`packages/core/src/adapters/docx.ts`):
+- The parser differential is gone. `verifyZipEntries` inflates every entry (20 MB per-entry cap on EVERY part, 64 MB total) and returns the bytes. `repackZip` builds a canonical STORE zip from exactly those entries (fresh local headers + CD + EOCD, CRC-32, UTF-8 flag, no ZIP64/extra/comments, CD order). mammoth only receives the repacked bytes. Repack size is bounded by the 64 MB total plus headers for at most 2000 entries.
+- Defense in depth in `readZipDirectory`: `cdOff + cdSize === eocd` exactly; disk and CD-disk must be 0; `entriesOnDisk === count`; the 0xffff/0xffffffff sentinels are refused; ZIP64 signatures 0x06064b50/0x07064b50 are refused in the directory+tail region (not scanned inside compressed data, to avoid false positives); duplicates are detected on normalized names (case-insensitive, leading `./` and `/` stripped, `//` collapsed). `guardZip` is kept as a size-returning wrapper. `DOCX_LIMITS.maxEntryBytes` was added, and `maxDocumentXmlBytes` is kept as a deprecated alias.
+- N3: `runOcrQueue` `aiOff` is now `() => boolean`, read before the quota call and before each page. `review.ts` passes `() => !useSession.getState().aiOn`.
+
+Tests: 7 new tests in `docx-zip-bomb`. The bypass A and B layouts are built in-test, the tests assert CoreError, and `vi.spyOn(mammoth, 'convertToHtml')` is never called (the seam is proven live by the fixture test, where the spy is called once). There are also tests for each sentinel, normalized duplicates, the per-entry cap on a non-document part, repack canonicality, and the `legal-numbering.docx` lines matching a direct mammoth conversion. The N3 unit test is `ocr-ai-consent` "switching AI off mid-run stops the remaining pages".
+
+Gates: core docx-zip-bomb 16/16, docx 27/27, security 44/44, ingest-all-formats 10/10, golden-09-ocr-footnote2 13/13. Full core: 465/467 under load average ~19 (a concurrent agent). The 2 timing tests (size-cap at-cap, diff-determinism) passed 4/4 on an isolated re-run, and an earlier loaded run's 8 timeouts all passed 35/35 in isolation. Core typecheck clean. Web: ocr-ai-consent 6/6, ocr-supersede 3/3, whole web unit 73/73. e2e preview: ocr-unavailable 4, ingest-all-formats 2, upload-limits 5. eslint and prettier are clean on the 6 touched files. The harness phase-06 validator reports 0 failures.
+
+Harness: `review-decision.json` now records F1 cycle 2 + N3 as resolved and N4 as carried, with the note "pending independent re-confirmation of F1". `adversarial-validation.json` gains the bypass A and B scenarios.
+
+No commit.

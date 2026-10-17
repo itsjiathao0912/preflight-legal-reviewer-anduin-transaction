@@ -113,6 +113,20 @@
       "ruled_out": true,
       "rationale": "readZipDirectory now requires the walk to end exactly at cdOff+cdSize with no further 0x02014b50 signature, rejects duplicate names, and caps word/document.xml at 20 MB (header + streamed inflate) inside the 64 MB total, so guardZip inspects exactly the entries any reader will see.",
       "test": "core test security (docx-zip-bomb: 'refuses an EOCD count lower than the real central directory', 'refuses duplicate entry names', 'refuses a word/document.xml that inflates past the per-entry cap')"
+    },
+    {
+      "stride": "T",
+      "scenario": "DOCX bypass A (review F1 cycle 2): EOCD disk number / CD-start disk / entries-on-disk = 0xffff switches JSZip into ZIP64 mode; it follows a ZIP64 locator + ZIP64 EOCD to a second central directory pointing at a 20+ MB word/document.xml the guard never inspected",
+      "ruled_out": true,
+      "rationale": "readZipDirectory refuses any 0xffff/0xffffffff sentinel, non-zero disk fields, entriesOnDisk != count, and any ZIP64 signature in the directory+tail region; independently, mammoth only receives repackZip output built from the entries the guard inflated, so JSZip cannot reach any other directory.",
+      "test": "core docx-zip-bomb: 'refuses bypass A (ZIP64 switch via disk 0xffff + locator) and never invokes mammoth'"
+    },
+    {
+      "stride": "T",
+      "scenario": "DOCX bypass B (review F1 cycle 2): a gap between the guard-visible central directory end and the EOCD makes JSZip shift offsets and read a hidden central directory at eocd - cdSize",
+      "ruled_out": true,
+      "rationale": "readZipDirectory requires cdOff + cdSize === eocd exactly; and mammoth only receives the canonical repack, so offsets in the upload are never interpreted by JSZip.",
+      "test": "core docx-zip-bomb: 'refuses bypass B (gap between CD end and EOCD) and never invokes mammoth'"
     }
   ]
 }

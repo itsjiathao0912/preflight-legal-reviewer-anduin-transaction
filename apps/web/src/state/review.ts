@@ -153,8 +153,8 @@ async function analyzeDocument(
   const ensureLive = () => {
     if (!load.live()) throw new SupersededError();
   };
-  // F2: page images leave the browser only while AI review is on (consent read once per load)
-  const ocrOpts = { signal: load.signal, aiOff: !useSession.getState().aiOn };
+  // F2: page images leave the browser only while AI review is on (consent re-read before each page, N3)
+  const ocrOpts = { signal: load.signal, aiOff: () => !useSession.getState().aiOn };
   const onOcr = (pages: OcrPageInput[]) => {
     if (!load.live()) return;
     store.setProgress(seq, pages);
