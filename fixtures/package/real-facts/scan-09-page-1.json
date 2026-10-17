@@ -1,0 +1,22 @@
+{
+  "id": "scan-09-page-1",
+  "name": "09-rw-holdings-scan-page-01.jpg",
+  "format": "ocr",
+  "titleLines": [
+    "Investment Form",
+    "RW HOLDINGS NNN REIT, INC.",
+    "SUBSCRIPTION AGREEMENT",
+    "1. Investment Date",
+    "US $500 minimum at US $10.16 per Share $",
+    "2. Account Type (Check One Box Only)",
+    "☐ Individual ☐ Pension Plan ☐ Traditional IRA",
+    "☐ Joint Tenants ☐ Profit Sharing Plan ☐ Simple IRA",
+    "☐ Tenants in Common ☐ KEOGH Plan ☐ SEP IRA",
+    "☐ Community Property ☐ Other ☐ ROTH IRA",
+    "☐ Trust ☐ Corporation ☐ Partnership/LLC",
+    "☐ Solo 401K"
+  ],
+  "headText": "Investment Form\nRW HOLDINGS NNN REIT, INC.\nSUBSCRIPTION AGREEMENT\n1. Investment Date\nUS $500 minimum at US $10.16 per Share $\n2. Account Type (Check One Box Only)\n☐ Individual ☐ Pension Plan ☐ Traditional IRA\n☐ Joint Tenants ☐ Profit Sharing Plan ☐ Simple IRA\n☐ Tenants in Common ☐ KEOGH Plan ☐ SEP IRA\n☐ Community Property ☐ Other ☐ ROTH IRA\n☐ Trust ☐ Corporation ☐ Partnership/LLC\n☐ Solo 401K\n1 All parties must sign.\n2 Please attach pages of Trust/Plan document (or corporate/entity resolution) which lists the name of Trust/Plan/Entity,\nTrustees/officers or authorized signatories, signatures and date.\n3. Investor Information\nInvestor 1 Name\nUS Tax ID# Date of Birth\nProfession / Occupation Street Address\nCity State Zip Code",
+  "expectedType": "sub_agreement",
+  "expectedRole": "to_digitize"
+}

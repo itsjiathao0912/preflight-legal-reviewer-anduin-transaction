@@ -1,0 +1,65 @@
+{
+  "primaryDemoId": "northgate-iii",
+  "packages": [
+    {
+      "id": "northgate-iii",
+      "firmId": null,
+      "members": [
+        "fixtures/package/design/northgate-iii/01-NG3-Subscription-Agreement.docx",
+        "fixtures/package/design/northgate-iii/02-NG3-LPA-Definitions-and-Key-Terms.docx",
+        "fixtures/package/design/northgate-iii/03-NG3-PPM-Summary-of-Terms.docx",
+        "fixtures/package/design/northgate-iii/04-NG2-Subscription-Agreement-2024.docx",
+        "fixtures/package/design/northgate-iii/05-Meridale-AML-KYC-Requirements.docx",
+        "fixtures/package/design/northgate-iii/06-GP-Email-Requirements-Note.docx"
+      ]
+    },
+    {
+      "id": "lotus-bay-asia-ii",
+      "firmId": null,
+      "members": [
+        "fixtures/package/design/lotus-bay-asia-ii/01-LB2-Subscription-Agreement-Offshore-v2.docx",
+        "fixtures/package/design/lotus-bay-asia-ii/02-LB2-Investor-Questionnaire-Standalone.docx",
+        "fixtures/package/design/lotus-bay-asia-ii/03-LB2-PPM-Summary.docx",
+        "fixtures/package/design/lotus-bay-asia-ii/04-LB2-Subscription-Agreement-Offshore-v1-draft.docx",
+        "fixtures/package/design/lotus-bay-asia-ii/05-Sakura-Side-Letter.docx",
+        "fixtures/package/design/lotus-bay-asia-ii/06-Harbourline-W8-Guide.docx"
+      ]
+    },
+    {
+      "id": "redwood-ridge-i",
+      "firmId": null,
+      "members": [
+        "fixtures/package/design/redwood-ridge-i/01-RR1-Subscription-Agreement.docx",
+        "fixtures/package/design/redwood-ridge-i/02-RR1-LPA-Definitions.docx",
+        "fixtures/package/design/redwood-ridge-i/03-RR1-PPM-Summary.docx",
+        "fixtures/package/design/redwood-ridge-i/04-Pinecroft-AML-KYC-Checklist.docx",
+        "fixtures/package/design/redwood-ridge-i/05-GP-Requirements-Email.docx",
+        "fixtures/package/design/redwood-ridge-i/06-RR1-Tax-Forms-Guide-SCANNED.docx"
+      ]
+    },
+    {
+      "id": "hartwell",
+      "firmId": "firm-x",
+      "members": [
+        "fixtures/package/hartwell/fund-iii-subscription-agreement.html",
+        "fixtures/package/hartwell/northgate-lpa-definitions.docx",
+        "fixtures/package/hartwell/fund-ii-subscription-agreement-prior.html"
+      ]
+    },
+    {
+      "id": "ngi",
+      "firmId": "partners-group",
+      "members": ["sample:05", "sample:06"]
+    },
+    {
+      "id": "rw-scans",
+      "firmId": null,
+      "members": ["scan:09"]
+    },
+    {
+      "id": "blackstone-appendix",
+      "firmId": null,
+      "members": ["sample:13"]
+    }
+  ]
+}

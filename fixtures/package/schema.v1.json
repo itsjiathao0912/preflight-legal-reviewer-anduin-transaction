@@ -1,0 +1,285 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "package-analysis.v1"
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "type": {
+            "type": "string",
+            "enum": ["sub_agreement", "lpa", "ppm", "tax_form", "side_letter", "other"]
+          },
+          "role": {
+            "type": "string",
+            "enum": ["to_digitize", "reference", "baseline"]
+          },
+          "confidence": {
+            "type": "string",
+            "enum": ["high", "low"]
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "confirmed": {
+            "type": "boolean"
+          },
+          "suggestionSource": {
+            "type": "string",
+            "enum": ["rule", "analyst", "ai"]
+          },
+          "needsOcr": {
+            "type": "boolean"
+          },
+          "format": {
+            "type": "string",
+            "enum": ["html", "pdf", "docx", "ocr", "image"]
+          },
+          "titleLines": {
+            "maxItems": 12,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 200
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "role",
+          "confidence",
+          "reason",
+          "confirmed",
+          "suggestionSource",
+          "needsOcr",
+          "format",
+          "titleLines"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "quote": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "blockIndex": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "sectionPath": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "page": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": ["blockIndex", "start", "end", "sectionPath"],
+            "additionalProperties": false
+          },
+          "targetLabel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "targetKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "targetFamily": {
+            "type": "string",
+            "enum": ["lpa", "ppm", "side_letter", "tax_form", "annex"]
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{16}$"
+          },
+          "resolution": {
+            "type": "string",
+            "enum": ["resolved", "not_in_package", "unclear"]
+          },
+          "resolvedDocId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "confirmedByAnalyst": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "quote",
+          "location",
+          "targetLabel",
+          "targetKey",
+          "targetFamily",
+          "id",
+          "resolution",
+          "confirmedByAnalyst"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "terms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "term": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "status": {
+            "type": "string",
+            "enum": ["defined_in_package", "unverified"]
+          },
+          "mentions": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "definingDocId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "quote": {
+            "type": "string",
+            "maxLength": 240
+          },
+          "reason": {
+            "type": "string",
+            "enum": ["no_reference_document", "not_in_reference_documents"]
+          }
+        },
+        "required": ["term", "status", "mentions"],
+        "additionalProperties": false
+      }
+    },
+    "coverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "structure_flow",
+              "internal_refs",
+              "defined_terms",
+              "external_refs",
+              "investor_paths"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["full", "partial", "blocked"]
+          },
+          "missingTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["sub_agreement", "lpa", "ppm", "tax_form", "side_letter", "other"]
+            }
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["id", "label", "status", "missingTypes", "reasons"],
+        "additionalProperties": false
+      }
+    },
+    "requests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{16}$"
+          },
+          "targetKey": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "targetFamily": {
+            "type": "string",
+            "enum": ["lpa", "ppm", "side_letter", "tax_form", "annex"]
+          },
+          "quote": {
+            "type": "string",
+            "maxLength": 240
+          },
+          "count": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "firstDocId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": ["id", "targetKey", "label", "targetFamily", "quote", "count", "firstDocId"],
+        "additionalProperties": false
+      }
+    },
+    "dropped": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": ["schema", "documents", "references", "terms", "coverage", "requests", "dropped"],
+  "additionalProperties": false
+}

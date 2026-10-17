@@ -1,0 +1,74 @@
+{
+  "fixtures/package/design/northgate-iii/01-NG3-Subscription-Agreement.docx": {
+    "source": "samples/packages/01-northgate-infrastructure-iii/docs/01-NG3-Subscription-Agreement.docx",
+    "sha256": "acd2389264500fd7150090b82a436af302ccea300607a83f3dc51aa5bdb57520"
+  },
+  "fixtures/package/design/northgate-iii/02-NG3-LPA-Definitions-and-Key-Terms.docx": {
+    "source": "samples/packages/01-northgate-infrastructure-iii/docs/02-NG3-LPA-Definitions-and-Key-Terms.docx",
+    "sha256": "d258dd249d3882732d91cc0b93b7cfceaf4ce1088d2afb2959be0f4019c489a9"
+  },
+  "fixtures/package/design/northgate-iii/03-NG3-PPM-Summary-of-Terms.docx": {
+    "source": "samples/packages/01-northgate-infrastructure-iii/docs/03-NG3-PPM-Summary-of-Terms.docx",
+    "sha256": "436f4f06a3815f5b61bfa13bc03e44cbb77ea4291e1c7616a3d88b2bbb8a1f9f"
+  },
+  "fixtures/package/design/northgate-iii/04-NG2-Subscription-Agreement-2024.docx": {
+    "source": "samples/packages/01-northgate-infrastructure-iii/docs/04-NG2-Subscription-Agreement-2024.docx",
+    "sha256": "d9491de91f5c1fe7d74668cc5a5d5b5d496bd40285227e78db3f2746ae6c7f8a"
+  },
+  "fixtures/package/design/northgate-iii/05-Meridale-AML-KYC-Requirements.docx": {
+    "source": "samples/packages/01-northgate-infrastructure-iii/docs/05-Meridale-AML-KYC-Requirements.docx",
+    "sha256": "f5503623938386040d31fe86bea5d0abe66fcc7c1c8dccda87a4fbdb2c2c3be7"
+  },
+  "fixtures/package/design/northgate-iii/06-GP-Email-Requirements-Note.docx": {
+    "source": "samples/packages/01-northgate-infrastructure-iii/docs/06-GP-Email-Requirements-Note.docx",
+    "sha256": "553d98148acc6982ca97f731856fcc8d0bbaa59cea26221cc08d591e19e149d9"
+  },
+  "fixtures/package/design/lotus-bay-asia-ii/01-LB2-Subscription-Agreement-Offshore-v2.docx": {
+    "source": "samples/packages/02-lotus-bay-asia-growth-ii/docs/01-LB2-Subscription-Agreement-Offshore-v2.docx",
+    "sha256": "860cbb7397802338c7659553baa5b9655a825a6b9a914ba086dbaf06be5ecdf2"
+  },
+  "fixtures/package/design/lotus-bay-asia-ii/02-LB2-Investor-Questionnaire-Standalone.docx": {
+    "source": "samples/packages/02-lotus-bay-asia-growth-ii/docs/02-LB2-Investor-Questionnaire-Standalone.docx",
+    "sha256": "db5627c88254f1181be7628a23c30d652c1975c3a1849bf20285d65be1924155"
+  },
+  "fixtures/package/design/lotus-bay-asia-ii/03-LB2-PPM-Summary.docx": {
+    "source": "samples/packages/02-lotus-bay-asia-growth-ii/docs/03-LB2-PPM-Summary.docx",
+    "sha256": "920712a6dda47391a50eba271bbb843578f8cb707489b911f8e0306678cb9459"
+  },
+  "fixtures/package/design/lotus-bay-asia-ii/04-LB2-Subscription-Agreement-Offshore-v1-draft.docx": {
+    "source": "samples/packages/02-lotus-bay-asia-growth-ii/docs/04-LB2-Subscription-Agreement-Offshore-v1-draft.docx",
+    "sha256": "5c13abea6d39de05d694612b67a09d530dc98a9fce23496496c7b2a09714884a"
+  },
+  "fixtures/package/design/lotus-bay-asia-ii/05-Sakura-Side-Letter.docx": {
+    "source": "samples/packages/02-lotus-bay-asia-growth-ii/docs/05-Sakura-Side-Letter.docx",
+    "sha256": "50f85b5b573b9da53a91157f583e13b10336247fafa186936cf824d7efcb8f12"
+  },
+  "fixtures/package/design/lotus-bay-asia-ii/06-Harbourline-W8-Guide.docx": {
+    "source": "samples/packages/02-lotus-bay-asia-growth-ii/docs/06-Harbourline-W8-Guide.docx",
+    "sha256": "2b432491ad2d1c64381f7fd0a3baa7193e948a2d8757f12bfa1f57c26c41bd18"
+  },
+  "fixtures/package/design/redwood-ridge-i/01-RR1-Subscription-Agreement.docx": {
+    "source": "samples/packages/03-redwood-ridge-credit-i/docs/01-RR1-Subscription-Agreement.docx",
+    "sha256": "e77408284b647a84374fa64b7990162c534205d1c5ecaf5dd3584dd375984148"
+  },
+  "fixtures/package/design/redwood-ridge-i/02-RR1-LPA-Definitions.docx": {
+    "source": "samples/packages/03-redwood-ridge-credit-i/docs/02-RR1-LPA-Definitions.docx",
+    "sha256": "23ff781232fa19d8da4cecf166cbfd23b9e07581ef55c810bcfc68a8895844c8"
+  },
+  "fixtures/package/design/redwood-ridge-i/03-RR1-PPM-Summary.docx": {
+    "source": "samples/packages/03-redwood-ridge-credit-i/docs/03-RR1-PPM-Summary.docx",
+    "sha256": "9fc5c37e6ded8e582c23d5df9639644c87ebaacb47f1a7f3dc3007f4e6ed9449"
+  },
+  "fixtures/package/design/redwood-ridge-i/04-Pinecroft-AML-KYC-Checklist.docx": {
+    "source": "samples/packages/03-redwood-ridge-credit-i/docs/04-Pinecroft-AML-KYC-Checklist.docx",
+    "sha256": "584ff8ec04b41e307bc18976dd45d73414ad25ee4072a3ba54e08f1ec0b1c545"
+  },
+  "fixtures/package/design/redwood-ridge-i/05-GP-Requirements-Email.docx": {
+    "source": "samples/packages/03-redwood-ridge-credit-i/docs/05-GP-Requirements-Email.docx",
+    "sha256": "3ff8f57280bb6aa9c99fbcfcb05e7fcd8fe9e78834951a9a8d56cd9ab34892c6"
+  },
+  "fixtures/package/design/redwood-ridge-i/06-RR1-Tax-Forms-Guide-SCANNED.docx": {
+    "source": "samples/packages/03-redwood-ridge-credit-i/docs/06-RR1-Tax-Forms-Guide-SCANNED.docx",
+    "sha256": "9d3cc994a076acdec22b2ed300521ce61189fb68d92452c2f1378d84e439ba47"
+  }
+}

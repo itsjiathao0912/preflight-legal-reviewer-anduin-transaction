@@ -167,3 +167,6 @@ export {
   type MetricsInput,
   type DocumentMetrics,
 } from './counsel/metrics';
+
+// --- Intake Phase 1: fund package module
+export * from './package/index';
