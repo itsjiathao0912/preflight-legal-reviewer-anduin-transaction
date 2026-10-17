@@ -25,13 +25,7 @@ export {
   type PackageFactsInput,
 } from './facts';
 export { extractPackageDefinitions } from './definitions';
-export {
-  extractExternalReferences,
-  NAMED_DOCUMENTS,
-  DEFINITIONAL_PHRASES,
-  GOVERNING_PHRASES,
-  type ReferenceContext,
-} from './references';
+export { extractExternalReferences, NAMED_DOCUMENTS, type ReferenceContext } from './references';
 export {
   applyPackageDefinitions,
   definitionSources,

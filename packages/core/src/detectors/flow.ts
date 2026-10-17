@@ -139,6 +139,40 @@ export function isFlowAction(c: Conditional): boolean {
   return c.action === 'complete' || c.action === 'skip' || c.action === 'proceed';
 }
 
+/** Per-graph memo: annex labels and question sets are computed once per graph, not per target. */
+const annexMemo = new WeakMap<DocGraph, ReadonlySet<string>>();
+const questionMemo = new WeakMap<DocGraph, Map<number, ReadonlySet<number>>>();
+
+function graphAnnexLabels(g: DocGraph): ReadonlySet<string> {
+  let labels: Set<string> | ReadonlySet<string> | undefined = annexMemo.get(g);
+  if (labels) return labels;
+  const out = annexLabels(g.structure.blocks);
+  for (const sc of g.structure.scopes) {
+    if (sc.kind !== 'appendix') continue;
+    const m = APPENDIX_TITLE_RE.exec(sc.title);
+    if (m) out.add(m[1]!.toUpperCase());
+  }
+  labels = out;
+  annexMemo.set(g, labels);
+  return labels;
+}
+
+function graphQuestionNumbers(g: DocGraph, at: number): ReadonlySet<number> {
+  const blocks = g.structure.blocks;
+  let byAnnex = questionMemo.get(g);
+  if (!byAnnex) {
+    byAnnex = new Map();
+    questionMemo.set(g, byAnnex);
+  }
+  const start = enclosingAnnex(blocks, at);
+  let qs = byAnnex.get(start);
+  if (!qs) {
+    qs = questionNumbers(blocks, start < 0 ? 0 : start);
+    byAnnex.set(start, qs);
+  }
+  return qs;
+}
+
 /**
  * Does the target exist? `uncertain` when the document gives no structural evidence either way
  * (no accepted sections at all, or a bare "Part X" in a document without recognized parts).
@@ -146,19 +180,14 @@ export function isFlowAction(c: Conditional): boolean {
 export function checkTarget(g: DocGraph, c: Conditional, t: ParsedTarget): TargetCheck {
   // Annex and Question targets first (the bare-Part branch below reads t.parts[0]).
   if (t.annex !== undefined) {
-    const labels = annexLabels(g.structure.blocks);
-    for (const sc of g.structure.scopes) {
-      if (sc.kind !== 'appendix') continue;
-      const m = APPENDIX_TITLE_RE.exec(sc.title);
-      if (m) labels.add(m[1]!.toUpperCase());
-    }
+    const labels = graphAnnexLabels(g);
     if (labels.size === 0) return { target: t, status: 'uncertain' };
     return labels.has(t.annex)
       ? { target: t, status: 'ok' }
       : { target: t, status: 'missing', missing: `Annex ${t.annex}` };
   }
   if (t.question !== undefined) {
-    const qs = questionNumbers(g.structure.blocks, c.blockIndex);
+    const qs = graphQuestionNumbers(g, c.blockIndex);
     if (qs.size === 0) return { target: t, status: 'uncertain' };
     if (qs.has(t.question)) return { target: t, status: 'ok' };
     const max = Math.max(...qs);

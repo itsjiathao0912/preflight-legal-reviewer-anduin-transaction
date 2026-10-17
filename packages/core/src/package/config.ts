@@ -32,3 +32,12 @@ export function checkPackageLimits(
     };
   return { ok: true };
 }
+
+/**
+ * Reference scan caps (hostile input). Far above any real sub doc (the 13 samples peak well
+ * under 100 references); the scan stops at the cap and counts what it skipped.
+ */
+export const REFERENCE_SCAN_LIMITS = Object.freeze({
+  maxPerBlock: 50,
+  maxPerDocument: 500,
+});

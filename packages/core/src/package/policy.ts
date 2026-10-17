@@ -9,7 +9,12 @@ import {
 } from './types';
 
 /** Missing-document gate policy as data (AC-I19). `computeGate` is not touched. */
-export const DEFAULT_PACKAGE_POLICY: PackagePolicy = Object.freeze(
+function deepFreeze<T>(o: T): T {
+  if (o && typeof o === 'object') for (const v of Object.values(o as object)) deepFreeze(v);
+  return Object.freeze(o);
+}
+
+export const DEFAULT_PACKAGE_POLICY: PackagePolicy = deepFreeze(
   PackagePolicySchema.parse({
     missingDocGate: {
       sub_agreement: 'block',

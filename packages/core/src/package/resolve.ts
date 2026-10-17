@@ -43,9 +43,14 @@ export function familyOfLabel(label: string): Exclude<TargetFamily, 'annex'> | n
 /** Literal analyst choice "none": confirmed as not in the package. */
 export const CONFIRMED_NONE = 'none';
 
+/** Escape regex metacharacters so a label is matched literally. */
+export function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function carriesLabel(d: PackageDocument, f: PackageFacts | undefined, label: string): boolean {
   const re = new RegExp(
-    `(?:^|[^A-Za-z0-9])${label.replace(/\s+/g, '[\\s_-]{1,3}')}(?![A-Za-z0-9])`,
+    `(?:^|[^A-Za-z0-9])${label.split(/\s+/).map(escapeRegExp).join('[\\s_-]{1,3}')}(?![A-Za-z0-9])`,
     'i',
   );
   return (

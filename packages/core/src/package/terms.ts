@@ -100,6 +100,43 @@ function normTerm(t: string): string {
   return t.toLowerCase();
 }
 
+const isWordChar = (c: string | undefined): boolean => c !== undefined && /\w/.test(c);
+
+/**
+ * Which of `terms` (lower case) occur in `text` with word boundaries on both sides, the same test
+ * as `new RegExp(\`\\b${term}\\b\`)` per term, in one pass over the word starts of `text`.
+ */
+function lowerUsedTerms(text: string, terms: readonly string[]): Set<string> {
+  const byHead = new Map<string, string[]>();
+  for (const t of new Set(terms)) {
+    const head = /^\w+/.exec(t)?.[0];
+    if (!head) continue;
+    const list = byHead.get(head);
+    if (list) list.push(t);
+    else byHead.set(head, [t]);
+  }
+  const found = new Set<string>();
+  let pending = byHead.size;
+  for (const m of text.matchAll(/\w+/g)) {
+    if (pending === 0) break;
+    const list = byHead.get(m[0]);
+    if (!list) continue;
+    for (let i = list.length - 1; i >= 0; i--) {
+      const t = list[i]!;
+      const end = m.index + t.length;
+      if (text.startsWith(t, m.index) && isWordChar(t.at(-1)) !== isWordChar(text[end])) {
+        found.add(t);
+        list.splice(i, 1);
+      }
+    }
+    if (list.length === 0) {
+      byHead.delete(m[0]);
+      pending--;
+    }
+  }
+  return found;
+}
+
 /** Terms used mid-sentence at least twice and not defined locally (bounded to 200 terms). */
 export function extractUsedTerms(
   blocks: readonly Block[],
@@ -131,9 +168,12 @@ export function extractUsedTerms(
   });
   // a term the document also writes in lower case is a common noun, not a defined term
   const all = blocks.map((b) => blockTextOf(b)).join('\n');
-  const lowerUse = (t: string) => new RegExp(`\\b${t.toLowerCase()}\\b`).test(all);
+  const lower = lowerUsedTerms(
+    all,
+    [...acc.values()].filter((t) => t.mentions >= 2).map((t) => t.term.toLowerCase()),
+  );
   return [...acc.values()]
-    .filter((t) => t.mentions >= 2 && !lowerUse(t.term))
+    .filter((t) => t.mentions >= 2 && !lower.has(t.term.toLowerCase()))
     .sort(
       (a, b) =>
         a.firstLocation.blockIndex - b.firstLocation.blockIndex ||

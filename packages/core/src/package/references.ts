@@ -1,27 +1,14 @@
 import { sha256Hex } from '../model/hash';
 import type { Block } from '../model/types';
-import { blockTextOf, isVerbatim, locationOf, sentenceWindow } from './quote';
+import { REFERENCE_SCAN_LIMITS } from './config';
+import { QUOTE_MAX, blockTextOf, locationOf, sentenceWindow } from './quote';
 import type { RawReference, TargetFamily } from './types';
 
 /**
  * External references (AC-I10/I11). Pattern data, linear-time. A named document (family 3) is
- * the reference target; the definitional (family 1) and governing (family 2) phrases are kept as
- * data for consumers that label the context. Exclusions: self-reference ("this ..."), and an
+ * the reference target. Hits are capped per block and per document (REFERENCE_SCAN_LIMITS). Exclusions: self-reference ("this ..."), and an
  * Annex/Schedule/Exhibit/Appendix whose label is a heading or scope label of the same document.
  */
-export const DEFINITIONAL_PHRASES: readonly string[] = Object.freeze([
-  'as defined in the',
-  'have the meanings given to them in the',
-  'has the meaning given to it in the',
-  'meanings ascribed to them in the',
-]);
-export const GOVERNING_PHRASES: readonly string[] = Object.freeze([
-  'pursuant to',
-  'in accordance with',
-  'subject to the terms of',
-  'as set forth in',
-]);
-
 export interface NamedDocPattern {
   label: string;
   family: Exclude<TargetFamily, 'annex'>;
@@ -81,44 +68,79 @@ export function referenceId(docId: string, r: RawReference): string {
   ).slice(0, 16);
 }
 
-/** Raw references of one document, in document order, plus the count of dropped quotes. */
+/**
+ * Raw references of one document, in document order, plus the count of dropped quotes and a
+ * `truncated` count (hits cut by the caps; 1 per pattern scan or block that hit a cap early).
+ */
 export function extractExternalReferences(
   blocks: readonly Block[],
   ctx: ReferenceContext,
-): { references: RawReference[]; dropped: number } {
+): { references: RawReference[]; dropped: number; truncated: number } {
   const internal = new Set(ctx.scopeLabels.map((l) => l.toLowerCase()));
   const quoteOf = ctx.quoteOf ?? sentenceWindow;
+  const { maxPerBlock, maxPerDocument } = REFERENCE_SCAN_LIMITS;
   const out: RawReference[] = [];
   let dropped = 0;
+  let truncated = 0;
+  let seen = 0;
   blocks.forEach((b, bi) => {
+    if (seen >= maxPerDocument) {
+      truncated++;
+      return;
+    }
     const text = blockTextOf(b);
-    const hits: Array<{ at: number; end: number; label: string; family: TargetFamily }> = [];
-    for (const m of text.matchAll(NAMED_RE)) {
+    type Hit = { at: number; end: number; label: string; family: TargetFamily };
+    const hits: Hit[] = [];
+    // Each pattern stops once it alone fills the block cap; the merged list is cut after sorting.
+    const scan = (re: RegExp, toHit: (m: RegExpExecArray) => Hit | null): void => {
+      let n = 0;
+      for (const m of text.matchAll(re)) {
+        if (n >= maxPerBlock) {
+          truncated++;
+          break;
+        }
+        const h = toHit(m);
+        if (h) {
+          hits.push(h);
+          n++;
+        }
+      }
+    };
+    scan(NAMED_RE, (m) => {
       const before = text.slice(Math.max(0, m.index - 6), m.index).toLowerCase();
-      if (/\bthis\s$/.test(before)) continue;
+      if (/\bthis\s$/.test(before)) return null;
       const label = m[1]!.replace(/\s+/g, ' ');
       const d = NAMED_DOCUMENTS.find((x) => x.label === label)!;
-      hits.push({ at: m.index, end: m.index + m[0].length, label: d.label, family: d.family });
-    }
-    for (const m of text.matchAll(TAX_FORM_RE)) {
-      hits.push({
-        at: m.index,
-        end: m.index + m[0].length,
-        label: `Form ${m[1]}`,
-        family: 'tax_form',
-      });
-    }
-    for (const m of text.matchAll(ANNEX_REF_RE)) {
+      return { at: m.index, end: m.index + m[0].length, label: d.label, family: d.family };
+    });
+    scan(TAX_FORM_RE, (m) => ({
+      at: m.index,
+      end: m.index + m[0].length,
+      label: `Form ${m[1]}`,
+      family: 'tax_form',
+    }));
+    scan(ANNEX_REF_RE, (m) => {
       const label = `${m[1]} ${m[2]}`;
-      if (internal.has(label.toLowerCase())) continue;
+      if (internal.has(label.toLowerCase())) return null;
       const before = text.slice(Math.max(0, m.index - 6), m.index).toLowerCase();
-      if (/\bthis\s$/.test(before)) continue;
-      hits.push({ at: m.index, end: m.index + m[0].length, label, family: 'annex' });
-    }
+      if (/\bthis\s$/.test(before)) return null;
+      return { at: m.index, end: m.index + m[0].length, label, family: 'annex' };
+    });
     hits.sort((a, c) => a.at - c.at);
+    const room = Math.min(maxPerBlock, maxPerDocument - seen);
+    if (hits.length > room) {
+      truncated += hits.length - room;
+      hits.length = room;
+    }
+    seen += hits.length;
     for (const h of hits) {
       const w = quoteOf(text, h.at, h.end);
-      if (!isVerbatim(text, w.quote)) {
+      // O(1) verbatim check: the quote must be exactly the text at its own offsets.
+      if (
+        w.quote.length === 0 ||
+        w.quote.length > QUOTE_MAX ||
+        text.slice(w.start, w.end) !== w.quote
+      ) {
         dropped++;
         continue;
       }
@@ -131,5 +153,5 @@ export function extractExternalReferences(
       });
     }
   });
-  return { references: out, dropped };
+  return { references: out, dropped, truncated };
 }
