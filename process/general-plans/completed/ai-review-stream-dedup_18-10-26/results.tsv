@@ -1,3 +1,4 @@
 cycle	domain	gate	fails	concerns	loop_status	note
 0	plan	BLOCKED	2	7	BASELINE	first-pass validate
 1	plan	CONDITIONAL	0	9	HALTED_SUCCESS	supplement fixed 2 FAILs; residuals K1-K3, AC7b/AC17/AC18, I0 accepted as known-gaps; E1-E11 execute instructions
+evl-1	tests	GREEN	0	-	HALTED_SUCCESS	vc-tester re-ran all A-G gates at ac13287; WITH_GAPS (K1-K3, AC7b/AC17/AC18, I0)
