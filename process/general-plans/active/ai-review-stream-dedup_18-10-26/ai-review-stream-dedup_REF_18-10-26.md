@@ -97,3 +97,23 @@ Capture gap (honest note): the P1b console summary was shown through a filter th
 | `usage.cost > 0` or non-free served model | **No** | No abort |
 
 TL;DR: streaming is viable as planned; idle 60 s, ceiling 420 s, prefilter as written in the plan; no STOP row; $0 spent.
+
+## Section C - Vanished Candidate Ids (C2b) and Re-points (C3)
+
+Candidate sets after Section B (rule-flagged sentences excluded): sample-01 22 -> 18, sample-03 36 -> 31. Surviving candidates keep id, quote and hint (checked for every survivor).
+
+| Sample | Vanished ids |
+|---|---|
+| 01 | `c_cfc36abe07ac9c19`, `c_c9fcc048467d841c`, `c_a3a1fd5641d412c0`, `c_bbfb16d50ab9577f` |
+| 03 | `c_fcfcb4a816686edb`, `c_54cd421d8bdba4af`, `c_ab71d8f803a229c5`, `c_c37d56d9973e94fc`, `c_53ded8db41297f0a` |
+
+Still present (checked): `c_b30f291dff2535b6`, `c_624f0f476f804afb`, `c_439057b9bc027023`, `c_777504f5f99ae768`, `c_9b07218f8183451e`, `c_7eff7dd7e95bd2d8`, `c_06828a091f0ab7cf`.
+
+| Case | Old pick | New pick | Why |
+|---|---|---|---|
+| `hostile-hallucinated-quote` | `c_a3a1fd5641d412c0` | `c_a603f23420e703bd` | lowest-index survivor of sample-01; its block has no rule finding |
+| `firm-rules-in-context-03` | `c_53ded8db41297f0a` | `c_11be0ae0434514ea` | lowest-index survivor of sample-03; its block has no rule finding (the placeholder sentence the rule talks about is rule-flagged, so it is no longer a candidate) |
+| `counsel-draft-03` | pick of 2 engine ids | `fixedCandidates` (`scripts/src/record/fixed-candidates/counsel-draft-03.json`) | live file and hash unchanged |
+| `ai-duplicate-of-rule` (new) | - | `c_439057b9bc027023`, `c_b30f291dff2535b6` | two picks: a one-pick `c_b30f...` request has the same inputHash as `hostile-severity-critical` |
+
+Derived recordings: sample-01 kept 1 of 3 live findings (`c_624f0f476f804afb`), sample-03 kept 3 of 4. In the app: sample-01 shows 1 AI row (was 3), sample-03 shows 1 verified + 2 rejected (was 2 + 2).

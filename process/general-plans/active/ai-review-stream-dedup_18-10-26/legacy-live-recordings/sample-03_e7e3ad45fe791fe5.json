@@ -1,0 +1,404 @@
+{
+  "case": "sample-03",
+  "taskId": "clause-judgment",
+  "promptVersion": "clause-judgment@1",
+  "inputHash": "e7e3ad45fe791fe5d37b45dd6f4ed4274bb3ae94a8849009dc9ce1c3f82497b8",
+  "model": "nvidia/nemotron-3-super-120b-a12b:free",
+  "messagesDigest": "e7e3ad45fe791fe5d37b45dd6f4ed4274bb3ae94a8849009dc9ce1c3f82497b8",
+  "request": {
+    "task": "clause-judgment",
+    "sample": "03",
+    "candidates": [
+      {
+        "id": "c_11be0ae0434514ea",
+        "quote": "Thank you for your interest in Partners Group Private Equity (Master Fund), LLC (the “Fund”).",
+        "section_path": [
+          "SUBSCRIPTION AGREEMENT INSTRUCTIONS"
+        ],
+        "issue_class_hint": "defined_term_issue"
+      },
+      {
+        "id": "c_b4c92e6ff8631f8c",
+        "quote": "☐ Completed Subscription Agreement, including all required information, elections, representations and warranties",
+        "section_path": [
+          "SUBSCRIPTION AGREEMENT INSTRUCTIONS"
+        ],
+        "issue_class_hint": "option_gap_overlap"
+      },
+      {
+        "id": "c_9b07218f8183451e",
+        "quote": "☐ Send all pages (including the Terms and Conditions) of this Subscription Agreement and associated documentation to:",
+        "section_path": [
+          "SUBSCRIPTION AGREEMENT INSTRUCTIONS"
+        ],
+        "issue_class_hint": "option_gap_overlap"
+      },
+      {
+        "id": "c_fcfcb4a816686edb",
+        "quote": "☐ For all custodial accounts, please send all pages (including the terms and conditions) of this Subscription Agreement to the Custodian indicated in Part B of Section 6 for forwarding to the Fund",
+        "section_path": [
+          "SUBSCRIPTION AGREEMENT INSTRUCTIONS"
+        ],
+        "issue_class_hint": "broken_cross_reference"
+      },
+      {
+        "id": "c_54cd421d8bdba4af",
+        "quote": "☐ Wire cleared funds equal to the amount specified in Part B of Section 4 to:",
+        "section_path": [
+          "SUBSCRIPTION AGREEMENT INSTRUCTIONS"
+        ],
+        "issue_class_hint": "broken_cross_reference"
+      },
+      {
+        "id": "c_ab71d8f803a229c5",
+        "quote": "ABA: #0028",
+        "section_path": [
+          "SUBSCRIPTION AGREEMENT INSTRUCTIONS"
+        ],
+        "issue_class_hint": "sensitive_data"
+      },
+      {
+        "id": "c_c37d56d9973e94fc",
+        "quote": "DDA: #1927",
+        "section_path": [
+          "SUBSCRIPTION AGREEMENT INSTRUCTIONS"
+        ],
+        "issue_class_hint": "sensitive_data"
+      },
+      {
+        "id": "c_53ded8db41297f0a",
+        "quote": "FFC: Partners Group Private Equity (Master Fund), LLC / [insert investor name]",
+        "section_path": [
+          "SUBSCRIPTION AGREEMENT INSTRUCTIONS"
+        ],
+        "issue_class_hint": "placeholder"
+      },
+      {
+        "id": "c_c6e30983e47e9387",
+        "quote": "1. The undersigned party or parties specified in Section 2 of the Subscription Agreement Signature Pages (collectively, the “Subscriber”) hereby applies to become a shareholder (a “Shareholder”), with the subscription amount specified in Part B of Section 6 of the Subscription Agreement Signature Pages, in Partners Group Private Equity (Master Fund), LLC (the “Fund”), on the terms and conditions of the limited liability company agreement of the Fund, as amended and restated from time to time (the “LLC Agreement”), and the prospectus of the Fund, as amended and restated from time to time (the “Prospectus”), a copy each of which the Subscriber has received and read.",
+        "section_path": [
+          "SUBSCRIPTION AGREEMENT TERMS & CONDITIONS"
+        ],
+        "issue_class_hint": "defined_term_issue"
+      },
+      {
+        "id": "c_3b1ebae4db695a6e",
+        "quote": "4. The Subscriber confirms that its subscription for shares in the Fund (“Shares”) is made solely on the basis of the LLC Agreement, the Prospectus and this Subscription Agreement and not in reliance on any other information, representations or warranties, whether oral or written, provided by any person including for the avoidance of doubt Partners Group (USA) Inc. (the “Adviser”) or any affiliate thereof or any officer, agent, director, member, partner or employee of any such person.",
+        "section_path": [
+          "SUBSCRIPTION AGREEMENT TERMS & CONDITIONS"
+        ],
+        "issue_class_hint": "defined_term_issue"
+      },
+      {
+        "id": "c_798596bf8b7bc474",
+        "quote": "7. The Subscriber hereby declares, represents and warrants that (i) it is a U.S. person (as defined in Appendix A) and (ii) it is not a Foreign Financial Institution as defined in the Uniting and Strengthening America by Providing Appropriate Tools Required to Intercept and Obstruct Terrorism Act of 2001 (the “USA PATRIOT Act”).",
+        "section_path": [
+          "SUBSCRIPTION AGREEMENT TERMS & CONDITIONS"
+        ],
+        "issue_class_hint": "defined_term_issue"
+      },
+      {
+        "id": "c_7aba2cda90b1a302",
+        "quote": "9. If the Subscriber is (i) an “employee benefit plan” as defined in Section 3(3) of the Employee Retirement Income Security Act of 1974, as amended (“ERISA”) that is subject to Title I of ERISA, (ii) a “plan” as defined in Section 4975 of the U.S. Internal Revenue Code, as amended, (the “Code”) that is subject to Section 4975 of the Code or (iii) a person or entity investing with the assets of, or otherwise on behalf of any entity otherwise deemed to hold the assets of any such employee benefit plan or plan, then the Subscriber as the plan or fiduciary of such employee benefit plan (the “Plan”) hereby declares, represents and warrants to the Fund that:",
+        "section_path": [
+          "SUBSCRIPTION AGREEMENT TERMS & CONDITIONS"
+        ],
+        "issue_class_hint": "defined_term_issue"
+      },
+      {
+        "id": "c_51cd8865e5e83814",
+        "quote": "To the extent permitted by applicable law, the Subscriber agrees to indemnify the Fund, the Adviser and each of their affiliates and their respective directors, trustees, managers, members, shareholders, partners, officers and employees (each, an \"Indemnitee\") and hold each of them harmless from any losses, charges, claims, expenses, assessments, damages, costs and liabilities, including, but not limited to, amounts paid in satisfaction of judgments, in compromise, or as fines or penalties, and reasonable counsel fees and disbursements, incurred in connection with the defense or disposition of any action, suit, investigation or other proceeding, whether civil or criminal, before any judicial, arbitral, administrative or legislative body that an Indemnitee may incur as a result of any declaration, certification, representation, warranty and/or agreement of the Subscriber herein being untrue in any respect.",
+        "section_path": [
+          "SUBSCRIPTION AGREEMENT TERMS & CONDITIONS"
+        ],
+        "issue_class_hint": "defined_term_issue"
+      },
+      {
+        "id": "c_01c7b93e2d274052",
+        "quote": "Single owner Please complete Part A of Section 2 Multiple owners Please complete Parts A & B of Section 2 Minor account Please complete Part C of Section 2 and Section 4",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "1. TYPE OF ACCOUNT (select only one)"
+        ],
+        "issue_class_hint": "broken_conditional"
+      },
+      {
+        "id": "c_e079ba3146b4ffdc",
+        "quote": "☐ Individual ☐ Tenants in common ☐ Community property ☐ Joint tenants with rights of survivorship ☐ UGMA: State of __________________ ☐ UGTA: State of __________________",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "1. TYPE OF ACCOUNT (select only one)"
+        ],
+        "issue_class_hint": "option_gap_overlap"
+      },
+      {
+        "id": "c_600f9f0726a39bb0",
+        "quote": "Qualified plan account Please complete Part A or C of Section 2 (as applicable) and Section 4",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "1. TYPE OF ACCOUNT (select only one)"
+        ],
+        "issue_class_hint": "broken_conditional"
+      },
+      {
+        "id": "c_93330e56bd8b24c5",
+        "quote": "☐ Traditional IRA ☐ Roth IRA ☐ Keogh ☐ Traditional rollover IRA ☐ Roth rollover IRA ☐ SIMPLE IRA ☐ Other ____________________________",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "1. TYPE OF ACCOUNT (select only one)"
+        ],
+        "issue_class_hint": "option_gap_overlap"
+      },
+      {
+        "id": "c_87cf19abf3e1122b",
+        "quote": "Other account Please complete Part C of Section 2",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "1. TYPE OF ACCOUNT (select only one)"
+        ],
+        "issue_class_hint": "broken_conditional"
+      },
+      {
+        "id": "c_e6a4ebfa7db1602f",
+        "quote": "☐ Qualified pension ☐ Profit-sharing plan ☐ Foundation ☐ Limited liability company ☐ Corporation: S-Corp ☐ Corporation: C-Corp ☐ Partnership ☐ Revocable trust ☐ Irrevocable trust ☐ Estate ☐ Other ____________________________",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "1. TYPE OF ACCOUNT (select only one)"
+        ],
+        "issue_class_hint": "option_gap_overlap"
+      },
+      {
+        "id": "c_0d95e3ad5657c652",
+        "quote": "☐ Class A (0.70% distribution fee) ☐ Class I (no distribution fee)",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "6. INVESTMENT DETAILS",
+          "Part A – Share class"
+        ],
+        "issue_class_hint": "option_gap_overlap"
+      },
+      {
+        "id": "c_bd6e0b52fb3b377d",
+        "quote": "☐ Yes ☐ No (please complete Part B below)",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "7. DISTRIBUTIONS",
+          "Part A – Distribution election"
+        ],
+        "issue_class_hint": "option_gap_overlap"
+      },
+      {
+        "id": "c_e1f8f3324710111e",
+        "quote": "☐ Subscriber ☐ Financial Advisor",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "8. DELIVERY OF DOCUMENTS"
+        ],
+        "issue_class_hint": "option_gap_overlap"
+      },
+      {
+        "id": "c_21e00dd8af81507f",
+        "quote": "☐ Yes ☐ No",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "8. DELIVERY OF DOCUMENTS"
+        ],
+        "issue_class_hint": "option_gap_overlap"
+      },
+      {
+        "id": "c_7eff7dd7e95bd2d8",
+        "quote": "I am not subject to backup withholding because: (a) I am exempt from backup withholding, or (b) I have not been notified by the Internal Revenue Service (“IRS”) that I am subject to backup withholding as a result of a failure to report all interest or dividends, or (c) the IRS has notified me that I am no longer subject to backup withholding; and 3.",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "9. INTERNAL REVENUE CODE CERTIFICATION"
+        ],
+        "issue_class_hint": "defined_term_issue"
+      },
+      {
+        "id": "c_f22ecd167ea91106",
+        "quote": "☐ By checking this box, the Subscriber certifies items 1-4 above, and agrees to notify the Fund within 30 days of any change in this information.",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "9. INTERNAL REVENUE CODE CERTIFICATION"
+        ],
+        "issue_class_hint": "option_gap_overlap"
+      },
+      {
+        "id": "c_29f197f1301562c5",
+        "quote": "For individuals: ☐ it is a natural person with an individual income in excess of $200,000 in each of the two most recent years or joint income with its spouse in excess of $300,000 in each of those years and has a reasonable expectation of reaching the same income level in the current year; or ☐ it is a natural person with an individual net worth, or joint net worth with its spouse at the time of its purchase of Shares, that exceeds $1,000,000 (see Part D for definition of net worth).",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "10. QUALIFIED INVESTOR DETERMINATION FOR ALL SUBSCRIBERS",
+          "Part A – “Accredited investor” determination"
+        ],
+        "issue_class_hint": "option_gap_overlap"
+      },
+      {
+        "id": "c_bb5d91cf0655b7b1",
+        "quote": "☐ it is a broker or dealer registered pursuant to section 15 of the U.S. Securities Exchange Act of 1934, as amended (the “Exchange Act”);",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "10. QUALIFIED INVESTOR DETERMINATION FOR ALL SUBSCRIBERS",
+          "Part A – “Accredited investor” determination"
+        ],
+        "issue_class_hint": "defined_term_issue"
+      },
+      {
+        "id": "c_cba79147e943d8e6",
+        "quote": "☐ it is an “investment company” registered under the U.S. Investment Company Act of 1940, as amended (the “Investment Company Act”);",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "10. QUALIFIED INVESTOR DETERMINATION FOR ALL SUBSCRIBERS",
+          "Part A – “Accredited investor” determination"
+        ],
+        "issue_class_hint": "defined_term_issue"
+      },
+      {
+        "id": "c_639771c3676e987d",
+        "quote": "☐ it is a private business development company as defined in section 202(a)(22) of the U.S. Investment Advisers Act of 1940, as amended (the “Advisers Act”); or ☐ it is an entity in which all of the equity owners are investors described in one or more of categories described above in this Part A.",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "10. QUALIFIED INVESTOR DETERMINATION FOR ALL SUBSCRIBERS",
+          "Part A – “Accredited investor” determination"
+        ],
+        "issue_class_hint": "defined_term_issue"
+      },
+      {
+        "id": "c_09359fdc71b62097",
+        "quote": "For individuals: ☐ it is a natural person with a net worth of at least $2,100,000 as of the date hereof, either alone or with assets held jointly with such person's spouse (see Part D for definition of net worth);",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "10. QUALIFIED INVESTOR DETERMINATION FOR ALL SUBSCRIBERS",
+          "Part B – “Qualified client” determination"
+        ],
+        "issue_class_hint": "option_gap_overlap"
+      },
+      {
+        "id": "c_f0a4ebf8c06683c3",
+        "quote": "☐ Yes ☐ No",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "10. QUALIFIED INVESTOR DETERMINATION FOR ALL SUBSCRIBERS",
+          "Part C – Additional questions for Subscribers that are trusts, corporations or other entities"
+        ],
+        "issue_class_hint": "option_gap_overlap"
+      },
+      {
+        "id": "c_bfe0606133f6e8f2",
+        "quote": "☐ Yes ☐ No",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "10. QUALIFIED INVESTOR DETERMINATION FOR ALL SUBSCRIBERS",
+          "Part C – Additional questions for Subscribers that are trusts, corporations or other entities"
+        ],
+        "issue_class_hint": "option_gap_overlap"
+      },
+      {
+        "id": "c_c08384ca8b824f47",
+        "quote": "The Fund is required by law to adopt a default method for determining the value of each Share at the time that it is acquired (the “Cost Basis”) in order to determine the gain or loss upon repurchase of Shares.",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "11. COST BASIS ELECTION"
+        ],
+        "issue_class_hint": "defined_term_issue"
+      },
+      {
+        "id": "c_9b7c619d74e229a2",
+        "quote": "☐ The Subscriber certifies that it has received and read the LLC Agreement, the Prospectus and the Subscription Agreement of the Fund and agrees to be bound by the terms and conditions of each.",
+        "section_path": [
+          "SubscripTIon Agreement SIGNATURE PAGES",
+          "12. ACKNOWLEDGEMENT AND SIGNATURE (please acknowledge and check each and sign below)"
+        ],
+        "issue_class_hint": "option_gap_overlap"
+      },
+      {
+        "id": "c_308a2e59a0f1e6b6",
+        "quote": "“United States” or “U.S.” means the United States of America, its territories and possessions, any state of the United States, and the District of Columbia.",
+        "section_path": [
+          "SubscripTIon Agreement – APPENDIX A"
+        ],
+        "issue_class_hint": "defined_term_issue"
+      },
+      {
+        "id": "c_06828a091f0ab7cf",
+        "quote": "“U.S. person” means:",
+        "section_path": [
+          "SubscripTIon Agreement – APPENDIX A"
+        ],
+        "issue_class_hint": "defined_term_issue"
+      }
+    ],
+    "rule_texts": [],
+    "mode": "json_schema"
+  },
+  "response": {
+    "raw": "{\"findings\": [{\"candidate_id\": \"c_9b07218f8183451e\", \"issue_class\": \"ambiguity\", \"severity\": \"medium\", \"confidence\": 0.9, \"quote\": \"☐ Send all pages (including the Terms and Conditions) of this Subscription Agreement and associated documentation to:\", \"explanation\": \"The instruction ends with a colon but does not specify where to send the documents, leaving the reader uncertain about the required action.\", \"interpretations\": [\"Send to the custodian indicated elsewhere\", \"Send to the fund administrator\", \"Send to the transfer agent\"]}, {\"candidate_id\": \"c_54cd421d8bdba4af\", \"issue_class\": \"ambiguity\", \"severity\": \"medium\", \"confidence\": 0.9, \"quote\": \"☐ Wire cleared funds equal to the amount specified in Part B of Section 4 to:\", \"explanation\": \"The wire instruction ends with a colon but omits the beneficiary details, making it impossible to execute the wire as written.\", \"interpretations\": [\"Wire to the Fund's designated bank account\", \"Wire to the custodian's account\", \"Wire to the transfer agent\"]}, {\"candidate_id\": \"c_7eff7dd7e95bd2d8\", \"issue_class\": \"meaningful_typo\", \"severity\": \"high\", \"confidence\": 0.95, \"quote\": \"I am not subject to backup withholding because: (a) I am exempt from backup withholding, or (b) I have not been notified by the Internal Revenue Service (â€œIRSâ€) that I am subject to backup withholding as a result of a failure to report all interest or dividends, or (c) the IRS has notified me that I am no longer subject to backup withholding; and 3.\", \"explanation\": \"The clause ends with â€œ; and 3.â€ which is nonsensical and likely a typo that alters the intended meaning of the certification.\", \"interpretations\": [\"The sentence was meant to end after subsection (c)\", \"An additional subsection (d) was omitted\", \"The â€œand 3.â€ is a stray character\"]}, {\"candidate_id\": \"c_06828a091f0ab7cf\", \"issue_class\": \"defined_term_issue\", \"severity\": \"high\", \"confidence\": 0.9, \"quote\": \"â€œU.S. personâ€ means:\", \"explanation\": \"The definition of â€œU.S. personâ€ begins but provides no content after the colon, leaving the term undefined.\", \"interpretations\": [\"The definition is missing due to a drafting error\", \"The term is intended to be defined elsewhere in the document\", \"The drafter intended to list the statutory definition but omitted it\"]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "c_9b07218f8183451e",
+          "issue_class": "ambiguity",
+          "severity": "medium",
+          "confidence": 0.9,
+          "quote": "☐ Send all pages (including the Terms and Conditions) of this Subscription Agreement and associated documentation to:",
+          "explanation": "The instruction ends with a colon but does not specify where to send the documents, leaving the reader uncertain about the required action.",
+          "interpretations": [
+            "Send to the custodian indicated elsewhere",
+            "Send to the fund administrator",
+            "Send to the transfer agent"
+          ]
+        },
+        {
+          "candidate_id": "c_54cd421d8bdba4af",
+          "issue_class": "ambiguity",
+          "severity": "medium",
+          "confidence": 0.9,
+          "quote": "☐ Wire cleared funds equal to the amount specified in Part B of Section 4 to:",
+          "explanation": "The wire instruction ends with a colon but omits the beneficiary details, making it impossible to execute the wire as written.",
+          "interpretations": [
+            "Wire to the Fund's designated bank account",
+            "Wire to the custodian's account",
+            "Wire to the transfer agent"
+          ]
+        },
+        {
+          "candidate_id": "c_7eff7dd7e95bd2d8",
+          "issue_class": "meaningful_typo",
+          "severity": "high",
+          "confidence": 0.95,
+          "quote": "I am not subject to backup withholding because: (a) I am exempt from backup withholding, or (b) I have not been notified by the Internal Revenue Service (â€œIRSâ€) that I am subject to backup withholding as a result of a failure to report all interest or dividends, or (c) the IRS has notified me that I am no longer subject to backup withholding; and 3.",
+          "explanation": "The clause ends with â€œ; and 3.â€ which is nonsensical and likely a typo that alters the intended meaning of the certification.",
+          "interpretations": [
+            "The sentence was meant to end after subsection (c)",
+            "An additional subsection (d) was omitted",
+            "The â€œand 3.â€ is a stray character"
+          ]
+        },
+        {
+          "candidate_id": "c_06828a091f0ab7cf",
+          "issue_class": "defined_term_issue",
+          "severity": "high",
+          "confidence": 0.9,
+          "quote": "â€œU.S. personâ€ means:",
+          "explanation": "The definition of â€œU.S. personâ€ begins but provides no content after the colon, leaving the term undefined.",
+          "interpretations": [
+            "The definition is missing due to a drafting error",
+            "The term is intended to be defined elsewhere in the document",
+            "The drafter intended to list the statutory definition but omitted it"
+          ]
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "nvidia/nemotron-3-super-120b-a12b:free",
+    "tokens": {
+      "in": 4217,
+      "out": 5783
+    },
+    "recordedAt": "2026-10-17T00:21:27.001Z",
+    "cost_usd": 0,
+    "response_mode": "json_schema"
+  }
+}
