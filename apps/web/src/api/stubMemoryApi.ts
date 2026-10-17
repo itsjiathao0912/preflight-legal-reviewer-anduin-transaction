@@ -393,7 +393,14 @@ export class StubMemoryApi implements MemoryApi {
     const out: CreatedQuestion[] = [];
     for (const it of items) {
       // Variance P04 (H2(d) parity): a question key `<findingId>@<owner>` needs its plain finding
-      if (!run.stored.includes(parseQuestionKey(it.finding_ref).findingId))
+      const pk = parseQuestionKey(it.finding_ref);
+      // Worker parity: the key's `@owner` suffix wins; a different body owner is refused
+      if (pk.owner && it.owner && it.owner !== pk.owner)
+        throw new MemoryApiError('invalid_request', 'owner does not match the question key', {
+          reason: 'owner_key_mismatch',
+        });
+      const owner = pk.owner ?? it.owner;
+      if (!run.stored.includes(pk.findingId))
         throw new MemoryApiError('invalid_request', 'finding not stored', {
           reason: 'finding_ref',
         });
@@ -411,7 +418,7 @@ export class StubMemoryApi implements MemoryApi {
         fingerprint: it.fingerprint,
         law_firm_id: run.law_firm_id,
         interpretations: [...it.interpretations],
-        ...(it.owner ? { owner: it.owner, owner_source: it.owner_source ?? 'suggested' } : {}),
+        ...(owner ? { owner, owner_source: it.owner_source ?? 'suggested' } : {}),
       };
       await this.put(K.question(q.question_id), q);
       out.push({ finding_ref: q.finding_ref, question_id: q.question_id });

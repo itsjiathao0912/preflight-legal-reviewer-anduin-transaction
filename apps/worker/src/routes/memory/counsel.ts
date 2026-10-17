@@ -59,7 +59,12 @@ export function counselQuestionHandler(deps: MemoryDeps): Handler {
     const body = parseWith(CounselQuestionRequestSchema, raw, { questionKey: true });
     // Variance (H2(d)): `finding_ref` may be a question key `<findingId>@<owner>`; the finding, run
     // and issue class resolve from the plain finding id, the key itself stays the question key.
-    const findingId = parseQuestionKey(body.finding_ref).findingId;
+    const parsedKey = parseQuestionKey(body.finding_ref);
+    const findingId = parsedKey.findingId;
+    // the key's `@owner` suffix is authoritative: a different body.owner is refused
+    if (parsedKey.owner && body.owner && body.owner !== parsedKey.owner)
+      throw new ProxyError('invalid_request', 'owner_key_mismatch');
+    const owner = parsedKey.owner ?? body.owner ?? null;
     const withFinding = await ctx.db
       .prepare(RUN_SQL.latestWithFinding)
       .bind(ctx.workspaceId, findingId)
@@ -98,8 +103,8 @@ export function counselQuestionHandler(deps: MemoryDeps): Handler {
       firm: run.law_firm_id,
       issueClass: cls.data,
       interpretations: body.interpretations.map(maskFree),
-      owner: body.owner ?? null,
-      ownerSource: body.owner ? (body.owner_source ?? 'suggested') : null,
+      owner,
+      ownerSource: owner ? (body.owner_source ?? 'suggested') : null,
     }).run();
     // an existing question for (run, finding_key) keeps its id (idempotent)
     const row = await ctx.db

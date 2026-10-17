@@ -136,6 +136,8 @@ export function scrubTerminal(op: OutboxOp): OutboxOp {
     // Variance: intent and the assertion label are free text too (kind kept for the record)
     out.answer = assertion ? { ...rest, assertion: { kind: assertion.kind, label: '' } } : rest;
   }
+  // Variance: the interpretations carry old/new document text
+  if (out.question) out.question = { ...out.question, interpretations: [] };
   if (out.doc) out.doc = { ...out.doc, doc_name: '' };
   return out;
 }

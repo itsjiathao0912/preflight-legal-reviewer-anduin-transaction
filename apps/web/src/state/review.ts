@@ -951,9 +951,10 @@ export const useReview = create<ReviewState>((set, get) => {
     },
 
     refreshMemory: async (revokedDecisionId, match) => {
-      const { doc, triage, memory } = get();
+      const { doc, triage } = get();
       if (doc && revokedDecisionId) {
-        const fpOf = (k: string) => memory?.byId[k]?.fingerprint ?? null;
+        // change / regression rows have no memory fingerprint; compute it like persistAnswer does
+        const fpOf = (k: string) => rowFingerprint(k);
         const pendingFp = (id: string | null | undefined, k: string) =>
           !!match && !!id && id.startsWith('pending:') && fpOf(k) === match.fingerprint;
         const next = { ...triage };
@@ -969,14 +970,27 @@ export const useReview = create<ReviewState>((set, get) => {
             !match || match.decision !== 'answered'
               ? t.decisionId === revokedDecisionId || pendingFp(t.decisionId, k)
               : false;
-          // H7: an owner's answer decision revoked -> that owner is asked again (null), gate blocked
-          const ownerHits = (Object.entries(t.ownerAnswerIds ?? {}) as [Owner, string | null][])
-            .filter(
-              ([, v]) =>
-                (!match || match.decision === 'answered') &&
-                (v === revokedDecisionId || pendingFp(v, k)),
-            )
-            .map(([o]) => o);
+          // H7: an owner's answer decision revoked -> that owner is asked again (null), gate blocked.
+          // Optimistic `pending:<op>` ids resolve through the outbox to the exact decision (one
+          // owner only); the fingerprint fallback applies only when no id resolves exactly.
+          const ownerEntries = (
+            Object.entries(t.ownerAnswerIds ?? {}) as [Owner, string | null][]
+          ).filter(() => !match || match.decision === 'answered');
+          const resolved = await Promise.all(
+            ownerEntries.map(async ([o, v]) => {
+              if (!v) return [o, v, null] as const;
+              if (!v.startsWith('pending:')) return [o, v, v] as const;
+              try {
+                return [o, v, (await outbox()?.resolveId(v)) ?? null] as const;
+              } catch {
+                return [o, v, null] as const;
+              }
+            }),
+          );
+          const exact = resolved.filter(([, , r]) => r === revokedDecisionId).map(([o]) => o);
+          const ownerHits = exact.length
+            ? exact
+            : resolved.filter(([, v, r]) => r === null && pendingFp(v, k)).map(([o]) => o);
           if (ownerHits.length) {
             const oa = { ...(t.ownerAnswers ?? {}) };
             const ids = { ...(t.ownerAnswerIds ?? {}) };
