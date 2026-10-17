@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { limits } from '@aduin/core';
+import { fetchQuota } from '../api/quota';
 import { allowanceLeft, appDb } from '../storage/db';
 import { KEYS, safeGet, safeSet } from './storage';
 
@@ -13,6 +14,11 @@ interface SessionState {
   privacyAck: boolean;
   /** Fresh-AI documents left today (display-only stub). */
   allowance: number;
+  /**
+   * Real allowance from GET /api/quota (Phase 05). null = not available (API base '' or the fetch
+   * failed): the stub `allowance` above is shown instead, silently (G14).
+   */
+  quota: { left: number; limit: number; resetsAt: number; globalOk: boolean } | null;
   /** Privacy notice requested before switching AI on. */
   privacyPrompt: boolean;
   setAi: (on: boolean) => void;
@@ -20,12 +26,15 @@ interface SessionState {
   ackPrivacy: () => void;
   closePrivacyPrompt: () => void;
   refreshAllowance: () => Promise<void>;
+  /** Refetch /api/quota (no-op when the API base is ''; failures keep the stub). */
+  refreshQuota: () => Promise<void>;
 }
 
 export const useSession = create<SessionState>((set, get) => ({
   aiOn: safeGet(KEYS.ai) !== 'off',
   privacyAck: false,
   allowance: limits.visitorAiDocsPerDay,
+  quota: null,
   privacyPrompt: false,
   setAi: (aiOn) => {
     safeSet(KEYS.ai, aiOn ? 'on' : 'off');
@@ -46,5 +55,17 @@ export const useSession = create<SessionState>((set, get) => ({
     } catch {
       /* keep the default */
     }
+  },
+  refreshQuota: async () => {
+    const q = await fetchQuota();
+    if (!q) return;
+    set({
+      quota: {
+        left: Math.max(0, q.ai.limit - q.ai.used),
+        limit: q.ai.limit,
+        resetsAt: q.ai.resetsAt,
+        globalOk: q.globalOk,
+      },
+    });
   },
 }));

@@ -1,4 +1,4 @@
-import type { BlockKind, Finding, StructureView } from '@aduin/core';
+import type { AiCandidate, BlockKind, Finding, StructureView } from '@aduin/core';
 
 /** Wire types between the engine worker and the main thread (structured-clone safe). */
 export type StageId = 'read' | 'structure' | 'checks' | 'ai' | 'done';
@@ -44,6 +44,14 @@ export interface FindingView extends Finding {
   sensitive: Span[];
   /** Document order (block index). */
   order: number;
+  /** U1 locator chip (Phase 05, additive): full section path plus paragraph number in that section. */
+  locator?: FindingLocator;
+}
+
+/** Where a finding sits: section path (outermost first) and 1-based paragraph within the section. */
+export interface FindingLocator {
+  path: string[];
+  paragraph: number;
 }
 
 export interface EngineSettings {
@@ -63,7 +71,34 @@ export interface EngineResult {
   failedStage: StageId | null;
   /** Phase 02 (additive, optional): the #structure view model; absent when the structurer failed. */
   structure?: StructureView;
+  /** Phase 05 (additive, optional): graph-selected AI candidates (core llm/candidates.ts, worker only). */
+  aiCandidates?: AiCandidate[];
 }
+
+/** Context for verifying one AI result (where it came from). */
+export interface VerifyAiContext {
+  model: string;
+  provenance: 'fresh' | 'cache';
+}
+
+export interface AiRejection {
+  candidate_id?: string;
+  reason: string;
+}
+
+/** verifyAi outcome: verified findings plus the rules hash of the injected rule set. */
+export type VerifyAiResponse =
+  | {
+      ok: true;
+      findings: FindingView[];
+      rejected: AiRejection[];
+      /** First 8 hex chars of the injected rules hash, or 'none'. */
+      rulesHash8: string;
+      /** "N of M firm rules applied". */
+      rulesApplied: number;
+      rulesTotal: number;
+    }
+  | { ok: false; error: 'doc_not_retained' | 'schema' };
 
 export interface EngineApi {
   analyze(
@@ -71,4 +106,18 @@ export interface EngineApi {
     settings: EngineSettings,
     onStage: (s: StageReport) => void,
   ): Promise<EngineResult>;
+  /**
+   * Phase 05 (G12/G13): verify an AI result against a retained document graph (LRU of 2, by docHash).
+   * Schema check, quote locate, snapToSentence, severity cap, mask. Never throws across Comlink.
+   */
+  verifyAi(
+    result: unknown,
+    docHash: string,
+    injectedRuleTexts: string[],
+    ctx: VerifyAiContext,
+  ): Promise<VerifyAiResponse>;
+  /** First 8 hex chars of the injected rules hash for these rule texts, or 'none'. */
+  rulesHash8(ruleTexts: string[]): Promise<string>;
+  /** Drop every retained graph. */
+  dispose(): Promise<void>;
 }

@@ -6,12 +6,15 @@
  */
 import * as Comlink from 'comlink';
 import {
+  buildAiCandidates,
   buildDocGraph,
   buildStructureView,
   htmlToLines,
   ISSUE_CLASS_LABELS,
   runDeterministic,
+  selectInjectedRules,
   sensitiveSpans,
+  verifyAiResult,
   type DocGraph,
   type Finding,
   type HtmlAdapterResult,
@@ -22,6 +25,7 @@ import type {
   EngineApi,
   EngineResult,
   EngineSettings,
+  FindingLocator,
   FindingView,
   SectionView,
   StageId,
@@ -55,7 +59,33 @@ function foundOf(f: Finding): string | null {
   return null;
 }
 
-function toView(f: Finding, blocks: BlockView[], indexById: Map<string, number>): FindingView {
+/**
+ * U1 locator: the finding's full section path and its paragraph number (1-based, non-heading blocks)
+ * inside the innermost section that contains it.
+ */
+function locatorOf(f: Finding, g: DocGraph | null, order: number): FindingLocator {
+  const path = f.section_path;
+  let paragraph = 1;
+  if (g) {
+    const key = path.join('\u0000');
+    let n = 0;
+    const blocks = g.doc.blocks;
+    for (let i = 0; i <= order && i < blocks.length; i++) {
+      const b = blocks[i]!;
+      if (b.kind === 'heading' || b.section_path.join('\u0000') !== key) continue;
+      n++;
+    }
+    paragraph = Math.max(1, n);
+  }
+  return { path: [...path], paragraph };
+}
+
+function toView(
+  f: Finding,
+  blocks: BlockView[],
+  indexById: Map<string, number>,
+  g: DocGraph | null = null,
+): FindingView {
   const order = indexById.get(f.anchor.blockId) ?? 0;
   const block = blocks[order];
   const sec = f.section_path[0];
@@ -77,7 +107,43 @@ function toView(f: Finding, blocks: BlockView[], indexById: Map<string, number>)
     found: foundOf(f),
     sensitive,
     order,
+    locator: locatorOf(f, g, order),
   };
+}
+
+/**
+ * Retained analyzed graphs for the AI lane (G13): bounded LRU of 2 keyed by docHash, so memory holds
+ * at most two documents. A third analysis evicts the least recently used one; dispose clears all.
+ */
+interface Retained {
+  g: DocGraph;
+  blocks: BlockView[];
+  idx: Map<string, number>;
+}
+const RETAIN_MAX = 2;
+const retained = new Map<string, Retained>();
+
+function retain(docHash: string, r: Retained): void {
+  retained.delete(docHash);
+  retained.set(docHash, r);
+  while (retained.size > RETAIN_MAX) {
+    const oldest = retained.keys().next().value;
+    if (oldest === undefined) break;
+    retained.delete(oldest);
+  }
+}
+
+function touch(docHash: string): Retained | undefined {
+  const r = retained.get(docHash);
+  if (r) {
+    retained.delete(docHash);
+    retained.set(docHash, r);
+  }
+  return r;
+}
+
+function plainStrings(xs: unknown): string[] {
+  return Array.isArray(xs) ? xs.filter((x): x is string => typeof x === 'string') : [];
 }
 
 function viewOf(g: DocGraph): { blocks: BlockView[]; sections: SectionView[] } {
@@ -97,7 +163,7 @@ function viewOf(g: DocGraph): { blocks: BlockView[]; sections: SectionView[] } {
   return { blocks, sections };
 }
 
-const api: EngineApi = {
+export const api: EngineApi = {
   async analyze(bytes, settings, onStage) {
     const stages: StageReport[] = [];
     const report = (s: StageReport) => {
@@ -158,6 +224,8 @@ const api: EngineApi = {
       return fail('structure', 'showing the plain text without sections');
     }
     const v = viewOf(g);
+    const idx = new Map(v.blocks.map((b, i) => [b.id, i] as const));
+    retain(lines.docHash, { g, blocks: v.blocks, idx });
     result.blocks = v.blocks;
     result.sections = v.sections;
     report({
@@ -171,8 +239,13 @@ const api: EngineApi = {
     try {
       if (shouldFail(settings, 'checks')) throw new Error('injected');
       const findings = runDeterministic(g);
-      const idx = new Map(v.blocks.map((b, i) => [b.id, i] as const));
-      result.findings = findings.map((f) => toView(f, v.blocks, idx));
+      result.findings = findings.map((f) => toView(f, v.blocks, idx, g));
+      // Phase 05: graph-selected AI candidates (optional on the wire; the AI lane is skipped without them)
+      try {
+        result.aiCandidates = buildAiCandidates(g, findings);
+      } catch (e) {
+        console.warn('[engine] ai_candidates_failed', e instanceof Error ? e.name : 'unknown');
+      }
     } catch {
       return fail('checks', 'no rule findings for this document');
     }
@@ -186,6 +259,42 @@ const api: EngineApi = {
     }
     report({ id: 'checks', state: 'done', sub: `Done · ${n} finding${n === 1 ? '' : 's'}` });
     return result;
+  },
+
+  // Phase 05 verify chain (G12): schema -> quote locate -> snapToSentence -> severity cap -> mask,
+  // all in core verifyAiResult; the main thread only receives plain FindingViews.
+  async verifyAi(aiResult, docHash, injectedRuleTexts, ctx) {
+    const sel = selectInjectedRules(plainStrings(injectedRuleTexts));
+    const r = touch(docHash);
+    if (!r) return { ok: false, error: 'doc_not_retained' };
+    const provenance = ctx?.provenance === 'cache' ? 'cache' : 'fresh';
+    const model = typeof ctx?.model === 'string' && ctx.model ? ctx.model.slice(0, 120) : 'unknown';
+    let out: ReturnType<typeof verifyAiResult>;
+    try {
+      out = verifyAiResult(r.g, aiResult, { model, provenance });
+    } catch {
+      return { ok: false, error: 'schema' };
+    }
+    if (!out.ok) return { ok: false, error: 'schema' };
+    return {
+      ok: true,
+      findings: out.findings.map((f) => toView(f, r.blocks, r.idx, r.g)),
+      rejected: out.rejected.map((x) => ({
+        ...(x.candidate_id !== undefined ? { candidate_id: x.candidate_id } : {}),
+        reason: x.reason,
+      })),
+      rulesHash8: sel.hash8,
+      rulesApplied: sel.applied,
+      rulesTotal: sel.total,
+    };
+  },
+
+  async rulesHash8(ruleTexts) {
+    return selectInjectedRules(plainStrings(ruleTexts)).hash8;
+  },
+
+  async dispose() {
+    retained.clear();
   },
 };
 

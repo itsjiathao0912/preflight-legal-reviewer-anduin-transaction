@@ -1,4 +1,5 @@
 import { ActiveDecisionSchema, limits, REASON_CODES, type ActiveDecision } from '@aduin/core';
+import { e2eFirmRules } from '../e2e-hook';
 import type { AppDb, DecisionRow } from '../storage/db';
 import { MemoryApiError, type AnswerInput, type DecideInput, type MemoryApi } from './memoryApi';
 
@@ -106,6 +107,16 @@ export class StubMemoryApi implements MemoryApi {
       fund_name: input.fund_name ?? '',
       decided_by_name: input.decided_by_name,
     });
+  }
+
+  /**
+   * Bundled samples carry no active firm rules (the demo seed rule is `proposed`), so the stub returns
+   * [] and the rules hash is 'none', matching the committed `{docHash}.none.json` precomputed files
+   * (E18(e) option "[] / none").
+   */
+  async firmRules(lawFirmId: string): Promise<string[]> {
+    if (!lawFirmId) throw new MemoryApiError('invalid_request', 'law_firm_id required');
+    return [...(e2eFirmRules() ?? [])];
   }
 
   async revoke(decisionId: string, reason: string): Promise<ActiveDecision | null> {

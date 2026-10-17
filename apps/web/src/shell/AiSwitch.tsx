@@ -1,10 +1,9 @@
-import { limits } from '@aduin/core';
 import { Icon } from '../components/ui/icon';
+import { Allowance } from '../features/ai/Allowance';
 import { useSession } from '../state/session';
 
 export function AiSwitch() {
   const aiOn = useSession((s) => s.aiOn);
-  const allowance = useSession((s) => s.allowance);
   const setAi = useSession((s) => s.setAi);
   const requestAiOn = useSession((s) => s.requestAiOn);
   return (
@@ -23,15 +22,7 @@ export function AiSwitch() {
             No AI
           </button>
         </div>
-        <div className="allow" data-testid="ai-allowance">
-          <Icon name="spark" />
-          <span>
-            <b>
-              {allowance} of {limits.visitorAiDocsPerDay}
-            </b>{' '}
-            fresh-AI documents left today
-          </span>
-        </div>
+        <Allowance />
       </div>
       <button
         className="ibtn aimini"

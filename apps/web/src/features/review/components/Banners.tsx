@@ -1,6 +1,7 @@
 import { Icon } from '../../../components/ui/icon';
 import { useReview } from '../../../state/review';
 import { useSession } from '../../../state/session';
+import { AiBanner } from '../../ai/AiBanner';
 
 export function Banners() {
   const aiOn = useSession((s) => s.aiOn);
@@ -17,6 +18,7 @@ export function Banners() {
           </p>
         </div>
       ) : null}
+      <AiBanner />
       {doc && doc.firmId === null ? (
         <div className="banner on" role="status" data-testid="memory-not-applied">
           <Icon name="info" />

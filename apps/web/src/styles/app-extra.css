@@ -187,3 +187,27 @@ body {
 .od-acts {
   justify-content: flex-end;
 }
+/* Phase 05 AI lane: calm info notices (not warnings) and the U1 locator chip. Token values only. */
+.banner.note {
+  background: var(--step);
+  color: var(--ink-2);
+}
+.banner.note svg {
+  color: var(--ink-3);
+}
+.banner .btn.sm {
+  margin-left: auto;
+  flex: none;
+}
+.t-loc {
+  background: var(--step);
+  color: var(--ink-2);
+  font-weight: 400;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.locrow {
+  margin: 0;
+}

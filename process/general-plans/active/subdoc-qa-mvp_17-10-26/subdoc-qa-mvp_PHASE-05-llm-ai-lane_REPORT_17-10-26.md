@@ -227,3 +227,160 @@ CONTEXT_PARTIAL: none.
 - Commands to stay green: the gates above, plus `record:author --check` and `precompute:ai --from-recordings --check` after any `llm/` or detector change. A changed candidate set moves the inputHash, so the authored files must be re-authored, live ones re-recorded, and precompute re-run.
 - Dependency changes: none.
 - Follow-up stubs: none created. The Phase 10 live-quality sweep is already named in the plan.
+
+## Stage 1a — worker-wiring (opus, 2026-10-17)
+
+Status: COMPLETE. W1-W4 ticked. Not committed. No live model calls (every test uses the injected OpenRouterStub; `test/setup.ts` net guard unchanged).
+
+### What changed (apps/worker only)
+
+| File | Change |
+|---|---|
+| `src/proxy/pipeline.ts` | New order: guards -> pre-limit -> body -> config -> identity -> **rules resolve** -> `TASKS[task].buildMessages` -> core `inputHash` -> `cacheKey(prompt_ver=task.promptVersion, schema_ver=task.schemaVersion, rules_hash=injected hash)` -> cache read -> miss only: Turnstile, claims, upstream. Rules resolve only with cookie `w` set, `a !== 'ro'` and `law_firm_id !== null`; a failed read or a missing store = `ProxyError('memory_unavailable','rules_unavailable')` (503, pre-stream, zero claims, zero upstream). HIT path unchanged. OCR path unchanged |
+| `src/proxy/ports.ts` | additive `ProxyPlatform.rulesFor?(workspaceId) => RulesPort` (undefined in `unavailablePlatform()`) |
+| `src/index.ts` | `buildApp` wires `rulesFor: (w) => createRulesPort(env.DB, w)`: a new workspace-bound port per request (the app stays cached per D1 binding) |
+| `src/proxy/guards.ts` | `shapeAi` passes `task` (schema default `clause-judgment`) |
+| `src/upstream/openrouter.ts` | `aiMessages(task, candidates, rules, mode)` from core TASKS (+ `schemaInstruction` in `json_object` mode); AI `response_format` = core `responseFormat(task, AI_RESPONSE_MODE)`; `buildBody` takes the format JSON; the old AI system prompt and the `z.toJSONSchema(AiResultSchema)` format are gone; OCR format unchanged |
+| `src/upstream/classify.ts` | task-aware: `classify(kind, res, {task, input})`; `parseContent` (prose/fences) stays here; `task.validate` is the only validation (envelope v:1, usage from `prompt_tokens`/`completion_tokens`, `ext.dropped`, per-finding drop); `finish_reason: 'length'` = `malformed` (claims kept, nothing cached); AI without a task context fails closed as malformed |
+| `src/upstream/models-config.ts` | `PROMPT_VER` = `{ocr:'ocr1'}` only; `MAX_TOKENS.ai` 6000 -> **10000** (orchestrator decision on the 1c concern) |
+| `src/config.ts` | `DEFAULT_TEXT_MODELS = 'nvidia/nemotron-3-super-120b-a12b:free'`; new `aiResponseMode` from `AI_RESPONSE_MODE` (default `json_schema`; anything other than `json_schema`/`json_object` -> ConfigError, fail closed) |
+| `wrangler.jsonc` | `AI_TEXT_MODELS` = the single model; `AI_RESPONSE_MODE: "json_schema"` |
+| `test/fakes/platform.ts` | `rulesFor(w)` (counted port call, 0 writes), `setRules`, `rulesCalls`, `rulesDown` |
+| `test/fakes/harness.ts` | `send`/`sendKeep` accept any `{app, env, clock, ctx}` (D1 harness reuse) |
+| `test/llm/llm-helpers.ts` (new, not a gate file) | workspace cookie signer, prompt-block parsers, recordings loader (JSON import), D1 harness over the real SQL ports with counted `rulesFor` |
+| `test/proxy/{abuse-protection-matrix,free-only-config,llm-ocr-cache-hit,proxy-budget}.test.ts` | updated for the new prompt shape, max_tokens 10000, new key derivation, BUDGET 13; free-only-config gains default-model, mode and response-format tests |
+| `test/llm/*.test.ts` (new, 13 gate files) | see gates below |
+
+W4 JSON-import probe (first task): eager `import.meta.glob('../../../../fixtures/llm-recordings/**/*.json', {query:'?raw', import:'default'})` works in the workers pool (9 files, strings). No `vitest.config.ts` fallback needed.
+
+### Port-call budget (FakePlatform, `proxy-budget`)
+
+- BUDGET = 13 (was 12).
+- workspace + firm AI MISS: **9** port calls (1 rules read + 1 cache get + claims + cache put + ledger).
+- workspace + firm HIT: **2** (rules read + cache get), 0 claims, 0 writes, 0 upstream, no siteverify.
+- no-firm HIT: **1** (cache get).
+- rules read failure: 1 port call (the failed read), 0 claims, 0 writes.
+
+### Gate outcomes (Stage 1a)
+
+All via `pnpm --filter @aduin/worker test <token>` (no `--`, one token per call).
+
+| Token | Files / tests |
+|---|---|
+| `proxy-budget` | 1 / 6 |
+| `free-only-config` | 1 / 23 |
+| `llm-failure-injection-matrix-d1` | 1 / 12 |
+| `rules-hash-seed-parity` | 1 / 3 |
+| `record-body-parity` | 1 / 20 (byte-identical body for all 9 recordings; inputHash equal; replay == `task.validate(parsed)`) |
+| `cache-hit-zero-claims-with-rules` | 1 / 1 |
+| `cache-invalidated-by-firm-rules-change` | 1 / 1 |
+| `firm-rule-isolation` | 1 / 2 (incl. another workspace's rule, and a forged cookie for another workspace) |
+| `firm-rule-in-context-recorded-llm` | 1 / 2 |
+| `proposed-rule-never-injected` | 1 / 2 |
+| `rules-read-fail-refuses-no-upstream` | 1 / 3 |
+| `no-workspace-ignores-law-firm-id` | 1 / 3 (no `w`, no cookie, `a === 'ro'`) |
+| `rules-injection-delimited-hostile` | 1 / 2 |
+| `rules-caps` | 1 / 3 |
+| `rules-hash-stable-and-order-independent` | 1 / 2 |
+| regression `llm-ocr-cache-hit`, `abuse-protection-matrix` | 6 / 39 |
+| `pnpm --filter @aduin/worker test` (whole) | 60 files / 508 tests pass (was 47 / 445) |
+| `pnpm --filter @aduin/worker typecheck` | exit 0 |
+| `pnpm --filter @aduin/core test contracts` | 34 pass |
+| `pnpm guard:cf`, `pnpm secrets:scan` | OK |
+| eslint + prettier on `apps/worker` | clean |
+
+Red-first: the new gates were run once against the HEAD worker source (src + wrangler restored afterwards): `rules-read-fail-refuses-no-upstream` 2 fail, `no-workspace-ignores-law-firm-id` 3 fail, `cache-invalidated-by-firm-rules-change` 1 fail, `rules-injection-delimited-hostile` 1 fail, `llm-failure-injection-matrix-d1` 3 fail (truncated reply, partial-invalid, rules), `record-body-parity` 20 fail. All green after the change.
+
+### Deviations (within blast radius)
+
+1. New gate files live in `apps/worker/test/llm/` (plus the helper `test/llm/llm-helpers.ts`); the plan names only `test/proxy/` for three of them. Token names are unique and each matches exactly its file.
+2. `test/proxy/abuse-protection-matrix.test.ts` and `test/proxy/llm-ocr-cache-hit.test.ts` (not listed) changed: the forwarded user turn is now the delimited untrusted block, and the cache key now uses the task versions. Assertions keep their intent.
+3. `rulesFor` absent while a request needs rules (workspace + firm) refuses with `rules_unavailable` too (safer than running without the firm's rules).
+4. `finish_reason: 'length'` is checked for AI only (OCR untouched per scope).
+
+### Concerns for the orchestrator (not fixed: outside my scope)
+
+- **Scripts drift (one line):** `scripts/src/record/ai-request.ts` `AI_MAX_TOKENS = 6000` "mirrors the Worker" but the Worker is now 10000. Recordings and inputHash are unaffected (they key off the messages only), and the scripts `record-body-parity` still passes (it checks its own template), but a future live recording would send a different body than the Worker. Recommend `AI_MAX_TOKENS = 10000` in scripts (+ its doc comment).
+- **Seed fact correction:** Stage 1c says "the demo seed rule `sr01` is `proposed`, so it is never injected". In `apps/worker/seed/demo.sql`, `sr01` has `origin='proposed'` but **`status='active'`**, and `sr03` (partners-group) is also active. So a sandbox workspace sending `law_firm_id: 'firm-x'` (or `partners-group`) gets a non-`none` rules hash. The `.none` precomputed keys stay correct only because bundled samples go through the no-firm / read-only path (web stub `firmRules` returns `[]`). `rules-hash-seed-parity` asserts exactly that (bundled-sample paths give `none`, precomputed files are `.none.json`, and a sandbox copy has the same per-firm rules hash as the demo). The web lane must not send a firm id for bundled samples while expecting the `.none` file.
+
+### Test infra gaps found
+
+- None blocking. Known-gap unchanged: live model behavior (AC28/AC51 residual). D1 tests run on local Miniflare D1, not remote.
+
+CONTEXT_PARTIAL: none.
+
+### Forward Preview
+
+- Test infra found: `test/llm/llm-helpers.ts` (`workspaceCookie`, `rulesIn`/`docIn`/`tagJson`, `loadRecordings`/`replay`, `makeD1Harness`, `insertRule`); FakePlatform `setRules`/`rulesDown`/`rulesCalls`.
+- Blast radius changes: the files in the table above (apps/worker only).
+- Commands to stay green: `pnpm --filter @aduin/worker test` (whole) plus the tokens above; `pnpm --filter @aduin/worker typecheck`.
+- Dependency changes: none.
+- UPDATE PROCESS items (E17): `process/context/worker/all-worker.md` (BUDGET 13, rules step, `rules_unavailable`, single text model, `AI_RESPONSE_MODE`, `max_tokens` 10000, `finish_reason` length = malformed); `tests/all-tests.md` (new tokens, `test/llm/` folder).
+
+## Stage 1b — web-lane (opus, 2026-10-17)
+
+Status: COMPLETE. V1-V5 ticked. Not committed. No live calls (every `/api/ai` and `/api/quota` in e2e is route-intercepted; openrouter.ai is aborted). Scope: `apps/web/**` only (`public/precomputed` read-only).
+
+### What was built
+
+- V1 `src/api/`: `base.ts` (runtime API base: `VITE_API_BASE` define `'/'` non-e2e, `''` for `--mode e2e`; read once; `setApiBaseValue` + change listeners), `http.ts` (`x-aduin-client: 1`, `x-aduin-doc`, `x-aduin-turnstile`, error-body parser), `ndjson.ts` (generic NDJSON POST: ignores `hb`, first terminal frame wins, no terminal = `upstream_failed/stream_dropped`, abort → `aborted`, no auto-retry; local frame parser, no core values — reusable by Phase 06 OCR), `quota.ts` (GET `/api/quota` with the client header; any failure → null, silent). `MemoryApi.firmRules(lawFirmId)` + stub (returns `[]`, or e2e-seeded texts).
+- V2 `features/ai/`: `ai-lane.ts` (zustand state machine `off|idle|pending|fresh|cache|skipped|unavailable|not_precomputed`, resume on reset timer / tab focus, AI toggle effect), `stream-client.ts`, `turnstile.ts` (token-provider seam, default null), `banner-map.ts` ((code, reason) → banner), `AiBanner.tsx`, `Allowance.tsx`, `Provenance.tsx`, `Locator.tsx`, `precomputed.ts`.
+- V3 lookup order static `/precomputed/{docHash}.{rulesHash8}.json` → `/api/ai`; run in `openDocument` before the list shows (so slice counts are stable). Samples never call `/api/ai` on open (`not_precomputed` + "Run AI on this sample"); uploads auto-run once the list shows. StageStatus/AiSwitch stubs replaced; stub allowance decrement only when the API base is `''`.
+- V4 `engine.worker.ts` (additive): `aiCandidates` in `analyze`, LRU-2 retained graphs by docHash, `verifyAi(result, docHash, injectedRuleTexts, ctx)`, `rulesHash8(ruleTexts)`, `dispose()`, U1 `locator {path, paragraph}` in `toView`; `api` exported for the unit test. Client re-analyzes once on `doc_not_retained`. import-graph ALLOWED unchanged.
+- V5 e2e specs: `sample-zero-calls`, `auto-downgrade`, `ai-resume`, `provenance`, `ai-banners`, `locator-chip`; shared `e2e/fixtures/ai.ts` (recording loader, NDJSON builders, intercepts).
+
+### Orchestrator note honoured (Stage 1a finding: demo seed sr01/sr03 are `active`)
+
+- The precomputed lookup hash is `rulesHash8(ruleTexts)` computed in the worker from the rules the client would inject (`MemoryApi.firmRules`). A firm with active rules gives an 8-hex hash, so the `.none.json` file is never used → `not_precomputed` + Run button. Test: `sample-zero-calls` "a bundled sample tagged with a firm that has active rules never uses the .none file" (rules seeded via new IS_E2E hook `__aduinE2E.setFirmRules`).
+- `/api/ai` sends `law_firm_id: null` when no rules are injected for the request (demo / read-only path, hash `none`); the firm id is sent only with active rules.
+- Worker facts recorded: live with `AI_RESPONSE_MODE=json_schema`, max_tokens 10000, cache key uses `task.promptVersion`/`schemaVersion`.
+
+### New data-testids
+
+`ai-banner` (`data-reason` = banner key), `ai-retry`, `ai-not-precomputed`, `ai-run-sample`, `ai-rules-notice`, `ai-suggestion-label`, `finding-locator`; `finding-provenance` gains `data-provenance` (`rule|fresh|cache`); `ai-allowance` gains `data-source` (`quota|stub`).
+
+### UI strings (status-stages, G11 old → new)
+
+- Button: `Checks done · AI review pending` → `Checks done · AI review {not connected | not run | running | done | from cache | skipped | unavailable | off}` (prefix `Checks done` kept in every state). Preview build (base `''`) = `not connected`.
+- `[data-stage=ai]`: `pending` / "Pending · AI review runs in a later build" → preview: `skipped` / "Skipped · AI review is not connected in this build". Others: "Running · AI review in progress", "Done · N AI suggestion(s)[ from cache]", "Not run · no saved AI review for this sample", "Skipped · {short reason}", "Unavailable · {short reason}".
+- `[data-stage=done]`: "Done · rules and AI" / "Done · rules only" / "Waiting for AI review".
+- Banner: "AI review skipped: {reason}. Rules, memory and the gate still work; ambiguity, contradiction and typo passes are skipped. [AI resumes at 00:00 UTC. | AI resumes shortly.]"; Run line: "No saved AI review for this sample." + "Run AI on this sample"; row label "AI suggestion"; locator "{section path} · ¶ N".
+
+Banner map: quota_exhausted (visitor_limit→visitor_limit, global_cap→daily_cap, ai_unavailable, ai_disabled, other→quota); budget_cap (circuit_breaker→breaker, else budget); rate_limited→rate; invalid_session→verification; memory_unavailable→rules_unavailable; upstream_failed (malformed/bad frame→result_unusable, else provider_error); client-side rules_changed (rules re-read after the call differ). Auto-resume for midnight/retry_after kinds only; provider/unusable/verification/rules → manual Retry.
+
+### Gate outcomes
+
+| Command | Result |
+|---|---|
+| `pnpm --filter @aduin/web test engine-ai-api` | 6 pass (red first; #1 → 2 findings 0 rejected; #3 → 2 + 2 `quote_not_found`; candidates equal recordings) |
+| `... test import-graph` / `source-guard` / `smoke` / `no-e2e-hook-in-dist` | 4 / 4 / 2 / 2 pass |
+| `pnpm --filter @aduin/web test` (whole) | 11 files, 44 pass |
+| `test:e2e sample-zero-calls` / `auto-downgrade` / `ai-resume` / `provenance` / `ai-banners` / `locator-chip` | 4 / 2 / 2 / 2 / 4 / 2 pass |
+| `test:e2e status-stages` / `structure-view` | 4 / 4 pass |
+| `pnpm --filter @aduin/web test:e2e` (whole preview) | 82 pass, 1 skipped (design-probe opt-in) |
+| `pnpm --filter @aduin/web typecheck`, eslint + prettier on apps/web | exit 0 |
+
+Not run here (EVL): repo-wide gates, `pnpm slice:check` (stack: production base `'/'`, sample #1 now shows 2 cached AI rows — merged before the list shows, quota fetch sends the client header).
+
+### Deviations (within blast radius)
+
+1. `verifyAi` takes a 4th arg `ctx {model, provenance}` (needed for provenance/model); `EngineApi.dispose()` added (LRU "cleared on dispose").
+2. Extra files: `api/{base,http,ndjson,quota}.ts`, `features/ai/{banner-map.ts,Locator.tsx}`, `e2e/fixtures/ai.ts`; CSS `.banner.note`, `.t-loc` in `styles/app-extra.css`.
+3. New IS_E2E hook `setFirmRules` (stub firm rules) for the orchestrator-requested test; read by `StubMemoryApi.firmRules` via `e2eFirmRules()` (compiled out of production; `no-e2e-hook-in-dist` green).
+4. AI toggle off removes AI findings (re-on re-runs the lookup; samples return to not_precomputed, no call).
+5. `storage/db.ts` unchanged (not needed).
+6. `rules_changed` is detected client-side (rules re-read after the call); not e2e-covered because the stub rules are static per run — known-gap, mapping covered in code only.
+
+### Test infra gaps / known gaps
+
+- `rules_changed` banner has no automated test (above). Real Turnstile widget (Phase 10). Live Worker stream not exercised by preview specs (named residual).
+- No core bugs found.
+
+CONTEXT_PARTIAL: none.
+
+### Forward Preview
+
+- Test infra found: `e2e/fixtures/ai.ts` (intercepts, NDJSON builders, recordings); `__aduinE2E.setApiBase('/')` / `setFirmRules`.
+- Blast radius changes: files listed above (apps/web only).
+- Commands to stay green: web `test` + `test:e2e` whole, `no-e2e-hook-in-dist`, `import-graph`.
+- Dependency changes: none. Phase 06 OCR should reuse `api/ndjson.ts` + `api/http.ts`.

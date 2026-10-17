@@ -9,11 +9,13 @@ async function stages(page: import('@playwright/test').Page) {
 }
 
 test.describe('status-stages', () => {
-  test('named stages; AI review shows pending', async ({ page }) => {
+  // Phase 05 (G11, deliberate): the AI stage is now the AI lane. The preview build has no Worker
+  // (API base ''), so the lane fails soft: "not connected" (was the Phase 03 stub "pending").
+  test('named stages; AI review shows not connected in the preview build', async ({ page }) => {
     await gotoApp(page);
     await openSample(page, '01');
     await expect(page.getByTestId('stage-status-button')).toHaveText(
-      /Checks done · AI review pending/,
+      /Checks done · AI review not connected/,
     );
     const pop = await stages(page);
     await expect(pop.locator('[data-testid=stage-item] .lab')).toHaveText([
@@ -25,8 +27,11 @@ test.describe('status-stages', () => {
     ]);
     await expect(pop.locator('[data-stage=read]')).toHaveAttribute('data-state', 'done');
     await expect(pop.locator('[data-stage=checks]')).toHaveAttribute('data-state', 'done');
-    await expect(pop.locator('[data-stage=ai]')).toHaveAttribute('data-state', 'pending');
-    await expect(pop.locator('[data-stage=ai]')).toContainText('Pending');
+    await expect(pop.locator('[data-stage=ai]')).toHaveAttribute('data-state', 'skipped');
+    await expect(pop.locator('[data-stage=ai]')).toContainText(
+      'Skipped · AI review is not connected in this build',
+    );
+    await expect(pop.locator('[data-stage=done]')).toContainText('Done · rules only');
   });
 
   test('an injected checks failure gives a partial result naming the stage', async ({ page }) => {

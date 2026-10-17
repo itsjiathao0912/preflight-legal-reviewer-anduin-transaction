@@ -4,6 +4,7 @@ import { memoryApi } from '../api/client';
 import type { MemoryApi } from '../api/memoryApi';
 import { e2eSettings, e2eTransform } from '../e2e-hook';
 import { analyzeInWorker } from '../engine/client';
+import { aiBeginOpen, aiOnOpen, aiRunFresh, setAiSink } from '../features/ai/ai-lane';
 import type { EngineResult, FindingView, StageId, StageReport } from '../engine/types';
 import {
   buildRows,
@@ -66,6 +67,8 @@ interface ReviewState {
   clearToast: () => void;
   /** E2E seam: set a counsel answer recorded for a finding in this document. */
   setCounselAnswer: (id: string, option: Triage['counselAnswer']) => Promise<void>;
+  /** Phase 05: replace this document's AI findings (verified in the engine worker) and re-label memory. */
+  setAiFindings: (docId: string, findings: FindingView[]) => Promise<void>;
 }
 
 let toastSeq = 0;
@@ -202,6 +205,7 @@ export const useReview = create<ReviewState>((set, get) => {
 
     openDocument: async (bytes, meta) => {
       const seq = ++loadSeq;
+      aiBeginOpen();
       set({
         phase: 'loading',
         error: null,
@@ -237,6 +241,16 @@ export const useReview = create<ReviewState>((set, get) => {
       if (seq !== loadSeq) return;
       result = { ...result, findings: e2eTransform(result.findings, result.blocks) };
       const doc: DocMeta = { ...meta, id: result.docHash || `doc_${seq}` };
+      // Phase 05 AI lane: static precomputed lookup + verify before the list shows (never /api/ai here)
+      const ai = await aiOnOpen(bytes, result, {
+        id: doc.id,
+        docHash: result.docHash,
+        source: meta.source,
+        firmId: meta.firmId,
+      });
+      if (seq !== loadSeq) return;
+      if (ai.findings.length)
+        result = { ...result, findings: [...result.findings, ...ai.findings] };
       const stages: Partial<Record<StageId, StageReport>> = {};
       for (const s of result.stages) stages[s.id] = s;
       const triage = await loadTriage(doc.id);
@@ -246,6 +260,8 @@ export const useReview = create<ReviewState>((set, get) => {
       const rows = buildRows(result.findings, memory, triage);
       const first = visibleRows(placement(rows).main, useFilters.getState())[0]?.f.id ?? null;
       set({ phase: 'ready', doc, recent, result, stages, memory, triage, selectedId: first });
+      // uploads only: a fresh AI review starts once the deterministic list is on screen
+      if (ai.fresh) void aiRunFresh();
       const db = appDb();
       if (db) {
         db.parsedModels
@@ -343,5 +359,16 @@ export const useReview = create<ReviewState>((set, get) => {
       const prev = get().triage[id] ?? { status: 'open' as const };
       await writeTriage(id, { ...prev, counselAnswer: option });
     },
+
+    setAiFindings: async (docId, findings) => {
+      const { doc, result } = get();
+      if (!doc || doc.id !== docId || !result) return;
+      const kept = result.findings.filter((f) => f.detector_kind !== 'ai');
+      if (kept.length === result.findings.length && findings.length === 0) return;
+      set({ result: { ...result, findings: [...kept, ...findings] } });
+      await refreshMemory();
+    },
   };
 });
+
+setAiSink((docId, findings) => void useReview.getState().setAiFindings(docId, findings));

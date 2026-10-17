@@ -9,6 +9,9 @@ export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
   define: {
     'import.meta.env.VITE_E2E': JSON.stringify(mode === 'e2e' ? '1' : ''),
+    // G16 runtime API base default: '' for the preview bundle (no Worker: the AI lane fails soft),
+    // '/' (same origin) for every other mode (production, the stack bundle, vitest `test`).
+    'import.meta.env.VITE_API_BASE': JSON.stringify(mode === 'e2e' ? '' : '/'),
   },
   worker: { format: 'es' as const },
   build: { outDir: 'dist', emptyOutDir: true },

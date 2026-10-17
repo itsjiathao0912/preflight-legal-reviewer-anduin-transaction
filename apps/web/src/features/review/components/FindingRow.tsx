@@ -1,6 +1,8 @@
 import { mask } from '@aduin/core';
 import { Icon } from '../../../components/ui/icon';
 import { useReview } from '../../../state/review';
+import { LocatorChip } from '../../ai/Locator';
+import { AI_SUGGESTION, Provenance } from '../../ai/Provenance';
 import { memoryLabelText } from '../memory-labels';
 import type { Row } from '../model';
 import { reasonLabel } from '../reasons';
@@ -50,9 +52,9 @@ function StatusIcons({ r }: { r: Row }) {
         </span>
       ) : null}
       {r.f.detector_kind === 'ai' ? (
-        <span title="AI finding">
+        <span title={AI_SUGGESTION}>
           <Icon name="spark" />
-          <span className="sr">AI finding. </span>
+          <span className="sr">{AI_SUGGESTION}. </span>
         </span>
       ) : null}
       {r.status === 'accepted' ? (
@@ -121,6 +123,10 @@ export function FindingRow({
         <div className="rbody" data-testid="finding-body">
           <p className="sub2">
             <b>{sev.label}</b> · {f.classLabel} · {f.loc}
+            {f.detector_kind === 'ai' ? ` · ${AI_SUGGESTION}` : ''}
+          </p>
+          <p className="locrow">
+            <LocatorChip f={f} />
           </p>
           <blockquote className="ev" data-testid="finding-quote">
             <QuoteBody r={r} />
@@ -149,20 +155,7 @@ export function FindingRow({
               {r.label !== 'new' ? <Icon name="memory" /> : null}
               {memoryLabelText(r.label, r.prior?.fund_name)}
             </span>
-            {f.detector_kind === 'rule' ? (
-              <span data-testid="finding-provenance">
-                <Icon name="rule" />
-                Rule {f.detector_id} · deterministic
-              </span>
-            ) : (
-              <span data-testid="finding-provenance">
-                <span className="tag t-ai">
-                  <Icon name="spark" />
-                  AI
-                </span>
-                {f.model} · {f.provenance === 'cache' ? 'from cache' : 'fresh'}
-              </span>
-            )}
+            <Provenance f={f} />
           </div>
           {r.prior && r.label !== 'new' ? (
             <p className="memnote">

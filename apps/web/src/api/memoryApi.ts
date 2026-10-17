@@ -53,4 +53,9 @@ export interface MemoryApi {
   answer(input: AnswerInput): Promise<ActiveDecision>;
   /** Revoke (never delete). Returns the decision that is active afterwards (always null in v1). */
   revoke(decisionId: string, reason: string): Promise<ActiveDecision | null>;
+  /**
+   * Phase 05 (G13): ACTIVE firm rule texts for the AI lane (plain strings handed to the engine worker).
+   * Real client (Phase 08): GET /api/memory/firm?law_firm_id= filtered to `status === 'active'`.
+   */
+  firmRules(lawFirmId: string): Promise<string[]>;
 }

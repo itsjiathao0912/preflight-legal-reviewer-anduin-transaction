@@ -1,3 +1,4 @@
+import { apiEnabled } from '../../api/base';
 import { appDb, spendAllowance } from '../../storage/db';
 import { useReview, type DocMeta } from '../../state/review';
 import { useSession } from '../../state/session';
@@ -53,7 +54,9 @@ export async function openUpload(
   await useReview
     .getState()
     .openDocument(file.bytes, { name: file.name, ...tag, source: 'upload', ref: id });
-  if (useSession.getState().aiOn && db) {
+  // Stub allowance only without an API (preview build); with an API the real quota is refetched
+  // after the fresh AI call.
+  if (useSession.getState().aiOn && db && !apiEnabled()) {
     try {
       await spendAllowance(db);
       await useSession.getState().refreshAllowance();

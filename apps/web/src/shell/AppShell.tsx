@@ -1,3 +1,4 @@
+import { useAiLaneEffects } from '../features/ai/ai-lane';
 import { featureFor } from '../features/registry';
 import { OpenDocumentDialog } from '../features/open-document/OpenDocumentDialog';
 import { PrivacyPrompt } from '../features/open-document/PrivacyPrompt';
@@ -9,6 +10,7 @@ import { useShellEffects } from './use-shell-effects';
 
 export function AppShell() {
   useShellEffects();
+  useAiLaneEffects();
   const rail = useShell(isRail);
   const route = useShell((s) => s.route);
   const View = featureFor(route)?.component ?? featureFor('findings')!.component;
