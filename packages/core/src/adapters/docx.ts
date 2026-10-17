@@ -94,6 +94,41 @@ interface ZipEntry {
   compressed: number;
   uncompressed: number;
   localOffset: number;
+  crc: number;
+}
+
+/** Longest entry name accepted (bytes). Real OOXML part names are far shorter. */
+export const MAX_ENTRY_NAME_BYTES = 255;
+
+const NAME_DECODER = new TextDecoder('utf-8', { fatal: true });
+
+/**
+ * Review N5: decode an entry name strictly (invalid UTF-8 would turn into U+FFFD and grow on
+ * re-encode) and refuse names no reader agrees on: too long, control chars, backslashes,
+ * `..` / `.` segments or absolute paths.
+ */
+function decodeEntryName(raw: Uint8Array): string {
+  if (raw.byteLength === 0 || raw.byteLength > MAX_ENTRY_NAME_BYTES) {
+    throw new CoreError('unsupported_type', 'This DOCX archive has an invalid entry name.');
+  }
+  let name: string;
+  try {
+    name = NAME_DECODER.decode(raw);
+  } catch {
+    throw new CoreError(
+      'unsupported_type',
+      'This DOCX archive has an entry name that is not UTF-8.',
+    );
+  }
+  // eslint-disable-next-line no-control-regex
+  if (/[\x00-\x1f\x7f\\]/.test(name) || name.startsWith('/') || /^[A-Za-z]:/.test(name)) {
+    throw new CoreError('unsupported_type', 'This DOCX archive has an invalid entry name.');
+  }
+  const segs = name.split('/');
+  if (segs.some((g, i) => g === '..' || g === '.' || (g === '' && i < segs.length - 1))) {
+    throw new CoreError('unsupported_type', 'This DOCX archive has an invalid entry name.');
+  }
+  return name;
 }
 
 /** ZIP64 / multi-disk signatures: a canonical DOCX never needs them and JSZip honours them. */
@@ -190,8 +225,9 @@ export function readZipDirectory(b: Uint8Array): ZipEntry[] {
     const extraLen = u16(b, p + 30);
     const commentLen = u16(b, p + 32);
     const localOffset = u32(b, p + 42);
+    const crc = u32(b, p + 16);
     if (p + 46 + nameLen > eocd) throw new CoreError('unsupported_type', ZIP_ERR);
-    const name = new TextDecoder().decode(b.subarray(p + 46, p + 46 + nameLen));
+    const name = decodeEntryName(b.subarray(p + 46, p + 46 + nameLen));
     // Duplicate names (after normalization) let another reader pick a different entry.
     const norm = normalizeEntryName(name);
     if (names.has(norm)) {
@@ -201,7 +237,7 @@ export function readZipDirectory(b: Uint8Array): ZipEntry[] {
     if (uncompressed > DOCX_LIMITS.maxEntryBytes) throw perEntryCapError(name);
     declared += uncompressed;
     if (declared > DOCX_LIMITS.maxUncompressedBytes) throw totalCapError();
-    entries.push({ name, method, compressed, uncompressed, localOffset });
+    entries.push({ name, method, compressed, uncompressed, localOffset, crc });
     p += 46 + nameLen + extraLen + commentLen;
   }
   // The EOCD count must describe the WHOLE central directory.
@@ -270,6 +306,11 @@ export async function verifyZipEntries(b: Uint8Array): Promise<VerifiedEntry[]> 
     const remaining = DOCX_LIMITS.maxUncompressedBytes - total;
     const budget = Math.min(remaining, DOCX_LIMITS.maxEntryBytes);
     let data: Uint8Array | null;
+    // Directory entries carry no content: skipped consistently (never re-packed).
+    if (e.name.endsWith('/')) {
+      if (e.uncompressed !== 0) throw new CoreError('unsupported_type', ZIP_ERR);
+      continue;
+    }
     if (e.method === 0) {
       data = e.compressed <= budget ? b.slice(start, end) : null;
     } else if (e.method === 8) {
@@ -317,8 +358,19 @@ export function crc32(d: Uint8Array): number {
 export function repackZip(entries: readonly VerifiedEntry[]): Uint8Array {
   const enc = new TextEncoder();
   const names = entries.map((e) => enc.encode(e.name));
+  // Review N5: every header field is fixed-width; never let a value silently wrap.
+  const tooBig = () =>
+    new CoreError('payload_too_large', 'This DOCX archive cannot be re-packed safely.');
+  if (entries.length > 0xffff || entries.length > DOCX_LIMITS.maxEntries) throw tooBig();
   let size = 22;
-  entries.forEach((e, i) => (size += 30 + 46 + 2 * names[i]!.byteLength + e.data.byteLength));
+  entries.forEach((e, i) => {
+    if (names[i]!.byteLength > 0xffff || names[i]!.byteLength > MAX_ENTRY_NAME_BYTES) {
+      throw new CoreError('unsupported_type', 'This DOCX archive has an invalid entry name.');
+    }
+    if (e.data.byteLength > 0xffffffff) throw tooBig();
+    size += 30 + 46 + 2 * names[i]!.byteLength + e.data.byteLength;
+  });
+  if (size > 0xffffffff) throw tooBig();
   const out = new Uint8Array(size);
   const dv = new DataView(out.buffer);
   const offsets: number[] = [];
@@ -363,6 +415,33 @@ export function repackZip(entries: readonly VerifiedEntry[]): Uint8Array {
   dv.setUint32(p + 12, p - cdOff, true);
   dv.setUint32(p + 16, cdOff, true);
   return out;
+}
+
+/**
+ * Review N5 self-check: re-parse the re-pack with the guard's own directory reader and confirm
+ * names, sizes, STORE method and CRCs match the verified entries exactly.
+ */
+export function assertRepackMatches(repacked: Uint8Array, entries: readonly VerifiedEntry[]): void {
+  const bad = () => new CoreError('unsupported_type', ZIP_ERR);
+  const dir = readZipDirectory(repacked);
+  if (dir.length !== entries.length) throw bad();
+  dir.forEach((d, i) => {
+    const e = entries[i]!;
+    if (
+      d.name !== e.name ||
+      d.method !== 0 ||
+      d.compressed !== e.data.byteLength ||
+      d.uncompressed !== e.data.byteLength ||
+      d.crc !== crc32(e.data)
+    ) {
+      throw bad();
+    }
+    const lo = d.localOffset;
+    if (lo + 30 > repacked.byteLength || u32(repacked, lo) !== 0x04034b50) throw bad();
+    const start = lo + 30 + u16(repacked, lo + 26) + u16(repacked, lo + 28);
+    if (start + d.compressed > repacked.byteLength) throw bad();
+    if (crc32(repacked.subarray(start, start + d.compressed)) !== d.crc) throw bad();
+  });
 }
 
 function roman(n: number): string {
@@ -526,7 +605,9 @@ export async function docxToLines(input: Uint8Array | ArrayBuffer): Promise<Docx
   }
   // Review F1: mammoth never sees the uploaded bytes, only a canonical re-pack of the entries
   // the guard actually inflated and measured (no parser differential possible).
-  const canonical = repackZip(await verifyZipEntries(bytes));
+  const verified = await verifyZipEntries(bytes);
+  const canonical = repackZip(verified);
+  assertRepackMatches(canonical, verified);
 
   let converted: { value: string; messages: Array<{ type: string; message: string }> };
   try {

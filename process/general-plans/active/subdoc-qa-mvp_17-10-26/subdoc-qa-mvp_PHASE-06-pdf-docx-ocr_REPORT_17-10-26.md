@@ -449,3 +449,10 @@ Gates: core docx-zip-bomb 16/16, docx 27/27, security 44/44, ingest-all-formats 
 Harness: `review-decision.json` now records F1 cycle 2 + N3 as resolved and N4 as carried, with the note "pending independent re-confirmation of F1". `adversarial-validation.json` gains the bypass A and B scenarios.
 
 No commit.
+
+## Review fix cycle 3
+
+- N5 fixed in `packages/core/src/adapters/docx.ts`: fatal UTF-8 name decode; names refused when > 255 bytes, control chars, backslashes, `.`/`..`/empty segments, absolute or drive paths; `repackZip` asserts count/name/size field widths; new `assertRepackMatches` re-parses the repack with the guard's own reader (names, STORE, sizes, CRC of stored bytes) before mammoth; directory entries skipped consistently (refused if they carry content). Entry cap 2000 confirmed.
+- Tests: 8 new N5 cases in `packages/core/test/security/docx-zip-bomb.test.ts` (31 pass), incl. mammoth spy on a 30,000-byte invalid-UTF-8 name and a 2000-entry timing bound (< 2 s).
+- Gates green: docx-zip-bomb 31, docx 42, security 59, ingest-all-formats 10, golden-09-ocr-footnote2 13; core tsc; eslint + prettier on touched files.
+- Harness: review-decision.json (N5 resolved, no pending), adversarial-validation.json (+N5). F1/N5 pending independent re-confirmation.

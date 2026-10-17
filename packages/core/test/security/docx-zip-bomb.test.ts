@@ -7,6 +7,8 @@ import {
   DOCX_STYLE_MAP,
   docxToLines,
   guardZip,
+  MAX_ENTRY_NAME_BYTES,
+  assertRepackMatches,
   readZipDirectory,
   reconstructNumbering,
   repackZip,
@@ -17,7 +19,7 @@ import { CoreError } from '../../src/model/errors';
 
 /** Minimal zip writer for adversarial archives (sizes in headers are caller-controlled). */
 function zip(
-  files: Array<{ name: string; data: Buffer; method?: number; claim?: number }>,
+  files: Array<{ name: string | Buffer; data: Buffer; method?: number; claim?: number }>,
   eocdCount = files.length,
 ): Uint8Array {
   const locals: Buffer[] = [];
@@ -26,7 +28,7 @@ function zip(
   for (const f of files) {
     const method = f.method ?? 8;
     const comp = method === 8 ? deflateRawSync(f.data) : f.data;
-    const name = Buffer.from(f.name);
+    const name = typeof f.name === 'string' ? Buffer.from(f.name) : f.name;
     const size = f.claim ?? f.data.length;
     const lh = Buffer.alloc(30);
     lh.writeUInt32LE(0x04034b50, 0);
@@ -342,5 +344,105 @@ describe('docx-zip-bomb F1 cycle 2 (parser differential)', () => {
     const expected = htmlToLines(reconstructNumbering(direct.value).html);
     expect(viaRepack.lines.map((l) => l.text)).toEqual(expected.lines.map((l) => l.text));
     expect(viaRepack.reconstructedNumbering).toBe(true);
+  });
+});
+
+describe('docx-zip-bomb N5 (entry names + repack integrity)', () => {
+  const doc = Buffer.from('<w:document/>');
+  afterEach(() => vi.restoreAllMocks());
+
+  it('refuses a long invalid-UTF-8 name before mammoth is called', async () => {
+    const spy = vi.spyOn(mammoth, 'convertToHtml');
+    const z = zip([
+      { name: Buffer.alloc(30000, 0xff), data: Buffer.from('x') },
+      { name: 'word/document.xml', data: doc },
+    ]);
+    expect(await codeOf(docxToLines(z))).toBe('unsupported_type');
+    expect(spy).not.toHaveBeenCalled();
+  });
+  it('refuses a short invalid-UTF-8 name', async () => {
+    const z = zip([
+      { name: Buffer.from([0x77, 0xc3, 0x28]), data: Buffer.from('x') },
+      { name: 'word/document.xml', data: doc },
+    ]);
+    expect(await codeOf(verifyZipEntries(z))).toBe('unsupported_type');
+  });
+  it('refuses names over MAX_ENTRY_NAME_BYTES', async () => {
+    const z = zip([
+      { name: 'a'.repeat(MAX_ENTRY_NAME_BYTES + 1), data: Buffer.from('x') },
+      { name: 'word/document.xml', data: doc },
+    ]);
+    expect(await codeOf(verifyZipEntries(z))).toBe('unsupported_type');
+  });
+  it.each([
+    '../evil.xml',
+    'word/../x.xml',
+    'word\\x.xml',
+    '/abs.xml',
+    'C:/x.xml',
+    'a\u0001b',
+    'a\u007fb',
+    './x.xml',
+  ])('refuses unsafe name %j', async (n) => {
+    const spy = vi.spyOn(mammoth, 'convertToHtml');
+    const z = zip([
+      { name: n, data: Buffer.from('x') },
+      { name: 'word/document.xml', data: doc },
+    ]);
+    expect(await codeOf(docxToLines(z))).toBe('unsupported_type');
+    expect(spy).not.toHaveBeenCalled();
+  });
+  it('repack self-check passes on honest output and catches a tampered re-pack', async () => {
+    const v = await verifyZipEntries(
+      zip([
+        { name: 'word/document.xml', data: doc },
+        { name: 'word/styles.xml', data: Buffer.from('<s/>') },
+      ]),
+    );
+    const r = repackZip(v);
+    expect(() => assertRepackMatches(r, v)).not.toThrow();
+    const t = r.slice();
+    const at = 30 + 'word/document.xml'.length;
+    t[at] = t[at]! ^ 0xff; // flip a content byte -> CRC mismatch
+    expect(() => assertRepackMatches(t, v)).toThrow(CoreError);
+    expect(() => assertRepackMatches(r, v.slice(1))).toThrow(CoreError);
+  });
+  it('repackZip refuses an oversized name instead of wrapping the 16-bit field', () => {
+    expect(() => repackZip([{ name: 'x'.repeat(70000), data: new Uint8Array(1) }])).toThrow(
+      CoreError,
+    );
+  });
+  it('skips directory entries consistently and refuses directories with content', async () => {
+    const v = await verifyZipEntries(
+      zip([
+        { name: 'word/', data: Buffer.alloc(0), method: 0 },
+        { name: 'word/document.xml', data: doc },
+      ]),
+    );
+    expect(v.map((e) => e.name)).toEqual(['word/document.xml']);
+    const z = zip([
+      { name: 'word/', data: Buffer.from('x'), method: 0 },
+      { name: 'word/document.xml', data: doc },
+    ]);
+    expect(await codeOf(verifyZipEntries(z))).toBe('unsupported_type');
+  });
+  it('bounds CPU for 2000 tiny + zero-length entries', async () => {
+    const files: Array<{ name: string; data: Buffer; method?: number }> = [
+      { name: 'word/document.xml', data: doc },
+    ];
+    for (let i = 1; i < DOCX_LIMITS.maxEntries; i++) {
+      files.push({
+        name: `p/${i}.bin`,
+        data: i % 2 ? Buffer.alloc(0) : Buffer.from('y'),
+        method: i % 3 ? 8 : 0,
+      });
+    }
+    const z = zip(files);
+    const t0 = Date.now();
+    const v = await verifyZipEntries(z);
+    const r = repackZip(v);
+    assertRepackMatches(r, v);
+    expect(v.length).toBe(DOCX_LIMITS.maxEntries);
+    expect(Date.now() - t0).toBeLessThan(2000);
   });
 });

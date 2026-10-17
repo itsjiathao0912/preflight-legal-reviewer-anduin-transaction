@@ -127,6 +127,13 @@
       "ruled_out": true,
       "rationale": "readZipDirectory requires cdOff + cdSize === eocd exactly; and mammoth only receives the canonical repack, so offsets in the upload are never interpreted by JSZip.",
       "test": "core docx-zip-bomb: 'refuses bypass B (gap between CD end and EOCD) and never invokes mammoth'"
+    },
+    {
+      "stride": "T",
+      "scenario": "DOCX N5: invalid-UTF-8 or overlong entry name grows on decode/re-encode and wraps the 16-bit name-length field in the repack, so JSZip reads a different archive than the guard verified",
+      "ruled_out": true,
+      "rationale": "Names are decoded with a fatal UTF-8 decoder and capped at 255 bytes; unsafe names refused; repackZip asserts every fixed-width field; assertRepackMatches re-parses the repack with the guard reader and checks names/sizes/CRCs before mammoth.",
+      "test": "core docx-zip-bomb N5: 'refuses a long invalid-UTF-8 name before mammoth is called', 'repack self-check passes on honest output and catches a tampered re-pack'"
     }
   ]
 }

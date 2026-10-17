@@ -1,5 +1,5 @@
 {
-  "task": "subdoc-qa-mvp phase 06 PDF, DOCX, OCR and precompute (06a-06f) + security review fix cycle + review fix cycle 2 (F1 repack, N3)",
+  "task": "subdoc-qa-mvp phase 06 PDF, DOCX, OCR and precompute (06a-06f, review fix cycle 3 (N5 entry names + repack self-check)) + security review fix cycle + review fix cycle 2 (F1 repack, N3)",
   "reviewer": "automated vc-code-reviewer security-reviewer (sonnet), independent of the implementing execute-agent",
   "decision": "approved-with-concerns",
   "reviewDecision": "APPROVE_WITH_FIXES",
@@ -13,7 +13,7 @@
     "F8 (backlog): lower-quality JPEG retry when a page body exceeds the OCR body cap.",
     "F10 (Phase 10): CSP and security headers on the web app.",
     "F12 (Phase 10): redeploy the Worker (ocr prompt + magic check) before the web bundle.",
-    "N4 (independent confirmation review): non-blocking note, carried to backlog.",
+    "N4: AI is on by default, so page images leave the browser by default after the upload-dialog disclosure.",
     "Carried: image uploads skip the core polyglot check; mitigated by magic check + header size cap + canvas re-encode, and now the Worker magic check (F5).",
     "Carried: deployed Worker still runs ocr1 schema until redeploy (Phase 10).",
     "Carried: OCR ground truth is agent-transcribed (3 pages); human spot-check recommended.",
@@ -36,6 +36,21 @@
         "docx-zip-bomb F1 cycle 2: applies the per-entry cap to every entry, not only word/document.xml",
         "docx-zip-bomb F1 cycle 2: repack is canonical: STORE, honest EOCD, re-verifies to the same entries",
         "docx-zip-bomb F1 cycle 2: a normal fixture DOCX converts identically through the repack"
+      ]
+    },
+    {
+      "id": "N5",
+      "severity": "Medium",
+      "fix": "Entry names decoded with a fatal UTF-8 TextDecoder (invalid UTF-8 refused, no U+FFFD growth); names refused when empty, > 255 bytes, containing control chars (< 0x20, 0x7f) or backslashes, '.'/'..'/empty segments, leading '/' or drive letters. repackZip asserts entry count <= 0xffff and maxEntries (2000), name byteLength <= 255 (<= 0xffff), sizes and total <= 0xffffffff. assertRepackMatches re-parses the repack with readZipDirectory and checks names, STORE, sizes, CD CRC and the CRC of the stored bytes before mammoth is called. Directory entries (trailing '/') are skipped consistently and refused if they carry content. Entry cap 2000 confirmed; 2000 tiny entries verify+repack+self-check well under 2 s.",
+      "tests": [
+        "docx-zip-bomb N5: refuses a long invalid-UTF-8 name before mammoth is called",
+        "docx-zip-bomb N5: refuses a short invalid-UTF-8 name",
+        "docx-zip-bomb N5: refuses names over MAX_ENTRY_NAME_BYTES",
+        "docx-zip-bomb N5: refuses unsafe name (.., backslash, absolute, drive, control chars, ./)",
+        "docx-zip-bomb N5: repack self-check passes on honest output and catches a tampered re-pack",
+        "docx-zip-bomb N5: repackZip refuses an oversized name instead of wrapping the 16-bit field",
+        "docx-zip-bomb N5: skips directory entries consistently and refuses directories with content",
+        "docx-zip-bomb N5: bounds CPU for 2000 tiny + zero-length entries"
       ]
     },
     {
@@ -96,5 +111,5 @@
   ],
   "mustStopBeforeFinalize": false,
   "autoStopCleared": true,
-  "notes": "Fix cycle 2 applied by the execute-agent after the independent confirmation review rejected F1 (bypass A ZIP64 switch, bypass B CD/EOCD gap); pending independent re-confirmation of F1. Validator vocabulary: decision uses approved | approved-with-concerns | rejected."
+  "notes": "F1/N5 pending independent re-confirmation"
 }
