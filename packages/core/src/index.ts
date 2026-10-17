@@ -142,3 +142,28 @@ export {
 
 // --- Phase 08 (S0): counsel gate + query sheet types (frozen; gate.ts / sheet.ts land in S1) ---
 export type * from './counsel/types';
+
+// --- Phase 08 (S1): counsel gate, query sheet, template draft, metrics ---
+export {
+  computeGate,
+  gateReasonFor,
+  isGating,
+  findingLink,
+  GATE_REASON_TEXT,
+} from './counsel/gate';
+export { includeOnSheet, buildCounselSheet, type BuildSheetOptions } from './counsel/sheet';
+export {
+  maskAndClamp,
+  maskQuote,
+  clampInterpretations,
+  templateInterpretations,
+  templateQuestionText,
+  INTERPRETATION_MAX_CHARS,
+  INTERPRETATIONS_MAX,
+} from './counsel/template-draft';
+export {
+  computeMetrics,
+  FALSE_ALARM_REASON,
+  type MetricsInput,
+  type DocumentMetrics,
+} from './counsel/metrics';
