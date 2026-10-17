@@ -75,6 +75,12 @@ export function AccordionRow({
         <span className="fv2-title" title={f.title} data-testid="finding-title">
           {f.title}
         </span>
+        {f.loc ? (
+          <span className="fv2-loc" title={f.loc} data-testid="finding-loc">
+            <span className="sr">, </span>
+            {f.loc}
+          </span>
+        ) : null}
         {change ? <OwnerChip r={row} meta={meta} /> : null}
         <StatusTag row={row} />
         {!change && f.detector_kind === 'ai' ? (
@@ -89,7 +95,6 @@ export function AccordionRow({
             AI agrees
           </span>
         ) : null}
-        <span className="fv2-tag">{f.ref}</span>
       </button>
       {open ? (
         <div className="fv2-body" data-testid="finding-body">

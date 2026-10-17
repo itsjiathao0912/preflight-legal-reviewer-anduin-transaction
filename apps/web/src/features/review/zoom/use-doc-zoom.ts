@@ -100,9 +100,7 @@ export function useDocZoom(
     const root = scrollRef.current;
     if (!id || !root) return;
     const mark = findMark(root, id);
-    if (mark && typeof mark.scrollIntoView === 'function') {
-      mark.scrollIntoView({ block: 'center' });
-    }
+    if (mark) scrollIntoViewVertically(mark, 'center');
   }, [pct, state, scrollRef]);
 
   return {
@@ -113,4 +111,16 @@ export function useDocZoom(
     style: { '--dz': pct / 100 } as CSSProperties,
     dataDz: String(pct),
   };
+}
+
+/**
+ * Scrolls `el` into view vertically only: the document area keeps its horizontal position, so a
+ * page wider than the reading area is never shifted off its left edge by a row click or a jump.
+ */
+export function scrollIntoViewVertically(el: Element, block: ScrollLogicalPosition): void {
+  if (typeof el.scrollIntoView !== 'function') return;
+  const area = el.closest('.docscroll');
+  const left = area ? area.scrollLeft : 0;
+  el.scrollIntoView({ block, inline: 'nearest' });
+  if (area && area.scrollLeft !== left) area.scrollLeft = left;
 }

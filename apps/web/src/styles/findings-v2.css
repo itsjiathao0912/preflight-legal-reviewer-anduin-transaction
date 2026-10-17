@@ -112,6 +112,27 @@
   color: inherit;
 }
 
+/* All / Errors / Changes: the grey track hugs its buttons (2px), same 28px height as the chips */
+.fv2-chips.seg {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 2px;
+  padding: 2px;
+  background: var(--step);
+}
+.fv2-chips.seg button {
+  min-height: 24px;
+  padding: 0 8px;
+  background: transparent;
+}
+.fv2-chips.seg button:hover {
+  background: var(--panel);
+}
+.fv2-chips.seg button[aria-pressed='true'] {
+  background: var(--card);
+  color: var(--ink);
+}
+
 /* "To review N" on the chips row (the group heading below stays for screen readers) */
 .fv2-fhead {
   padding: 4px 12px 8px 16px;
@@ -144,6 +165,7 @@
 /* ---------- groups and list ---------- */
 .fv2-group {
   margin: 0 0 8px;
+  min-width: 0;
 }
 .fv2-group-h {
   display: flex;
@@ -174,6 +196,8 @@
 /* ---------- accordion row ---------- */
 .fv2-row {
   list-style: none;
+  /* grid items of the shipped .rows lists: never grow past the panel to fit a one-line title */
+  min-width: 0;
   border-radius: var(--r);
   border: 1px solid transparent;
 }
@@ -189,8 +213,8 @@
   border: 0;
   background: transparent;
   border-radius: var(--r);
-  display: grid;
-  grid-template-columns: 16px minmax(0, 1fr) auto;
+  /* one line: icon, title (takes the rest, truncates), section on the right, then tags */
+  display: flex;
   gap: 8px;
   align-items: center;
   padding: 0 8px 0 12px;
@@ -226,6 +250,27 @@
 }
 .fv2-rowb[data-severity='note'] .fv2-sev {
   color: var(--note-fg);
+}
+.fv2-rowb > * {
+  flex: none;
+}
+.fv2-rowb > .fv2-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* the finding's section, right-aligned; it truncates first and never wraps (the title wraps) */
+.fv2-rowb > .fv2-loc {
+  flex: 0 1 auto;
+  max-width: 140px;
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fv2-rowb[aria-expanded='true'] > .fv2-loc {
+  line-height: 21px;
 }
 .fv2-title {
   font-size: 14px;
@@ -399,6 +444,39 @@
 }
 .fv2-details[open] > summary svg {
   transform: rotate(90deg);
+}
+
+/* key / value pairs (Expected / Found and Details): label column, value on the same line */
+.fv2-kv {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 13px;
+}
+.fv2-kv > dt {
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+.fv2-kv > dd {
+  margin: 0;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+/* Previously handled: the last group inside the scrolling list (hidden while empty) */
+.fv2-prev[hidden] {
+  display: none;
+}
+.fv2-prev {
+  padding: 0 8px 16px;
+}
+.fv2-prev .prevwrap {
+  border-radius: var(--r);
+}
+.fv2-prev .prevlist {
+  max-height: none;
+  overflow: visible;
 }
 
 /* ---------- sticky action bar ---------- */
@@ -608,6 +686,24 @@
   background: var(--panel);
 }
 
+/* ---------- reading-view toolbar: always one line ---------- */
+.fv2-docbar {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  min-width: 0;
+}
+.fv2-docbar > .fv2-src {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fv2-docbar > * {
+  flex: none;
+}
+.fv2-docbar > .fv2-src {
+  flex: 0 1 auto;
+}
+
 /* ---------- work grid: panel width from --fpw (set by usePanelWidth) ---------- */
 .work.fv2-work {
   grid-template-columns: minmax(0, 1fr) calc(var(--fpw, 50) * 1%);
@@ -700,6 +796,13 @@
   }
   .docscroll[data-dz] .paper {
     padding: calc(40px * var(--dz)) calc(36px * var(--dz)) calc(56px * var(--dz));
+  }
+}
+
+/* below 1100: "Jump to section" is icon + chevron (aria-label and title keep the name) */
+@media (max-width: 1099px) {
+  .fv2-docbar .fv2-jl {
+    display: none;
   }
 }
 

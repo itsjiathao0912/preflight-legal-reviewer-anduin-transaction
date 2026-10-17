@@ -190,8 +190,14 @@ export function FindingsPanelV2({ view }: { view: ReviewView }) {
             count={view.variance.summary.cosmetic}
           />
         ) : null}
+        {/* last group inside the scrolling list (never a band over the bar); hidden while empty,
+            the count stays in the DOM for the memory flows that read it */}
+        {ready ? (
+          <div className="fv2-prev" hidden={view.previous.length === 0}>
+            <PreviouslyHandledRow items={view.previous} />
+          </div>
+        ) : null}
       </div>
-      {ready ? <PreviouslyHandledRow items={view.previous} /> : null}
       <ActionBar
         row={ready ? selectedRow : null}
         busy={actions.busy}

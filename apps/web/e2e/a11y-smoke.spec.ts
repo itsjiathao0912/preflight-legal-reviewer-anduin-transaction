@@ -41,8 +41,12 @@ test.describe('a11y-smoke', () => {
       await expect(page.getByTestId(pop)).toBeHidden();
     }
 
-    await page.getByTestId('previously-handled-toggle').click();
-    await audit(page, 'previously handled expanded');
+    // Findings v2: "Previously handled" is hidden while it is empty
+    const prev = page.getByTestId('previously-handled-toggle');
+    if (await prev.isVisible()) {
+      await prev.click();
+      await audit(page, 'previously handled expanded');
+    }
 
     await page.getByTestId('action-dismiss').click();
     await expect(page.getByTestId('dismiss-modal')).toBeVisible();

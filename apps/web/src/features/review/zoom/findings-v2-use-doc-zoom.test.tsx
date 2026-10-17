@@ -1,7 +1,7 @@
 import { act, useRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useDocZoom, type DocZoom } from './use-doc-zoom';
+import { scrollIntoViewVertically, useDocZoom, type DocZoom } from './use-doc-zoom';
 import { DOCZOOM_KEY } from './zoom-math';
 
 // AC-16: document zoom hook (jsdom; ResizeObserver stubbed, no layout).
@@ -199,7 +199,7 @@ describe('findings-v2-use-doc-zoom', () => {
     expect(scrollSpy).not.toHaveBeenCalled();
     key('=');
     expect(scrollSpy).toHaveBeenCalledTimes(1);
-    expect(scrollSpy).toHaveBeenCalledWith({ block: 'center' });
+    expect(scrollSpy).toHaveBeenCalledWith({ block: 'center', inline: 'nearest' });
     expect(scrollSpy.mock.contexts[0]).toBe(container!.querySelector('mark[data-finding-id="f2"]'));
   });
 
@@ -225,5 +225,21 @@ describe('findings-v2-use-doc-zoom', () => {
     scrollSpy.mockClear();
     act(() => latest!.dispatch({ type: 'fit' }));
     expect(scrollSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('scrollIntoViewVertically keeps the document area horizontal position', () => {
+    const area = document.createElement('div');
+    area.className = 'docscroll';
+    const mark = document.createElement('mark');
+    area.appendChild(mark);
+    document.body.appendChild(area);
+    area.scrollLeft = 0;
+    scrollSpy.mockImplementationOnce(() => {
+      area.scrollLeft = 85;
+    });
+    scrollIntoViewVertically(mark, 'center');
+    expect(scrollSpy).toHaveBeenCalledWith({ block: 'center', inline: 'nearest' });
+    expect(area.scrollLeft).toBe(0);
+    area.remove();
   });
 });

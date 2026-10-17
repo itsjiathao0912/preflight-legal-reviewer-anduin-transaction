@@ -13,7 +13,7 @@ import { forceSeverity, gotoApp, openSample, rowsLoc } from './fixtures/app';
  */
 const OUT = resolve(
   REPO_ROOT,
-  'process/features/findings-v2/active/findings-v2_18-10-26/design-probe',
+  'process/features/findings-v2/completed/findings-v2_18-10-26/design-probe',
 );
 const WIDTHS = [1440, 1024];
 const ZOOMS = [75, 100, 150];

@@ -98,7 +98,7 @@ export function ExpandedBlock({ row, twin }: { row: Row; twin?: FindingView | un
         <p className="fv2-sec-h">What’s wrong</p>
         <p>{f.detail.explanation}</p>
         {f.detail.expected || f.found ? (
-          <dl>
+          <dl className="fv2-kv">
             <dt>Expected</dt>
             <dd data-testid="finding-expected">{f.detail.expected ?? '—'}</dd>
             <dt>Found</dt>
@@ -131,7 +131,7 @@ export function ExpandedBlock({ row, twin }: { row: Row; twin?: FindingView | un
           <Icon name="chev" />
           Details
         </summary>
-        <dl>
+        <dl className="fv2-kv">
           <dt>Where</dt>
           <dd>
             {f.loc} <LocatorChip f={f} />

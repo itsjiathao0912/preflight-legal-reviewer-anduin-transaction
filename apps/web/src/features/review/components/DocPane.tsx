@@ -2,11 +2,11 @@ import { mask } from '@aduin/core';
 import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Icon } from '../../../components/ui/icon';
 import { Popover } from '../../../components/ui/popover';
-import type { BlockView, SectionView } from '../../../engine/types';
+import type { BlockView, DocSource, SectionView } from '../../../engine/types';
 import { useFilters } from '../../../state/filters';
 import { useReview } from '../../../state/review';
 import type { Row } from '../model';
-import { DocZoomControls, useDocZoom } from '../zoom';
+import { DocZoomControls, scrollIntoViewVertically, useDocZoom } from '../zoom';
 
 /**
  * Reading view: the document model rendered as React text nodes (never raw HTML, no innerHTML,
@@ -24,6 +24,14 @@ interface Mask {
   start: number;
   end: number;
 }
+
+/** Docbar label: only where the reading-view text came from (kept short so the bar is one line). */
+const SOURCE_LABEL: Record<DocSource, string> = {
+  html: 'From HTML',
+  pdf: 'From PDF',
+  docx: 'From DOCX',
+  ocr: 'From scan',
+};
 
 const NO_MASKS: Mask[] = [];
 const EMPTY: { marks: Mark[]; masks: Mask[] } = { marks: [], masks: NO_MASKS };
@@ -134,10 +142,12 @@ function JumpMenu({ sections, rows }: { sections: SectionView[]; rows: Row[] }) 
           className="btn sm"
           type="button"
           data-testid="jump-menu-button"
+          aria-label="Jump to section"
+          title="Jump to section"
           disabled={sections.length === 0}
         >
           <Icon name="jump" />
-          Jump to section
+          <span className="fv2-jl">Jump to section</span>
           <Icon name="chevd" />
         </button>
       }
@@ -160,7 +170,8 @@ function JumpMenu({ sections, rows }: { sections: SectionView[]; rows: Row[] }) 
                 data-testid="jump-item"
                 onClick={() => {
                   setOpen(false);
-                  document.getElementById(`blk-${s.blockId}`)?.scrollIntoView({ block: 'start' });
+                  const el = document.getElementById(`blk-${s.blockId}`);
+                  if (el) scrollIntoViewVertically(el, 'start');
                 }}
               >
                 <span className="jl">{s.label}</span>
@@ -222,7 +233,7 @@ export function DocPane({ rows }: { rows: Row[] }) {
       `[data-testid="doc-highlight"][data-finding-id="${CSS.escape(selectedId)}"]`,
     );
     if (!el) return;
-    el.scrollIntoView({ block: 'center' });
+    scrollIntoViewVertically(el, 'center');
     el.classList.remove('flash');
     void el.offsetWidth;
     el.classList.add('flash');
@@ -230,8 +241,10 @@ export function DocPane({ rows }: { rows: Row[] }) {
 
   return (
     <section className="docpane" aria-label="Document reading view">
-      <div className="docbar">
-        <span>Reading view · text extracted from HTML</span>
+      <div className="docbar fv2-docbar">
+        <span className="fv2-src" title="Reading view: text extracted from the document">
+          {SOURCE_LABEL[result?.source ?? 'html']}
+        </span>
         <JumpMenu sections={result?.sections ?? []} rows={rows} />
         <DocZoomControls pct={zoom.pct} mode={zoom.state.mode} dispatch={zoom.dispatch} />
       </div>

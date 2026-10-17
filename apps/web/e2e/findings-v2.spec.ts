@@ -311,6 +311,96 @@ test.describe('findings-v2', () => {
     });
   }
 
+  for (const [w, z] of [
+    [1440, 150],
+    [1024, 150],
+    [1024, 100],
+  ] as const) {
+    test(`a page wider than the reading area scrolls from its left edge, nothing clipped (${w}, zoom ${z})`, async ({
+      browser,
+    }) => {
+      const page = await browser.newPage({ viewport: { width: w, height: 900 } });
+      await gotoApp(page, { zoom: z });
+      await openSample(page, '03');
+      await rowsLoc(page).first().click();
+      await page.waitForTimeout(300);
+      const m = await zoomPane(page).evaluate((el) => {
+        const paper = el.querySelector('.paper')!;
+        const atNow = el.scrollLeft;
+        el.scrollLeft = 0;
+        const s = el.getBoundingClientRect();
+        const p0 = paper.getBoundingClientRect();
+        el.scrollLeft = el.scrollWidth;
+        const p1 = paper.getBoundingClientRect();
+        return {
+          atNow,
+          overflow: el.scrollWidth - el.clientWidth,
+          leftGap: p0.left - s.left,
+          rightGap: s.left + el.clientWidth - p1.right,
+          wider: p0.width > el.clientWidth,
+        };
+      });
+      // a row click scrolls the document vertically only
+      expect(m.atNow).toBe(0);
+      expect(m.leftGap).toBeGreaterThanOrEqual(0);
+      if (m.wider) {
+        expect(m.overflow).toBeGreaterThan(0);
+        expect(m.rightGap).toBeGreaterThanOrEqual(0);
+      }
+      await page.close();
+    });
+  }
+
+  for (const w of [1440, 1024] as const) {
+    test(`design polish: one-line toolbar, section on the row, key/value grid, segment, previously handled (${w})`, async ({
+      browser,
+    }) => {
+      const page = await browser.newPage({ viewport: { width: w, height: 900 } });
+      await gotoApp(page, { zoom: 100 });
+      await openSample(page, '03');
+      // 1: the reading-view toolbar is one line; the label names only the source
+      const bar = page.locator('.fv2-docbar');
+      await expect(bar.locator('.fv2-src')).toHaveText('From HTML');
+      const jump = page.getByTestId('jump-menu-button');
+      await expect(jump).toHaveAccessibleName('Jump to section');
+      const barBox = (await bar.boundingBox())!;
+      expect(barBox.height).toBeLessThanOrEqual(48);
+      expect((await jump.boundingBox())!.height).toBeLessThanOrEqual(36);
+      await expect(jump.locator('.fv2-jl')).toBeVisible({ visible: w >= 1100 });
+      // 6: the section sits right-aligned on the title line and never wraps
+      const first = page.locator('[data-testid="finding-row"][aria-expanded="false"]').first();
+      const loc = first.getByTestId('finding-loc');
+      await expect(loc).toHaveText(/\S/);
+      const r = (await first.boundingBox())!;
+      const l = (await loc.boundingBox())!;
+      const t = (await first.getByTestId('finding-title').boundingBox())!;
+      expect(l.x).toBeGreaterThan(t.x + t.width - 1);
+      expect(l.height).toBeLessThanOrEqual(22);
+      expect(r.height).toBeLessThanOrEqual(40);
+      // the row (and its section label) stays inside the panel: nothing runs off the right edge
+      const panel = (await page.getByTestId('findings-column').boundingBox())!;
+      expect(l.x + l.width).toBeLessThanOrEqual(panel.x + panel.width + 1);
+      expect(r.x + r.width).toBeLessThanOrEqual(panel.x + panel.width + 1);
+      // 3: Previously handled (0) is hidden and is not a band above the bar
+      await expect(page.getByTestId('previously-handled-count')).toHaveText('0');
+      await expect(page.getByTestId('previously-handled-toggle')).toBeHidden();
+      // 5: Expected / Found use a label column with the value on the same line
+      const withKv = page.locator('[data-testid="finding-row"]');
+      const n = await withKv.count();
+      for (let i = 0; i < n; i++) {
+        await withKv.nth(i).click();
+        if (await page.getByTestId('finding-expected').count()) break;
+      }
+      if (await page.getByTestId('finding-expected').count()) {
+        const dt = (await page.locator('.fv2-kv dt').first().boundingBox())!;
+        const dd = (await page.getByTestId('finding-expected').boundingBox())!;
+        expect(Math.abs(dd.y - dt.y)).toBeLessThan(4);
+        expect(dd.x).toBeGreaterThan(dt.x + 40);
+      }
+      await page.close();
+    });
+  }
+
   test('scroll-to-finding still centers the passage at 150% (D7, D15)', async ({ page }) => {
     await gotoApp(page, { zoom: 150 });
     await openSample(page, '01');
@@ -420,6 +510,10 @@ test.describe('findings-v2', () => {
   }) => {
     await gotoApp(page);
     await openFundIIIvsII(page);
+    // the All / Errors / Changes track hugs its buttons: same height as a severity chip
+    const seg = (await page.getByTestId('kind-segment').boundingBox())!;
+    const chip = (await page.locator('.fv2-fhead .fv2-chips button').first().boundingBox())!;
+    expect(Math.abs(seg.height - chip.height)).toBeLessThanOrEqual(1);
     const tax = changeRow(page, /Tax Status/);
     await expect(tax.getByTestId('owner-chip')).toHaveText('Counsel');
     await tax.click();
