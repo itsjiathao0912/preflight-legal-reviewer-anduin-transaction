@@ -230,3 +230,13 @@ Gates: web vitest 73 files / 544 tests; typecheck clean; findings-v2 e2e 11/11; 
 - Tests: zoom-math unit (fit floor 60, manual floor 60, - no-op at 60, + to 70); findings-v2 e2e +3 (1440x900 and 1024x768 fit, 1024 with the panel at 65%), D15 test floor updated; design-probe now also captures `design-probe/app-1440-fit.png` and `app-1024-fit.png`.
 - Gates: vitest 545 (73 files), typecheck 0, findings-v2 19, layout-vs-mockup 5, finding-highlight 4, perf-budget 4, full preview 261 + 1 skip, design-probe 1. Not deployed.
 - Residual: at 1024 with the default panel, Fit width cannot fit the whole page (needs ~44%); the header banners take about 130 px (backlog `findings-v2-header-status-chips_NOTE_18-10-26.md`).
+
+### Fit width deploy (18-10-26)
+- Commit deployed: code `8fcd893`, main HEAD `036ba5e`. Static assets only; no migration, no route, no custom domain, workers.dev only.
+- New live version: `cd06402a-93df-499e-8298-560e4c243331` (100%, CF API deployments list).
+- Rollback target: `d6f88c56-cbc8-42b6-96cc-f054ba0d0a83` (re-checked live right before deploy); deeper `7db9e602`, `d9aaddd9`; never `8a82ead2`.
+- Pre-deploy: port 4317 freed, `pnpm guard:cf` OK, `pnpm secrets:scan` OK, site key read from the live bundle (exactly 1 distinct match, never printed), plain web bundle made right before deploy. `deploy:preflight` 13/13 PASS.
+- Live checks: `/api/health` 200 `{ok:true}` `cache-control: no-store`; title "Preflight"; sample #1: 18 findings in about 0.86 s, no Turnstile wait; `findings-column` + `action-counsel` present; 0 console errors; only API call `GET /api/quota` (0 AI, 0 OCR).
+- Fit width: 1440x900 readout 77%, page right 803.5 <= docscroll right 836 (fits), docscroll right 836 <= panel left 836. 1024x768 readout 60%, docscroll right 491.6 <= panel left 491.6; page right 508 overflows docscroll by about 16 px and scrolls horizontally (expected per D15 amendment).
+- Screenshots (Fit width default, first finding opened): `design-probe/live-1440.png`, `design-probe/live-1024.png`.
+- Rollback: not needed.
