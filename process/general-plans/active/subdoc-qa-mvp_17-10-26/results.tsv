@@ -59,3 +59,15 @@ iteration	timestamp	gaps_found	fail_count	concern_count	applied	saturation_statu
 57	2026-10-17	1	0	1	1	ACTIVE	CONTINUE	phase=05 pvl cycle 4 (G16 AI lane runtime API base, IS_E2E setApiBase hook); supplement applied; re-validate from V1
 58	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	phase=05 pvl Gate: PASS after 4 supplement cycles (trend 9,3,3,1,0; G16 runtime API base, IS_E2E setApiBase hook)
 59	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	phase=05 evl cycle 1 gates green after review fixes (core 355, worker 515, scripts 49, web unit 47, e2e 82, golden 44, risk validator 0 failures)
+60	2026-10-17	TBD	0	0	0	ACTIVE	baseline	phase=09 pvl baseline (inner)
+61	2026-10-17	6	0	6	6	ACTIVE	CONTINUE	phase=09 pvl first-pass CONDITIONAL (6 gaps: counts, name masking, e2e-hook touchpoint, header mount, draft type, test gaps); supplement cycle 1 applied (6 gaps); re-validate from V1
+62	2026-10-17	1	0	1	1	ACTIVE	CONTINUE	phase=09 pvl cycle 2 (G7 confidenceNote gate); supplement applied; re-validate from V1
+63	2026-10-17	TBD	0	0	0	ACTIVE	baseline	phase=08 pvl baseline (inner)
+64	2026-10-17	12	0	12	12	ACTIVE	CONTINUE	phase=08 pvl first-pass CONDITIONAL (G1-G12); supplement cycle 1 applied (12 gaps: stack-memory secrets, playwright mechanics, session cap, seed ownership, wire shapes, import-graph, download signature, gate naming, session/run lifecycle, no-firm, t0 hook, seam order); re-validate from V1
+65	2026-10-17	TBD	0	0	0	ACTIVE	baseline	phase=08b pvl baseline (inner)
+66	2026-10-17	9	0	9	9	ACTIVE	CONTINUE	phase=08b pvl first-pass CONDITIONAL (9 gaps: AI-context proof, Phase 08 pins, error mapping, awaited writes, seed precondition, refreshMemory, firm source, deviations, test-infra pins); supplement cycle 1 applied; re-validate from V1
+67	2026-10-17	4	0	4	4	ACTIVE	CONTINUE	phase=08b pvl cycle-1 re-validate CONDITIONAL (G10-G13: audit paging, X11 no-join, fake-Worker endpoints, body-mapping test); supplement cycle 2 applied; re-validate from V1
+68	2026-10-17	2	0	2	2	ACTIVE	CONTINUE	phase=08 pvl cycle 2 (G13 analyst-name default, G14 read_only wording); supplement applied; re-validate from V1
+69	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	phase=08 pvl Gate: PASS after 2 supplement cycles (trend 12,2,0)
+70	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	phase=08b pvl Gate: PASS after 2 supplement cycles (trend 9,4,0; E12 endpoint/health list, E13 Dexie triage seam)
+71	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	phase=09 pvl Gate: PASS after 2 supplement cycles (trend 6,1,0; advisory E10 0-based OCR page index)
