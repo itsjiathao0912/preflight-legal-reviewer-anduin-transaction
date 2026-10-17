@@ -12,7 +12,7 @@ metadata:
 
 # aduin-transaction - UI/UX Context
 
-Last updated: 2026-10-17 (Phase 03 UPDATE PROCESS; E3 recorded; HEAD 70d320b)
+Last updated: 2026-10-17 (Phase 05 UPDATE PROCESS; HEAD f0f476c plus the process commit)
 
 Entrypoint for the `ui/` context group. `vc-ui-ux-designer` MUST read this before any design or frontend work.
 
@@ -98,13 +98,26 @@ Authoritative list: the `Published data-testid` bullet group in `subdoc-qa-mvp_P
 - Fonts are self-hosted (@fontsource Geist and Newsreader). Document text is rendered as React text nodes; `dangerouslySetInnerHTML`/`innerHTML` are banned in reading view. A single fingerprint flow: engine returns `quote_hash`, the main thread calls core `fingerprintFor(finding, firmId)`; `firmId=null` means "memory not applied".
 - Copy rules: sentence-case labels; filter/AI persistence per SPEC; the Findings badge counts open items only; Accept on a blocking finding keeps the gate Blocked until counsel answers.
 
+## AI Lane (Phase 05, `apps/web/src/{api,features/ai}`)
+
+- **State machine** (`features/ai/ai-lane.ts`, zustand): `off | idle | pending | fresh | cache | skipped | unavailable | not_precomputed`. Resumes on the reset timer and on tab focus; toggling AI off removes AI findings (re-on re-runs the lookup; samples return to `not_precomputed`, no call).
+- **Lookup order:** static `/precomputed/{docHash}.{rulesHash8}.json`, then `POST /api/ai`. It runs in `openDocument` before the list shows, so counts are stable. Bundled samples never call `/api/ai` on open: they show `not_precomputed` and a "Run AI on this sample" button. Uploads auto-run once. The lookup hash is `rulesHash8(ruleTexts)` of the rules the client would inject (`MemoryApi.firmRules`); `law_firm_id` is sent only when active rules exist, else `null` (hash `none`).
+- **Verify chain in the engine worker:** `analyze` also returns optional `aiCandidates`; `verifyAi(result, docHash, injectedRuleTexts, ctx {model, provenance})` runs there (LRU-2 retained graphs; the client re-analyzes once on `doc_not_retained`). The main thread never imports core parse or verify code.
+- **Provenance and labels:** AI rows show the label "AI suggestion" plus fresh/cache provenance (`finding-provenance` has `data-provenance` = `rule|fresh|cache`). Locator chip "{section path} · ¶ N" (U1 shipped; engine `toView` carries `locator {path, paragraph}`).
+- **Stage status prefix invariant:** the stage button text is always `Checks done · AI review {not connected | not run | running | done | from cache | skipped | unavailable | off}`; the `Checks done` prefix is kept in every state. The preview (e2e) build with API base `''` reads `not connected`. `[data-stage=ai]` and `[data-stage=done]` have matching state texts ("Done · rules and AI", "Done · rules only", "Waiting for AI review").
+- **Banners** (`banner-map.ts`, `AiBanner.tsx`): `(code, reason)` maps to `visitor_limit`, `daily_cap`, `ai_unavailable`, `ai_disabled`, `quota`, `breaker`, `budget`, `rate`, `verification` (invalid_session), `rules_unavailable` (memory_unavailable), `result_unusable`, `provider_error`, and a client-side `rules_changed` (rules re-read after the call differ). Auto-resume only for midnight / retry-after kinds; provider, unusable, verification and rules banners need manual Retry. Copy: "AI review skipped: {reason}. Rules, memory and the gate still work; ambiguity, contradiction and typo passes are skipped." The rules notice shows "N of M firm rules applied" (`100+` over the cap).
+- **API client** (`src/api/`): `base.ts` (runtime API base: `VITE_API_BASE` is `'/'` in production and stack builds, `''` in `--mode e2e`; base `''` fails soft with a stub allowance and no `/api/ai`), `http.ts` (`x-aduin-client`, `x-aduin-doc`, `x-aduin-turnstile`), `ndjson.ts` (generic stream client, ignores `hb`, first terminal frame wins, 4 MiB line cap, no auto-retry; reused by Phase 06 OCR), `quota.ts` (silent on failure). Turnstile is a token-provider seam only (no key: "verification needed", no call); the widget loader is Phase 10.
+- **E2E hooks** (IS_E2E only, compiled out of production): `__aduinE2E.setApiBase(base)` (called by the five AI specs before opening a document) and `__aduinE2E.setFirmRules(texts)` (stub firm rules). `no-e2e-hook-in-dist` guards production.
+- **New data-testids:** `ai-banner` (`data-reason`), `ai-retry`, `ai-not-precomputed`, `ai-run-sample`, `ai-rules-notice`, `ai-suggestion-label`, `finding-locator`; `ai-allowance` has `data-source` (`quota|stub`).
+- **Open:** the `rules_changed` banner has no automated test; AI draft text is not shown yet (mask and clamp `drafts[].text` first, Phase 08).
+
 ## UI Test Conventions
 
 - Two Playwright projects (`apps/web/playwright.config.ts`): `preview` (`vite preview` of a `--mode e2e` build, stub memory API, no Worker; runs every Phase 03 spec) and `stack` (built SPA + Worker; only `slice.spec.ts`; select with `--project=stack`; `SLICE_BASE_URL` points it at a deployed https `*.workers.dev` Worker). Details and commands: `process/context/tests/all-tests.md`.
 - Derive layout and tokens from `design/mockups/app.html` at test time through `apps/web/test/support/mockupCss.ts` (`rootVars`, `fontSizes`, `radii`, `shellWidths`, `railMaxWidth`, `sevTable`, `reasonsList`, `findingsCss`); never hard-code mockup numbers in specs. Later UI phases add their own section slicer beside `findingsCss`.
 - E2E hook `window.__aduinE2E` exists only in `--mode e2e` builds (`no-e2e-hook-in-dist` guards production). Fixtures: `e2e/fixtures/{app,seedMemory}.ts`.
 - A11y: `@axe-core/playwright` is installed as a dev-only dependency (MPL-2.0 decision D-8 recorded in `THIRD_PARTY_NOTICES.md`); gate = zero critical violations; serious items are listed, not gate-failing, and close in Phase 10.
-- Known UI follow-ups U1-U4 (locator chip, contrast measurement, keyboard-focus screenshot, notes underline): `process/general-plans/backlog/core-followups_17-10-26/core-followups_REF_17-10-26.md`. AC6 edit-text/severity: backlog B-EDIT.
+- Known UI follow-ups U1-U4 (locator chip shipped in Phase 05, contrast measurement, keyboard-focus screenshot, notes underline): `process/general-plans/backlog/core-followups_17-10-26/core-followups_REF_17-10-26.md`. AC6 edit-text/severity: backlog B-EDIT.
 
 ## Source Paths
 

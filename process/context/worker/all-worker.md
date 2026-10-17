@@ -12,7 +12,7 @@ metadata:
 
 # aduin-transaction - Worker Context
 
-Last updated: 2026-10-17 (Phase 04b UPDATE PROCESS; HEAD 59d9831 plus the process commit)
+Last updated: 2026-10-17 (Phase 05 UPDATE PROCESS; HEAD f0f476c plus the process commit)
 
 Entrypoint for the `worker/` context group (one doc for now). Read this before touching `apps/worker`, `/api/*`, limits, or a deploy.
 
@@ -34,15 +34,17 @@ Source map (`apps/worker/src`): `app.ts` (createApp + AppDeps seams), `config.ts
 
 1. Header-only guards (origin, `x-aduin-client: 1`, content type, body caps).
 2. In-isolate pre-limit (30 req/min, 6 AI req/min per IP; no subrequest).
-3. Body read, parse, shape (open-proxy whitelist; client-supplied model/plugins/provider/tools/max_tokens dropped or rejected; images only as `data:image/(png|jpeg|webp);base64`).
+3. Body read, parse, shape (open-proxy whitelist; client-supplied model/plugins/provider/tools/max_tokens dropped or rejected; images only as `data:image/(png|jpeg|webp);base64`). For AI, `shapeAi` passes `task` (default `clause-judgment`) and applies a server-side idempotent `mask(text, sensitiveSpans(text))` to candidate quotes.
 4. Identity: signed visitor cookie `__Host-aduin_v` (Secure, HttpOnly, SameSite=Lax; minted on the first `/api/*` call).
-5. Cache read (content-hash key). A HIT costs zero claims, zero writes, zero upstream calls.
-6. Turnstile (token in header `x-aduin-turnstile`; fails closed with 401 `invalid_session`).
-7. Ordered claims: visitor (req, fresh-doc v + IP, OCR pages) then global provider counter (always claimed last) then spend reservation.
-8. OpenRouter call (`redirect: 'error'`, 120 s timeout, free models only) streamed as hold-open NDJSON (`{t:'hb'}` every 10 s, then one terminal `result` or `error` frame).
-9. Classify, cache write, ledger write, terminal frame.
+5. Firm rules (AI only): resolved only when the cookie has `w`, `a !== 'ro'` and the request carries `law_firm_id`; otherwise no rules (hash `none`). A failed rules read, or no rules store while rules are needed, refuses with 503 `memory_unavailable` / reason `rules_unavailable` before any claim or upstream call.
+6. Messages and key: `TASKS[task].buildMessages(...)` (core `llm/`), core `inputHash(messages)`, cache key = `inputHash` + the task's `promptVersion` + `schemaVersion` + the injected `rules_hash`.
+7. Cache read. A HIT costs zero claims, zero writes, zero upstream calls (a HIT with firm rules still costs the one rules read).
+8. Turnstile (token in header `x-aduin-turnstile`; fails closed with 401 `invalid_session`).
+9. Ordered claims: visitor (req, fresh-doc v + IP, OCR pages) then global provider counter (always claimed last) then spend reservation.
+10. OpenRouter call (`redirect: 'error'`, 120 s timeout, free models only) streamed as hold-open NDJSON (`{t:'hb'}` every 10 s, then one terminal `result` or `error` frame).
+11. Classify (task-aware: `parseContent` for prose/fences, then `task.validate` is the only validation; `finish_reason: 'length'` = malformed, claims kept, nothing cached), cache write, ledger write, terminal frame.
 
-Pre-stream refusals are HTTP via `errorStatus(code)` with body `{error:{code,message,reason?,retry_after_s?}}`; failures after the stream opens are terminal `error` frames with the same fields. Clients must handle both. Budget: at most 12 port calls per AI request.
+Pre-stream refusals are HTTP via `errorStatus(code)` with body `{error:{code,message,reason?,retry_after_s?}}`; failures after the stream opens are terminal `error` frames with the same fields. Clients must handle both. Budget: at most 13 port calls per AI request (`proxy-budget`: workspace + firm MISS 9, workspace + firm HIT 2 = rules read + cache get, no-firm HIT 1, a rules read failure 1).
 
 ## Refund Policy (DV10)
 
@@ -50,14 +52,15 @@ Pre-stream refusals are HTTP via `errorStatus(code)` with body `{error:{code,mes
 |---|---|---|
 | refusal before dispatch, pre-dispatch abort, non-consuming 4xx (400/401/403/413/415/422) | refunded | refunded |
 | client abort after dispatch | kept | kept |
-| provider fault after dispatch (timeout, network, 5xx, 429, 402) | refunded | kept |
+| provider fault after dispatch (network, 5xx, 429, 402) | refunded | kept |
+| upstream timeout (review M2: the call may still have consumed provider budget) | kept | kept |
 | malformed output, 200-with-error body | kept | kept |
 
 ## Limits And Config
 
-Defaults live in `packages/core/src/config/limits.ts` (the single source); env vars override. Per visitor per UTC day: 3 fresh-AI documents (D-4), 8 AI requests, 6 OCR pages. Global cap = min(`globalProviderReqsPerDay`, `PROVIDER_ALLOWANCE_PER_DAY` default 50). Spend cap `SPEND_CAP_MICRO_USD` (paid path disabled; `PAID_FALLBACK_ENABLED=false`). Body caps: AI 128 KiB, OCR 700 KiB, other 64 KiB. Windows reset at UTC midnight.
+Defaults live in `packages/core/src/config/limits.ts` (the single source); env vars override. Per visitor per UTC day: 3 fresh-AI documents (D-4), 8 AI requests, 6 OCR pages. Global cap = min(`globalProviderReqsPerDay`, `PROVIDER_ALLOWANCE_PER_DAY` default 50). Spend cap `SPEND_CAP_MICRO_USD` (paid path disabled; `PAID_FALLBACK_ENABLED=false`). Body caps: AI 128 KiB, OCR 700 KiB, other 64 KiB. AI output budget: one `AI_MAX_TOKENS = 10000` in core `packages/core/src/llm/wire.ts`, used by the Worker `MAX_TOKENS.ai` and by the scripts request builder (live sample #3 used 5783 output tokens, so 6000 was too tight). Firm rules in the prompt: at most 20 rules, 500 code points each, 4096 bytes total (core `llm/rules.ts`). Active rules per firm per workspace: the rules read is `LIMIT 101` and creating or approving the 101st active rule is refused with 429 `quota_exhausted` / reason `active_rule_cap` (cap is 100). Windows reset at UTC midnight.
 
-Plain vars in `wrangler.jsonc`: `PAID_FALLBACK_ENABLED`, `OPENROUTER_BASE_URL` (must be https `openrouter.ai`), `AI_TEXT_MODELS`, `AI_VISION_MODELS` (every id must end in `:free`; `openrouter/*` router ids rejected), `AI_UPLOADS_ENABLED` (exact string `true`). Other optional vars: `AI_PAID_MODELS`, `VISITOR_AI_DOCS_PER_DAY`, `VISITOR_AI_REQS_PER_DAY`, `VISITOR_OCR_PAGES_PER_DAY`, `PAID_MAX_COST_MICRO_USD`, `VISITOR_COOKIE_TTL_S`, `TURNSTILE_PASS_TTL_MS`, `TURNSTILE_SITE_KEY`. Invalid config throws `ConfigError` and the proxy degrades without any upstream call.
+Plain vars in `wrangler.jsonc`: `PAID_FALLBACK_ENABLED`, `OPENROUTER_BASE_URL` (must be https `openrouter.ai`), `AI_TEXT_MODELS` (a single free text model, `nvidia/nemotron-3-super-120b-a12b:free`), `AI_RESPONSE_MODE` (`json_schema` default; only `json_schema` or `json_object` allowed, anything else is a `ConfigError`), `AI_VISION_MODELS` (every id must end in `:free`; `openrouter/*` router ids rejected), `AI_UPLOADS_ENABLED` (exact string `true`). Other optional vars: `AI_PAID_MODELS`, `VISITOR_AI_DOCS_PER_DAY`, `VISITOR_AI_REQS_PER_DAY`, `VISITOR_OCR_PAGES_PER_DAY`, `PAID_MAX_COST_MICRO_USD`, `VISITOR_COOKIE_TTL_S`, `TURNSTILE_PASS_TTL_MS`, `TURNSTILE_SITE_KEY`. Invalid config throws `ConfigError` and the proxy degrades without any upstream call.
 
 Circuit breaker: trips on `usage.cost > 0` or a served model id that is not `:free` and not in the configured free lists. Persisted in D1 by Phase 04b (`platform/breaker.ts`, fail closed on D1 error); the in-isolate trip is still set first.
 
@@ -79,18 +82,19 @@ Phase 10 preconditions: apply migrations 0001-0005 to the remote D1 and set the 
 
 ## Secrets (names only; set with `wrangler secret put`, never in the repo or logs)
 
-Set on the live Worker: `COOKIE_SIGNING_KEYS` (JSON map kid to key), `COOKIE_SIGNING_KID`, `OPENROUTER_API_KEY` (from `~/.config/openrouter/credentials.env`). Not set yet: `TURNSTILE_SECRET` (widget arrives with 04b/05). Local dev uses gitignored `.dev.vars`.
+Set on the live Worker: `COOKIE_SIGNING_KEYS` (JSON map kid to key), `COOKIE_SIGNING_KID`, `OPENROUTER_API_KEY` (from `~/.config/openrouter/credentials.env`). Not set yet: `TURNSTILE_SECRET` (the web widget loader is a Phase 10 item; Phase 05 shipped only the token-provider seam). Local dev uses gitignored `.dev.vars`.
 
 ## Deploy Rules And Redeploy Recipe
 
-- Live: https://aduin-transaction-web.giathaowork.workers.dev (workers.dev subdomain `giathaowork`; active version `9dcf2f75-d8ac-419f-b33b-5a2525847ae7`). AI is fail-closed until the D1 platform is deployed (Phase 10) and the Turnstile widget lands (05).
+- Live: https://aduin-transaction-web.giathaowork.workers.dev (workers.dev subdomain `giathaowork`; active version `9dcf2f75-d8ac-419f-b33b-5a2525847ae7`). The deployed version predates Phases 04b and 05 (the Phase 05 pipeline is on main, not yet deployed). AI is fail-closed until the D1 platform is deployed (Phase 10) and the Turnstile widget lands (Phase 10).
 - Hard rules: only `aduin-transaction-*` names on workers.dev/pages.dev; never touch zone `itsjiathao.com`; no route or custom domain; Workers Free only; `git push` needs user OK. Run `pnpm guard:cf && pnpm secrets:scan` before every deploy.
 - Recipe until Phase 10: (1) `pnpm --filter @aduin/web build` (a plain build, not `build:e2e`; `no-e2e-hook-in-dist` proves it); (2) the committed `wrangler.jsonc` binds D1 with a placeholder all-zero id that `wrangler deploy` cannot resolve, so generate a temporary config that is the committed file minus `d1_databases` and `$schema`, with `main` and `assets.directory` paths rebased, under the gitignored `apps/worker/.wrangler/`; assert it has no routes/custom_domain/zone keys and the name starts with `aduin-transaction-`; (3) `wrangler deploy -c <that file>`; (4) delete the temporary file. Phase 10 creates the real D1 and replaces the placeholder id, after which plain `wrangler deploy` works.
 - Verify: `SLICE_BASE_URL=https://aduin-transaction-web.giathaowork.workers.dev pnpm --filter @aduin/web exec playwright test --project=stack` (https `*.workers.dev` only).
 
 ## Known Gaps
 
-- Real workerd CPU and hold-open timing, OpenRouter accounting of aborted/4xx requests, and the served-model string format are unproven (Phase 05/10 live probe).
+- Real workerd CPU and hold-open timing at `max_tokens` 10000 and OpenRouter accounting of aborted/4xx requests are unproven (Phase 10 probe). The served-model string was observed in Phase 05: `nvidia/nemotron-3-super-120b-a12b:free`, `json_schema` accepted (3 of 8 live calls used, $0).
+- Phase 05 follow-ups in the backlog: the Worker should echo `meta.rules_hash8` / `rules_applied` (L5), and live-model quality (2 of 4 quotes unlocatable on sample #3; counsel drafts echo clause text) is a Phase 10 sweep.
 - `x-aduin-doc` is client-attested (04a F4) and stays untrusted. 04a F5 (claim throws on storage errors) and F14 (breaker persisted) are done in 04b.
 - D1 daily-rows risk N11 (accepted until Turnstile is live) and N12 (AI refusals write 6-12 rows): see the Memory API section and `process/general-plans/backlog/core-followups_17-10-26/`.
 - `GET /api/health` lacks `cache-control: no-store`.
@@ -103,7 +107,7 @@ Set on the live Worker: `COOKIE_SIGNING_KEYS` (JSON map kid to key), `COOKIE_SIG
 
 ## Update Triggers
 
-Pipeline or refund-policy change, new route, new env var or secret, limit change, D1 platform wired (04b), Turnstile widget added, deploy recipe change, custom domain decision.
+Pipeline order, task registry or prompt version, refund-policy change, new route, new env var or secret, limit change, D1 platform wired (04b), Turnstile widget added, deploy recipe change, custom domain decision.
 
 ## Routing
 

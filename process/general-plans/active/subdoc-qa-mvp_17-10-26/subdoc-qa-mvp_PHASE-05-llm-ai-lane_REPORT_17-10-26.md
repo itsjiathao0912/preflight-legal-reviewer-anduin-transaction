@@ -412,3 +412,52 @@ CONTEXT_PARTIAL: none.
 - I1: re-verify firm-rule isolation end to end in Phase 08.
 
 **Deviations:** recorded in the plan `## Deviations` (Review fix cycle).
+
+## UPDATE PROCESS closeout (17-10-26)
+
+Verdict: Phase 05 is DONE. Commits on main: 2ac1917 (Stage 0 core llm), e9c90d9 (1c recordings and scripts), 9c9f3b5 (1a worker), a9732a6 (1b web), f0f476c (review fixes M1-M3, L1-L3 and evidence pack).
+
+### What Was Done
+- Core `llm/*` task framework (two frozen tasks, rules injection, verify chain), additive `AiRequest.task` / `AiResult.drafts` contract.
+- Worker: firm-rules injection and cache key, single free text model with `json_schema`, refund and cap changes (M2, M3).
+- Web: AI lane (states, banners, provenance, locator chip), shared API client, `verifyAi` in the engine worker.
+- Recordings, `RecordedTransport`, record and precompute scripts; precomputed AI results for samples #1 and #3.
+- F4, P2-3 and the P2-4 cue in core detectors.
+
+### What Was Skipped/Deferred
+All as backlog stubs in `core-followups_REF_17-10-26.md`: L4, L5, L6, I1, rules-changed banner has no automated test, Turnstile widget loader (Phase 10), live-model quality sweep (Phase 10), P2-4 residual (#2/#5 badge counts are not driven by "check one"). W3, W10, P2-6 stay open; W13 unchanged.
+
+### Test Gate Outcomes (final EVL, all green)
+core 355, worker 515, scripts 49, web unit 47, web e2e 82 (+1 opt-in skipped), golden 44; `pnpm typecheck`, `pnpm lint`, guards, seed, `slice:check` green; high-risk evidence validator (harness/phase-05) 0 failures.
+
+### Plan Deviations
+See the plan `## Deviations`. Notable: M1 changed sample #1 to 3 AI findings; M2 timeout now keeps all claims; M3 cap error is `quota_exhausted` / `active_rule_cap`.
+
+### Test Infra Gaps Found
+- No automated test for the rules-changed banner.
+- AC28/AC51 live-model quality is only Hybrid; quality residual is not gated.
+- AC40 real workerd timing at `max_tokens` 10000 is Agent-Probe only.
+
+### SPEC Achievement
+- AC26, AC27, AC32, AC33, AC34, AC35, AC36: met, fully automated gates passed.
+- AC28 and AC51: Hybrid. Automated gate passes; live-model quality residual is unmet and tracked: live call #3 returned 2 of 4 quotes that could not be located in the document, and counsel drafts echo clause text. Backlog: live-model quality sweep in Phase 10.
+- AC40: Agent-Probe residual (unmet as a gate); backlog: real workerd timing probe at `max_tokens` 10000 in Phase 10.
+Live-call usage: 3 of 8 allowed, cost $0. Served model: `nvidia/nemotron-3-super-120b-a12b:free`; `json_schema` response mode accepted.
+
+### Closeout Packet
+1. Plan: `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-05-llm-ai-lane_PLAN_17-10-26.md`.
+2. Classification: Ready for UPDATE PROCESS archival (umbrella stays active; phase marked DONE in registry and umbrella state).
+3. Finished and verified: see above. Unverified: live-model quality, real workerd timing.
+4b. Validate-contract: present, Gate PASS after 4 PVL cycles.
+5. Cleanup: context docs (worker, engine, ui, tests, root), registry, umbrella state, backlog updated in this commit.
+6. Next: Phase 06 EXECUTE (in progress by another agent), then 07, 08, 08b, 09, 10.
+7. Commit: process commit on main after the five source commits.
+8. Regression: web e2e 82 and golden 44 green against prior verified surfaces (Phases 02, 03, 04a, 04b).
+9. SPEC achievement: above.
+Drift score: HIGH (core, worker, web, scripts touched; many files; protocol-adjacent context updates; backlog notes written; deviations recorded). Strongly recommend UPDATE PROCESS -- harness/protocol files touched.
+
+### Forward Preview
+Test Infra Found: `RecordedTransport`, `fixtures/llm-recordings`, `record:author` / `precompute:ai` with `--check`, e2e hooks `setApiBase` / `setFirmRules` (IS_E2E guarded).
+Blast Radius Changes: Phase 05 also touched worker `proxy/ports.ts`, `index.ts`, `upstream/classify.ts`, `config.ts`, web `engine/{types,client}.ts`, `vite.config.ts`, `e2e-hook.ts`, `.prettierignore`; recorded in the registry.
+Commands to Stay Green: `pnpm --filter @aduin/core test`, `pnpm --filter @aduin/worker test`, `pnpm --filter @aduin/scripts test`, `pnpm --filter @aduin/web test`, web e2e preview project, `pnpm typecheck`, `pnpm lint`, `pnpm guard:cf`, `pnpm secrets:scan`.
+Dependency Changes: none (no new runtime packages).

@@ -1,6 +1,6 @@
 # aduin-transaction - All Context
 
-Last updated: 2026-10-17 (Phase 02/04b UPDATE PROCESS; HEAD 59d9831 plus the process commit)
+Last updated: 2026-10-17 (Phase 05 UPDATE PROCESS; HEAD f0f476c plus the process commit)
 
 This file is the root context entrypoint for the repo.
 
@@ -24,7 +24,7 @@ Target user: Anduin's Digitization Service Analyst. Deliverables: live demo, REA
 
 Domain knowledge, defect taxonomy, competitors and product decisions: `process/context/product-domain.md`.
 
-**Live demo (Milestone 1, 17-10-26):** https://aduin-transaction-web.giathaowork.workers.dev (Worker `aduin-transaction-web`, version `9dcf2f75-d8ac-419f-b33b-5a2525847ae7`). The Findings screen runs real engine findings on bundled samples. AI is fail-closed until Phase 04b (D1) and Phase 05 (Turnstile widget). Deploy rules and the redeploy recipe: `process/context/worker/all-worker.md`.
+**Live demo (Milestone 1, 17-10-26):** https://aduin-transaction-web.giathaowork.workers.dev (Worker `aduin-transaction-web`, version `9dcf2f75-d8ac-419f-b33b-5a2525847ae7`). The Findings screen runs real engine findings on bundled samples. The deployed version predates Phases 04b and 05; AI stays fail-closed on the live site until Phase 10 deploys D1 and the Turnstile widget. Deploy rules and the redeploy recipe: `process/context/worker/all-worker.md`.
 
 ---
 
@@ -192,7 +192,7 @@ When durable project knowledge changes:
 
 ## Repository Structure
 
-pnpm monorepo scaffold exists (Phase 00 of the subdoc-qa-mvp program, commit 7d9955b); Phase 01 (6d12628) added the core engine in `packages/core` (see `process/context/engine/all-engine.md`); Phase 03 (833161b) added the web shell and Findings screen; Phase 04a (729e7fd) added the Worker AI/OCR proxy; Milestone 1 closed at 70d320b; Phase 02 (7a7f421 + 1f5dade) added detectors, investor paths, the structure view and fixtures; Phase 04b (7a7f421 + bb83e04 + fb3064f + 59d9831) added the D1 schema, platform ports and the memory API. Current layout:
+pnpm monorepo scaffold exists (Phase 00 of the subdoc-qa-mvp program, commit 7d9955b); Phase 01 (6d12628) added the core engine in `packages/core` (see `process/context/engine/all-engine.md`); Phase 03 (833161b) added the web shell and Findings screen; Phase 04a (729e7fd) added the Worker AI/OCR proxy; Milestone 1 closed at 70d320b; Phase 02 (7a7f421 + 1f5dade) added detectors, investor paths, the structure view and fixtures; Phase 04b (7a7f421 + bb83e04 + fb3064f + 59d9831) added the D1 schema, platform ports and the memory API; Phase 05 (2ac1917 + e9c90d9 + 9c9f3b5 + a9732a6 + f0f476c) added the LLM task framework (`packages/core/src/llm`), firm-rules injection in the Worker, the AI lane in the web app and LLM recordings/scripts. Current layout:
 
 ```
 aduin-transaction/
@@ -200,7 +200,7 @@ aduin-transaction/
   .claude/ .codex/ .agents/ -- vibecode-pro-max-kit v3.2.5 agents, skills, hooks
   package.json, pnpm-workspace.yaml, pnpm-lock.yaml -- root scripts, workspaces (packages/*, apps/*, scripts), pnpm@11.13.1
   tsconfig.base.json, eslint.config.js, THIRD_PARTY_NOTICES.md
-  packages/core/            -- @aduin/core: parser/graph/detector engine (src/index.ts seam; test/{unit,golden,property,seeded,recorded})
+  packages/core/            -- @aduin/core: parser/graph/detector engine + `src/llm/` LLM task framework (src/index.ts seam; test/{unit,golden,property,seeded,recorded})
   apps/web/                 -- @aduin/web: React 19 + Vite 8 + Tailwind 4 SPA. src/{styles,shell,features,components,state,engine,storage,api,memory}; engine runs in a Comlink Web Worker; e2e/ = 17 Playwright specs + fixtures; test/ = 9 Vitest gates + support/mockupCss.ts; public/samples and firms.json are generated (gitignored). See process/context/ui/all-ui.md
   apps/worker/              -- @aduin/worker: Cloudflare Worker, wrangler.jsonc. src/{config,proxy,limits,upstream,identity,routes/proxy}: POST /api/ai, POST /api/ocr, GET /api/quota (NDJSON hold-open proxy to OpenRouter, quotas, spend cap, Turnstile, breaker); routes/memory, memory/, platform/, migrations/0001-0005 and seed/ are the Phase 04b D1 memory API. See process/context/worker/all-worker.md
   scripts/                  -- @aduin/scripts: guards (guard:cf, secrets:scan), build-samples.ts, slice-check.ts (M1 check), spike runners and spike worker scripts (spikes/s01-s02)
@@ -227,7 +227,7 @@ Chosen in INNOVATE and scaffolded in Phase 00 (exact pins in the `package.json` 
 - **Test / lint:** vitest 4.1.12, Playwright 1.64, fast-check 4.10, eslint 10 + typescript-eslint 8, prettier 3.9. See `process/context/tests/all-tests.md`.
 - **Hosting:** Cloudflare (Workers plus static assets; D1/R2/KV as needed), resources named
   `aduin-transaction-*`, default `*.workers.dev` / `*.pages.dev` URLs. **Never touch zone `itsjiathao.com`** (enforced by `pnpm guard:cf`).
-- **LLM / OCR:** OpenRouter (OpenAI-compatible API). Free models first, cheap paid fallback, ~$10 total cap.
+- **LLM / OCR:** OpenRouter (OpenAI-compatible API). Free models first, cheap paid fallback, ~$10 total cap. Phase 05 serves one free text model, `nvidia/nemotron-3-super-120b-a12b:free`, with `json_schema` response mode (details: `process/context/worker/all-worker.md`, `process/context/engine/all-engine.md`).
 - **a11y:** `@axe-core/playwright` 4.14.0 is installed dev-only (MPL-2.0; decision D-8 recorded in `THIRD_PARTY_NOTICES.md`). Docxodus WASM is still unproven on Workers.
 - **Local toolchain:** Node.js v24.22.0, git, gh (logged in as itsjiathao0912).
 
@@ -258,12 +258,12 @@ Secrets live outside the repo (see `CLAUDE.md` credentials table). Env var names
   The paid fallback is chosen against the ~$10 cap.
 - Persistence for counsel-query tracking (D1 vs KV) and whether the demo needs auth.
 - OpenRouter credits not yet topped up by the user; paid fallback unavailable until then.
-- Next step: Phase 05 (LLM tasks / AI lane; carries U1 locator chip, masking for AI findings, F4, live probe of the served model id and billing, free models only) starting at Step 1 RESEARCH, then 06 and 09, 07, 08, 08b, 10; see the umbrella `## Current Execution State`. Phases 00, 01, 02, 03, 04a, 04b are DONE and Milestone 1 is closed and live. Phase 10 owns creating and migrating the real D1 (the placeholder id in `apps/worker/wrangler.jsonc` stays until then), setting `TURNSTILE_SECRET`, and the remote D1 rows_written re-measure (`process/context/worker/all-worker.md`).
+- Next step: Phase 06 EXECUTE is in progress (another session), Phase 07 has PVL PASS and waits on 06, then 08, 08b, 09, 10; see the umbrella `## Current Execution State`. Phases 00-05 (incl. 02, 04a, 04b) are DONE; Milestone 1 is closed and live (the deployed version predates 04b and 05). Phase 08 preconditions (backlog L4/L5/L6/I1): `computeGate` excludes AI findings, mask and clamp draft text, rules-isolation re-verify. Phase 10 owns creating and migrating the real D1 (placeholder id in `apps/worker/wrangler.jsonc` stays until then), remote migrations 0001-0005, the Turnstile widget plus `TURNSTILE_SECRET`, the live-model quality sweep/precompute spread over UTC days, the workerd timing probe at `max_tokens` 10000, and the remote D1 rows_written re-measure (`process/context/worker/all-worker.md`).
 - Open backlog: AC6 edit text/severity (B-EDIT), UI notes U1-U4, core follow-ups, `/api/health` no-store (`process/general-plans/backlog/`).
 
 ## Scan Metadata
 
 - Generated: 2026-10-17
-- HEAD: 59d9831 (execution), process commit follows
-- Mode: delta update after Phase 02 (detectors/fixtures/structure view) and Phase 04b (D1 memory API)
+- HEAD: f0f476c (execution), process commit follows
+- Mode: delta update after Phase 05 (LLM tasks, AI lane); earlier deltas: Phases 02 and 04b
 - Package manager: pnpm 11.13.1 (workspaces: packages/*, apps/*, scripts)
