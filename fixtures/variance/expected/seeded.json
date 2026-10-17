@@ -1,0 +1,381 @@
+{
+  "version": 1,
+  "firm_id": "hartwell-crane",
+  "note": "Hand-authored expectations per seeded pair (a = baseline, b = current).",
+  "cases": [
+    {
+      "id": "cos-renumber",
+      "kind": "cosmetic",
+      "note": "Section 4 inserted number gap closed: headings 5->4, 6->5, 7->6; refs to 5 re-pointed",
+      "expect": {
+        "shown": 0,
+        "cosmetic": 6,
+        "groups": {
+          "VAR-COS-RENUMBER": 6
+        }
+      }
+    },
+    {
+      "id": "cos-fund-name",
+      "kind": "cosmetic",
+      "note": "fund name Fund II -> Fund III (3 occurrences)",
+      "expect": {
+        "shown": 0,
+        "cosmetic": 3,
+        "groups": {
+          "VAR-COS-NAME:II -> III": 3
+        }
+      }
+    },
+    {
+      "id": "cos-cover-date",
+      "kind": "cosmetic",
+      "note": "cover date month and year (2 hunks)",
+      "expect": {
+        "shown": 0,
+        "cosmetic": 2,
+        "groups": {
+          "VAR-COS-DATE": 2
+        }
+      }
+    },
+    {
+      "id": "cos-rename",
+      "kind": "cosmetic",
+      "note": "defined term Units -> Shares everywhere (4 occurrences)",
+      "expect": {
+        "shown": 0,
+        "cosmetic": 4,
+        "groups": {
+          "VAR-COS-RENAME:Units -> Shares": 4
+        }
+      }
+    },
+    {
+      "id": "cos-format",
+      "kind": "cosmetic",
+      "note": "e-mail -> email (2), Internet -> internet (1)",
+      "expect": {
+        "shown": 0,
+        "cosmetic": 3,
+        "groups": {
+          "VAR-COS-FORMAT": 3
+        }
+      }
+    },
+    {
+      "id": "item-new-section",
+      "kind": "logic",
+      "note": "new section 6A (heading only: one block)",
+      "expect": {
+        "shown": 1,
+        "cosmetic": 0,
+        "rows": [
+          {
+            "class": "new",
+            "rule_id": "VAR-NEW-UNIT",
+            "unit_key_b": "body:1/s6a",
+            "contains": "6A"
+          }
+        ]
+      }
+    },
+    {
+      "id": "item-new-sentence",
+      "kind": "logic",
+      "note": "Singapore sentence of 12+ words inserted",
+      "expect": {
+        "shown": 1,
+        "cosmetic": 0,
+        "rows": [
+          {
+            "class": "new",
+            "rule_id": "VAR-NEW-INSERTION",
+            "unit_key_b": "body:1/s1",
+            "contains": "Singapore"
+          }
+        ]
+      }
+    },
+    {
+      "id": "item-new-paragraph",
+      "kind": "logic",
+      "note": "sanctions paragraph (c) of 12+ words",
+      "expect": {
+        "shown": 1,
+        "cosmetic": 0,
+        "rows": [
+          {
+            "class": "new",
+            "rule_id": "VAR-NEW-INSERTION",
+            "unit_key_b": "body:1/s4",
+            "contains": "sanctions"
+          }
+        ]
+      }
+    },
+    {
+      "id": "item-audience",
+      "kind": "logic",
+      "note": "7-word insertion restricts the clause to non-US entities",
+      "expect": {
+        "shown": 1,
+        "cosmetic": 0,
+        "rows": [
+          {
+            "class": "changed_logic",
+            "rule_id": "VAR-LOGIC-GUARD-JURISDICTION",
+            "unit_key_b": "body:1/s2",
+            "contains": "outside the United States",
+            "reusable": "no"
+          }
+        ]
+      }
+    },
+    {
+      "id": "item-amount",
+      "kind": "logic",
+      "note": "Class A minimum 250,000 -> 500,000",
+      "expect": {
+        "shown": 1,
+        "cosmetic": 0,
+        "rows": [
+          {
+            "class": "changed_logic",
+            "rule_id": "VAR-LOGIC-GUARD-DIGIT",
+            "unit_key_b": "body:1/s3",
+            "contains": "500"
+          }
+        ]
+      }
+    },
+    {
+      "id": "item-select-all",
+      "kind": "logic",
+      "note": "tax status select one -> select all that apply",
+      "expect": {
+        "shown": 1,
+        "cosmetic": 0,
+        "rows": [
+          {
+            "class": "changed_logic",
+            "rule_id": "VAR-LOGIC-DEFAULT",
+            "unit_key_b": "body:1/s1",
+            "contains": "all that apply"
+          }
+        ]
+      }
+    },
+    {
+      "id": "item-trust-split",
+      "kind": "logic",
+      "note": "Trust option split",
+      "expect": {
+        "shown": 1,
+        "cosmetic": 0,
+        "rows": [
+          {
+            "class": "changed_logic",
+            "rule_id": "VAR-LOGIC-GUARD-INVESTOR",
+            "unit_key_b": "body:1/s1",
+            "contains": "Revocable trust",
+            "investor_types_include": ["trust"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "edge-date-operative",
+      "kind": "edge",
+      "note": "a date in operative text (not the cover) is logic",
+      "expect": {
+        "shown": 1,
+        "cosmetic": 0,
+        "rows": [
+          {
+            "class": "changed_logic",
+            "rule_id": "VAR-LOGIC-GUARD-DIGIT",
+            "unit_key_b": "body:1/s3",
+            "contains": "2025"
+          }
+        ]
+      }
+    },
+    {
+      "id": "edge-single-name",
+      "kind": "edge",
+      "note": "a fund-name swap with only 1 occurrence is logic",
+      "expect": {
+        "shown": 1,
+        "cosmetic": 0,
+        "rows": [
+          {
+            "class": "changed_logic",
+            "rule_id": "VAR-LOGIC-DEFAULT",
+            "unit_key_b": "body:1/s2",
+            "contains": "III"
+          }
+        ]
+      }
+    },
+    {
+      "id": "edge-ref-not-moved",
+      "kind": "edge",
+      "note": "a reference whose target did not move (Section 2 -> Section 3) is logic",
+      "expect": {
+        "shown": 1,
+        "cosmetic": 0,
+        "rows": [
+          {
+            "class": "changed_logic",
+            "rule_id": "VAR-LOGIC-GUARD-DIGIT",
+            "unit_key_b": "body:1/s4",
+            "contains": "Section 3"
+          }
+        ]
+      }
+    },
+    {
+      "id": "edge-number",
+      "kind": "edge",
+      "note": "a changed number of days is logic",
+      "expect": {
+        "shown": 1,
+        "cosmetic": 0,
+        "rows": [
+          {
+            "class": "changed_logic",
+            "rule_id": "VAR-LOGIC-GUARD-DIGIT",
+            "unit_key_b": "body:1/s2",
+            "contains": "15"
+          }
+        ]
+      }
+    },
+    {
+      "id": "edge-negation",
+      "kind": "edge",
+      "note": "an added negation is logic",
+      "expect": {
+        "shown": 1,
+        "cosmetic": 0,
+        "rows": [
+          {
+            "class": "changed_logic",
+            "rule_id": "VAR-LOGIC-GUARD-NEGATION",
+            "unit_key_b": "body:1/s4",
+            "contains": "not"
+          }
+        ]
+      }
+    },
+    {
+      "id": "edge-modal",
+      "kind": "edge",
+      "note": "a changed modal (may -> shall) is logic",
+      "expect": {
+        "shown": 1,
+        "cosmetic": 0,
+        "rows": [
+          {
+            "class": "changed_logic",
+            "rule_id": "VAR-LOGIC-GUARD-MODAL",
+            "unit_key_b": "body:1/s3",
+            "contains": "shall"
+          }
+        ]
+      }
+    },
+    {
+      "id": "edge-condition",
+      "kind": "edge",
+      "note": "an added condition word is logic",
+      "expect": {
+        "shown": 1,
+        "cosmetic": 0,
+        "rows": [
+          {
+            "class": "changed_logic",
+            "rule_id": "VAR-LOGIC-GUARD-CONDITION",
+            "unit_key_b": "body:1/s4",
+            "contains": "unless"
+          }
+        ]
+      }
+    },
+    {
+      "id": "edge-truncated",
+      "kind": "edge",
+      "note": "a rewrite beyond the edit bound is one coarse truncated hunk (logic)",
+      "expect": {
+        "shown": 1,
+        "cosmetic": 0,
+        "rows": [
+          {
+            "class": "changed_logic",
+            "rule_id": "VAR-LOGIC-GUARD-TRUNCATED",
+            "unit_key_b": "body:1/s4",
+            "contains": "w"
+          }
+        ]
+      }
+    },
+    {
+      "id": "impact-trust-only",
+      "kind": "impact",
+      "note": "a change inside a section only trusts complete",
+      "expect": {
+        "shown": 1,
+        "cosmetic": 0,
+        "rows": [
+          {
+            "class": "changed_logic",
+            "rule_id": "VAR-LOGIC-DEFAULT",
+            "unit_key_b": "body:1/s6a",
+            "contains": "current",
+            "investor_types_include": ["trust"],
+            "investor_types_exclude": ["individual", "corporation", "ira"],
+            "reusable": "no"
+          }
+        ]
+      }
+    },
+    {
+      "id": "impact-conditional",
+      "kind": "impact",
+      "note": "a conditional target changes (Section 5 -> Section 6)",
+      "expect": {
+        "shown": 1,
+        "cosmetic": 0,
+        "rows": [
+          {
+            "class": "changed_logic",
+            "rule_id": "VAR-LOGIC-GUARD-DIGIT",
+            "unit_key_b": "body:1/s1",
+            "contains": "Section 6",
+            "conditionals": 1,
+            "reusable": "no"
+          }
+        ]
+      }
+    },
+    {
+      "id": "impact-reusable",
+      "kind": "impact",
+      "note": "a wording change outside every investor path, with no form element: reusable",
+      "expect": {
+        "shown": 1,
+        "cosmetic": 0,
+        "rows": [
+          {
+            "class": "changed_logic",
+            "rule_id": "VAR-LOGIC-DEFAULT",
+            "unit_key_b": "appendix:a",
+            "contains": "today",
+            "reusable": "yes"
+          }
+        ]
+      }
+    }
+  ]
+}

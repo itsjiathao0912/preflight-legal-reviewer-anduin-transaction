@@ -6,6 +6,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildFixtures, DIFF_DIR, SEEDED_DIR } from './build-seeded';
+import { VARIANCE_DIR } from './build-variance';
 import { ROOT } from './find-shared-passages';
 import { buildDocxFixtures, DOCX_DIR, sameDocx } from './make-docx';
 import { buildPdfFixtures, PDF_CROP, PDF_DIR } from './make-pdf';
@@ -165,6 +166,8 @@ const walkPkg = (rel: string) => {
   }
 };
 walkPkg(PACKAGE_DIR);
+// Variance Phase 01: every file under fixtures/variance (recursive) must be generated.
+walkStray(VARIANCE_DIR);
 
 if (problems.length) {
   console.error(`fixtures:check FAILED (${problems.length})`);

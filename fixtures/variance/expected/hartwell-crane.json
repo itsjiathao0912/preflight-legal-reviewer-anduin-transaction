@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "firm_id": "hartwell-crane",
+  "pair": {
+    "baseline": "hartwell-crane/fund-II.html",
+    "current": "hartwell-crane/fund-III.html"
+  },
+  "note": "Authored counts (counted while writing the Fund II text, never read back from the engine). Raw = cosmetic + 7 demo items, each exactly one raw change.",
+  "raw": 214,
+  "shown": 7,
+  "new": 3,
+  "changed_logic": 4,
+  "cosmetic": 207,
+  "groups": {
+    "VAR-COS-RENUMBER": 118,
+    "VAR-COS-NAME:II -> III": 41,
+    "VAR-COS-DATE": 8,
+    "VAR-COS-RENAME:Units -> Shares": 29,
+    "VAR-COS-FORMAT": 11
+  },
+  "authored": {
+    "renumberHeadings": 8,
+    "renumberRefs": 110,
+    "fundName": 41,
+    "dateParts": 8,
+    "term": 29,
+    "format": 11
+  },
+  "items": [
+    {
+      "id": "7A",
+      "label": "New Section 7A \"Source of Funds Verification\"",
+      "unit_key_b": "body:1/s7a",
+      "class": "new",
+      "rule_id": "VAR-NEW-UNIT",
+      "owners": ["fund_admin"],
+      "passage": "7A. Source of Funds Verification"
+    },
+    {
+      "id": "singapore",
+      "label": "Singapore added to the Investor domicile list",
+      "unit_key_b": "body:1/s2/pa",
+      "class": "new",
+      "rule_id": "VAR-NEW-INSERTION",
+      "owners": ["gp", "counsel"],
+      "passage": "Singapore is also accepted as a domicile"
+    },
+    {
+      "id": "sanctions",
+      "label": "New sanctions representation 8(f)",
+      "unit_key_b": "body:1/s8",
+      "class": "new",
+      "rule_id": "VAR-NEW-INSERTION",
+      "owners": ["counsel"],
+      "passage": "subject of sanctions administered by OFAC"
+    },
+    {
+      "id": "4.2",
+      "label": "Section 4.2 now applies only to non-US entities",
+      "unit_key_b": "body:1/s4",
+      "class": "changed_logic",
+      "rule_id": "VAR-LOGIC-GUARD-JURISDICTION",
+      "owners": ["counsel"],
+      "passage": "formed or organized outside the United States"
+    },
+    {
+      "id": "class-a-minimum",
+      "label": "Class A minimum raised to US$ 500,000",
+      "unit_key_b": "body:1/s6/pb",
+      "class": "changed_logic",
+      "rule_id": "VAR-LOGIC-GUARD-DIGIT",
+      "owners": ["gp"],
+      "passage": "500,000"
+    },
+    {
+      "id": "tax-status",
+      "label": "Tax status is now \"select all that apply\"",
+      "unit_key_b": "body:1/s2/pc",
+      "class": "changed_logic",
+      "rule_id": "VAR-LOGIC-DEFAULT",
+      "owners": ["counsel"],
+      "passage": "select all that apply"
+    },
+    {
+      "id": "trust-split",
+      "label": "Trust split into revocable and irrevocable",
+      "unit_key_b": "body:1/s2/pb",
+      "class": "changed_logic",
+      "rule_id": "VAR-LOGIC-GUARD-INVESTOR",
+      "owners": ["gp"],
+      "passage": "Revocable trust or irrevocable trust"
+    }
+  ],
+  "r01": {
+    "setup_pair": {
+      "baseline": "hartwell-crane/fund-I.html",
+      "current": "hartwell-crane/fund-II.html"
+    },
+    "removed_unit_key_a": "appendix:c",
+    "assertion": {
+      "kind": "scope_exists",
+      "label": "appendix c"
+    },
+    "statement": "Appendix C must exist",
+    "source_fund": "Fund II",
+    "violated_in": "hartwell-crane/fund-III.html",
+    "holds_in": "hartwell-crane/fund-III-with-appendix-c.html"
+  }
+}

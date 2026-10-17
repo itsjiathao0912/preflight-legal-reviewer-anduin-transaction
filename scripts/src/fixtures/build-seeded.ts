@@ -26,6 +26,7 @@ import {
   type MemoryLabel,
 } from '../../../packages/core/src/index';
 import { DEMO_FIRM, ROOT, sampleFindings } from './find-shared-passages';
+import { buildVarianceFixtures } from './build-variance';
 
 export const SEEDED_DIR = 'fixtures/html-seeded';
 export const MEMORY_DIR = 'fixtures/memory';
@@ -1051,6 +1052,7 @@ export function buildFixtures(): Map<string, string> {
   for (const [k, v] of buildMemory()) out.set(k, v);
   for (const [k, v] of buildDiffFixtures()) out.set(k, v);
   out.set(`${MEMORY_DIR}/demo-seed-spec.json`, json(buildDemoSeedSpec()));
+  for (const [k, v] of buildVarianceFixtures()) out.set(k, v);
   return out;
 }
 

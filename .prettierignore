@@ -18,3 +18,4 @@ apps/worker/worker-configuration.d.ts
 fixtures/llm-recordings/
 fixtures/diff/
 apps/web/public/precomputed/
+fixtures/variance/
