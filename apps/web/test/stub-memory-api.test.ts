@@ -116,4 +116,104 @@ describe('stub-memory-api', () => {
     expect(r.unavailable).toBe(true);
     expect(r.byId.f1?.label).toBe('new');
   });
+
+  it('variance: stub stores owner, enforces the intent rule and the per-firm check cap', async () => {
+    const { run_id } = await api.ensureRun({
+      client_op_id: 'op_run00001',
+      doc_name: 'Doc',
+      doc_hash: 'c'.repeat(64),
+      law_firm_id: 'partners-group',
+      settings_hash: 'd'.repeat(64),
+    });
+    const fps: string[] = [];
+    const qs: string[] = [];
+    for (let i = 0; i < 21; i++) {
+      const ref = `f${i}`;
+      await api.storeFindings(run_id, [{ id: ref } as never]);
+      const f = (i + 1).toString(16).padStart(64, '0');
+      fps.push(f);
+      const [q] = await api.createQuestions(run_id, [
+        {
+          client_op_id: `op_q${i}xxxxx`,
+          finding_ref: ref,
+          fingerprint: f,
+          interpretations: ['A'],
+          ...(i === 0 ? { owner: 'gp' as const } : {}),
+        },
+      ]);
+      qs.push(q!.question_id);
+    }
+    const stored = (await db.uiState.get(`stub:question:${qs[0]}`))?.value as {
+      owner?: string;
+      owner_source?: string;
+    };
+    expect(stored).toMatchObject({ owner: 'gp', owner_source: 'suggested' });
+    const ans = (i: number, extra: object) =>
+      api.answer({
+        client_op_id: `op_a${i}xxxxx`,
+        law_firm_id: 'partners-group',
+        question_id: qs[i]!,
+        fingerprint: fps[i]!,
+        issue_class: 'broken_cross_reference',
+        counsel_option: 'A',
+        decided_by_name: 'Linh Tran',
+        fund_name: 'Fund I',
+        ...extra,
+      });
+    await expect(ans(0, { scope: 'firm_template', intent: ' ' })).rejects.toMatchObject({
+      reason: 'intent_required',
+    });
+    await expect(
+      ans(0, { scope: 'fund', assertion: { kind: 'scope_exists', label: 'Appendix C' } }),
+    ).rejects.toMatchObject({ reason: 'assertion_scope' });
+    const withCheck = (i: number) =>
+      ans(i, {
+        scope: 'firm_template',
+        intent: 'Standard.',
+        assertion: { kind: 'scope_exists', label: `Appendix ${String.fromCharCode(65 + i)}` },
+      });
+    for (let i = 0; i < 20; i++) await withCheck(i);
+    await expect(withCheck(20)).rejects.toMatchObject({ reason: 'regression_check_cap' });
+    const r = await api.lookupWithChecks('partners-group', [fps[0]!]);
+    expect(r.regression_checks).toHaveLength(20);
+    expect(r.regression_checks[0]).toMatchObject({
+      assertion_key: 'appendix a',
+      statement_text: 'Appendix A must exist',
+      source_fund_name: 'Fund I',
+    });
+    expect((await api.lookupWithChecks('firm-x', [fps[0]!])).regression_checks).toEqual([]);
+  });
+
+  it('variance: fingerprintFindings with a fund name ignores a fund-scoped answer of another fund', async () => {
+    const { run_id } = await api.ensureRun({
+      client_op_id: 'op_run00002',
+      doc_name: 'Doc',
+      doc_hash: 'e'.repeat(64),
+      law_firm_id: 'partners-group',
+      settings_hash: 'd'.repeat(64),
+    });
+    const f = finding('f1', QH);
+    const fp = fingerprintFor(f, 'partners-group')!;
+    await api.storeFindings(run_id, [{ id: 'f1' } as never]);
+    const [q] = await api.createQuestions(run_id, [
+      { client_op_id: 'op_q_scope1', finding_ref: 'f1', fingerprint: fp, interpretations: ['A'] },
+    ]);
+    await api.answer({
+      client_op_id: 'op_a_scope1',
+      law_firm_id: 'partners-group',
+      question_id: q!.question_id,
+      fingerprint: fp,
+      issue_class: 'broken_cross_reference',
+      counsel_option: 'A',
+      decided_by_name: 'Linh Tran',
+      fund_name: 'Fund A',
+      scope: 'fund',
+    });
+    const other = await fingerprintFindings([f], 'partners-group', api, 'Fund B');
+    expect(other.byId.f1).toMatchObject({ label: 'new', prior: null });
+    const same = await fingerprintFindings([f], 'partners-group', api, 'Fund A');
+    expect(same.byId.f1?.label).toBe('already_answered');
+    const legacy = await fingerprintFindings([f], 'partners-group', api);
+    expect(legacy.byId.f1?.label).toBe('already_answered');
+  });
 });

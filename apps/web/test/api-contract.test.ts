@@ -184,6 +184,91 @@ describe.each(IMPLS)('api-contract ($name)', (impl) => {
     expect(d.counsel_option).toBe('A');
   });
 
+  // --- Variance Phase 03 (AC-V14-c): intent / scope / assertion and lookupWithChecks ---
+  const asked = async () => {
+    const { run_id } = await run();
+    await api.storeFindings(run_id, [wire('f1')]);
+    const f = fp('a'.repeat(64));
+    const [q] = await api.createQuestions(run_id, [
+      {
+        client_op_id: opId(),
+        finding_ref: 'f1',
+        fingerprint: f,
+        interpretations: ['A', 'B'],
+        owner: 'counsel',
+        owner_source: 'suggested',
+      },
+    ]);
+    return { f, q: q! };
+  };
+  const answerIn = (q: { question_id: string }, f: string, extra: object = {}) => ({
+    client_op_id: opId(),
+    law_firm_id: FIRM,
+    question_id: q.question_id,
+    quote_text: 'the quote',
+    fingerprint: f,
+    issue_class: 'broken_cross_reference' as const,
+    counsel_option: 'A' as const,
+    decided_by_name: 'Linh Tran',
+    ...extra,
+  });
+  const hexN = (i: number) => i.toString(16).padStart(64, '0');
+
+  it('variance: answer carries intent and scope onto the answered decision', async () => {
+    const { f, q } = await asked();
+    const d = await api.answer(
+      answerIn(q, f, { scope: 'firm_template', intent: 'Firm standard.' }),
+    );
+    expect(d).toMatchObject({
+      decision: 'answered',
+      scope: 'firm_template',
+      intent: 'Firm standard.',
+    });
+  });
+
+  it('variance: the intent rule and the assertion rule refuse identically (invalid_request)', async () => {
+    const { f, q } = await asked();
+    for (const extra of [
+      { scope: 'firm_template' },
+      { scope: 'firm_template', intent: '   ' },
+      { scope: 'fund', intent: 'x', assertion: { kind: 'scope_exists', label: 'Appendix C' } },
+      { intent: 'x', assertion: { kind: 'scope_exists', label: 'Appendix C' } },
+    ]) {
+      const e = await api.answer(answerIn(q, f, extra)).catch((x: unknown) => x);
+      expect(e, JSON.stringify(extra)).toBeInstanceOf(MemoryApiError);
+      expect((e as MemoryApiError).code).toBe('invalid_request');
+    }
+  });
+
+  it('variance: lookupWithChecks chunks by 200 and dedupes checks (0, 1, 200, 201, 450)', async () => {
+    const { f, q } = await asked();
+    await api.answer(
+      answerIn(q, f, {
+        scope: 'firm_template',
+        intent: 'Appendix C is standard.',
+        assertion: { kind: 'scope_exists', label: 'appendix c' },
+      }),
+    );
+    const none = await api.lookupWithChecks(FIRM, []);
+    expect(none).toEqual({ decisions: [], regression_checks: [] });
+    for (const n of [1, 200, 201, 450]) {
+      const fps = [f, ...Array.from({ length: n - 1 }, (_, i) => hexN(i + 1))];
+      const r = await api.lookupWithChecks(FIRM, fps);
+      expect(
+        r.decisions.map((d) => d.fingerprint),
+        `n=${n}`,
+      ).toEqual([f]);
+      expect(r.regression_checks, `n=${n}`).toHaveLength(1);
+      expect(r.regression_checks[0]).toMatchObject({
+        assertion_kind: 'scope_exists',
+        assertion_key: 'appendix c',
+      });
+    }
+    // another firm: no checks; lookup() keeps returning the plain array
+    expect((await api.lookupWithChecks('firm-x', [f])).regression_checks).toEqual([]);
+    expect(Array.isArray(await api.lookup(FIRM, [f]))).toBe(true);
+  });
+
   it('createQuestions refuses a firm-less run and bad interpretations', async () => {
     const noFirm = await run(null);
     await api.storeFindings(noFirm.run_id, [wire('f1')]);

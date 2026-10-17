@@ -441,3 +441,129 @@ describe('client.ts selection', () => {
     expect(b).not.toBe(a);
   });
 });
+
+describe('realMemoryApi variance (Phase 03)', () => {
+  /** A worst-case-sized finding (~82 KB UTF-8: 20 facts of 1000 three-byte chars, as V1 caps allow). */
+  const fat = (id: string, factChars = 1000) =>
+    ({
+      id,
+      detail: {
+        explanation: '€'.repeat(1000),
+        facts: Object.fromEntries(
+          Array.from({ length: 20 }, (_, i) => [`k${i}`, '€'.repeat(factChars)]),
+        ),
+        interpretations: Array.from({ length: 6 }, () => '€'.repeat(500)),
+      },
+    }) as unknown as FindingWire;
+  const bytes = (b: unknown) => new TextEncoder().encode(JSON.stringify(b)).length;
+
+  it('storeFindings splits by bytes: every body <= 131,072 and every finding is delivered once', async () => {
+    const { api, fake } = make();
+    const { run_id } = await api.ensureRun(runInput());
+    const list = Array.from({ length: 30 }, (_, i) => fat(`w${i}`));
+    expect((await api.storeFindings(run_id, list)).stored).toBe(30);
+    const posts = fake.calls.filter((c) => c.path.endsWith('/findings'));
+    expect(posts.length).toBeGreaterThan(2); // 30 worst cases cannot ride in 2 chunks of 25
+    for (const p of posts) expect(bytes(p.body)).toBeLessThanOrEqual(131_072);
+    const sent = posts.flatMap((p) => (p.body['findings'] as { id: string }[]).map((f) => f.id));
+    expect(sent.sort()).toEqual(list.map((f) => f.id).sort());
+  });
+
+  it('small findings still ride in 25-finding chunks (no extra requests)', async () => {
+    const { api, fake } = make();
+    const { run_id } = await api.ensureRun(runInput());
+    await api.storeFindings(
+      run_id,
+      Array.from({ length: 30 }, (_, i) => wire(`s${i}`)),
+    );
+    expect(fake.calls.filter((c) => c.path.endsWith('/findings'))).toHaveLength(2);
+  });
+
+  it('a single finding over the cap is not clipped or split: typed finding_too_large error', async () => {
+    const { api, fake } = make();
+    const { run_id } = await api.ensureRun(runInput());
+    const e = await api.storeFindings(run_id, [fat('huge', 3000)]).catch((x: unknown) => x);
+    expect(e).toBeInstanceOf(MemoryApiError);
+    expect((e as MemoryApiError).reason).toBe('finding_too_large');
+    expect(fake.calls.filter((c) => c.path.endsWith('/findings'))).toHaveLength(0);
+  });
+
+  it('lookupWithChecks: no request for 0 fingerprints; 1, 2 and 3 requests for 200, 201 and 450', async () => {
+    const { api, fake } = make();
+    await api.bootstrap('Linh Tran');
+    const hexN = (i: number) => i.toString(16).padStart(64, '0');
+    expect(await api.lookupWithChecks(FIRM, [])).toEqual({ decisions: [], regression_checks: [] });
+    expect(fake.lookupCalls()).toBe(0);
+    for (const [count, requests] of [
+      [200, 1],
+      [201, 2],
+      [450, 3],
+    ] as const) {
+      const before = fake.lookupCalls();
+      await api.lookupWithChecks(
+        FIRM,
+        Array.from({ length: count }, (_, i) => hexN(i + 1)),
+      );
+      expect(fake.lookupCalls() - before, `n=${count}`).toBe(requests);
+    }
+  });
+
+  it('question and answer carry the variance fields with the exact Worker names', async () => {
+    const { api, fake } = make();
+    const { run_id } = await api.ensureRun(runInput());
+    await api.storeFindings(run_id, [wire('f1')]);
+    const [q] = await api.createQuestions(run_id, [
+      {
+        client_op_id: op(),
+        finding_ref: 'f1',
+        fingerprint: FP,
+        interpretations: ['A'],
+        owner: 'fund_admin',
+        owner_source: 'override',
+      },
+    ]);
+    expect(fake.calls.find((c) => c.path === '/api/counsel/questions')?.body).toMatchObject({
+      owner: 'fund_admin',
+      owner_source: 'override',
+    });
+    await api.answer({
+      client_op_id: op(),
+      law_firm_id: FIRM,
+      question_id: q!.question_id,
+      quote_text: 'the quote',
+      fingerprint: FP,
+      issue_class: 'broken_cross_reference',
+      counsel_option: 'B',
+      decided_by_name: 'Linh Tran',
+      scope: 'firm_template',
+      intent: 'Firm standard.',
+      assertion: { kind: 'scope_exists', label: 'Appendix C' },
+    });
+    expect(fake.calls.find((c) => c.path === '/api/counsel/answers')?.body).toMatchObject({
+      option: 'B',
+      scope: 'firm_template',
+      intent: 'Firm standard.',
+      assertion: { kind: 'scope_exists', label: 'Appendix C' },
+    });
+  });
+
+  it('refuses a firm_template answer without intent before any request (no write budget spent)', async () => {
+    const { api, fake } = make();
+    await api.bootstrap('Linh Tran');
+    const before = fake.calls.length;
+    await expect(
+      api.answer({
+        client_op_id: op(),
+        law_firm_id: FIRM,
+        question_id: 'q_1',
+        quote_text: 'the quote',
+        fingerprint: FP,
+        issue_class: 'broken_cross_reference',
+        counsel_option: 'A',
+        decided_by_name: 'Linh Tran',
+        scope: 'firm_template',
+      }),
+    ).rejects.toMatchObject({ code: 'invalid_request', reason: 'intent_required' });
+    expect(fake.calls.length).toBe(before);
+  });
+});

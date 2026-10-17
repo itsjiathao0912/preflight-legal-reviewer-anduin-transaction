@@ -500,4 +500,46 @@ describe('outbox', () => {
     await box.drain();
     expect((await box.list())[0]!.state).toBe('synced');
   });
+
+  it('variance: terminal answer ops drop intent and the assertion label; the question carries owner', async () => {
+    const f = flaky();
+    const { box } = outbox(f.api);
+    await box.enqueueAnswer(
+      DOC,
+      {
+        client_op_id: op(),
+        law_firm_id: DOC.law_firm_id!,
+        quote_text: 'answer quote',
+        fingerprint: FP,
+        issue_class: 'broken_cross_reference',
+        counsel_option: 'A',
+        decided_by_name: 'Linh Tran',
+        scope: 'firm_template',
+        intent: 'private intent text',
+        assertion: { kind: 'scope_exists', label: 'secret appendix label' },
+      },
+      {
+        finding_ref: 'f1',
+        fingerprint: FP,
+        interpretations: ['A', 'B'],
+        owner: 'gp',
+        owner_source: 'override',
+      },
+    );
+    await box.drain();
+    const sent = f.calls.find((c) => c.m === 'answer')!.args[0];
+    expect(sent).toMatchObject({
+      scope: 'firm_template',
+      intent: 'private intent text',
+      assertion: { kind: 'scope_exists', label: 'secret appendix label' },
+    });
+    const asked = f.calls.find((c) => c.m === 'createQuestions')!.args[1] as unknown[];
+    expect(asked[0]).toMatchObject({ owner: 'gp', owner_source: 'override' });
+    const rows = await box.list();
+    expect(rows[0]!.state).toBe('synced');
+    const raw = JSON.stringify(await db.outbox.toArray());
+    for (const secret of ['private intent text', 'secret appendix label', 'answer quote'])
+      expect(raw).not.toContain(secret);
+    expect(raw).toContain('firm_template'); // scope is an enum, kept
+  });
 });

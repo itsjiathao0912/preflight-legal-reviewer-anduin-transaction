@@ -56,6 +56,9 @@ export function createFakeMemoryFetch(opts: FakeMemoryOptions = {}) {
   const runKeys = new Map<string, string>();
   const decisions: Json[] = [];
   const questions = new Map<string, { fingerprint: string; law_firm_id: string }>();
+  // Variance Phase 03: regression checks (Worker: per workspace AND firm, cap 20)
+  const checks: (Json & { id: string; law_firm_id: string })[] = [];
+  let lookupCalls = 0;
   const rules = new Map<string, Json & { law_firm_id: string }>();
   const audit: Json[] = [];
   const calls: FakeCall[] = [];
@@ -72,7 +75,8 @@ export function createFakeMemoryFetch(opts: FakeMemoryOptions = {}) {
   const fetchImpl = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
     const url = new URL(typeof input === 'string' ? input : input.toString(), 'http://fake.local');
     const method = (init.method ?? 'GET').toUpperCase();
-    const body = (init.body ? JSON.parse(String(init.body)) : {}) as Json;
+    const rawBody = init.body ? String(init.body) : '';
+    const body = (rawBody ? JSON.parse(rawBody) : {}) as Json;
     const path = url.pathname;
     calls.push({
       method,
@@ -146,6 +150,9 @@ export function createFakeMemoryFetch(opts: FakeMemoryOptions = {}) {
       const run = runs.get(m[1]!);
       if (!run) return err(400, 'invalid_request', 'run_not_found');
       if (m[2] === 'findings') {
+        // the Worker refuses a findings body over FINDINGS_BODY_CAP (128 KB) before parsing
+        if (new TextEncoder().encode(rawBody).length > 128 * 1024)
+          return err(413, 'payload_too_large', 'body');
         const list = (body.findings as { id: string }[]) ?? [];
         if (list.length < 1 || list.length > 25) return err(400, 'invalid_request', 'findings');
         let stored = 0;
@@ -211,24 +218,62 @@ export function createFakeMemoryFetch(opts: FakeMemoryOptions = {}) {
       const q = questions.get(String(body.question_id));
       if (!q) return err(400, 'invalid_request', 'question_not_found');
       if (q.fingerprint !== body.fingerprint) return err(422, 'fingerprint_mismatch');
+      const intent = typeof body.intent === 'string' ? body.intent : undefined;
+      const scope = body.scope as string | undefined;
+      const assertion = body.assertion as { kind?: string; label?: string } | undefined;
+      if (scope === 'firm_template' && (intent ?? '').trim().length === 0)
+        return err(400, 'invalid_request', 'schema');
+      if (assertion !== undefined && scope !== 'firm_template')
+        return err(400, 'invalid_request', 'schema');
+      if (assertion) {
+        const active = checks.filter((c) => c.law_firm_id === q.law_firm_id);
+        if (active.length >= 20) return err(400, 'invalid_request', 'regression_check_cap');
+        const key = String(assertion.label ?? '')
+          .toLowerCase()
+          .replace(/\s+/g, ' ')
+          .trim();
+        checks.push({
+          id: id('rc'),
+          law_firm_id: q.law_firm_id,
+          assertion_kind: 'scope_exists',
+          assertion_key: key,
+          statement_text: `${key} must exist`,
+          source_fund_name: '',
+        });
+        record('regression_check_created', q.law_firm_id);
+      }
       record('answer_recorded', q.law_firm_id);
-      return json(200, {
-        answer_id: id('ans'),
-        decision: {
-          id: id('d'),
-          fingerprint: body.fingerprint,
-          status: 'active',
-          decision: 'answered',
-          counsel_option: body.option,
-          fund_name: '',
-          decided_by_name: 'Fake Analyst',
-          decided_at: now(),
-        },
-      });
+      const answered = {
+        id: id('d'),
+        fingerprint: body.fingerprint,
+        status: 'active',
+        decision: 'answered',
+        counsel_option: body.option,
+        ...(intent ? { intent } : {}),
+        ...(scope ? { scope } : {}),
+        fund_name: '',
+        decided_by_name: 'Fake Analyst',
+        decided_at: now(),
+      };
+      // the Worker writes a superseding `answered` decision (Variance: lookup must see it)
+      for (const p of decisions)
+        if (
+          p.fingerprint === answered.fingerprint &&
+          p.law_firm_id === q.law_firm_id &&
+          p.status === 'active'
+        )
+          p.status = 'superseded';
+      decisions.push({ ...answered, law_firm_id: q.law_firm_id });
+      return json(200, { answer_id: id('ans'), decision: answered });
     }
     if (method === 'POST' && path === '/api/memory/lookup') {
+      lookupCalls++;
       const fps = new Set((body.fingerprints as string[]) ?? []);
+      if (fps.size < 1 || fps.size > 200) return err(400, 'invalid_request', 'schema');
       return json(200, {
+        regression_checks: checks
+          .filter((c) => c.law_firm_id === body.law_firm_id)
+          .map(({ law_firm_id: _f, ...c }) => c),
         decisions: decisions
           .filter(
             (d) =>
@@ -308,5 +353,5 @@ export function createFakeMemoryFetch(opts: FakeMemoryOptions = {}) {
     }
     return err(404, 'invalid_request', 'not_found');
   };
-  return { fetch: fetchImpl as typeof fetch, calls };
+  return { fetch: fetchImpl as typeof fetch, calls, lookupCalls: () => lookupCalls };
 }
