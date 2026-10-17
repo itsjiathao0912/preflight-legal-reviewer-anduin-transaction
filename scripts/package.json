@@ -27,7 +27,9 @@
     "probe:live-session": "tsx src/live/probe-session.ts",
     "probe:live-ai": "tsx src/live/probe-ai.ts",
     "shots:live": "tsx src/screenshots/shots-live.ts",
-    "deploy:preflight": "tsx src/deploy/preflight.ts"
+    "deploy:preflight": "tsx src/deploy/preflight.ts",
+    "package:fixtures": "tsx src/fixtures/make-package.ts",
+    "package:facts-extract": "tsx src/fixtures/package-facts-extract.ts"
   },
   "dependencies": {
     "@aduin/core": "workspace:*",

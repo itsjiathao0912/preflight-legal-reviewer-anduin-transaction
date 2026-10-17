@@ -9,6 +9,7 @@ import { buildFixtures, DIFF_DIR, SEEDED_DIR } from './build-seeded';
 import { ROOT } from './find-shared-passages';
 import { buildDocxFixtures, DOCX_DIR, sameDocx } from './make-docx';
 import { buildPdfFixtures, PDF_CROP, PDF_DIR } from './make-pdf';
+import { buildPackageFixtures, PACKAGE_DIR, REAL_FACTS_KEYS } from './make-package';
 import { OcrResultSchema } from '@aduin/core';
 import {
   OCR_PRECOMPUTED_DIR,
@@ -125,6 +126,46 @@ if (existsSync(join(OCR_PRECOMPUTED_DIR, 'index.json'))) {
   }
   for (const f of strayPrecomputed()) problems.push(`stray: apps/web/public/precomputed/ocr/${f}`);
 }
+// Intake Phase 1: package fixtures (hartwell, design copies, expected/schema/demo JSON) rebuilt
+// in memory; DOCX by zip entries; real-facts are checked for shape only (derived from local files).
+const freshPkg = await buildPackageFixtures();
+for (const [rel, content] of freshPkg) {
+  const abs = join(ROOT, rel);
+  if (!existsSync(abs)) problems.push(`missing: ${rel}`);
+  else if (typeof content === 'string') {
+    if (readFileSync(abs, 'utf8') !== content) problems.push(`drift: ${rel}`);
+  } else if (rel.startsWith(`${PACKAGE_DIR}/hartwell/`) && rel.endsWith('.docx')) {
+    if (!sameDocx(readFileSync(abs), content)) problems.push(`drift: ${rel}`);
+  } else if (!content.equals(readFileSync(abs))) problems.push(`drift: ${rel}`);
+}
+const walkPkg = (rel: string) => {
+  const abs = join(ROOT, rel);
+  if (!existsSync(abs)) return;
+  for (const f of readdirSync(abs)) {
+    const r = `${rel}/${f}`;
+    if (statSync(join(ROOT, r)).isDirectory()) walkPkg(r);
+    else if (r.startsWith(`${PACKAGE_DIR}/real-facts/`)) {
+      try {
+        const j = JSON.parse(readFileSync(join(ROOT, r), 'utf8')) as Record<string, unknown>;
+        const keys = Object.keys(j);
+        const titles = j.titleLines as unknown;
+        if (
+          keys.join(',') !== REAL_FACTS_KEYS.join(',') ||
+          !Array.isArray(titles) ||
+          titles.length > 12 ||
+          titles.some((t) => typeof t !== 'string' || t.length > 200) ||
+          typeof j.headText !== 'string' ||
+          j.headText.length > 1500
+        )
+          problems.push(`bad shape: ${r}`);
+      } catch {
+        problems.push(`invalid JSON: ${r}`);
+      }
+    } else if (!freshPkg.has(r)) problems.push(`stray: ${r}`);
+  }
+};
+walkPkg(PACKAGE_DIR);
+
 if (problems.length) {
   console.error(`fixtures:check FAILED (${problems.length})`);
   for (const p of problems) console.error(`  ${p}`);
