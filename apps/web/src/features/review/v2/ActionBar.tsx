@@ -1,0 +1,78 @@
+import { Icon } from '../../../components/ui/icon';
+import type { Row } from '../model';
+import { barState } from './action-plan';
+import type { Control } from './types';
+
+/** Tooltip on a disabled "Move back to review" (a recorded answer would be dropped locally). */
+export const MOVE_BACK_ANSWERED =
+  'An answer is recorded for this finding; it cannot be moved back.';
+
+/**
+ * D1, D3: one sticky bar for the open finding. Two equal buttons for an open row (or nothing open,
+ * both disabled); "Move back to review" for a row already sent or closed.
+ */
+export function ActionBar({
+  row,
+  busy,
+  askDisabled,
+  askTitle,
+  onControl,
+}: {
+  row: Row | null;
+  busy: boolean;
+  askDisabled: boolean;
+  askTitle: string | undefined;
+  onControl(c: Control): void;
+}) {
+  const st = barState(row);
+  return (
+    <div
+      className="fv2-bar"
+      data-testid="action-bar"
+      role="group"
+      aria-label="Actions for the open finding"
+    >
+      {st.primary === 'move-back' ? (
+        <button
+          type="button"
+          className="btn fv2-btn fv2-btn-outline"
+          data-testid="action-restore"
+          data-action="move-back"
+          disabled={busy || !st.moveBackEnabled}
+          title={st.moveBackEnabled ? undefined : MOVE_BACK_ANSWERED}
+          onClick={() => onControl('move-back')}
+        >
+          <Icon name="undo" />
+          Move back to review
+        </button>
+      ) : (
+        <>
+          <button
+            type="button"
+            className="btn pri fv2-btn fv2-btn-fill"
+            data-testid="action-counsel"
+            data-action="ask-counsel"
+            disabled={busy || row === null || askDisabled}
+            title={askDisabled ? askTitle : row ? `${st.labels.ask} (C)` : undefined}
+            onClick={() => onControl('ask-counsel')}
+          >
+            <Icon name="counsel" />
+            {st.labels.ask}
+          </button>
+          <button
+            type="button"
+            className="btn fv2-btn fv2-btn-outline"
+            data-testid="action-dismiss"
+            data-action="close-issue"
+            disabled={busy || !st.closeEnabled}
+            title={row ? `${st.labels.close} (X)` : undefined}
+            onClick={() => onControl('close-issue')}
+          >
+            <Icon name="x" />
+            {st.labels.close}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
