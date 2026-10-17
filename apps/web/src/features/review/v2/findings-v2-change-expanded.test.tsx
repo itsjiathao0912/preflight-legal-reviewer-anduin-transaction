@@ -138,6 +138,11 @@ describe('findings-v2-change-expanded', () => {
     );
     expect(body.textContent).toContain('Change vs baseline');
     expect(body.querySelector('[data-testid="action-counsel"]')).toBeNull();
+    // B1 rule-row parity parts (P-11, G9-G11) stay out of change rows; the bar keeps P-5 copy
+    expect(body.querySelector('[data-testid="finding-expected"]')).toBeNull();
+    expect(body.querySelector('[data-testid="finding-dismissed-reason"]')).toBeNull();
+    expect(body.querySelector('.memnote')).toBeNull();
+    expect(q('[data-testid="action-dismiss"]')!.textContent).not.toBe('Re-confirm dismissal');
   });
 
   it('should take regression owners from regression meta (E23)', async () => {

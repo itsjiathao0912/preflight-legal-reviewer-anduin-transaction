@@ -1,6 +1,6 @@
 import type { ReasonCode } from '@aduin/core';
 import { useCallback, useRef, useState } from 'react';
-import { useReview, type OwnerAsk } from '../../../state/review';
+import { memoryNotSavedNote, useReview, type OwnerAsk } from '../../../state/review';
 import { nextToReview, planControl } from './action-plan';
 import { flatOrder, groupRows } from './groups';
 import { computeOutcome, type OutcomeAction } from './outcome';
@@ -58,8 +58,13 @@ export function useFindingActions(view: ReviewView): FindingActions {
         setBusy(false);
       }
       const st = useReview.getState();
+      // P-12: keep the store's "not saved to memory" note (withNote) on the replaced toast text
+      const note = memoryNotSavedNote(st.doc);
+      const kept = st.toast?.msg ?? '';
+      const text =
+        note && kept.trimEnd().endsWith(note) ? `${outcome.text.trimEnd()} ${note}` : outcome.text;
       if (opts.next === 'next-review') st.select(nextToReview(flat, id));
-      st.showToast(outcome.text, opts.undo ? (useReview.getState().toast?.undo ?? null) : null);
+      st.showToast(text, opts.undo ? (useReview.getState().toast?.undo ?? null) : null);
     },
     [],
   );

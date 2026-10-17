@@ -8,11 +8,21 @@ import { useCounsel } from '../../counsel/counsel-store';
 import { EMPTY_DRAFTS, wordingFor } from '../../counsel/sheet-model';
 import { memoryLabelText } from '../memory-labels';
 import type { Row } from '../model';
+import { reasonLabel } from '../reasons';
 import { SEV } from '../severity';
 import { isBlocking } from './groups';
 import { QuoteBody } from './QuoteBody';
 
 const letter = (i: number): string => String.fromCharCode(65 + i);
+
+/** Same date format as the superseded FindingRow (copied, E-B4: that file is removed in B6). */
+function fmtDate(ms: number): string {
+  return new Date(ms).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
 
 /**
  * D6 expanded block for rule and AI rows, stacked: severity line (+ "AI agrees"), What's wrong,
@@ -32,6 +42,9 @@ export function ExpandedBlock({ row, twin }: { row: Row; twin?: FindingView | un
   const question = wordingFor(row, drafts).text;
   const qOpen = isBlocking(row) || readings.length > 0;
   const hint = readings.length ? 'Counsel will choose A or B' : 'Counsel will confirm the wording';
+  const reconfirm = row.label === 'dismissed_reconfirm' && row.status !== 'dismissed';
+  const prior = row.label !== 'new' ? row.prior : undefined;
+  const dismissedReason = row.status === 'dismissed' ? row.triage?.reasonCode : undefined;
   return (
     <>
       <p className="fv2-sec-h">
@@ -55,16 +68,43 @@ export function ExpandedBlock({ row, twin }: { row: Row; twin?: FindingView | un
             {AI_SUGGESTION}
           </span>
         ) : null}
-        {row.label !== 'new' ? (
-          <span className="fv2-tag" data-testid="finding-memory-tag">
-            <Icon name="memory" />
-            {memoryLabelText(row.label, row.prior?.fund_name)}
-          </span>
-        ) : null}
+        <span className="fv2-tag" data-testid="finding-memory-tag">
+          {row.label !== 'new' ? <Icon name="memory" /> : null}
+          {memoryLabelText(row.label, row.prior?.fund_name)}
+        </span>
       </p>
+      {prior ? (
+        <p className="memnote">
+          <b>{prior.decided_by_name}</b>{' '}
+          {prior.decision === 'dismissed'
+            ? 'dismissed'
+            : prior.decision === 'accepted'
+              ? 'accepted'
+              : 'recorded counsel’s answer on'}{' '}
+          this in {prior.fund_name || 'another fund'} on {fmtDate(prior.decided_at)}
+          {prior.reason_code ? ` (${reasonLabel(prior.reason_code)})` : ''}.
+          {reconfirm
+            ? ' Blocks digitization, so it stays in the main list until you re-confirm.'
+            : ''}
+        </p>
+      ) : null}
+      {dismissedReason ? (
+        <div className="fv2-sec" data-testid="finding-dismissed-reason">
+          <p className="dim">{`Reason: ${reasonLabel(dismissedReason)}`}</p>
+          {row.triage?.note ? <p className="dim">{row.triage.note}</p> : null}
+        </div>
+      ) : null}
       <div className="fv2-sec">
         <p className="fv2-sec-h">What’s wrong</p>
         <p>{f.detail.explanation}</p>
+        {f.detail.expected || f.found ? (
+          <dl>
+            <dt>Expected</dt>
+            <dd data-testid="finding-expected">{f.detail.expected ?? '—'}</dd>
+            <dt>Found</dt>
+            <dd data-testid="finding-found">{f.found ?? '—'}</dd>
+          </dl>
+        ) : null}
       </div>
       <blockquote className="fv2-quote" data-testid="finding-quote">
         <QuoteBody row={row} />

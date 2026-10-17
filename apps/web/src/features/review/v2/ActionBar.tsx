@@ -7,6 +7,9 @@ import type { Control } from './types';
 export const MOVE_BACK_ANSWERED =
   'An answer is recorded for this finding; it cannot be moved back.';
 
+/** P-14 bar label for a row whose dismissal in another fund must be re-confirmed. */
+export const RECONFIRM_LABEL = 'Re-confirm dismissal';
+
 /**
  * D1, D3: one sticky bar for the open finding. Two equal buttons for an open row (or nothing open,
  * both disabled); "Move back to review" for a row already sent or closed.
@@ -25,6 +28,8 @@ export function ActionBar({
   onControl(c: Control): void;
 }) {
   const st = barState(row);
+  // P-14: a memory re-confirm row keeps the old "Re-confirm dismissal" wording on the bar
+  const closeLabel = row?.label === 'dismissed_reconfirm' ? RECONFIRM_LABEL : st.labels.close;
   return (
     <div
       className="fv2-bar"
@@ -65,11 +70,11 @@ export function ActionBar({
             data-testid="action-dismiss"
             data-action="close-issue"
             disabled={busy || !st.closeEnabled}
-            title={row ? `${st.labels.close} (X)` : undefined}
+            title={row ? `${closeLabel} (X)` : undefined}
             onClick={() => onControl('close-issue')}
           >
             <Icon name="x" />
-            {st.labels.close}
+            {closeLabel}
           </button>
         </>
       )}

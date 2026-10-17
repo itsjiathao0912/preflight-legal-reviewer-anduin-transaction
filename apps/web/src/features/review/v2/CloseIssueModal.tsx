@@ -19,11 +19,14 @@ export function CloseIssueModal({
   open,
   onClose,
   onSubmit,
+  focusAfterClose,
 }: {
   row: Row | null;
   open: boolean;
   onClose(): void;
   onSubmit(key: CloseReasonKey, note: string): Promise<void> | void;
+  /** P-15: called when the dialog has closed; `saved` is true after a successful save. */
+  focusAfterClose?(saved: boolean): void;
 }) {
   const [key, setKey] = useState<CloseReasonKey | null>(null);
   const [note, setNote] = useState('');
@@ -31,6 +34,7 @@ export function CloseIssueModal({
   const [saving, setSaving] = useState(false);
   const first = useRef<HTMLInputElement>(null);
   const noteRef = useRef<HTMLTextAreaElement>(null);
+  const saved = useRef(false);
 
   useEffect(() => {
     if (open) {
@@ -38,6 +42,7 @@ export function CloseIssueModal({
       setNote('');
       setError(null);
       setSaving(false);
+      saved.current = false;
     }
   }, [open]);
 
@@ -57,6 +62,7 @@ export function CloseIssueModal({
     setSaving(true);
     try {
       await onSubmit(key, note.trim());
+      saved.current = true;
     } finally {
       setSaving(false);
     }
@@ -73,6 +79,11 @@ export function CloseIssueModal({
       onOpenAutoFocus={(e) => {
         e.preventDefault();
         first.current?.focus();
+      }}
+      onCloseAutoFocus={(e) => {
+        if (!focusAfterClose) return;
+        e.preventDefault();
+        focusAfterClose(saved.current);
       }}
     >
       <form noValidate onSubmit={(e) => void submit(e)} className="dform">

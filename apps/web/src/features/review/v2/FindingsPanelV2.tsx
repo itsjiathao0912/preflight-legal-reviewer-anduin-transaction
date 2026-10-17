@@ -88,6 +88,19 @@ export function FindingsPanelV2({ view }: { view: ReviewView }) {
     setModalFor(null);
   };
 
+  // P-15: after a save focus the newly selected row; after Esc or Cancel return to the bar button
+  const focusAfterClose = (saved: boolean) => {
+    const root = width.ref.current;
+    if (!root) return;
+    const id = saved ? useReview.getState().selectedId : null;
+    const rowBtn = id
+      ? Array.from(root.querySelectorAll<HTMLElement>('[data-testid="finding-row"]')).find(
+          (el) => el.getAttribute('data-finding-id') === id,
+        )
+      : undefined;
+    (rowBtn ?? root.querySelector<HTMLElement>('[data-testid="action-dismiss"]'))?.focus();
+  };
+
   const showKind = ready && !!doc?.firmId;
   const lines = vDoc === doc?.id ? varianceLines({ line: vLine, ignored: vIgnored }) : [];
   const empty = view.visible.length
@@ -176,6 +189,7 @@ export function FindingsPanelV2({ view }: { view: ReviewView }) {
         open={modalFor !== null}
         onClose={() => setModalFor(null)}
         onSubmit={onSubmitClose}
+        focusAfterClose={focusAfterClose}
       />
     </aside>
   );

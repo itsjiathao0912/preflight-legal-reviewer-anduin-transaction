@@ -382,6 +382,102 @@ describe('findings-v2-panel-ui', () => {
     );
   });
 
+  it('should render Expected and Found with the kept ids inside What\u2019s wrong (P-11)', () => {
+    const ef = h.fv('e7', 'high', {
+      detail: { explanation: 'x', facts: {}, interpretations: [], expected: 'Section 4' },
+      found: 'Section 9',
+    } as never);
+    seed({}, 'e7');
+    mount({ errors: [ef] });
+    expect(q('[data-testid="finding-expected"]')!.textContent).toBe('Section 4');
+    expect(q('[data-testid="finding-found"]')!.textContent).toBe('Section 9');
+  });
+
+  it('should show the New memory tag, the re-confirm bar label and the prior-decision note (P-14, G10, G11)', () => {
+    seed({}, 'e1');
+    mount({ errors: [E1] });
+    expect(q('[data-testid="finding-memory-tag"]')!.textContent).toBe('New');
+    expect(q('[data-testid="action-dismiss"]')!.textContent).toBe('Close issue');
+    expect(q('.memnote')).toBeNull();
+    mounted!.unmount();
+    mounted = null;
+    const prior = {
+      decided_by_name: 'Dana',
+      decision: 'dismissed',
+      fund_name: 'Fund II',
+      decided_at: Date.UTC(2026, 0, 5),
+      reason_code: 'no_form_impact',
+    };
+    const Patch = () => {
+      const triage = useReview((s) => s.triage);
+      const view = useMemo(() => {
+        const v = h.makeView([E1], triage);
+        const rows = v.rows.map((r) => ({
+          ...r,
+          label: 'dismissed_reconfirm' as const,
+          prior: prior as never,
+        }));
+        return { ...v, rows, main: rows, visible: rows };
+      }, [triage]);
+      return <FindingsPanelV2 view={view} />;
+    };
+    seed({}, 'e1');
+    mounted = h.renderV2(<Patch />);
+    expect(q('[data-testid="action-dismiss"]')!.textContent).toBe('Re-confirm dismissal');
+    expect(q('[data-testid="action-dismiss"]')!.getAttribute('title')).toBe(
+      'Re-confirm dismissal (X)',
+    );
+    expect(q('[data-testid="finding-memory-tag"]')!.textContent).toBe(
+      'Dismissed in Fund II, re-confirm',
+    );
+    const memo = q('.memnote')!.textContent!;
+    expect(memo).toContain(
+      'Dana dismissed this in Fund II on 5 Jan 2026 (Does not affect the form).',
+    );
+    expect(memo).toContain(
+      'Blocks digitization, so it stays in the main list until you re-confirm.',
+    );
+  });
+
+  it('should show "Reason: <label>" as one text node on a dismissed row (G9)', () => {
+    useFilters.setState({ status: 'all' });
+    seed({ e2: { status: 'dismissed', reasonCode: 'no_form_impact', note: 'n1' } }, 'e2');
+    mount({ errors: [E1, E2] });
+    const line = q('[data-testid="finding-dismissed-reason"] p')!;
+    expect(line.childNodes).toHaveLength(1);
+    expect(line.textContent).toBe('Reason: Does not affect the form');
+    expect(q('[data-testid="finding-dismissed-reason"]')!.textContent).toContain('n1');
+    expect(q('[data-testid="action-restore"]')).not.toBeNull();
+  });
+
+  it('should return focus to Close issue after Cancel and to the next row after a save (P-15)', async () => {
+    const tick = () =>
+      act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+    dismiss = vi.fn(async (id: string, reasonCode: string) => {
+      writeTriage(id, { status: 'dismissed', reasonCode } as Triage);
+      useReview.setState({ selectedId: 'e3' });
+      return 'e3';
+    });
+    useReview.setState({ dismiss } as never);
+    seed({}, 'e2');
+    mount({ errors: [E1, E2, E3] });
+    click(q('[data-testid="action-dismiss"]'));
+    click(h.queryDoc('[data-testid="dismiss-cancel"]'));
+    await tick();
+    expect(document.activeElement).toBe(q('[data-testid="action-dismiss"]'));
+    click(q('[data-testid="action-dismiss"]'));
+    click(h.queryDoc('[data-reason="tool_false_alarm"]'));
+    await act(async () => {
+      (h.queryDoc('[data-testid="dismiss-save"]') as HTMLButtonElement).click();
+    });
+    await flush();
+    await tick();
+    expect(dismiss).toHaveBeenCalledWith('e2', 'tool_false_alarm', '');
+    expect(document.activeElement).toBe(row('e3'));
+  });
+
   it('should list dismissed rows in Closed with the Status filter set to all (P-7) and show done', () => {
     useFilters.setState({ status: 'all' });
     seed({

@@ -14,7 +14,7 @@ vi.mock('../../ai/ai-lane', () => ({
   setAiSink: () => undefined,
 }));
 
-const { useReview } = await import('../../../state/review');
+const { useReview, memoryNotSavedNote } = await import('../../../state/review');
 const { useOwners } = await import('../../variance/owner-store');
 const { useFindingActions } = await import('./use-finding-actions');
 const { computeOutcome } = await import('./outcome');
@@ -101,6 +101,39 @@ describe('findings-v2-actions-flow', () => {
     expect(toast.msg).toBe(expected);
     expect(toast.msg.startsWith('Sent to counsel · Counsel questions now 1 · Gate')).toBe(true);
     expect(toast.undo).toBe(undoFn);
+  });
+
+  it('should keep the store memory note on the outcome toast for a firm-less accept (P-12)', async () => {
+    const note = memoryNotSavedNote(DOC);
+    expect(note).not.toBe('');
+    const accept = withToast(`Finding accepted. ${note}`);
+    useReview.setState({ accept, selectedId: 'e1' });
+    const view = h.makeView([E1, E2, E3]);
+    const a = mount(view);
+    await act(async () => {
+      await a.ask('e1');
+    });
+    const base = computeOutcome({
+      rows: view.rows,
+      id: 'e1',
+      action: 'ask-counsel',
+      result: RESULT,
+      policy: undefined,
+    }).text;
+    expect(useReview.getState().toast!.msg).toBe(`${base.trimEnd()} ${note}`);
+    expect(useReview.getState().toast!.undo).toBe(undoFn);
+  });
+
+  it('should not add a memory note when the store toast has none (P-12)', async () => {
+    const needsCounsel = withToast('Added to the counsel questions draft.');
+    useReview.setState({ needsCounsel });
+    const a = mount(h.makeView([E1, E2, E3]));
+    await act(async () => {
+      await a.ask('e2');
+    });
+    const msg = useReview.getState().toast!.msg;
+    expect(msg.startsWith('Sent to counsel')).toBe(true);
+    expect(msg).not.toContain(memoryNotSavedNote(DOC));
   });
 
   it('should send a non-blocking row with needsCounsel(id) only (AC-2)', async () => {
