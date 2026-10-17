@@ -118,3 +118,16 @@ F1-F8 and F11 are resolved. The items below are non-blocking.
 | P8-1 | Compare diff-only "Version drift" counsel questions: stub `process/general-plans/backlog/phase08-version-drift-questions_NOTE_17-10-26.md` (not built in Phase 08) | later |
 | P8-2 | Live AI counsel-draft quality is Known-Gap (recorded replay in CI); include in the Phase 10 live-model sweep | 10 |
 | P8-3 | Re-measure `rows_written` on the deployed Worker including the Phase 08 session bootstrap and outbox write volume; real D1 and Turnstile are live only in Phase 10 | 10 |
+
+## Phase 08b follow-ups (firm memory UI; APPROVE_WITH_FIXES, M1/m1/m4 and NITs fixed and confirmed at 2de6749; 2026-10-17)
+
+Memory-page polish. All non-blocking; none is a SPEC AC.
+
+| # | Item | Owner phase |
+|---|---|---|
+| P8b-1 (m2) | A quiet refetch after a write drops the older audit pages already loaded with "Show older entries"; keep or re-fetch them | later |
+| P8b-2 (m3) | The "Reopened" list includes undo/restore revokes (`decision_revoked` events from other causes); filter them out or relabel the status "Revoked" | later |
+| P8b-3 (m5) | A failed quiet refetch replaces valid on-screen data with the "Memory unavailable" state; keep the stale data and show a quiet error | later |
+| P8b-4 (NIT) | Audit row aria-labels expose raw ids; "What memory keeps" popover role; a one-frame flash when the firm changes | later |
+| P8b-5 | Browser-driven AI run echoing `meta.rules_hash8` (AC51 residual): stub `process/general-plans/backlog/memory-ui-ai-rules-echo-browser_NOTE_17-10-26.md` | 10 |
+| P8b-6 | Demo/video note: a direct `#memory` deep link lands on `#findings` on first load by design (`use-shell-effects` resets the hash); open a document, then use the sidebar Memory item. Revisit if a deep-link demo is wanted | 10 / later |

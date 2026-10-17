@@ -5,7 +5,7 @@ status: COMPLETE
 feature: subdoc-qa-mvp
 plan: process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-08b-memory-ui_PLAN_17-10-26.md
 name: report:subdoc-qa-mvp-phase-08b-memory-ui
-description: "Phase 08b EXECUTE report: #memory screen (Decisions, Rules, Audit trail) over the Phase 08 MemoryApi; all gates green; no commit"
+description: "Phase 08b EXECUTE report: #memory screen (Decisions, Rules, Audit trail) over the Phase 08 MemoryApi; all gates green; EVL + review closed; UPDATE PROCESS done"
 metadata:
   node_type: memory
   type: report
@@ -190,3 +190,33 @@ None.
 - **NIT, fixed.** `no-e2e-hook-in-dist` asserts `useRealMemory` is absent in production and present in the e2e build. `memory.css` hex literals replaced with `var(--ink)` / `var(--accent)`. The Reopen snapshot stores the entered reason (ReopenDialog passes it to `onDone`).
 
 Gates: web unit 196/196 (incl. review-sync 13, memory-join, no-e2e-hook-in-d 2/2); e2e preview memory-ui-decisions 11, memory-ui-rules 7, memory-ui-audit 1, counsel-gate 4, gate-pill 3, counsel-answer 3, sample-picker-smoke 2; full preview 157 passed / 1 skipped; `pnpm typecheck` and `pnpm lint` clean. stack-memory not run (no change to its surface).
+
+## Closeout (UPDATE PROCESS, 2026-10-17)
+
+**Commits:** 54ddaae (feat: memory screen), 2de6749 (review fixes). Process commit follows this closeout.
+
+**Classification:** Keep in program task folder (umbrella plan stays active; Phase 08b itself is DONE and verified). Drift score: HIGH (5 signals: more than 10 files touched, review-driven fix cycle, 3+ memory-worthy observations such as the `useRealMemory` seam, registry/umbrella structural changes, deviations P1-P6). Strongly recommend UPDATE PROCESS -- harness/protocol files touched (no harness files changed; context docs, registry and umbrella were updated here).
+
+**Review:** vc-code-reviewer APPROVE_WITH_FIXES. M1 (reopening an answered decision left the local counsel answer, so the gate stayed Ready) fixed in 2de6749 and independently CONFIRMED FIXED. m1 (reopen wiped unrelated triage fields), m4 (dialog closed mid-write) and the NITs (`useRealMemory` asserted absent from production, `memory.css` hex literals to tokens, reopen snapshot keeps its reason) fixed. No evidence pack required (no auth, billing, migration or API change; the e2e switch is compiled out of production).
+
+**EVL:** cycle 1 on 54ddaae all green (web unit 194, preview e2e 157 + 1 opt-in skip, stack-memory 10, core 2914, Worker firm-rule tokens, typecheck, lint, `guard:cf`, `secrets:scan`, `slice:check`). Cycle 2 on 2de6749 all green (web unit 196, preview 157 + 1 skip, stack-memory 10, `counsel-gate` 4, `gate-pill` 3, plus the same repo gates). `closeout_classification: CLEAN`. TSV rows 77-78 (final HALTED_SUCCESS).
+
+### SPEC Achievement
+
+| AC | Result | Proven by |
+|---|---|---|
+| AC52 [P1] firm memory page lists decisions and rules, filters by issue class, reopens a decision | met | `memory-ui-decisions` (11), Fully-Automated |
+| AC54 [P1] proposed rule has no effect until approved; approval active and audited; reject stays inactive | met | `memory-ui-rules` (7) + Worker `proposed-rule-never-injected` (2), Fully-Automated |
+| AC50 [P1] closing: Reopen revokes, finding is New next review | met | two reopen cases in `memory-ui-decisions`; M1 follow-up covered by the review-sync unit case and `counsel-gate` |
+| AC53 [P1] closing: proposal visible with evidence | met | `memory-ui-rules` + 04b `rule-proposal-threshold-matrix` |
+| AC55 [P0] closing: audit trail viewable, filters by action group | met | `memory-ui-audit` (1) + Phase 08 `audit-trail-append-only` |
+| AC51 [P1] closing: active rule reaches AI as context, never a filter, never another firm | met for context and isolation (Worker gates + Hybrid `stack-memory-firm-rules`); browser-driven AI run echoing `meta.rules_hash8` is unmet | residual stub `process/general-plans/backlog/memory-ui-ai-rules-echo-browser_NOTE_17-10-26.md` (Phase 10 live probe) |
+
+## SPEC Gaps
+
+- AC51 browser-driven `meta.rules_hash8` echo: unmet, Known-Gap residual with a backlog stub (exists on disk). It does not make any developed behavior vacuously green: every other AC above has a passing automated or Hybrid gate.
+- Memory-page polish (review m2, m3, m5 and NITs): not SPEC ACs; backlog row P8b-1 in `process/general-plans/backlog/core-followups_17-10-26/core-followups_REF_17-10-26.md`.
+
+**Known Gaps verification:** `memory-ui-ai-rules-echo-browser_NOTE_17-10-26.md` exists (no `BACKLOG_NOTE_MISSING`).
+
+**Next valid state:** missing-target cross-reference detector (P6-1, P1, corpus check on the 13 sample docs), then Phase 10. Deploy of the 08b web build is handled separately; the new live version id is recorded by the orchestrator.

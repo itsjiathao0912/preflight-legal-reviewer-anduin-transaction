@@ -248,6 +248,23 @@ Whole suites, independent serial EVL: core 76 files / 2914, worker 65 files / 52
 - **Interim AC59/AC60** is asserted by `memory-prior-answer` from `fixtures/memory/fund-expectations.json`: fund II 8 findings, 5 handled, 3 need action, 62.5% fewer; final runs in Phase 10.
 - Residual: the read-only demo cookie is not minted for real (response rewrite in the spec plus the worker test `session-cookie-workerd`); live AI counsel-draft quality is a Known-Gap.
 
+## Phase 08b gate tokens and the memory e2e seam (counts at HEAD 2de6749)
+
+Whole suites, serial EVL: web unit 27 files / 196, preview e2e 157 passed plus 1 opt-in skip, `stack-memory` 10 passed, core 2914 (unchanged), Worker unchanged. One token per call, no `--`.
+
+| Package | Tokens |
+|---|---|
+| web unit | `memory-join` (5 cases), `review-sync` (13, incl. reopen clears a counsel answer, reopen keeps unrelated triage fields), `no-e2e-hook-in-d` (also asserts `useRealMemory` is absent from the production build and present in the e2e build) |
+| web e2e (preview) | `memory-ui-decisions` (11), `memory-ui-rules` (7), `memory-ui-audit` (1), `placeholder-routes`, `app-shell`, `a11y-smoke` (adds the `#memory` case), `counsel-gate` (4), `gate-pill` (3) |
+| web e2e (stack-memory) | `pnpm --filter @aduin/web test:e2e:stack-memory` then `stack-memory-firm-rules` (Hybrid, firm A only, firm B none, no AI call; sandbox copy holds `sd01`-`sd03` and `sr01`) |
+| worker (AC51 AI context) | `firm-rule-in-context-recorded-llm`, `firm-rule-isolation`, `proposed-rule-never-injected` |
+
+- **`useRealMemory` e2e switch:** `window.__aduinE2E.useRealMemory(on)` (IS_E2E-only, compiled out of production; `api/client.ts` rebuilds its cached memory client when the wanted kind changes). Preview builds keep the Dexie stub even after `setApiBase('/')`, so a spec that needs the real client against a fake Worker calls `useFakeWorkerClient(page)` (= `useRealMemory(true)` then `setApiBase('/')`) after `gotoApp`, with `installFakeWorker` registered before navigation.
+- **Fixture `apps/web/e2e/fixtures/memory-stub-rules.ts`:** stateful fake Worker over `page.route`: core-zod-validated request and response bodies, request recording (`bodiesOf`), one-shot failures, `expectClean()` (no unexpected route, no invalid body), `demoSeed()` mirroring `sd01`-`sd03` + `sr01`, `fakeDecision`, `recordedEvent`, `errorBody`.
+- The Worker masks long digit runs in free rule text (`maskFree`); stack specs must use letters-only nonces in rule text.
+- Preview spec tokens are named `memory-ui-*` so the Playwright filter regex cannot also match the `stack-memory-*` specs.
+- Residual: a browser-driven AI run echoing `meta.rules_hash8` is not covered (backlog `memory-ui-ai-rules-echo-browser_NOTE_17-10-26.md`, Phase 10 live probe).
+
 ## Debugging Quick Reference
 
 - **Worker tests fail to find bindings:** bindings come from `apps/worker/wrangler.jsonc`; the plugin config points at it.
