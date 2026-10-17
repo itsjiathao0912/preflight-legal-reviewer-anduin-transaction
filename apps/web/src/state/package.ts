@@ -29,6 +29,7 @@ import type {
 import {
   listPackages,
   listUploads,
+  MAX_STORED_PACKAGE_DOCS,
   readFacts,
   readMemberBytes,
   readPackage,
@@ -433,9 +434,9 @@ export const usePackage = create<PackageState>((set, get) => {
     const current = get().current;
     if (!current) return;
     const doc = current.docs.find((d) => d.id === current.primaryDocId);
-    if (!doc) return;
+    if (!doc) return void (reopen && set({ refreshing: false }));
     const o = primaryOpen(current, doc);
-    if (!o) return;
+    if (!o) return void (reopen && set({ refreshing: false }));
     if (reopen) set({ refreshing: true });
     const defs = packageDefsOf(current.docs, get().facts);
     await useReview.getState().openDocument(o.bytes, o.meta, {
@@ -669,6 +670,9 @@ export const usePackage = create<PackageState>((set, get) => {
       const cur = get().draft;
       if (!cur) return { ok: false, reason: 'unknown_doc' };
       if (cur.rows.some((x) => x.id === r.facts.contentHash)) return { ok: true };
+      // a stored package holds at most 12 uploads + MAX_EARLIER_BASELINES (restore must parse it)
+      if (cur.rows.length >= MAX_STORED_PACKAGE_DOCS)
+        return { ok: false, reason: 'role_not_allowed' };
       // review Minor 4: only a subscription agreement can be a baseline (same rule as setRole)
       if (r.failed || rowOf(r.facts, r.failed).type !== 'sub_agreement')
         return { ok: false, reason: 'role_not_allowed' };

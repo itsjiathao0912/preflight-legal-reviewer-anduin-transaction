@@ -517,6 +517,21 @@ describe('package-store: review fixes (Minor 3-7)', () => {
     await vi.waitFor(async () => expect(await appDb()!.packages.get(c.id)).toBeTruthy());
     const good = (await appDb()!.packages.get(c.id))!;
     expect(persist.parseStoredPackage(good)).not.toBeNull();
+    const demoRef = '/samples/packages/northgate-iii/01-NG3-Subscription-Agreement.docx';
+    expect(
+      persist.parseStoredPackage({
+        ...good,
+        docs: good.docs.map((d) => ({ ...d, sampleRef: demoRef })),
+      }),
+    ).not.toBeNull();
+    const pad = (n: number) =>
+      Array.from({ length: n }, (_, i) =>
+        i < good.docs.length
+          ? good.docs[i]!
+          : { ...good.docs[0]!, id: String(i).padStart(64, 'a') },
+      );
+    expect(persist.parseStoredPackage({ ...good, docs: pad(17) })).not.toBeNull();
+    expect(persist.parseStoredPackage({ ...good, docs: pad(18) })).toBeNull();
     const bad = [
       { ...good, docs: [{ ...good.docs[0]!, id: '../etc' }] },
       { ...good, docs: good.docs.map((d) => ({ ...d, sampleRef: '/samples/../secret.htm' })) },
@@ -535,6 +550,13 @@ describe('package-store: review fixes (Minor 3-7)', () => {
     expect(persist.safeSampleRef('/samples/../x')).toBe(false);
     expect(persist.safeSampleRef('a/b/c')).toBe(false);
     expect(persist.safeSampleRef('..')).toBe(false);
+    expect(
+      persist.safeSampleRef('/samples/packages/northgate-iii/01-NG3-Subscription-Agreement.docx'),
+    ).toBe(true);
+    expect(persist.safeSampleRef('/samples/packages/x/../y')).toBe(false);
+    expect(persist.safeSampleRef('/samples/packages/x/a\\b')).toBe(false);
+    expect(persist.safeSampleRef('/samples/packages/x/y/z')).toBe(false);
+    expect(persist.MAX_STORED_PACKAGE_DOCS).toBe(17);
   });
 
   it('Minor 7: a superseded re-open never clears refreshing while a newer re-open loads', async () => {

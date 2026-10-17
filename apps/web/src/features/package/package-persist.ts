@@ -1,4 +1,9 @@
-import { PackageDocumentSchema, PackageFactsSchema, type PackageFacts } from '@aduin/core';
+import {
+  PACKAGE_LIMITS,
+  PackageDocumentSchema,
+  PackageFactsSchema,
+  type PackageFacts,
+} from '@aduin/core';
 import {
   appDb,
   type StoredDocument,
@@ -15,9 +20,18 @@ import {
 /** Review Minor 6: one path segment (or `dir/file`) of safe characters; never `..`. */
 const SAFE_SEGMENT = /^[A-Za-z0-9._-]{1,120}(\/[A-Za-z0-9._-]{1,120})?$/;
 
+/** A demo-package member URL (same shape as demo-packages.ts URL_RE). */
+const DEMO_MEMBER = /^\/samples\/packages\/[a-z0-9-]{1,40}\/[A-Za-z0-9._-]{1,120}$/;
+
+/** Most earlier-document baselines addEarlierDocument may add on top of the uploads. */
+export const MAX_EARLIER_BASELINES = 5;
+/** Most members a stored package may hold (uploads + earlier baselines). */
+export const MAX_STORED_PACKAGE_DOCS = PACKAGE_LIMITS.maxFiles + MAX_EARLIER_BASELINES;
+
 /** A bundled member reference: `scan:NN`, `sample:NN`, a bare `NN-name.htm` or `/samples/...`. */
 export function safeSampleRef(ref: string): boolean {
   if (ref.includes('..')) return false;
+  if (DEMO_MEMBER.test(ref)) return true;
   const plain = ref.startsWith('/samples/')
     ? ref.slice(9)
     : ref.startsWith('scan:') || ref.startsWith('sample:')
@@ -40,7 +54,8 @@ export function parseStoredPackage(v: unknown): StoredPackage | null {
   if (!isStr(o.firmName) || !isStr(o.fund) || !isStr(o.version) || !isStr(o.primaryDocId))
     return null;
   if (typeof o.createdAt !== 'number' || !Number.isFinite(o.createdAt)) return null;
-  if (!Array.isArray(o.docs) || o.docs.length === 0 || o.docs.length > 12) return null;
+  if (!Array.isArray(o.docs) || o.docs.length === 0 || o.docs.length > MAX_STORED_PACKAGE_DOCS)
+    return null;
   const ct = o.confirmedTargets;
   if (!ct || typeof ct !== 'object' || Array.isArray(ct)) return null;
   if (!Object.values(ct).every(isStr)) return null;
