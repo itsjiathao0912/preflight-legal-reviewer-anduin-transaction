@@ -14,9 +14,9 @@ describe.each([3, 5])('golden-03-05-swapped-part-b-refs (AC12, sample #%i)', (n)
     expect(f).toHaveLength(1);
     expect(f[0]!.detector_id).toBe('ref-label-coherence');
     expect(f[0]!.detail.expected).toBe('Section 4 (CUSTODIAN INFORMATION)');
-    expect(f[0]!.detail.facts.noun_window).toBe('agreement custodian');
+    expect(f[0]!.detail.facts.noun_window).toBe('custodian');
     expect(f[0]!.detail.facts.cited_overlap).toBe(0);
-    expect(f[0]!.detail.facts.expected_overlap).toBe(0.5);
+    expect(f[0]!.detail.facts.expected_overlap).toBe(1);
     // demo-readiness 17-10-26: the ref sits in the instructions scope (a payment/delivery
     // instruction the investor follows), so a wrong target blocks digitization.
     expect(f[0]!.detail.facts.routing_context).toBe('instructions');
@@ -24,7 +24,7 @@ describe.each([3, 5])('golden-03-05-swapped-part-b-refs (AC12, sample #%i)', (n)
     expect(f[0]!.confidence).toBeLessThanOrEqual(0.7);
     // internal fit scores stay in facts, never in the explanation text
     expect(f[0]!.detail.explanation).toBe(
-      '"agreement custodian" is said to be in Part B of Section 6, but that target is "Investment amount"; it fits Section 4 (CUSTODIAN INFORMATION) better.',
+      '"custodian" is said to be in Part B of Section 6, but that target is "Investment amount"; it fits Section 4 (CUSTODIAN INFORMATION) better.',
     );
     expect(f[0]!.detail.explanation).not.toMatch(/fit \d/);
   });
@@ -33,9 +33,9 @@ describe.each([3, 5])('golden-03-05-swapped-part-b-refs (AC12, sample #%i)', (n)
     const f = xref.filter((x) => x.quote.includes('amount specified in Part B of Section 4'));
     expect(f).toHaveLength(1);
     expect(f[0]!.detail.expected).toBe('Section 6 Part B (Investment amount)');
-    expect(f[0]!.detail.facts.noun_window).toBe('equal amount');
+    expect(f[0]!.detail.facts.noun_window).toBe('amount');
     expect(f[0]!.detail.facts.cited_overlap).toBe(0);
-    expect(f[0]!.detail.facts.expected_overlap).toBe(0.5);
+    expect(f[0]!.detail.facts.expected_overlap).toBe(1);
     expect(f[0]!.detail.facts.routing_context).toBe('instructions');
     expect(f[0]!.severity).toBe('critical');
     expect(f[0]!.detail.explanation).not.toMatch(/fit \d/);

@@ -68,12 +68,20 @@ describe('secret-non-leak (AC26/AC39)', () => {
     expect(h.or.calls).toHaveLength(0);
   });
 
-  test("F6: the OpenRouter call never follows redirects (redirect: 'error')", async () => {
+  test("F6: the OpenRouter call never follows redirects (redirect: 'manual')", async () => {
     const h = makeHarness();
     h.or.reply(okAi());
     await bodyText(await send(h));
     expect(h.or.calls).toHaveLength(1);
-    expect(h.or.calls[0]!.redirect).toBe('error');
+    expect(h.or.calls[0]!.redirect).toBe('manual');
+  });
+
+  test('F6: an upstream 302 is a failure and the Location is never fetched', async () => {
+    const h = makeHarness();
+    h.or.reply({ status: 302, text: '', headers: { location: 'https://openrouter.ai/elsewhere' } });
+    const text = await bodyText(await send(h));
+    expect(text).toContain('upstream_failed');
+    expect(h.or.calls).toHaveLength(1);
   });
 
   test('base URL must be https with host openrouter.ai (else fail closed, no call)', async () => {

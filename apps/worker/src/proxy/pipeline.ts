@@ -470,7 +470,12 @@ async function once(
       ac.signal,
     );
     return await classify(fwd.kind, res, fwd.ai);
-  } catch {
+  } catch (e) {
+    // class name only: never log error messages (they can carry upstream bodies)
+    ctx.logger(cfg).log('proxy.upstream_exception', {
+      kind: fwd.kind,
+      name: e instanceof Error ? e.name : typeof e,
+    });
     return {
       ok: false,
       code: 'upstream_failed',

@@ -118,8 +118,10 @@ export function callOpenRouter(
     },
     body,
     signal,
-    // never follow a redirect: the bearer key must only ever reach the pinned host
-    redirect: 'error',
+    // never follow a redirect: the bearer key must only ever reach the pinned host. workerd only
+    // supports 'follow' | 'manual' ('error' throws synchronously). With 'manual' a 3xx (or an
+    // opaqueredirect, status 0) is returned unfollowed and classify's `!res.ok` fails it.
+    redirect: 'manual',
   });
 }
 

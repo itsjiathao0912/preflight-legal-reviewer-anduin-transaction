@@ -35,6 +35,8 @@ export const REF_LABEL_COHERENCE_ID = 'ref-label-coherence';
 
 const STOP = new Set<string>(LABEL_COHERENCE.stopwords);
 const VERB_TAIL_RE = /\b(indicated|specified|set forth|described)\s+in\s*$/;
+/** Prepositions that end the subject noun phrase ("pages to the Custodian" -> "the Custodian"). */
+const PHRASE_BREAK_RE = /\s(?:to|for|with|by)\s+(?=(?:the|a|an|its|such)\s)/gi;
 
 /** Singular fold for token comparison. */
 export function fold(token: string): string {
@@ -117,7 +119,6 @@ export function scoreReference(g: DocGraph, r: RefInfo): LabelScore | null {
   const before = blockText(g, r.blockIndex).slice(0, r.start);
   const verbAt = before.search(VERB_TAIL_RE);
   const head = verbAt >= 0 ? before.slice(0, verbAt) : before;
-  const window = nounWindow(head);
   // offset of the 4th-last raw token (for the quote focus)
   let windowStart = head.length;
   let count = 0;
@@ -127,6 +128,11 @@ export function scoreReference(g: DocGraph, r: RefInfo): LabelScore | null {
       windowStart = i;
     }
   }
+  // do not let the window cross a preposition: keep only the noun phrase after it
+  let cut = -1;
+  for (const m of head.matchAll(PHRASE_BREAK_RE)) cut = m.index + m[0].length;
+  if (cut > windowStart) windowStart = cut;
+  const window = nounWindow(head.slice(windowStart));
   const targets = targetsOf(scope);
   const sec = targets.find((t) => t.sectionNumber === r.sectionNumber && t.part === undefined);
   const citedPart = targets.find((t) => t.sectionNumber === r.sectionNumber && t.part === r.part);
