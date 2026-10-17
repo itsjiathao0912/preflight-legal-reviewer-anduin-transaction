@@ -14,11 +14,20 @@
   --fv2-fix-sev: rgb(138 90 0);
   --fv2-hover: rgb(209 216 210);
   position: relative;
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  /* column of header blocks, the list (takes the rest) and the bar; the Errors/Changes segment
+     and the previously-handled row are optional, so no fixed row template */
+  display: flex;
+  flex-direction: column;
   min-height: 0;
   min-width: 0;
   background: var(--card);
+}
+.fv2 > * {
+  flex: none;
+}
+.fv2 > .flist {
+  flex: 1 1 0;
+  min-height: 0;
 }
 
 /* ---------- progress header ---------- */
@@ -380,7 +389,7 @@
   background: var(--panel);
   padding: 8px;
   font: inherit;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink);
 }
 .fv2-modal textarea[aria-invalid='true'] {

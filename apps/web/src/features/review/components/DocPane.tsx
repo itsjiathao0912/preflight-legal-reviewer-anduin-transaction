@@ -6,6 +6,7 @@ import type { BlockView, SectionView } from '../../../engine/types';
 import { useFilters } from '../../../state/filters';
 import { useReview } from '../../../state/review';
 import type { Row } from '../model';
+import { DocZoomControls, useDocZoom } from '../zoom';
 
 /**
  * Reading view: the document model rendered as React text nodes (never raw HTML, no innerHTML,
@@ -195,6 +196,7 @@ export function DocPane({ rows }: { rows: Row[] }) {
   const selectSeq = useReview((s) => s.selectSeq);
   const revealed = useReview((s) => s.revealed);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const zoom = useDocZoom(scrollRef, selectedId);
 
   const byBlock = useMemo(() => {
     const m = new Map<string, { marks: Mark[]; masks: Mask[] }>();
@@ -231,10 +233,13 @@ export function DocPane({ rows }: { rows: Row[] }) {
       <div className="docbar">
         <span>Reading view · text extracted from HTML</span>
         <JumpMenu sections={result?.sections ?? []} rows={rows} />
+        <DocZoomControls pct={zoom.pct} mode={zoom.state.mode} dispatch={zoom.dispatch} />
       </div>
       <div
         className="scroll docscroll"
         ref={scrollRef}
+        style={zoom.style}
+        data-dz={zoom.dataDz}
         tabIndex={0}
         role="region"
         aria-label="Document text"

@@ -146,3 +146,53 @@ export function compareCss(css: string = mockupCss()): string {
     throw new Error('no "Compare versions" block in app.html');
   return findingsCss(css) + '\n' + css.slice(shared, sharedEnd) + '\n' + css.slice(start, end);
 }
+
+/** design/mockups/findings-v2.html: the Findings v2 panel, zoom and action-bar spec (Phase B). */
+export const FINDINGS_V2_HTML = resolve(REPO_ROOT, 'design', 'mockups', 'findings-v2.html');
+
+export function findingsV2Html(): string {
+  return readFileSync(FINDINGS_V2_HTML, 'utf8');
+}
+
+/** Every <style> block of findings-v2.html, joined in document order. */
+export function findingsV2Css(html: string = findingsV2Html()): string {
+  const blocks = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]!);
+  if (blocks.length === 0) throw new Error('findings-v2.html has no <style> block');
+  return blocks.join('\n');
+}
+
+/**
+ * Panel geometry from findings-v2.html: default percent of `.work` (wide at or above `wideMin`
+ * px, narrow below), the drag clamp, and the splitter handle width (the 8px middle grid column).
+ */
+export function findingsV2Widths(html: string = findingsV2Html()) {
+  const def = html.match(/window\.innerWidth>=(\d+)\?(\d+):(\d+)/);
+  if (!def) throw new Error('no default panel percent in findings-v2.html');
+  const clamp = html.match(/Math\.max\((\d+),Math\.min\((\d+),v\)\)/);
+  if (!clamp) throw new Error('no panel clamp in findings-v2.html');
+  const handle = stripComments(findingsV2Css(html)).match(
+    /\.work\{[^}]*grid-template-columns:minmax\(0,1fr\) (\d+)px var\(--fpw/,
+  );
+  if (!handle) throw new Error('no splitter column in findings-v2.html .work');
+  return {
+    wideMin: Number(def[1]),
+    wide: Number(def[2]),
+    narrow: Number(def[3]),
+    min: Number(clamp[1]),
+    max: Number(clamp[2]),
+    handle: Number(handle[1]),
+  };
+}
+
+/**
+ * Selectors that carry a static box-shadow in findings-v2.html (keyframes excluded). The style
+ * audit maps them to their v2 class names and allows a shadow only there (E-B7).
+ */
+export function findingsV2ShadowSelectors(css: string = findingsV2Css()): string[] {
+  const c = stripComments(css).replace(/@keyframes[^{]*\{(?:[^{}]*\{[^}]*\})*[^}]*\}/g, '');
+  const out: string[] = [];
+  for (const m of c.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    if (/box-shadow\s*:/.test(m[2]!)) out.push(m[1]!.trim());
+  }
+  return out;
+}

@@ -2,7 +2,10 @@ import { expect, test, type Page } from '@playwright/test';
 import {
   compareCss,
   findingsCss,
+  findingsV2ShadowSelectors,
+  findingsV2Widths,
   fontSizes,
+  mockupCss,
   radii,
   railMaxWidth,
   shellWidths,
@@ -21,52 +24,80 @@ const CMP_RADII = radii(compareCss());
 // Reference values the derivation must yield today (update the plan, never the assertion, if they differ).
 const REF_FONTS = [13, 14, 15, 16, 17, 20, 28];
 const REF_RADII = [0, 2, 3, 4, 999];
+// Findings v2 (Phase B): panel geometry and the shadow allow-list come from design/mockups/findings-v2.html.
+const V2 = findingsV2Widths();
+const V2_SHADOWS = findingsV2ShadowSelectors();
+/** findings-v2.html shadow selector -> the v2 class that implements it (E-B7). */
+const V2_SHADOW_CLASS: Record<string, string> = {
+  '.li.open': 'fv2-row-open',
+  '.btn.out': 'fv2-btn-outline',
+  '.pop': 'fv2-zoom-menu',
+};
+// Invalid-field inset: app.html `input[aria-invalid=true]` (the v2 modal textarea follows it).
+const INVALID_INSET = /\[aria-invalid=true\]\{box-shadow:inset/.test(mockupCss());
+const ALLOWED_SHADOW_CLASSES = Object.keys(V2_SHADOW_CLASS)
+  .filter((sel) => V2_SHADOWS.includes(sel))
+  .map((sel) => V2_SHADOW_CLASS[sel]!);
 
-async function columnWidth(page: Page) {
-  return (await page.getByTestId('findings-column').boundingBox())!.width;
+async function boxWidth(page: Page, testId: string) {
+  return (await page.getByTestId(testId).boundingBox())!.width;
+}
+
+/** Expected findings panel width: percent of the real `.work` content width (E-B8). */
+async function expectedPanelWidth(page: Page, pct: number) {
+  const work = await page.locator('.work.fv2-work').evaluate((e) => {
+    const cs = getComputedStyle(e);
+    return e.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  });
+  return (work * pct) / 100;
 }
 
 /** Computed font sizes (elements with own text), radii, shadows and gradients across the app. */
 async function styleAudit(page: Page) {
-  return page.evaluate(() => {
-    const fonts = new Set<number>();
-    const radii = new Set<string>();
-    const shadows: string[] = [];
-    const gradients: string[] = [];
-    const desc = (e: Element) =>
-      `${e.tagName.toLowerCase()}[${e.getAttribute('data-testid') ?? ''}].${String(
-        e.getAttribute('class') ?? '',
-      )
-        .split(' ')
-        .join('.')}`;
-    for (const e of Array.from(document.querySelectorAll('body *'))) {
-      if (e.closest('[data-testid="open-document-dialog"]') || e.closest('svg')) continue;
-      const cs = getComputedStyle(e);
-      if (cs.display === 'none' || cs.visibility === 'hidden') continue;
-      const ownText = Array.from(e.childNodes).some(
-        (n) => n.nodeType === 3 && (n.textContent ?? '').trim().length > 0,
-      );
-      if (ownText) fonts.add(parseFloat(cs.fontSize));
-      // native radio/checkbox are UA-drawn (the mockup uses the same native controls)
-      const native = e.matches('input[type=radio], input[type=checkbox]');
-      if (!native)
-        for (const c of [
-          cs.borderTopLeftRadius,
-          cs.borderTopRightRadius,
-          cs.borderBottomRightRadius,
-          cs.borderBottomLeftRadius,
-        ])
-          radii.add(c);
-      if (cs.boxShadow !== 'none') {
-        const ok =
-          e.getAttribute('role') === 'dialog' &&
-          (e.classList.contains('pop') || e.classList.contains('modal'));
-        if (!ok) shadows.push(desc(e));
+  return page.evaluate(
+    ([allowed, invalidInset]) => {
+      const fonts = new Set<number>();
+      const radii = new Set<string>();
+      const shadows: string[] = [];
+      const gradients: string[] = [];
+      const desc = (e: Element) =>
+        `${e.tagName.toLowerCase()}[${e.getAttribute('data-testid') ?? ''}].${String(
+          e.getAttribute('class') ?? '',
+        )
+          .split(' ')
+          .join('.')}`;
+      for (const e of Array.from(document.querySelectorAll('body *'))) {
+        if (e.closest('[data-testid="open-document-dialog"]') || e.closest('svg')) continue;
+        const cs = getComputedStyle(e);
+        if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+        const ownText = Array.from(e.childNodes).some(
+          (n) => n.nodeType === 3 && (n.textContent ?? '').trim().length > 0,
+        );
+        if (ownText) fonts.add(parseFloat(cs.fontSize));
+        // native radio/checkbox are UA-drawn (the mockup uses the same native controls)
+        const native = e.matches('input[type=radio], input[type=checkbox]');
+        if (!native)
+          for (const c of [
+            cs.borderTopLeftRadius,
+            cs.borderTopRightRadius,
+            cs.borderBottomRightRadius,
+            cs.borderBottomLeftRadius,
+          ])
+            radii.add(c);
+        if (cs.boxShadow !== 'none') {
+          const ok =
+            (e.getAttribute('role') === 'dialog' &&
+              (e.classList.contains('pop') || e.classList.contains('modal'))) ||
+            allowed.some((c) => e.classList.contains(c)) ||
+            (invalidInset && e.getAttribute('aria-invalid') === 'true');
+          if (!ok) shadows.push(desc(e));
+        }
+        if (/gradient/.test(cs.backgroundImage)) gradients.push(desc(e));
       }
-      if (/gradient/.test(cs.backgroundImage)) gradients.push(desc(e));
-    }
-    return { fonts: [...fonts], radii: [...radii], shadows, gradients };
-  });
+      return { fonts: [...fonts], radii: [...radii], shadows, gradients };
+    },
+    [ALLOWED_SHADOW_CLASSES, INVALID_INSET] as const,
+  );
 }
 
 function checkAudit(
@@ -90,28 +121,43 @@ test.describe('layout-vs-mockup', () => {
     expect([W.sidebar, W.rail, W.column, W.narrowColumn, RAIL_AT, W.narrowMax]).toEqual([
       232, 56, 400, 380, 1199, 1279,
     ]);
+    expect([V2.wideMin, V2.wide, V2.narrow, V2.min, V2.max, V2.handle]).toEqual([
+      1280, 50, 55, 40, 65, 8,
+    ]);
+    // every allow-listed v2 shadow maps to a shadow the mockup really draws (E-B7)
+    for (const sel of Object.keys(V2_SHADOW_CLASS)) expect(V2_SHADOWS).toContain(sel);
+    expect(INVALID_INSET).toBe(true);
   });
 
-  test('should size the sidebar 232px and the findings column 400px at 1440 and use the 56px rail at 1199', async ({
+  test('should size the sidebar 232px, the findings panel 50% at 1440 and 55% below 1280, and use the 56px rail at 1199', async ({
     page,
   }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await gotoApp(page);
-    await openSample(page, '01');
-    expect(await sidebarWidth(page)).toBe(W.sidebar);
-    expect(await columnWidth(page)).toBe(W.column);
-
-    await page.setViewportSize({ width: RAIL_AT + 1, height: 900 });
-    await expect.poll(() => sidebarWidth(page)).toBe(W.sidebar);
-    expect(await columnWidth(page)).toBe(W.narrowColumn);
-
-    await page.setViewportSize({ width: RAIL_AT, height: 900 });
-    await expect.poll(() => sidebarWidth(page)).toBe(W.rail);
-    await expect(page.getByTestId('sidebar-toggle')).toBeHidden();
-
-    await page.setViewportSize({ width: 1024, height: 768 });
-    await expect.poll(() => sidebarWidth(page)).toBe(W.rail);
-    expect(await columnWidth(page)).toBe(W.narrowColumn);
+    // The panel percent is chosen once at mount (E-B16): set each viewport BEFORE the app loads.
+    const cases = [
+      { width: 1440, height: 900, sidebar: W.sidebar, pct: V2.wide },
+      { width: RAIL_AT + 1, height: 900, sidebar: W.sidebar, pct: V2.narrow },
+      { width: RAIL_AT, height: 900, sidebar: W.rail, pct: V2.narrow },
+      { width: 1024, height: 768, sidebar: W.rail, pct: V2.narrow },
+    ];
+    for (const [i, c] of cases.entries()) {
+      expect(c.width >= V2.wideMin).toBe(c.pct === V2.wide);
+      await page.setViewportSize({ width: c.width, height: c.height });
+      if (i === 0) {
+        await gotoApp(page);
+        await openSample(page, '01');
+      } else {
+        await page.reload();
+        await expect(rowsLoc(page).first()).toBeVisible({ timeout: 30_000 });
+      }
+      await expect.poll(() => sidebarWidth(page)).toBe(c.sidebar);
+      if (c.sidebar === W.rail) await expect(page.getByTestId('sidebar-toggle')).toBeHidden();
+      const want = await expectedPanelWidth(page, c.pct);
+      expect(
+        Math.abs((await boxWidth(page, 'findings-column')) - want),
+        `panel at ${c.width}`,
+      ).toBeLessThanOrEqual(1);
+      expect(Math.abs((await boxWidth(page, 'panel-resizer')) - V2.handle)).toBeLessThanOrEqual(1);
+    }
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
@@ -144,9 +190,7 @@ test.describe('layout-vs-mockup', () => {
     await expect(page.getByTestId('nav-findings')).toHaveAttribute('aria-current', 'page');
     // the last open document is reopened (uploads/samples restore), but selection resets
     await expect(rowsLoc(page).first()).toBeVisible({ timeout: 30_000 });
-    await expect(rowsLoc(page).nth(1).locator('xpath=ancestor-or-self::li[1]')).not.toHaveClass(
-      /\bsel\b/,
-    );
+    await expect(rowsLoc(page).nth(1)).toHaveAttribute('aria-expanded', 'false');
   });
 
   test('computed styles stay inside the app.html vocabulary on Findings, overlays and Compare', async ({

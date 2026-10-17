@@ -36,7 +36,24 @@ export async function memorySettled(page: Page) {
   );
 }
 
-export async function gotoApp(page: Page) {
+/** Document zoom storage key (`zoom-math.ts` DOCZOOM_KEY). */
+export const DOCZOOM_KEY = 'ui:v1:doczoom';
+
+/**
+ * Open the app. The document zoom defaults to manual 100% for specs (stable geometry): the seed is
+ * written only when the key is absent, so a reload keeps whatever zoom the test set. `zoom: 'fit'`
+ * skips the seed (app default, fit width); a number seeds that manual percent.
+ */
+export async function gotoApp(page: Page, opts: { zoom?: 'fit' | number } = {}) {
+  const zoom = opts.zoom ?? 100;
+  if (zoom !== 'fit') {
+    await page.addInitScript(
+      ([key, value]) => {
+        if (localStorage.getItem(key) === null) localStorage.setItem(key, value);
+      },
+      [DOCZOOM_KEY, JSON.stringify({ mode: 'manual', pct: zoom })] as const,
+    );
+  }
   await page.goto('/');
   await expect(page.getByTestId('app-shell')).toBeVisible();
   await page.waitForFunction(() => '__aduinE2E' in window);

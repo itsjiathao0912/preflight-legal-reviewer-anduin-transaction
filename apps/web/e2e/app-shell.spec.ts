@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoApp, openSample, rowsLoc, sidebarWidth } from './fixtures/app';
+import { DOCZOOM_KEY, gotoApp, openSample, rowsLoc, sidebarWidth } from './fixtures/app';
 import { closeAsRealIssue } from './fixtures/findings-actions';
 import { railMaxWidth, shellWidths } from '../test/support/mockupCss';
 
@@ -58,7 +58,9 @@ test.describe('app-shell', () => {
     await expect(page.getByTestId('sidebar-toggle')).toHaveAttribute('aria-expanded', 'false');
     await page.getByTestId('sidebar-toggle').click();
     expect(await sidebarWidth(page)).toBe(W.sidebar);
-    expect(await page.evaluate(() => Object.keys(localStorage).sort())).toEqual(['ui:v1:sidebar']);
+    // the zoom key is seeded by gotoApp (test default), not shell state: ignore it, keep the rest exact
+    const keys = await page.evaluate(() => Object.keys(localStorage).sort());
+    expect(keys.filter((k) => k !== DOCZOOM_KEY)).toEqual(['ui:v1:sidebar']);
   });
 
   test('should force the icon rail below 1200px', async ({ page }) => {
