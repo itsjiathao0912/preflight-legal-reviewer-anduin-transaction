@@ -1,0 +1,233 @@
+/* Phase 08b: firm memory page (Decisions | Rules | Audit trail), ported from
+   design/mockups/app.html (#v-memory + memory dialogs). Hex values are copied from the mockup CSS. */
+.memory-view .hacts {
+  position: relative;
+}
+.memory-view .pgbody {
+  padding-top: 4px;
+}
+.mtool {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 0 0 10px;
+}
+.mtool select {
+  width: auto;
+  min-width: 190px;
+  background-color: var(--card);
+}
+.mtool .shown {
+  margin-left: auto;
+  color: var(--ink-3);
+  font-size: 13px;
+}
+.segx button {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.segx .fl {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+  background: var(--fix-bg);
+  color: var(--fix-fg);
+  border-radius: 3px;
+  padding: 0 5px;
+  font-size: 13px;
+  font-weight: 600;
+}
+table.t.fx {
+  table-layout: fixed;
+  border-spacing: 0 3px;
+}
+table.t.fx td {
+  height: 46px;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 12px;
+}
+table.t.fx th {
+  padding: 0 12px 2px;
+}
+table.t.fx tr.revoked td.pass q {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  color: var(--ink-3);
+}
+table.t.fx q {
+  quotes: '\201C' '\201D';
+  font: 400 15px/1.5 var(--serif);
+}
+table.t.fx td.pass q {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+table.t.fx td.pass .lean {
+  color: var(--ink-3);
+  font-size: 14px;
+}
+.c-dec {
+  width: 150px;
+}
+.c-cls {
+  width: 150px;
+}
+.c-fund {
+  width: 150px;
+}
+.c-who {
+  width: 140px;
+}
+.c-st {
+  width: 176px;
+}
+.linkbtn {
+  border: 0;
+  background: transparent;
+  padding: 2px 4px;
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  color: var(--ink-2);
+  border-radius: 3px;
+}
+.linkbtn:hover {
+  color: var(--ink);
+}
+.linkbtn:disabled {
+  color: var(--ink-3);
+  text-decoration: none;
+  cursor: not-allowed;
+}
+.strip {
+  background: var(--accent-tint);
+  border-radius: var(--r);
+  padding: 6px 8px 6px 16px;
+  display: grid;
+  gap: 2px;
+  margin-bottom: 18px;
+}
+.srow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 14px;
+  align-items: center;
+  min-height: 42px;
+}
+.srow .rule {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: #12302d;
+}
+.srow .mut {
+  color: #1e3f3b;
+}
+.rhead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 6px;
+}
+.rhead h3 {
+  margin: 0;
+  font: 600 14px/1.3 var(--sans);
+}
+.rhead .mut {
+  flex: 1;
+}
+.memory-view .ainfo {
+  margin: 10px 0 18px;
+}
+.memory-view .rejected {
+  margin-top: 18px;
+}
+.memory-view .rejected li {
+  color: var(--ink-3);
+}
+table.t.fx td.act {
+  overflow: visible;
+  text-align: right;
+  width: 130px;
+}
+.lockbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: var(--note-bg);
+  color: var(--note-fg);
+  border-radius: var(--r);
+  padding: 8px 14px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+.lockbar b {
+  font-weight: 600;
+}
+.pop.memory-kept {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  width: min(360px, calc(100vw - 48px));
+  display: grid;
+  gap: 8px;
+}
+.memory-kept h2 {
+  margin: 0;
+  font: 600 14px/1.3 var(--sans);
+}
+.memory-kept p {
+  margin: 0;
+  font-size: 14px;
+}
+/* native <dialog> (app.html dialog.dlg) */
+dialog.dlg::backdrop {
+  background: rgba(21, 24, 27, 0.42);
+}
+.dl .sum {
+  background: var(--panel);
+  border-radius: var(--r);
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+}
+.dl .sum .l1 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.dl label.l {
+  font-weight: 600;
+  font-size: 13px;
+  display: grid;
+  gap: 4px;
+}
+.dl label.l .opt {
+  font-weight: 400;
+  color: var(--ink-3);
+}
+.dl textarea,
+.dl input[type='text'] {
+  width: 100%;
+  border: 0;
+  border-radius: var(--r);
+  padding: 8px 10px;
+  font-size: 16px;
+  background: var(--panel);
+}
+.dl textarea {
+  resize: vertical;
+  min-height: 64px;
+}

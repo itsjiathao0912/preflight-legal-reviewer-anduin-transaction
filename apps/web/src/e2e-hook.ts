@@ -14,6 +14,8 @@ import type { BlockView, EngineSettings, FindingView, StageId } from './engine/t
  *   setApiBase(base)            switch the AI lane on in the preview build (G16; only the five AI
  *                               specs call it, before opening a document, with /api/* intercepted)
  *   forceInvalidOutline(on)     make the next outline export fail schema validation (Phase 09)
+ *   useRealMemory(on)           Phase 08b: use the real Worker memory client (with setApiBase('/'))
+ *                               so a spec can answer /api/** through a page.route fake Worker
  *   api                         { seedDecision, seedAnswer, setCounselAnswer, state } bound at install
  */
 type Transform = (findings: FindingView[], blocks: BlockView[]) => FindingView[];
@@ -23,6 +25,7 @@ interface HookState {
   firmRules: string[] | null;
   transform: Transform | null;
   forceInvalidOutline: boolean;
+  realMemory: boolean;
 }
 
 const state: HookState = {
@@ -30,6 +33,7 @@ const state: HookState = {
   firmRules: null,
   transform: null,
   forceInvalidOutline: false,
+  realMemory: false,
 };
 
 export function e2eSettings(): Pick<EngineSettings, 'e2eFailStage'> {
@@ -62,6 +66,14 @@ export function e2eForceInvalidOutline(): boolean {
   return false;
 }
 
+/** E2E-only: true when a spec asked for the real Worker memory client (false outside IS_E2E). */
+export function e2eRealMemory(): boolean {
+  if (IS_E2E) {
+    return state.realMemory;
+  }
+  return false;
+}
+
 export function installE2eHook(api: Record<string, unknown>): void {
   if (IS_E2E) {
     (window as unknown as Record<string, unknown>)['__aduinE2E'] = {
@@ -77,6 +89,9 @@ export function installE2eHook(api: Record<string, unknown>): void {
       },
       forceInvalidOutline: (on: boolean) => {
         state.forceInvalidOutline = on === true;
+      },
+      useRealMemory: (on: boolean) => {
+        state.realMemory = on === true;
       },
       // the only runtime writer of the API base; stays inside the IS_E2E block (E21a)
       setApiBase: (base: string) => {

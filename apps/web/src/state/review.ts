@@ -115,6 +115,12 @@ interface ReviewState {
    * question is created at send time when it was not exported yet); undoable.
    */
   recordAnswer: (id: string, answer: RecordedAnswer) => Promise<void>;
+  /**
+   * Phase 08b (memory page): re-read memory for the open document after a write made elsewhere.
+   * When `revokedDecisionId` is given (Reopen), any triage entry of this document whose decisionId
+   * equals it is reset to `open`, so the finding is New on this review too (AC50).
+   */
+  refreshMemory: (revokedDecisionId?: string) => Promise<void>;
   /** Phase 05: replace this document's AI findings (verified in the engine worker) and re-label memory. */
   setAiFindings: (docId: string, findings: FindingView[]) => Promise<void>;
 }
@@ -715,6 +721,20 @@ export const useReview = create<ReviewState>((set, get) => {
             await writeTriage(id, prev);
           })(),
       );
+    },
+
+    refreshMemory: async (revokedDecisionId) => {
+      const { doc, triage } = get();
+      if (doc && revokedDecisionId) {
+        const hits = Object.keys(triage).filter((k) => triage[k]?.decisionId === revokedDecisionId);
+        if (hits.length) {
+          const next = { ...triage };
+          for (const k of hits) next[k] = { status: 'open' };
+          set({ triage: next });
+          await saveTriage(doc.id, next);
+        }
+      }
+      await refreshMemory();
     },
 
     setAiFindings: async (docId, findings) => {

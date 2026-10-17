@@ -23,7 +23,11 @@ describe('@aduin/web smoke (jsdom)', () => {
       'compare',
       // Phase 08 append: the real Counsel questions view
       'counsel',
+      // Phase 08b append: the real Firm memory view
+      'memory',
     ]);
+    expect(featureFor('memory')?.component.name).toBe('MemoryView');
+    expect(featureFor('memory')?.label).toBe('Firm memory');
     expect(featureFor('counsel')?.component.name).toBe('CounselScreen');
     expect(featureFor('counsel')?.label).toBe('Counsel questions');
     expect(featureFor('compare')?.component.name).toBe('CompareScreen');

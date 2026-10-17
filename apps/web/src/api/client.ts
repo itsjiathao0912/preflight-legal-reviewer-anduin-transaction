@@ -1,5 +1,6 @@
 import type { MemoryApi } from './memoryApi';
 import { IS_E2E } from '../e2e-flag';
+import { e2eRealMemory } from '../e2e-hook';
 import { appDb } from '../storage/db';
 import { apiEnabled, onApiBaseChange } from './base';
 import { RealMemoryApi } from './realMemoryApi';
@@ -13,6 +14,9 @@ import { StubMemoryApi } from './stubMemoryApi';
  * Phase 08 S2: the Playwright preview build (`--mode e2e`) has no Worker memory, so it keeps the
  * stub even when an AI spec switches the API base on for `/api/ai` (the `stack-memory` project
  * runs the plain build against the real Worker).
+ * Phase 08b: a preview spec may opt into the real client (`__aduinE2E.useRealMemory(true)`, IS_E2E
+ * only) and answer every /api/** call with a page.route fake Worker; the cached client is rebuilt
+ * when the wanted kind changes.
  */
 let api: MemoryApi | null = null;
 let unsubscribe: (() => void) | null = null;
@@ -23,9 +27,11 @@ export function memoryApi(): MemoryApi | null {
       api = null;
     });
   }
-  if (api) return api;
+  const wantReal = apiEnabled() && (!IS_E2E || e2eRealMemory());
+  if (api && api instanceof RealMemoryApi === wantReal) return api;
+  api = null;
   const db = appDb();
-  if (apiEnabled() && !IS_E2E) {
+  if (wantReal) {
     api = new RealMemoryApi({ db });
     return api;
   }

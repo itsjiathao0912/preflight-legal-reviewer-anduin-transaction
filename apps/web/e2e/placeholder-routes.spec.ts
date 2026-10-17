@@ -4,10 +4,8 @@ import { gotoApp } from './fixtures/app';
 // Phase 02: Structure (with its Investor types sub-view) is a real view now (structure-view.spec.ts).
 // Phase 07: Compare versions is a real view now (diff-pairs.spec.ts).
 // Phase 08: Counsel questions is a real view now (counsel-*.spec.ts).
-const ROUTES: [string, string][] = [
-  ['memory', 'Firm memory'],
-  ['documents', 'Documents'],
-];
+// Phase 08b: Firm memory is a real view now (memory-ui-*.spec.ts).
+const ROUTES: [string, string][] = [['documents', 'Documents']];
 
 test.describe('placeholder-routes', () => {
   for (const [route, title] of ROUTES) {
@@ -33,6 +31,16 @@ test.describe('placeholder-routes', () => {
     await page.getByTestId('nav-counsel').click();
     await expect(page.getByTestId('counsel-view')).toBeVisible();
     await expect(page.getByTestId('counsel-view').locator('h1')).toHaveText('Counsel questions');
+    await expect(page.getByTestId('placeholder-view')).toHaveCount(0);
+  });
+  test('Memory is a real view', async ({ page }) => {
+    await gotoApp(page);
+    await page.getByTestId('nav-memory').click();
+    await expect(page.getByTestId('memory-view')).toBeVisible();
+    await expect(page.getByTestId('memory-view').locator('h1')).toHaveText('Firm memory');
+    await expect(page.getByTestId('memory-no-firm')).toHaveText(
+      'Open a document for a law firm to see its memory.',
+    );
     await expect(page.getByTestId('placeholder-view')).toHaveCount(0);
   });
   test('compare is no longer a placeholder', async ({ page }) => {

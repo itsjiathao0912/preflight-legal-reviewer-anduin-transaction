@@ -64,12 +64,18 @@ test.describe('a11y-smoke', () => {
     await page.getByTestId('sidebar-toggle').click();
     await audit(page, 'findings rail');
 
-    // Phase 08: Counsel questions is a real view now; the placeholder audit moves to Firm memory
+    // Phase 08: Counsel questions is a real view now; the placeholder audit moves to Documents
     await page.getByTestId('nav-counsel').click();
     await expect(page.getByTestId('counsel-view')).toBeVisible();
     await audit(page, 'counsel');
 
+    // Phase 08b: Firm memory is a real view (#memory route case)
     await page.getByTestId('nav-memory').click();
+    await expect(page.getByTestId('memory-view')).toBeVisible();
+    await expect(page.getByTestId('memory-loading')).toHaveCount(0);
+    await audit(page, 'memory');
+
+    await page.getByTestId('nav-documents').click();
     await expect(page.getByTestId('placeholder-view')).toBeVisible();
     await audit(page, 'placeholder');
 
