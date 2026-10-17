@@ -183,3 +183,35 @@ Session ledger: smoke 1, probe:live-session 2 claimed. No real `POST /api/sessio
 **Results:** web unit 223/223 pass, preview e2e 173/173 pass, stack-memory 10/10 pass twice in a row (it failed 1-2 of 10 before the fixture wait was added), `pnpm typecheck` and `pnpm lint` both clean. Red-first was not run literally: the new tests were written after the fix, because git stash/checkout are not allowed. The old code awaited `ensureSession()` before `phase: 'ready'`, so the first unit case could not have passed against it.
 
 **Residual:** the live fix needs a redeploy (owned by the orchestrator). AI firm-rules lookup on a firm doc still downgrades to `rules_unavailable` when the background verification fails (the existing degrade path). Run AI re-reads the rules with user intent.
+
+## Redeploy after render-first fix (17-10-26, HEAD af59da6)
+
+**Answer first:** the render-first fix is live as version **23612b12-51c7-4d75-a324-f4f2f6392ba8**. Firm and no-firm samples show findings in about 1 s with no Turnstile overlay and no `/api/session` call. 14 of 16 demo screenshots are captured; 13 and 14 (firm memory, audit list) stay manual.
+
+### Deploy
+| Step | Result |
+|---|---|
+| Guards | `pnpm guard:cf` OK, `pnpm secrets:scan` OK |
+| Build | Plain web build with `VITE_TURNSTILE_SITE_KEY` inline (scratchpad script, as in Wave C) |
+| Preflight | `deploy:preflight` 13/13 PASS (no e2e marker, site key compiled in, no routes/zone keys) |
+| `wrangler deploy` | First attempt: assets uploaded, then CF API 10500 "internal authentication error" on the deployments call; live stayed on 67c796ff. Retry succeeded: workers.dev only, cron 17 3 * * *, D1 `aduin-transaction-db` bound. Version **23612b12-51c7-4d75-a324-f4f2f6392ba8**. Rollback target: 67c796ff-477c-4900-ba89-4ff3109e0c56. No secret re-put. |
+
+### Live verification (headless Chromium; /api/ai, /api/ocr, /api/session aborted)
+| Check | Result |
+|---|---|
+| Sample #5 (Partners Group), fresh load | first finding row 1022 ms (915-1027 ms over 3 runs); 0 visible Turnstile iframes, 0 dialogs 3 s later; memory state `unavailable` (banner + Retry) |
+| Sample #3 (Partners Group), fresh load | 1019 ms; no overlay, no dialog; memory `unavailable` |
+| Sample #1 (no firm), fresh load | 907 ms; no overlay; memory `ready` (not applied, no firm) |
+| Network | only `GET /api/quota`; zero /api/ai, /api/ocr, /api/session requests issued |
+| `curl -sI /` | CSP unchanged (same policy as Wave C), nosniff present |
+| `GET /api/health` | 200, `cache-control: no-store` (HEAD returns 404; GET-only route) |
+| `/api/memory/health` | schema_version 5 = expected, seed_mode 0, seed_version 1 |
+| Stack smoke (`--project=stack`, SLICE_BASE_URL) | 1 passed (2.6 s), `global_ok=true` |
+| Final | `pnpm guard:cf` OK, `pnpm secrets:scan` OK, `pnpm lint` OK |
+
+### Screenshots (`docs/demo/img/`, 1440x900, DPR 1, 58-304 KB each)
+- Live site: `02-shell`, `03-findings`, `04-finding-expanded`, `05-dismiss` (sample 1, modal open, not saved), `06-stage`, `07-ai-toggle`, `08-compare` (5 vs 6, 59 changes), `09-counsel` (one finding marked Needs counsel; memory write aborted, queued locally), `10-gate` (clear gate popover), `11-structure` (Investor types), `12-outline` (Cross-references lens + Export logic outline).
+- From `slides.html`: `01-title`, `15-known-misses`, `16-close`.
+- Capture manually: `13-memory`, `14-audit` (need a Turnstile-verified session).
+- Doc updates: storyboard capture status, slides findings slide now shows `img/03-findings.png`, README hero image + screenshot line, live version id in README, DEPLOY.md, slides.html, script.md.
+- Method: scratchpad Playwright spec (not `shots-live.ts`; that script and its test are unchanged).

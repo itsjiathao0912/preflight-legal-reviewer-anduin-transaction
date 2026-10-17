@@ -6,7 +6,7 @@ Screen: the live site, 1440 px wide. Screenshots in `docs/demo/img/` are fallbac
 Notes for the recorder:
 - Firm memory is reached through the sidebar nav. A direct `#memory` link lands on Findings on first load by design.
 - Use sample 5 and sample 6 (Partners Group NGI 2024 and 2026). Samples use precomputed AI, so no wait.
-- D1 and the Turnstile widget are live (version 67c796ff). A human must pass the Turnstile check for the memory and upload segments.
+- D1 and the Turnstile widget are live (version 23612b12). A human must pass the Turnstile check for the memory and upload segments.
 
 | Time | Segment | Narration |
 |---|---|---|

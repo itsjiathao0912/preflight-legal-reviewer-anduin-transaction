@@ -5,8 +5,10 @@ Digitization Service Analyst: it reads a sub doc (HTML, text PDF, DOCX or scanne
 graph, finds what would break a digitized form, and turns confirmed issues into a counsel query sheet
 that blocks digitization until the critical items are answered.
 
+![Findings screen: document on the left, findings with cited evidence on the right](docs/demo/img/03-findings.png)
+
 Live demo: https://aduin-transaction-web.giathaowork.workers.dev
-Live version: 67c796ff-477c-4900-ba89-4ff3109e0c56 (code 38a3b2f).
+Live version: 23612b12-51c7-4d75-a324-f4f2f6392ba8 (code af59da6).
 Live status: D1 `aduin-transaction-db` is live (schema v5, demo seed of 3 law firms, 1 workspace, 3 firm rules, 8 decisions),
 the Turnstile managed widget is live, and CSP is enforced (`style-src` keeps `unsafe-inline` for Radix). The zero-upstream smoke run passed.
 
@@ -34,7 +36,7 @@ This tool does the mechanical part deterministically and shows its evidence, the
    dismissals. Reach it from the sidebar (a direct `#memory` link lands on Findings on first load by design:
    routes are never persisted). Memory is shared and writable on the live site (D1 is live), behind the visitor session and Turnstile.
 
-Screenshots: `docs/demo/img/` (added at final deploy). Video and slides: `docs/demo/`.
+Screenshots: `docs/demo/img/` (captured from the live site; shot list in `docs/demo/storyboard.md`). Video and slides: `docs/demo/`.
 
 ## How it works
 
