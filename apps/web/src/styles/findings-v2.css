@@ -716,6 +716,14 @@
 .docscroll[data-dz] {
   position: relative;
 }
+/* The reading column never grows past its grid track: the page overflows only inside .docscroll,
+   which scrolls horizontally from the page's left edge and ends at the panel's left edge. */
+.work.fv2-work > .docpane {
+  grid-template-columns: minmax(0, 1fr);
+}
+.work.fv2-work > .docpane > .docscroll[data-dz] {
+  min-width: 0;
+}
 
 /* ---------- D15 zoom overrides: the whole page scales with --dz ---------- */
 .docscroll[data-dz] {

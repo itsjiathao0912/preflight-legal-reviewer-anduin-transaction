@@ -2,10 +2,11 @@ export const DOCZOOM_KEY = 'ui:v1:doczoom';
 export const PAGE_PX = 700;
 /** 2 x 32px gutter. */
 export const GUTTER_PX = 64;
-export const ZOOM_MIN = 75;
+/** Manual range shares the fit floor so - from a 60% fit is a no-op and + goes to 70 (D15 amendment). */
+export const ZOOM_MIN = 60;
 export const ZOOM_MAX = 200;
 export const ZOOM_STEP = 10;
-export const FIT_MIN = 90;
+export const FIT_MIN = 60;
 export const FIT_MAX = 175;
 export const PRESETS: readonly number[] = Object.freeze([75, 90, 100, 125, 150]);
 

@@ -230,7 +230,7 @@ test.describe('findings-v2', () => {
     await expect(fitBtn).toHaveAttribute('aria-pressed', 'true');
     const expectedFit = async () =>
       zoomPane(page).evaluate((el) =>
-        Math.min(175, Math.max(90, Math.round(((el.clientWidth - 64) / 700) * 100))),
+        Math.min(175, Math.max(60, Math.round(((el.clientWidth - 64) / 700) * 100))),
       );
     await expect.poll(async () => (await dz(page)) === (await expectedFit())).toBe(true);
     const fit = await dz(page);
@@ -242,7 +242,7 @@ test.describe('findings-v2', () => {
     expect(await dz(page)).toBe(Math.min(200, (Math.floor(fit / 10) + 1) * 10));
     await page.getByTestId('zoom-out').click();
     await page.getByTestId('zoom-out').click();
-    expect(await dz(page)).toBe(Math.max(75, Math.min(200, (Math.floor(fit / 10) + 1) * 10) - 20));
+    expect(await dz(page)).toBe(Math.max(60, Math.min(200, (Math.floor(fit / 10) + 1) * 10) - 20));
     await expect(page.getByTestId('zoom-menu')).toHaveText(`${await dz(page)}% ▾`);
 
     // presets
@@ -347,6 +347,72 @@ test.describe('findings-v2', () => {
         expect(m.overflow).toBeGreaterThan(0);
         expect(m.rightGap).toBeGreaterThanOrEqual(0);
       }
+      await page.close();
+    });
+  }
+
+  // D15 amendment: Fit width clamps 60-175; the page fits its area, and the reading area never
+  // extends under the findings panel. When even 60% is too wide, the area scrolls from the left.
+  for (const [w, h, fpw] of [
+    [1440, 900, null],
+    [1024, 768, null],
+    [1024, 768, 65],
+  ] as const) {
+    test(`fit width fits the page and never paints under the panel (${w}x${h}${fpw ? `, panel ${fpw}%` : ''})`, async ({
+      browser,
+    }) => {
+      const page = await browser.newPage({ viewport: { width: w, height: h } });
+      if (fpw !== null) {
+        await page.addInitScript(([k, v]) => localStorage.setItem(k, v), [
+          FPW_KEY,
+          String(fpw),
+        ] as const);
+      }
+      await gotoApp(page, { zoom: 'fit' });
+      await openSample(page, '03');
+      await expect(page.getByTestId('zoom-fit')).toHaveAttribute('aria-pressed', 'true');
+      await page.waitForTimeout(300);
+      const m = await zoomPane(page).evaluate((el) => {
+        const paper = el.querySelector('.paper')!;
+        el.scrollLeft = 0;
+        const s = el.getBoundingClientRect();
+        const p = paper.getBoundingClientRect();
+        const col = document
+          .querySelector('[data-testid="findings-column"]')!
+          .getBoundingClientRect();
+        const pane = el.closest('.docpane')!.getBoundingClientRect();
+        // what is painted at a point just left of the panel inside the reading area
+        const y = s.top + Math.min(200, s.height / 2);
+        const hit = document.elementFromPoint(col.left + 4, y);
+        return {
+          areaRight: s.right,
+          areaInner: s.left + el.clientWidth,
+          paneRight: pane.right,
+          panelLeft: col.left,
+          pageLeft: p.left - s.left,
+          pageRight: p.right,
+          overflow: el.scrollWidth - el.clientWidth,
+          fitNeeded: Math.round(((el.clientWidth - 64) / 700) * 100),
+          hitInPanel: !!hit && !!hit.closest('[data-testid="findings-column"]'),
+        };
+      });
+      const pct = await dz(page);
+      // never under the panel: the reading area (and its pane) end at the panel's left edge
+      expect(m.areaRight).toBeLessThanOrEqual(m.panelLeft + 1);
+      expect(m.paneRight).toBeLessThanOrEqual(m.panelLeft + 1);
+      expect(m.hitInPanel).toBe(true);
+      expect(m.pageLeft).toBeGreaterThanOrEqual(0);
+      if (m.fitNeeded >= 60) {
+        // fit suffices: the page's right edge (with its border) is inside the area, no scroll
+        expect(pct).toBe(Math.min(175, m.fitNeeded));
+        expect(m.pageRight).toBeLessThanOrEqual(m.areaInner + 1);
+        expect(m.overflow).toBeLessThanOrEqual(1);
+      } else {
+        // even 60% is too wide: horizontal scroll from the page's left edge
+        expect(pct).toBe(60);
+        expect(m.overflow).toBeGreaterThan(0);
+      }
+      if (fpw !== null) expect(m.fitNeeded).toBeLessThan(60);
       await page.close();
     });
   }

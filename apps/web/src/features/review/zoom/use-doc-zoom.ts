@@ -31,7 +31,7 @@ function findMark(root: ParentNode, id: string): Element | null {
   return null;
 }
 
-/** D15 document zoom: fit width by default, manual 75-200, Cmd/Ctrl = - 0, saved per viewer. */
+/** D15 document zoom: fit width by default, manual 60-200 (fit 60-175), Cmd/Ctrl = - 0, saved per viewer. */
 export function useDocZoom(
   scrollRef: RefObject<HTMLElement | null>,
   selectedId: string | null,

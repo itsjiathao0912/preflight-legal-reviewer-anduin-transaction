@@ -18,7 +18,10 @@ describe('findings-v2-zoom-math', () => {
     expect(PRESETS).toEqual([75, 90, 100, 125, 150]);
   });
   it('fitWidth clamps at the edges', () => {
-    expect(fitWidth(0)).toBe(90);
+    expect(fitWidth(0)).toBe(60);
+    // D15 amendment: fit floor is 60, so a 1024 reading column (~460px) fits near 60, not 90
+    expect(fitWidth(484)).toBe(60);
+    expect(fitWidth(554)).toBe(70);
     expect(fitWidth(764)).toBe(100);
     expect(fitWidth(1900)).toBe(175);
     expect(fitWidth(4000)).toBe(175);
@@ -47,15 +50,25 @@ describe('findings-v2-zoom-math', () => {
       pct: 130,
     });
     expect(zoomReducer({ mode: 'manual', pct: 200 }, { type: 'in' }, 0).pct).toBe(200);
-    expect(zoomReducer({ mode: 'manual', pct: 75 }, { type: 'out' }, 0).pct).toBe(75);
-    expect(zoomReducer({ mode: 'manual', pct: 78 }, { type: 'out' }, 0).pct).toBe(75);
+    expect(zoomReducer({ mode: 'manual', pct: 60 }, { type: 'out' }, 0).pct).toBe(60);
+    expect(zoomReducer({ mode: 'manual', pct: 75 }, { type: 'out' }, 0).pct).toBe(70);
+    expect(zoomReducer({ mode: 'manual', pct: 63 }, { type: 'out' }, 0).pct).toBe(60);
+    // from a 60% fit: - is a no-op at 60, + goes to 70
+    expect(zoomReducer({ mode: 'fit', pct: 100 }, { type: 'out' }, 0)).toEqual({
+      mode: 'manual',
+      pct: 60,
+    });
+    expect(zoomReducer({ mode: 'fit', pct: 100 }, { type: 'in' }, 0)).toEqual({
+      mode: 'manual',
+      pct: 70,
+    });
   });
   it('preset clamps and fit keeps the manual pct', () => {
     expect(zoomReducer({ mode: 'fit', pct: 100 }, { type: 'preset', pct: 125 }, 0)).toEqual({
       mode: 'manual',
       pct: 125,
     });
-    expect(zoomReducer({ mode: 'fit', pct: 100 }, { type: 'preset', pct: 10 }, 0).pct).toBe(75);
+    expect(zoomReducer({ mode: 'fit', pct: 100 }, { type: 'preset', pct: 10 }, 0).pct).toBe(60);
     expect(zoomReducer({ mode: 'fit', pct: 100 }, { type: 'preset', pct: 500 }, 0).pct).toBe(200);
     expect(zoomReducer({ mode: 'manual', pct: 125 }, { type: 'fit' }, 0)).toEqual({
       mode: 'fit',
@@ -69,6 +82,7 @@ describe('findings-v2-zoom-math', () => {
     expect(parseZoom({ mode: 'zoomy', pct: 120 })).toEqual(fb);
     expect(parseZoom({ mode: 'manual', pct: 'x' })).toEqual(fb);
     expect(parseZoom({ mode: 'manual', pct: 300 })).toEqual({ mode: 'manual', pct: 200 });
+    expect(parseZoom({ mode: 'manual', pct: 10 })).toEqual({ mode: 'manual', pct: 60 });
     expect(parseZoom({ mode: 'manual', pct: 111.6 })).toEqual({ mode: 'manual', pct: 112 });
     expect(parseZoom({ mode: 'fit', pct: 125 })).toEqual({ mode: 'fit', pct: 125 });
   });
