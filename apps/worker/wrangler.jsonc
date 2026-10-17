@@ -17,7 +17,7 @@
     {
       "binding": "DB",
       "database_name": "aduin-transaction-db",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "5f0d76d8-ad88-4a0b-80eb-cff716c10eca",
     },
   ],
   // Phase 04b: daily retention purge (the lazy purge from new sessions stays the baseline).

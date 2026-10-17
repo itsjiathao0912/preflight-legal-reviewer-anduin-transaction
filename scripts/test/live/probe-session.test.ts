@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { judge, requestCarriesToken, VIOLATION_INIT } from '../../src/live/probe-session';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import {
+  FIRM_SAMPLE_ID,
+  judge,
+  requestCarriesToken,
+  VIOLATION_INIT,
+} from '../../src/live/probe-session';
+import { ROOT } from '../../src/live/common';
 
 const base = {
   mode: 'headless' as const,
@@ -32,5 +40,15 @@ describe('probe:live-session', () => {
   it('the CSP listener script carries no e2e hook marker', () => {
     expect(VIOLATION_INIT).toContain('securitypolicyviolation');
     expect(VIOLATION_INIT).not.toContain('__aduinE2E');
+  });
+});
+
+describe('probe-session sample choice (Wave C finding)', () => {
+  it('opens a bundled sample whose law firm resolves, so the session bootstrap runs', () => {
+    // build-samples.ts has side effects on import; read its tag table as text.
+    const src = readFileSync(join(ROOT, 'scripts', 'src', 'build-samples.ts'), 'utf8');
+    const m = new RegExp(`'${FIRM_SAMPLE_ID}':\\s*\\{[^}]*?firmId:\\s*([^,]+),`).exec(src);
+    expect(m).not.toBeNull();
+    expect(m?.[1]?.trim()).not.toBe('null');
   });
 });

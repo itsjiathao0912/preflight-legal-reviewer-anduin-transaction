@@ -49,6 +49,13 @@ export function makeHttp(base: string, fetchImpl: typeof fetch = fetch, cookie?:
   return async (path, init = {}) => {
     const headers = new Headers(init.headers);
     if (cookie) headers.set('cookie', `${COOKIE_NAME}=${cookie}`);
+    // Like a browser: mutating requests carry the page origin, so each matrix case reaches the
+    // guard it targets instead of stopping at the origin check.
+    // The SPA sends this on every /api call; without it the Worker answers 400 client_header.
+    if (!headers.has('x-aduin-client')) headers.set('x-aduin-client', '1');
+    const method = (init.method ?? 'GET').toUpperCase();
+    if (method !== 'GET' && method !== 'HEAD' && !headers.has('origin'))
+      headers.set('origin', base);
     const res = await fetchImpl(liveUrl(base, path), { ...init, headers, redirect: 'manual' });
     const text = await res.text();
     let body: unknown = text;
@@ -72,7 +79,10 @@ export interface MatrixCase {
 const JPEG_PDF = Buffer.concat([Buffer.from('%PDF-1.7\n'), randomBytes(64)]).toString('base64');
 
 export function matrixCases(): MatrixCase[] {
-  const json = { 'content-type': 'application/json' };
+  // Every case carries the SPA client header so it is rejected by the guard it targets (body cap,
+  // content type, session, cookie) rather than by the client-header check (live finding, Wave C).
+  const client = { 'x-aduin-client': '1' };
+  const json = { ...client, 'content-type': 'application/json' };
   return [
     {
       id: 'ai-no-session-no-token',
@@ -83,7 +93,7 @@ export function matrixCases(): MatrixCase[] {
     {
       id: 'ai-wrong-content-type',
       path: '/api/ai',
-      init: { method: 'POST', headers: { 'content-type': 'text/plain' }, body: 'x' },
+      init: { method: 'POST', headers: { ...client, 'content-type': 'text/plain' }, body: 'x' },
       expect: [400, 403, 415],
     },
     {
@@ -141,6 +151,7 @@ export async function runMatrix(http: Http, paceMs: number): Promise<string[]> {
   const before = await http('/api/quota');
   const stop0 = stopReason(before);
   if (stop0) return [`stop before matrix: ${stop0}`];
+  if (before.status !== 200) return [`quota read before matrix: HTTP ${before.status}`];
   for (const c of matrixCases()) {
     await sleep(paceMs);
     const r = await http(c.path, c.init);
@@ -157,7 +168,8 @@ export async function runMatrix(http: Http, paceMs: number): Promise<string[]> {
   }
   await sleep(paceMs);
   const after = await http('/api/quota');
-  if (JSON.stringify(after.body) !== JSON.stringify(before.body))
+  if (after.status !== 200) failures.push(`quota read after matrix: HTTP ${after.status}`);
+  else if (JSON.stringify(after.body) !== JSON.stringify(before.body))
     failures.push('quota changed across the matrix (something was claimed)');
   else log(P, 'matrix: quota unchanged (reject-before-claim holds)');
   return failures;

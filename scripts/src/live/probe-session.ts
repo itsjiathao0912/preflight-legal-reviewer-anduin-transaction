@@ -3,7 +3,9 @@
 // Runs Chromium headless first, then headed (unless --headless-only / --headed-only). Each run:
 // claims one session in the ledger BEFORE launching (5 per IP per UTC day; refuses at 4 used),
 // installs a `securitypolicyviolation` listener before any page script, opens the live site and
-// the #memory view (which bootstraps `POST /api/session` lazily), and waits for that response.
+// sample #3 (a known firm) and the #memory view (which bootstraps `POST /api/session` lazily),
+// and waits for that response. Automated Chromium is usually refused by the managed challenge
+// (R2); in headed mode a human operator can complete the interactive challenge.
 // Pass = a Turnstile token was sent, `POST /api/session` answered 200, zero CSP violations.
 // AI and OCR requests are aborted by the probe (no counted calls here).
 //
@@ -26,6 +28,8 @@ import {
 } from './common';
 
 const P = 'probe:live-session';
+/** A bundled sample whose law firm resolves (sample #1 has none, so it never bootstraps). */
+export const FIRM_SAMPLE_ID = '03';
 
 export interface SessionObservation {
   mode: 'headless' | 'headed';
@@ -111,6 +115,11 @@ async function runOnce(
       })
       .catch(() => undefined);
     await page.goto(`${base}/`, { waitUntil: 'load' });
+    // The session bootstraps only for a document with a known law firm (no firm => no memory
+    // call). Open bundled sample #3 (Partners Group) first, then the #memory view (Wave C finding).
+    await page.getByTestId('doc-switcher').click();
+    await page.getByTestId('open-another').click();
+    await page.locator(`[data-testid="sample-option"][data-sample-id="${FIRM_SAMPLE_ID}"]`).click();
     await page.evaluate(() => {
       location.hash = '#memory';
     });
@@ -135,7 +144,8 @@ async function main(): Promise<number> {
     ['headless-only', 'headed-only'],
   );
   const base = liveBase(f.values['base']);
-  const timeoutMs = Number(f.values['timeout-ms'] ?? 90_000);
+  // Covers the 120 s interactive Turnstile budget when a human completes the challenge (headed).
+  const timeoutMs = Number(f.values['timeout-ms'] ?? 180_000);
   const modes: boolean[] = f.bools.has('headless-only')
     ? [false]
     : f.bools.has('headed-only')

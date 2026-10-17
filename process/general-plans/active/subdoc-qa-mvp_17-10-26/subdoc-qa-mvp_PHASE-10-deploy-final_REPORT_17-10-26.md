@@ -110,3 +110,51 @@ Supplement fix of the Wave A review findings on commit bdc42cc, scripts and docs
 | NIT | `assertOutsideRepo` compares realpaths (deepest existing ancestor) and uses a segment check (`rel === '..'`, `..` + sep, or absolute). Tests: `..x` child, symlink into the repo. | `common.ts`, tests |
 
 Gates: `pnpm --filter @aduin/scripts test` per token: live-guards 53, deploy-preflight 13, conformance-free-plan 9, probe-session 5, probe-ai 3, shots-live 2 (all pass). Scripts typecheck pass. Scoped eslint and prettier on changed files pass. `pnpm guard:cf` OK, `pnpm secrets:scan` OK. Repo-wide `pnpm lint` fails only on Playwright trace files under `apps/web/test-results/` (generated artifacts from the concurrent web e2e run, not in this file set); Wave B should rerun lint after that directory is cleaned or confirm it is ignored.
+
+## Wave C live results (17-10-26, UTC; opus execute, HEAD 8e89991 + Wave C edits)
+
+**Answer first:** the deploy is done (version `67c796ff-477c-4900-ba89-4ff3109e0c56`, real D1, Turnstile widget, CSP live, zero-upstream smoke green). Residual R2 happened: automated Chromium gets no Turnstile token. So the AC51 echo, the AI/OCR sweep, the AI-call timing and the D4 burst did not run. Those gates stay CONDITIONAL with backlog stubs. AI calls 0/6, OCR 0/6, spend $0.
+
+### State changes
+| Step | Result |
+|---|---|
+| C1 before-state | Workers: aduin-transaction-web, portfolio-2026. D1: portfolio-db. Widgets: none. Rollback target 4325e4e4-9aca-4ae8-8985-cc0b73097c3e. Only `/accounts/` listings were used. |
+| C2 D1 | `aduin-transaction-db` = `5f0d76d8-ad88-4a0b-80eb-cff716c10eca` (APAC); id written to `apps/worker/wrangler.jsonc`; guard:cf OK |
+| C3 migrations + seed | 0001-0005 applied remotely; seed:check OK; demo.sql 80 rows written; schema_version 5; law_firm 3, workspace 1, firm_rule 3, decision 8 |
+| C4 widget | `aduin-transaction-web`, managed, domain aduin-transaction-web.giathaowork.workers.dev only. Site key (24 chars, public) is in the scratchpad. Secret piped to `wrangler secret put TURNSTILE_SECRET` from a mode-600 scratch file, deleted afterwards, never printed. Other secrets not re-put. |
+| C5 build + deploy | Plain build with VITE_TURNSTILE_SITE_KEY inline; deploy:preflight 13/13 PASS; `wrangler deploy`: no routes, workers.dev only, cron 17 3 * * *, version **67c796ff-477c-4900-ba89-4ff3109e0c56** |
+
+### C6 probes (in plan order)
+| Probe | Result |
+|---|---|
+| `curl -sI /` | CSP `default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; worker-src 'self' blob:; connect-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`, plus nosniff, `referrer-policy: no-referrer`, permissions-policy (camera/mic/geo/payment denied), COOP same-origin. No HSTS. PASS |
+| `/api/health` | 200 `{"ok":true}`, `cache-control: no-store`. PASS |
+| `/api/memory/health` (with `x-aduin-client: 1`) | schema_version "5" = expected, seed_mode 0, seed_version 1. PASS |
+| Stack smoke (headless) | 1 passed (7.0 s); `global_ok=true`; consoleErrors empty; no failing POST; quota ai 0/3 before and after (zero upstream, AC34 live). Headed rerun skipped: no Turnstile console noise to investigate, and it saves session budget. PASS |
+| `probe:live-session` headless + headed | RESIDUAL (exit 3): token=false, 0 CSP violations, no session POST. Diagnosis below. |
+| AC39 matrix | 7/7 rejected by the targeted guard: ai-no-session 400, wrong content-type 415, oversized 413, ocr pdf-as-image 400, forged cookie 401, no cookie 401, unknown route 404. Quota read 200 before and after, unchanged. PASS (after the script fix below) |
+| AC40 limits | Quota shape OK; one safe 429 `rate_limited` after 30 requests. PASS |
+| AC40 CPU (GraphQL workerCpu, today, 116 requests) | CPU p50 1.6 ms / p99 16.0 ms; wall p50 2.0 ms / p99 240 s; 0 errors. The p99 is above the 10 ms Free limit: observation, backlog stub. The AI-call timing at max_tokens 10000 was not measured (R2). |
+| D4 rows_written | Burst not run (no cookie, R2). Baseline read: rowsWritten 238, rowsRead 413 today (migrations + seed). **D4 decision: caps unchanged** (no evidence above 60k/day); no redeploy. |
+| C8 AI/OCR sweep | Not run (R2). Ledger: 0 AI, 0 OCR calls, $0. AC51 echo not run. |
+| After-state diff | +D1 aduin-transaction-db, +widget aduin-transaction-web, Worker version 4325e4e4 -> 67c796ff. Nothing else. Secrets: COOKIE_SIGNING_KEYS, COOKIE_SIGNING_KID, OPENROUTER_API_KEY, TURNSTILE_SECRET. |
+| Final checks | guard:cf OK, secrets:scan OK, `pnpm lint` OK (eslint config unchanged), scripts typecheck OK, scripts live tests 87/87 |
+
+Session ledger: smoke 1, probe:live-session 2 claimed. No real `POST /api/session` was made, so the server-side per-IP count is untouched. The diagnostic runs aborted every /api write.
+
+### R2 diagnosis (Turnstile)
+- Opening `#memory` with no document open makes no memory call (the view shows "no firm"). So `probe:live-session` as written could never bootstrap a session. Sample #1 (Franklin) also has no law firm. Fixed: the probe now opens sample #3 first (see the deviations below).
+- With sample #3 open, the widget loads (`api.js` 302 -> 200) and the challenge runs. Headless fails. Headed escalates to interactive (the overlay is revealed). One plain click restarted the challenge, and it failed again: PAT endpoint 401, and the decoy host `brunhild.challenges.cloudflare.com` does not resolve publicly. The only CSP messages come from **Cloudflare's own iframe CSP** (`connect-src data:`), not from our page policy, so no `connect-src` change is warranted (R4: no evidence).
+- Client behavior with no token is correct: no failing `POST /api/session` (E24/G16).
+
+### Deviations (within the blast radius, A6 scripts; autopilot)
+1. `scripts/src/conformance/free-plan.ts`: `makeHttp` now sends `x-aduin-client: 1` on every call and a same-origin `Origin` on non-GET calls; the matrix requires a 200 quota read before and after. Why: without the header every case (and the quota read) got 400 `client_header`, so the matrix was nearly vacuous. The "quota unchanged" check compared two error bodies, and the oversized case could not reach the 413 body cap. Regression test added in `scripts/test/live/conformance-free-plan.test.ts`.
+2. `scripts/src/live/probe-session.ts`: opens firm sample #3 (`FIRM_SAMPLE_ID`) before `#memory`; default timeout 90 s -> 180 s (covers the 120 s interactive budget for a human operator). Regression test added in `scripts/test/live/probe-session.test.ts`.
+
+### Backlog stubs
+- `process/general-plans/backlog/phase10-live-ai-sweep-operator_NOTE_17-10-26.md`
+- `process/general-plans/backlog/phase10-d4-rows-written-burst_NOTE_17-10-26.md`
+- `process/general-plans/backlog/phase10-worker-cpu-p99_NOTE_17-10-26.md`
+
+### Rollback
+`wrangler rollback 4325e4e4-9aca-4ae8-8985-cc0b73097c3e`; `wrangler secret delete TURNSTILE_SECRET`; delete the widget by site key; drop `aduin-transaction-db`.

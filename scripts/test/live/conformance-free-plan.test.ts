@@ -48,6 +48,20 @@ describe('conformance:free-plan matrix (AC39)', () => {
         : res(429, err('rate_limited'));
     expect((await runMatrix(h429, 0))[0]).toMatch(/stop at .*429/);
   });
+  it('every API matrix case carries the client header so it reaches its targeted guard', async () => {
+    for (const c of matrixCases().filter((x) => x.init.method === 'POST'))
+      expect(new Headers(c.init.headers).get('x-aduin-client')).toBe('1');
+    const seen: Headers[] = [];
+    const fake = (async (_u: string, i: RequestInit) => {
+      seen.push(new Headers(i.headers));
+      return new Response('{}', { status: 400 });
+    }) as unknown as typeof fetch;
+    await makeHttp(LIVE, fake)('/api/ai', { method: 'POST', body: '{}' });
+    await makeHttp(LIVE, fake)('/api/quota');
+    expect(seen[0]?.get('origin')).toBe(LIVE);
+    expect(seen[1]?.get('origin')).toBeNull();
+    expect(seen[1]?.get('x-aduin-client')).toBe('1');
+  });
   it('no matrix case is a well-formed AI/OCR request (cannot reach upstream)', () => {
     for (const c of matrixCases())
       if (c.path === '/api/ai') expect(c.expect.every((s) => s >= 400)).toBe(true);
