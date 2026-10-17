@@ -23,4 +23,11 @@ describe('gate pill view', () => {
     const v = gatePillView(true, { status: 'blocked', reasons: [1, 2] });
     expect(v).toMatchObject({ state: 'blocked', label: 'Blocked · 2', className: 'gate' });
   });
+  it('never shows Ready when the open document has no readable text', () => {
+    const v = gatePillView(true, { status: 'ready', reasons: [], unreadable: true });
+    expect(v.state).toBe('unreadable');
+    expect(v.className).not.toContain('ready');
+    expect(v.label).not.toContain('Ready');
+    expect(v.body).toContain('No text could be read');
+  });
 });

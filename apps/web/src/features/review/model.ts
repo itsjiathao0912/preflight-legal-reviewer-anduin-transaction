@@ -131,6 +131,18 @@ export function computeGate(rows: readonly Row[]): GateResult {
   );
 }
 
+/** Message shown when no text could be read from an open document (gate, banner, counsel line). */
+export const NO_TEXT_MESSAGE =
+  'No text could be read from this file; it looks scanned. Turn AI on to read scanned pages, or upload a PDF/HTML.';
+
+/**
+ * True when a document is open but nothing could be read from it (e.g. an image-only DOCX with AI
+ * off). Such a document was never checked, so it must never count as Ready to digitize.
+ */
+export function hasNoText(result: { blocks: readonly unknown[] } | null | undefined): boolean {
+  return !!result && result.blocks.length === 0;
+}
+
 /** Filter-menu option lists derived from the loaded findings. */
 export function classOptions(rows: readonly Row[]): { value: string; label: string }[] {
   const m = new Map<string, string>();

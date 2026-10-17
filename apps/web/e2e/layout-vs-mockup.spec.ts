@@ -131,7 +131,7 @@ test.describe('layout-vs-mockup', () => {
     expect(gate.y).toBeGreaterThan(side.y + side.height / 2);
   });
 
-  test('only collapse persists across reload (route, selection, expanded row and popovers reset)', async ({
+  test('only collapse and the open document persist across reload (route, selection, expanded row and popovers reset)', async ({
     page,
   }) => {
     await gotoApp(page);
@@ -142,8 +142,11 @@ test.describe('layout-vs-mockup', () => {
     await page.reload();
     expect(await sidebarWidth(page)).toBe(W.rail);
     await expect(page.getByTestId('nav-findings')).toHaveAttribute('aria-current', 'page');
-    await expect(page.getByTestId('finding-row')).toHaveCount(0);
-    await expect(page.getByTestId('empty-state')).toBeVisible();
+    // the last open document is reopened (uploads/samples restore), but selection resets
+    await expect(rowsLoc(page).first()).toBeVisible({ timeout: 30_000 });
+    await expect(rowsLoc(page).nth(1).locator('xpath=ancestor-or-self::li[1]')).not.toHaveClass(
+      /\bsel\b/,
+    );
   });
 
   test('computed styles stay inside the app.html vocabulary on Findings, overlays and Compare', async ({

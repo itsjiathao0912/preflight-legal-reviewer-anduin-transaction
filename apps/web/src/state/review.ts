@@ -39,6 +39,7 @@ import {
 import { fingerprintFindings, type MemoryResult } from '../memory/fingerprintFindings';
 import { appDb } from '../storage/db';
 import { useFilters } from './filters';
+import { saveLastDoc } from './last-doc';
 import {
   ensureSession,
   ensureSessionWithin,
@@ -608,6 +609,8 @@ export const useReview = create<ReviewState>((set, get) => {
       const rows = buildRows(result.findings, memory, triage);
       const first = visibleRows(placement(rows).main, useFilters.getState())[0]?.f.id ?? null;
       set({ phase: 'ready', doc, recent, result, stages, memory, triage, selectedId: first });
+      // restore-on-reload: remember what is open (uploads stay in IndexedDB for 24 h)
+      void saveLastDoc(meta);
       const live = () => seq === loadSeq && get().doc === doc;
       const engineResult = result;
       // Phase 05 AI lane: static precomputed lookup + verify (never /api/ai for samples here)

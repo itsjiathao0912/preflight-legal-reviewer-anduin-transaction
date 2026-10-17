@@ -5,6 +5,7 @@ import {
   buildRows,
   chipCounts,
   computeGate,
+  hasNoText,
   counselCount,
   openCount,
   placement,
@@ -33,7 +34,8 @@ export function useReviewView() {
       chips: chipCounts(main),
       open: openCount(main),
       counsel: counselCount(rows),
-      gate: computeGate(rows),
+      // a document with no readable text was never checked: the gate reads `unreadable`, never Ready
+      gate: { ...computeGate(rows), unreadable: hasNoText(result) },
     };
   }, [result, memory, triage, sev, cls, status, sort, det]);
 }

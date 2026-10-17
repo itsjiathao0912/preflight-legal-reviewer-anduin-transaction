@@ -139,6 +139,8 @@ export function useStages(): {
   let button = 'No document open';
   if (phase === 'loading') button = 'Reading the document…';
   else if (failed) button = `${LABEL[failed]} failed · partial result`;
+  else if (phase === 'ready' && stages.checks?.state === 'skipped')
+    button = 'No text could be read';
   else if (checksDone) button = `Checks done · AI review ${ai.suffix}`;
   else if (phase === 'error') button = 'Processing failed';
   return { list, button, failed, busy: phase === 'loading' };

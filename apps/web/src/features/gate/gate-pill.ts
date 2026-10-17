@@ -1,7 +1,8 @@
 import type { IconName } from '../../icons/sprite';
+import { NO_TEXT_MESSAGE } from '../review/model';
 
 /** Sidebar gate pill view (pure). `none` = no document open: neutral, never the green Ready state. */
-export type GatePillState = 'none' | 'ready' | 'blocked';
+export type GatePillState = 'none' | 'ready' | 'blocked' | 'unreadable';
 
 export interface GatePillView {
   state: GatePillState;
@@ -14,7 +15,7 @@ export interface GatePillView {
 
 export function gatePillView(
   hasDocument: boolean,
-  gate: { status: 'ready' | 'blocked'; reasons: readonly unknown[] },
+  gate: { status: 'ready' | 'blocked'; reasons: readonly unknown[]; unreadable?: boolean },
 ): GatePillView {
   if (!hasDocument)
     return {
@@ -24,6 +25,15 @@ export function gatePillView(
       label: 'No document',
       title: 'No document open',
       body: 'Open a document to check whether it can be digitized.',
+    };
+  if (gate.unreadable)
+    return {
+      state: 'unreadable',
+      className: 'gate',
+      icon: 'lock',
+      label: 'Not ready · no text',
+      title: 'Not ready to digitize',
+      body: NO_TEXT_MESSAGE,
     };
   if (gate.status === 'blocked')
     return {

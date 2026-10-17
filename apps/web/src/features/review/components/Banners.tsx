@@ -1,3 +1,4 @@
+import { hasNoText, NO_TEXT_MESSAGE } from '../model';
 import { Icon } from '../../../components/ui/icon';
 import { useReview } from '../../../state/review';
 import { useSession } from '../../../state/session';
@@ -8,6 +9,7 @@ export function Banners() {
   const aiOn = useSession((s) => s.aiOn);
   const doc = useReview((s) => s.doc);
   const memory = useReview((s) => s.memory);
+  const result = useReview((s) => s.result);
   const retryMemory = useReview((s) => s.retryMemory);
   return (
     <>
@@ -17,6 +19,14 @@ export function Banners() {
           <p className="bn-p">
             <b>AI review is off.</b> Rules, memory and the gate still work; ambiguity, contradiction
             and typo passes are skipped.
+          </p>
+        </div>
+      ) : null}
+      {doc && hasNoText(result) ? (
+        <div className="banner on" role="alert" data-testid="no-text-banner">
+          <Icon name="warn" />
+          <p className="bn-p">
+            <b>Not ready to digitize.</b> {NO_TEXT_MESSAGE}
           </p>
         </div>
       ) : null}
