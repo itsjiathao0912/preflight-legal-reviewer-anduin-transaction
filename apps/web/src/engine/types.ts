@@ -6,6 +6,7 @@ import type {
   DiffStage,
   Finding,
   OcrResult,
+  OutlineDraft,
   Region,
   StructureView,
 } from '@aduin/core';
@@ -94,6 +95,8 @@ export interface EngineResult {
   failedStage: StageId | null;
   /** Phase 02 (additive, optional): the #structure view model; absent when the structurer failed. */
   structure?: StructureView;
+  /** Phase 09 (additive, optional): form logic outline draft (no document name); absent without structure. */
+  outline?: OutlineDraft;
   /** Phase 05 (additive, optional): graph-selected AI candidates (core llm/candidates.ts, worker only). */
   aiCandidates?: AiCandidate[];
   /** Phase 06 (additive): which adapter read the document (absent = html, the Phase 03 default). */

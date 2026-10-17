@@ -7,6 +7,7 @@
 import * as Comlink from 'comlink';
 import {
   buildAiCandidatesWithSites,
+  buildOutlineDraft,
   buildDocGraph,
   buildStructureView,
   CoreError,
@@ -549,6 +550,21 @@ export const api: EngineApi = {
     // Phase 02: the #structure view model (pure core function, worker only; optional on the wire)
     try {
       result.structure = buildStructureView(g, result.findings);
+      // Phase 09: the form logic outline draft, projected eagerly from the same masked view
+      try {
+        const low = (result.ocr?.pages ?? [])
+          .filter((p) => p.lowConfidence)
+          .map((p) => p.index + 1); // OcrPageView.index is 0-based; the note reads page numbers
+        result.outline = buildOutlineDraft(result.structure, {
+          docHash: result.docHash,
+          source: result.source ?? 'html',
+          ...(result.pageCount !== undefined ? { pageCount: result.pageCount } : {}),
+          ...(low.length ? { ocrLowConfidencePages: low } : {}),
+          ...(result.notice ? { notice: result.notice } : {}),
+        });
+      } catch (e) {
+        console.warn('[engine] outline_failed', e instanceof Error ? e.name : 'unknown');
+      }
     } catch (e) {
       // the Structure view shows its empty state; log a code only, never document text (F8)
       console.warn('[engine] structure_view_failed', e instanceof Error ? e.name : 'unknown');

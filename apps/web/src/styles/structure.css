@@ -340,3 +340,18 @@ table.t tr.sel td:first-child {
   margin-top: 4px;
   font-style: normal;
 }
+
+/* Phase 09: logic outline export in the Structure header */
+.outline-export {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex: none;
+  max-width: 340px;
+  text-align: right;
+}
+.outline-export .mut {
+  margin: 0;
+  font-size: 12px;
+}

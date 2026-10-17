@@ -13,6 +13,7 @@ import type { BlockView, EngineSettings, FindingView, StageId } from './engine/t
  *   setFirmRules(texts)         stub active firm rules (sandbox firm with rules: no `.none` lookup)
  *   setApiBase(base)            switch the AI lane on in the preview build (G16; only the five AI
  *                               specs call it, before opening a document, with /api/* intercepted)
+ *   forceInvalidOutline(on)     make the next outline export fail schema validation (Phase 09)
  *   api                         { seedDecision, seedAnswer, setCounselAnswer, state } bound at install
  */
 type Transform = (findings: FindingView[], blocks: BlockView[]) => FindingView[];
@@ -21,9 +22,15 @@ interface HookState {
   failStage: StageId | null;
   firmRules: string[] | null;
   transform: Transform | null;
+  forceInvalidOutline: boolean;
 }
 
-const state: HookState = { failStage: null, firmRules: null, transform: null };
+const state: HookState = {
+  failStage: null,
+  firmRules: null,
+  transform: null,
+  forceInvalidOutline: false,
+};
 
 export function e2eSettings(): Pick<EngineSettings, 'e2eFailStage'> {
   if (IS_E2E) {
@@ -47,6 +54,14 @@ export function e2eFirmRules(): string[] | null {
   return null;
 }
 
+/** E2E-only: true when the next outline export must fail validation (false outside IS_E2E). */
+export function e2eForceInvalidOutline(): boolean {
+  if (IS_E2E) {
+    return state.forceInvalidOutline;
+  }
+  return false;
+}
+
 export function installE2eHook(api: Record<string, unknown>): void {
   if (IS_E2E) {
     (window as unknown as Record<string, unknown>)['__aduinE2E'] = {
@@ -59,6 +74,9 @@ export function installE2eHook(api: Record<string, unknown>): void {
       },
       setFirmRules: (texts: string[] | null) => {
         state.firmRules = Array.isArray(texts) ? texts.filter((t) => typeof t === 'string') : null;
+      },
+      forceInvalidOutline: (on: boolean) => {
+        state.forceInvalidOutline = on === true;
       },
       // the only runtime writer of the API base; stays inside the IS_E2E block (E21a)
       setApiBase: (base: string) => {

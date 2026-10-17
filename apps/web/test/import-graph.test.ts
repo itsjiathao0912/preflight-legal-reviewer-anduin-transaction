@@ -22,6 +22,13 @@ const ALLOWED = new Set([
   'REASON_CODES',
   'ActiveDecisionSchema',
   'SEVERITIES',
+  // Phase 09: logic outline finalize (schema check, masked name, file name)
+  'OutlineSchema',
+  'outlineFilename',
+  'maskOutlineName',
+  // Phase 07c drift narrative (pure: masked candidates from a DiffResult, filtered reader)
+  'buildDriftNarrativeCandidates',
+  'readDriftNarrative',
 ]);
 
 function files(dir: string): string[] {

@@ -36,10 +36,13 @@ describe('no-e2e-hook-in-dist', () => {
     expect(prod.length).toBeGreaterThan(10_000);
     expect(prod.includes(MARKER)).toBe(false);
     expect(prod.includes('e2eFailStage')).toBe(false);
+    // Phase 09: the force-invalid-outline hook must not ship either
+    expect(prod.includes('forceInvalidOutline')).toBe(false);
   }, 180_000);
 
   it('positive control: the e2e build does contain the hook marker', async () => {
     const e2e = await buildTo('e2e');
     expect(e2e.includes(MARKER)).toBe(true);
+    expect(e2e.includes('forceInvalidOutline')).toBe(true);
   }, 180_000);
 });

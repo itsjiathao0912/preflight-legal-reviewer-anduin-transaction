@@ -4,6 +4,7 @@ import '../../styles/structure.css';
 import { Icon } from '../../components/ui/icon';
 import { useReview } from '../../state/review';
 import { useShell } from '../../state/shell';
+import { ExportOutlineButton } from '../outline/ExportOutlineButton';
 import { InvestorTypesLens } from '../investor-paths/InvestorTypesLens';
 import { DEFAULT_LENS, LENSES, lineFor } from './model';
 import { StructureDrawer } from './StructureDrawer';
@@ -103,6 +104,7 @@ export function StructureScreen() {
           </button>
         </div>
       ) : null}
+      {doc ? <ExportOutlineButton /> : null}
     </header>
   );
 

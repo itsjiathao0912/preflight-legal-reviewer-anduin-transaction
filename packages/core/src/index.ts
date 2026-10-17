@@ -125,3 +125,17 @@ export { setSupSegments, supSegmentsOf, type SupSegment } from './adapters/sup-s
 
 // --- Phase 07 (07a): version / sibling diff engine (runs in the engine worker; main thread imports types only) ---
 export * from './diff/index';
+
+// --- Phase 09: form logic outline export (builder runs in the engine worker; main thread imports
+// only OutlineSchema, outlineFilename, maskOutlineName as values) ---
+export {
+  OutlineSchema,
+  outlineFilename,
+  maskOutlineName,
+  buildOutlineDraft,
+  OUTLINE_SCHEMA_ID,
+  OUTLINE_DISCLAIMER,
+  type Outline,
+  type OutlineDraft,
+  type OutlineDraftOptions,
+} from './outline/index';
