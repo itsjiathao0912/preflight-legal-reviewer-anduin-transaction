@@ -69,6 +69,15 @@ import type { Logger } from './log';
 import { memoryBreaker, type BreakerPort, type ProxyPlatform } from './ports';
 import { ndjsonResponse, ndjsonSingle, realTimers, type Timers } from './stream';
 
+/** L5: rules echo on the AI result frame (additive `meta`; no rule text ever leaves here). */
+type RulesEchoMeta = { rules_hash8: string; rules_applied: number; rules_total: number };
+const NO_RULES_META: RulesEchoMeta = { rules_hash8: 'none', rules_applied: 0, rules_total: 0 };
+function rulesEcho(r: { hash8: string; applied: number; total: number }): RulesEchoMeta {
+  return r.applied === 0
+    ? NO_RULES_META
+    : { rules_hash8: r.hash8, rules_applied: r.applied, rules_total: r.total };
+}
+
 export const UPSTREAM_TIMEOUT_MS = 120_000;
 export const CACHE_TTL_S = 7 * 86_400;
 const DOC_HEADER = 'x-aduin-doc';
@@ -241,6 +250,8 @@ export async function handleProxy(
     let promptVer: string;
     let schemaVer: string;
     let rulesHash = 'none';
+    // L5 rules echo (additive frame meta): counts and the hash prefix only, never rule text
+    let rulesMeta: RulesEchoMeta = NO_RULES_META;
     if (p.kind === 'ai') {
       const ruleTexts = await resolveRules(ctx, visitor, p.ai.law_firm_id);
       const rules = selectInjectedRules(ruleTexts);
@@ -250,6 +261,7 @@ export async function handleProxy(
       promptVer = task.promptVersion;
       schemaVer = task.schemaVersion;
       rulesHash = rules.hash;
+      rulesMeta = rulesEcho(rules);
       fwd = {
         kind,
         messagesJson: JSON.stringify(messages),
@@ -285,7 +297,14 @@ export async function handleProxy(
     if (hit && hit.kind === kind) {
       const frame = (
         hit.kind === 'ai'
-          ? { t: 'result', kind: 'ai', data: hit.data, cache: 'hit', model: hit.model }
+          ? {
+              t: 'result',
+              kind: 'ai',
+              data: hit.data,
+              cache: 'hit',
+              model: hit.model,
+              meta: { ...rulesMeta },
+            }
           : { t: 'result', kind: 'ocr', data: hit.data, cache: 'hit', model: hit.model }
       ) as Frame;
       return ndjsonSingle(frame, await cookieHeaders());
@@ -392,6 +411,7 @@ export async function handleProxy(
         data: outcome.data,
         cache: 'miss',
         model: outcome.model,
+        ...(outcome.kind === 'ai' ? { meta: { ...rulesMeta } } : {}),
       } as Frame;
     };
     return ndjsonResponse({
