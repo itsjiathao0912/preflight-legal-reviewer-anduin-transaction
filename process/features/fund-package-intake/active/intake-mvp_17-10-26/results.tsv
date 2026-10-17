@@ -8,3 +8,7 @@ iteration	timestamp	gaps_found	fail_count	concern_count	applied	saturation_statu
 6	2026-10-17	7	0	7	0	ACTIVE	CONTINUE	inner PVL P1 (T14 scope) CONDITIONAL 7 concerns (2 high: heading bold/caps rule, nonexistent annex scope); P4 inner PASS; supplement P1
 7	2026-10-17	7	0	7	7	ACTIVE	CONTINUE	P1 supplement applied (T14 gaps 1-7; rollback 47d98295); re-validate P1 from V1
 8	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	P1 inner PVL PASS after T14 supplement; all 4 phase plans PASS
+9	2026-10-17	TBD	0	0	0	ACTIVE	baseline	EVL phase 1 baseline (execute reports all gates green; core 3076+3 skip, scripts 156)
+10	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	EVL phase 1 green on independent vc-tester re-run (core 3076+3 skip, scripts 156, 27 tokens, diff gates)
+11	2026-10-17	4	0	4	4	ACTIVE	CONTINUE	P3 inner refresh after P2 (R1 one-doc packages show coverage, R2 reload restore join item J0, R3 testids/live(), R4 rollback 328ca295); re-validate P3
+12	2026-10-17	0	0	0	0	SATURATED	HALTED_SUCCESS	EVL phase 2 green (web 266, core 3077, scripts 156, e2e 192+1 skip on rerun; intake-demo-packages flaked once at 5 s timeout -> harden in P3 join); P3 inner PVL PASS
