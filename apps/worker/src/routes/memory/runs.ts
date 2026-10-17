@@ -5,6 +5,7 @@ import {
   CreateRunResponseSchema,
   firmById,
   resolveLabel,
+  scopeMismatch,
   StoreFindingsRequestSchema,
   StoreFindingsResponseSchema,
 } from '@aduin/core';
@@ -100,7 +101,7 @@ export function storeFindingsHandler(deps: MemoryDeps): Handler {
     const run = await ctx.db
       .prepare(RUN_SQL.context)
       .bind(ctx.workspaceId, runId)
-      .first<{ id: string; law_firm_id: string | null }>();
+      .first<{ id: string; law_firm_id: string | null; fund_name: string }>();
     if (!run) throw new ProxyError('invalid_request', 'run_not_found');
     const active = run.law_firm_id
       ? await lookupActive(
@@ -113,11 +114,15 @@ export function storeFindingsHandler(deps: MemoryDeps): Handler {
     const byFp = new Map(active.map((d) => [d.fingerprint, d]));
     const rows = body.findings.map((f) => {
       const d = byFp.get(f.fingerprint) ?? null;
+      const scope = { fundName: run.fund_name };
       const label = resolveLabel(
         { severity: f.severity, issue_class: f.issue_class, fingerprint: f.fingerprint },
         d,
+        scope,
       );
-      return findingRow(f, label, d ? d.id : null);
+      // Variance D5: a fund-scoped decision of another fund does not apply, so it is NOT linked
+      // (keyed on the scope mismatch itself; an answered-unclear decision keeps its link).
+      return findingRow(f, label, d && !scopeMismatch(d, scope) ? d.id : null);
     });
     if (rows.length > 0) await claimWrite(ctx, 'fnd', rows.length);
     const [insert] = await ctx.db.batch(insertFindingsStmts(ctx.db, ctx, runId, rows));

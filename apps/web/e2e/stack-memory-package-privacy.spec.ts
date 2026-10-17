@@ -126,6 +126,6 @@ test.describe('stack-memory-package-privacy', () => {
 
     const health = await page.request.get('/api/memory/health', { headers: CLIENT_HEADERS });
     expect(health.status()).toBe(200);
-    expect(((await health.json()) as { schema_version: string }).schema_version).toBe('5');
+    expect(((await health.json()) as { schema_version: string }).schema_version).toBe('6');
   });
 });

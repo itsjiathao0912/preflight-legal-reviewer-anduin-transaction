@@ -8,7 +8,7 @@ export const OP_REPLAY_TEXT =
 /** uq_decision_active: a second active decision for (workspace, firm, fingerprint). */
 export const ACTIVE_CONFLICT_TEXT =
   'UNIQUE constraint failed: decision.workspace_id, decision.law_firm_id, decision.fingerprint';
-/** RAISE(ABORT, ...) messages from migration 0002. */
+/** RAISE(ABORT, ...) messages from migrations 0002 and 0006 (variance; no entry contains another). */
 export const TRIGGER_TEXTS = [
   'decision_append_only',
   'decision_immutable',
@@ -17,8 +17,23 @@ export const TRIGGER_TEXTS = [
   'answer_immutable',
   'rule_immutable',
   'demo_read_only',
+  'regression_check_immutable',
+  'regression_check_append_only',
+  'regression_check_cap',
+  'question_owner_immutable',
 ] as const;
 export type TriggerText = (typeof TRIGGER_TEXTS)[number];
+
+/**
+ * Variance (0006) trigger texts that map to a typed 400 `invalid_request` (reason = the text)
+ * instead of the generic 503 `memory_unavailable`. Older texts keep their existing mapping.
+ */
+export const TRIGGER_INVALID_REQUEST: ReadonlySet<TriggerText> = new Set<TriggerText>([
+  'regression_check_immutable',
+  'regression_check_append_only',
+  'regression_check_cap',
+  'question_owner_immutable',
+]);
 
 export type BatchFailure =
   | { kind: 'op_replay' }

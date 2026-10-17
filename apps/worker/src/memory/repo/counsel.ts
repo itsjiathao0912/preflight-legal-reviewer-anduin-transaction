@@ -7,7 +7,7 @@ import type { MemoryCtx } from '../ctx';
 export const COUNSEL_SQL = {
   insertQuestion:
     'INSERT INTO counsel_question (workspace_id, id, review_run_id, finding_key, fingerprint, law_firm_id, ' +
-    'issue_class, interpretations_json, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) ' +
+    'issue_class, interpretations_json, created_at, owner, owner_source) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11) ' +
     'ON CONFLICT(workspace_id, review_run_id, finding_key) DO NOTHING',
   questionById:
     'SELECT id, review_run_id, finding_key, fingerprint, law_firm_id, issue_class, status ' +
@@ -15,8 +15,8 @@ export const COUNSEL_SQL = {
   questionByRunKey:
     'SELECT id FROM counsel_question WHERE workspace_id = ?1 AND review_run_id = ?2 AND finding_key = ?3',
   insertAnswer:
-    'INSERT INTO counsel_answer (workspace_id, id, question_id, option, note, answered_by_name, answered_at) ' +
-    'VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)',
+    'INSERT INTO counsel_answer (workspace_id, id, question_id, option, note, answered_by_name, answered_at, intent, scope) ' +
+    'VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)',
   markAnswered:
     "UPDATE counsel_question SET status = 'answered' WHERE workspace_id = ?1 AND id = ?2",
   markExported:
@@ -52,6 +52,8 @@ export function insertQuestionStmt(
     firm: string;
     issueClass: string;
     interpretations: string[];
+    owner?: string | null;
+    ownerSource?: string | null;
   },
 ): D1PreparedStatement {
   return db
@@ -66,15 +68,34 @@ export function insertQuestionStmt(
       q.issueClass,
       JSON.stringify(q.interpretations),
       ctx.now,
+      q.owner ?? null,
+      q.ownerSource ?? null,
     );
 }
 
 export function insertAnswerStmt(
   db: Db,
   ctx: MemoryCtx,
-  a: { id: string; questionId: string; option: string; note: string | null },
+  a: {
+    id: string;
+    questionId: string;
+    option: string;
+    note: string | null;
+    intent?: string | null;
+    scope?: string | null;
+  },
 ): D1PreparedStatement {
   return db
     .prepare(COUNSEL_SQL.insertAnswer)
-    .bind(ctx.workspaceId, a.id, a.questionId, a.option, a.note, ctx.analystName, ctx.now);
+    .bind(
+      ctx.workspaceId,
+      a.id,
+      a.questionId,
+      a.option,
+      a.note,
+      ctx.analystName,
+      ctx.now,
+      a.intent ?? null,
+      a.scope ?? null,
+    );
 }

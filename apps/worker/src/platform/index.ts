@@ -56,9 +56,23 @@ export const MEMORY_WRITE_WEIGHTS = Object.freeze({
   decision: 32,
   run: 12,
   counselAnswer: 18,
+  /**
+   * Variance (Phase 03): answer that also creates a regression check. Derived from a measurement
+   * (rows-written variance test, local D1): plain answer 13 rows, answer + check 18 rows, delta +5
+   * (check row + PK and ix_regression_check_scope entries + its audit row and indexes) -> 18 + 5.
+   */
+  counselAnswerWithAssertion: 23,
   findingsBase: 5,
   other: 10,
 });
+
+/** Counsel answer weight: an `assertion` (non-null object) also writes a check + audit row. */
+export function counselAnswerWeight(raw: Record<string, unknown>): number {
+  const a = raw['assertion'];
+  return a !== null && typeof a === 'object'
+    ? MEMORY_WRITE_WEIGHTS.counselAnswerWithAssertion
+    : MEMORY_WRITE_WEIGHTS.counselAnswer;
+}
 
 export type WriteKind = 'req' | 'run' | 'fnd';
 

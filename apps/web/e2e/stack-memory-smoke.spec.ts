@@ -6,7 +6,7 @@ test('memory health is ok on the seeded local D1', async ({ page }) => {
   const res = await page.request.get('/api/memory/health', { headers: CLIENT_HEADERS });
   expect(res.status()).toBe(200);
   const body = (await res.json()) as { ok: boolean; schema_version: string; seed_mode: string };
-  expect(body).toMatchObject({ ok: true, schema_version: '5', seed_mode: '0' });
+  expect(body).toMatchObject({ ok: true, schema_version: '6', seed_mode: '0' });
 });
 
 test('POST /api/session mints a writable sandbox session', async ({ page, baseURL }) => {

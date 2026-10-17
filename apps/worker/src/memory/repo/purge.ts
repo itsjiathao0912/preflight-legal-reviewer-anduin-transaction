@@ -20,6 +20,7 @@ export const PURGE_CHILD_TABLES = [
   'finding',
   'firm_rule',
   'decision',
+  'regression_check',
   'counsel_answer',
   'counsel_question',
   'review_run',

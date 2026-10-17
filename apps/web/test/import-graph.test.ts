@@ -10,6 +10,8 @@ const WORKER = 'engine/engine.worker.ts';
 const ALLOWED = new Set([
   'fingerprintFor',
   'resolveLabel',
+  // Variance Phase 03: D5 scope rule shared with the Worker label call site
+  'scopeMismatch',
   'mask',
   'limits',
   // firm list functions

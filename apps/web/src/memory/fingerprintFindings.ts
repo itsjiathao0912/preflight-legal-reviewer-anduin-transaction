@@ -2,6 +2,7 @@ import {
   fingerprintFor,
   limits,
   resolveLabel,
+  scopeMismatch,
   type ActiveDecision,
   type MemoryLabel,
 } from '@aduin/core';
@@ -12,6 +13,8 @@ import type { MemoryApi } from '../api/memoryApi';
  * Main-thread fingerprint flow (Phase 01 Contracts v1): core fingerprintFor(finding, firmId) per finding,
  * then memoryApi.lookup(firmId, fingerprints[]) in chunks of limits.memoryLookupMax, then resolveLabel.
  * firmId = null -> null fingerprints, no lookup, every label `new`, memory not applied.
+ * fundName (Variance D5): when given, a fund-scoped decision of another fund does not apply (label
+ * `new`, no prior), exactly as the Worker resolves the persisted label; omitted = legacy behavior.
  */
 export interface MemoryAnnotated {
   fingerprint: string | null;
@@ -31,7 +34,9 @@ export async function fingerprintFindings(
   findings: readonly FindingView[],
   firmId: string | null,
   api: MemoryApi | null,
+  fundName?: string | null,
 ): Promise<MemoryResult> {
+  const scope = typeof fundName === 'string' ? { fundName } : undefined;
   const byId: Record<string, MemoryAnnotated> = {};
   if (firmId === null) {
     for (const f of findings) byId[f.id] = { fingerprint: null, label: 'new', prior: null };
@@ -54,9 +59,10 @@ export async function fingerprintFindings(
   }
   for (const f of findings) {
     const a = byId[f.id]!;
-    const prior = a.fingerprint ? (decisions.get(a.fingerprint) ?? null) : null;
+    const found = a.fingerprint ? (decisions.get(a.fingerprint) ?? null) : null;
+    const prior = found && !scopeMismatch(found, scope) ? found : null;
     a.prior = prior;
-    a.label = resolveLabel({ ...f, fingerprint: a.fingerprint }, prior);
+    a.label = resolveLabel({ ...f, fingerprint: a.fingerprint }, prior, scope);
   }
   return { byId, applied: true, unavailable: false };
 }

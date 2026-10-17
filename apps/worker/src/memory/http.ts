@@ -19,7 +19,7 @@ import {
   parseJsonObject,
   readBodyCapped,
 } from '../proxy/guards';
-import { classifyBatchError } from '../db/tx';
+import { classifyBatchError, TRIGGER_INVALID_REQUEST } from '../db/tx';
 import { ID_RE } from '../db/ids';
 import { resolveSession, verifySession, type MemoryCtx } from './ctx';
 
@@ -83,6 +83,8 @@ export function handle(deps: MemoryDeps, name: string, fn: MemoryHandler): Handl
       const kind = classifyBatchError(e);
       if (kind.kind === 'trigger' && kind.trigger === 'demo_read_only')
         return errorResponse(new ProxyError('read_only_demo'));
+      if (kind.kind === 'trigger' && TRIGGER_INVALID_REQUEST.has(kind.trigger))
+        return errorResponse(new ProxyError('invalid_request', kind.trigger));
       deps.logger.log('memory.error', { route: name, kind: kind.kind });
       return errorResponse(new ProxyError('memory_unavailable', 'storage'));
     }

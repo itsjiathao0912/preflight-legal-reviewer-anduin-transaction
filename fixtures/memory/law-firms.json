@@ -16,6 +16,21 @@
       "id": "firm-y",
       "name": "Firm Y",
       "aliases": ["Firm Y LLC", "Firm Y & Partners", "Firm-Y"]
+    },
+    {
+      "id": "hartwell-crane",
+      "name": "Hartwell & Crane LLP",
+      "aliases": ["Hartwell & Crane", "HC LLP", "H&C"]
+    },
+    {
+      "id": "ostrander-pell",
+      "name": "Ostrander Pell LLP",
+      "aliases": ["Ostrander Pell"]
+    },
+    {
+      "id": "calder-reyes",
+      "name": "Calder Reyes",
+      "aliases": []
     }
   ]
 }

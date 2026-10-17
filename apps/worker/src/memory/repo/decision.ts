@@ -6,7 +6,7 @@ import type { MemoryCtx } from '../ctx';
 export const DECISION_COLS =
   'd.id, d.law_firm_id, d.fingerprint, d.status, d.decision, d.reason_code, d.note, d.counsel_option, ' +
   'd.counsel_note, d.issue_class, d.quote_snippet, d.section_path, d.pattern_key, d.fund_name, ' +
-  'd.doc_version_label, d.decided_by_name, d.decided_at';
+  'd.doc_version_label, d.intent, d.scope, d.decided_by_name, d.decided_at';
 
 export const DECISION_SQL = {
   byId: `SELECT ${DECISION_COLS} FROM decision d WHERE d.workspace_id = ?1 AND d.id = ?2`,
@@ -22,8 +22,8 @@ export const DECISION_SQL = {
     'INSERT INTO decision (workspace_id, id, law_firm_id, fingerprint, fp_version, issue_class, pattern_key, ' +
     'quote_hash, quote_snippet, section_path, fund_name, doc_version_label, origin_fund_id, origin_document_id, ' +
     'origin_review_run_id, origin_finding_key, decision, reason_code, note, counsel_option, counsel_note, ' +
-    'counsel_answer_id, decided_by_analyst_id, decided_by_name, decided_at, status, supersedes_id) VALUES ' +
-    "(?1, ?2, ?3, ?4, 1, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, 'active', ?25)",
+    'counsel_answer_id, decided_by_analyst_id, decided_by_name, decided_at, status, supersedes_id, intent, scope) VALUES ' +
+    "(?1, ?2, ?3, ?4, 1, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, 'active', ?25, ?26, ?27)",
 } as const;
 
 export interface DecisionDbRow {
@@ -42,6 +42,9 @@ export interface DecisionDbRow {
   pattern_key: string | null;
   fund_name: string;
   doc_version_label: string | null;
+  /** Variance (0006); absent on rows selected by pre-0006 column lists. */
+  intent?: string | null;
+  scope?: ActiveDecision['scope'] | null;
   decided_by_name: string;
   decided_at: number;
 }
@@ -74,6 +77,8 @@ export function toActiveDecision(r: DecisionDbRow): ActiveDecision {
     ...(r.pattern_key !== null ? { pattern_key: r.pattern_key } : {}),
     fund_name: r.fund_name,
     ...(r.doc_version_label !== null ? { doc_version_label: r.doc_version_label } : {}),
+    ...(r.intent !== null && r.intent !== undefined ? { intent: r.intent } : {}),
+    ...(r.scope ? { scope: r.scope } : {}),
     decided_by_name: r.decided_by_name,
     decided_at: r.decided_at,
   };
@@ -116,6 +121,9 @@ export interface NewDecision {
   counsel_note: string | null;
   counsel_answer_id: string | null;
   supersedes_id: string | null;
+  /** Variance (0006): set only on answered decisions; null/absent elsewhere. */
+  intent?: string | null;
+  scope?: 'fund' | 'firm_template' | null;
 }
 
 export function insertDecisionStmt(db: Db, ctx: MemoryCtx, d: NewDecision): D1PreparedStatement {
@@ -147,6 +155,8 @@ export function insertDecisionStmt(db: Db, ctx: MemoryCtx, d: NewDecision): D1Pr
       ctx.analystName,
       ctx.now,
       d.supersedes_id,
+      d.intent ?? null,
+      d.scope ?? null,
     );
 }
 
@@ -188,6 +198,8 @@ export function newDecisionView(ctx: MemoryCtx, d: NewDecision): ActiveDecision 
     pattern_key: d.pattern_key,
     fund_name: d.fund_name,
     doc_version_label: d.doc_version_label,
+    intent: d.intent ?? null,
+    scope: d.scope ?? null,
     decided_by_name: ctx.analystName,
     decided_at: ctx.now,
   });

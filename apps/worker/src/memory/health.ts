@@ -4,7 +4,7 @@
 import type { Db } from '../db/meta';
 
 /** Bump together with a new migration (the last statement of each migration sets it). */
-export const EXPECTED_SCHEMA_VERSION = '5';
+export const EXPECTED_SCHEMA_VERSION = '6';
 export const DEMO_WORKSPACE_ID = 'ws_demo';
 
 /** Global statement (app_meta holds no workspace data). */
