@@ -18,7 +18,7 @@ drafts one request to the GP.
 
 ![Findings screen of the live app: the document on the left, findings with cited evidence on the right](docs/demo/img/03-findings.png)
 
-Live version d9aaddd9-a62f-4850-8ff2-89889c8ef652 (Variance Management, built from main 0c6312e; it includes the AI review streaming, idle-timeout and no-duplicate-AI-findings fixes first shipped in 8a82ead2) · status: D1 `aduin-transaction-db` is live (schema v6 after migration 0006, demo seed: Partners Group workspace with 7 decisions and 1 proposed rule, plus three reference law firms), the Turnstile managed widget is live, and CSP is enforced (`style-src` keeps `unsafe-inline` for Radix). Rollback note: after migration 0006 the previous version 8a82ead2 refuses memory writes (it pins schema 5), so a rollback means rolling forward or a D1 restore; the older chain is 8a82ead2, b04f1a8c, 3d2c7301.
+Live version 493f2501-8920-43b5-95fd-e0878877ab1f (Findings v2 redesign on top of Variance Management, code b00241f; the database is unchanged at schema 6; Variance itself first went live in d9aaddd9 from main 0c6312e, which includes the AI review streaming, idle-timeout and no-duplicate-AI-findings fixes first shipped in 8a82ead2) · status: D1 `aduin-transaction-db` is live (schema v6 after migration 0006, demo seed: Partners Group workspace with 7 decisions and 1 proposed rule, plus three reference law firms), the Turnstile managed widget is live, and CSP is enforced (`style-src` keeps `unsafe-inline` for Radix). Rollback note: after migration 0006 the previous version 8a82ead2 refuses memory writes (it pins schema 5), so a rollback means rolling forward or a D1 restore; the chain is d9aaddd9 (and the Findings v2 builds after it), then 8a82ead2, b04f1a8c, 3d2c7301.
 
 ## At a glance
 
