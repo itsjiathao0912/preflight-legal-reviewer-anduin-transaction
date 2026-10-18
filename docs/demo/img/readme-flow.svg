@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1360 520" width="1360" height="520" role="img" aria-labelledby="t d">
+  <title id="t">Analyst workflow before digitization</title>
+  <desc id="d">Open a document or package, run deterministic checks, optionally add labelled AI judgment, triage into Ask counsel or Close issue, send the counsel sheet, track answers, and pass the gate to Ready to digitize. Firm memory and version variance feed into the checks.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#57606a"/></marker>
+    <marker id="v" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#3D3566"/></marker>
+  </defs>
+  <style>
+    text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;fill:#1f2328}
+    .w{font-size:15px;font-weight:700}.s{font-size:13px}.m{font-size:13px;fill:#57606a}
+    .st{fill:#fff;stroke:#0f766e;stroke-width:1.8}
+    .ai{fill:#f1eefb;stroke:#3D3566;stroke-width:1.8;stroke-dasharray:6 4}
+    .gate{fill:#fdecec;stroke:#b42318;stroke-width:1.8}
+    .ok{fill:#e6f4f1;stroke:#0f766e;stroke-width:1.8}
+    .side{fill:#f6f8fa;stroke:#d0d7de;stroke-width:1.5}
+    .ln{stroke:#57606a;stroke-width:1.8;fill:none}
+  </style>
+  <rect width="1360" height="520" rx="14" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="30" y="42" class="w" style="font-size:18px">From sub doc to digitization-ready</text>
+
+  <rect x="30" y="80" width="170" height="110" rx="10" class="st"/>
+  <text x="45" y="108" class="w">1. Open</text><text x="45" y="130" class="s">a sub doc or a</text><text x="45" y="148" class="s">fund package</text><text x="45" y="170" class="m">HTML, PDF, DOCX</text>
+  <rect x="225" y="80" width="190" height="110" rx="10" class="st"/>
+  <text x="240" y="108" class="w">2. Deterministic checks</text><text x="240" y="130" class="s">cross-references,</text><text x="240" y="148" class="s">conditionals, flows,</text><text x="240" y="166" class="s">terms, missing documents</text>
+  <rect x="440" y="80" width="190" height="110" rx="10" class="ai"/>
+  <text x="455" y="108" class="w" style="fill:#3D3566">3. AI judgment</text><text x="455" y="130" class="s">optional, labelled</text><text x="455" y="148" class="s">ambiguity, contradictions</text><text x="455" y="166" class="s" style="font-weight:700">never gates</text>
+  <rect x="655" y="80" width="190" height="110" rx="10" class="st"/>
+  <text x="670" y="108" class="w">4. Triage</text><text x="670" y="130" class="s">every finding cites</text><text x="670" y="148" class="s">its evidence:</text><text x="670" y="166" class="s">Ask counsel / Close issue</text>
+  <rect x="870" y="80" width="200" height="110" rx="10" class="st"/>
+  <text x="885" y="108" class="w">5. Counsel sheet</text><text x="885" y="130" class="s">questions by owner,</text><text x="885" y="148" class="s">DOCX export,</text><text x="885" y="166" class="s">answer tracking</text>
+  <rect x="1095" y="80" width="235" height="110" rx="10" class="gate"/>
+  <text x="1110" y="108" class="w" style="fill:#b42318">6. Gate</text><text x="1110" y="130" class="s">Blocked until every critical</text><text x="1110" y="148" class="s">item is answered, then</text><text x="1110" y="168" class="w" style="fill:#0b4f47">Ready to digitize</text>
+
+  <path d="M200 135 H225" class="ln" marker-end="url(#a)"/><path d="M415 135 H440" class="ln" marker-end="url(#a)"/>
+  <path d="M630 135 H655" class="ln" marker-end="url(#a)"/><path d="M845 135 H870" class="ln" marker-end="url(#a)"/><path d="M1070 135 H1095" class="ln" marker-end="url(#a)"/>
+
+  <rect x="225" y="290" width="400" height="150" rx="10" class="side"/>
+  <text x="243" y="318" class="w">Firm memory</text>
+  <text x="243" y="342" class="s">Remembers decisions per law firm.</text>
+  <text x="243" y="362" class="s">"Already decided at Fund I" is shown on the</text>
+  <text x="243" y="380" class="s">finding, so a second fund from the same firm</text>
+  <text x="243" y="398" class="s">does not re-raise it. A rule is proposed after</text>
+  <text x="243" y="416" class="s">three matching dismissals.</text>
+  <rect x="660" y="290" width="410" height="150" rx="10" class="side"/>
+  <text x="678" y="318" class="w">Version and variance diff</text>
+  <text x="678" y="342" class="s">Compare against a baseline: an earlier fund,</text>
+  <text x="678" y="362" class="s">a feeder, a parallel fund or a prior draft.</text>
+  <text x="678" y="380" class="s">Only meaningful changes reach the analyst,</text>
+  <text x="678" y="398" class="s">each with an impact line and an owner</text>
+  <text x="678" y="416" class="s">(Counsel, GP or Fund admin). No model calls.</text>
+  <path d="M425 290 V215 H320 V190" class="ln" marker-end="url(#a)"/>
+  <path d="M865 290 V215 H750 V190" class="ln" marker-end="url(#a)"/>
+  <path d="M1200 190 V470 H330" class="ln" style="stroke:#3D3566;stroke-dasharray:6 4" marker-end="url(#v)"/>
+  <text x="1210" y="330" class="m">answers become</text><text x="1210" y="348" class="m">firm memory</text>
+  <rect x="30" y="290" width="170" height="150" rx="10" fill="#fff" stroke="#d0d7de"/>
+  <text x="45" y="318" class="w">Runs in the</text><text x="45" y="338" class="w">browser</text><text x="45" y="364" class="s">Steps 1-2, 4 and the</text><text x="45" y="382" class="s">variance diff need</text><text x="45" y="400" class="s">no server and no AI.</text>
+</svg>

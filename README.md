@@ -1,286 +1,139 @@
 # Subscription Document QA
 
-**Review a fund subscription document before it is digitized.** A web app for the Anduin Transactions
-Digitization Service Analyst: it reads a sub doc (HTML, text PDF, DOCX or scanned pages), builds a logic
-graph, finds what would break a digitized form, and turns confirmed issues into a counsel query sheet
-that blocks digitization until the critical items are answered. It also takes the whole fund package
-(sub agreement, LPA, PPM, baseline, side letters), shows which referenced documents are missing, and
-drafts one request to the GP.
+**Check a fund subscription document before it is digitized.** A web app for the Anduin Transactions Digitization Service Analyst. It reads a sub doc (HTML, text PDF, DOCX or scanned pages), builds a logic graph, flags what would break a digitized form, and turns confirmed issues into a counsel question sheet. A gate stays **Blocked** until every critical question is answered. It also takes a whole fund package (sub agreement, LPA, PPM, baseline, side letters), says which cited documents are missing and drafts one request to the GP.
 
-[Live demo](https://aduin-transaction-web.giathaowork.workers.dev) · [Docs](docs/README.md) · [Architecture](docs/architecture/README.md) · [Decisions](docs/architecture/decisions.md)
+Built by Thao Dao for the Anduin Transactions job-application challenge. [LinkedIn](https://www.linkedin.com/in/thaodao0912/)
 
-![tests 4,753](https://img.shields.io/badge/tests-4%2C753_passing-brightgreen)
-![detectors 13](https://img.shields.io/badge/detectors-13-blue)
-![issue classes 15](https://img.shields.io/badge/issue_classes-15-blue)
-![deploy Cloudflare Workers](https://img.shields.io/badge/deploy-Cloudflare_Workers-F38020)
-![AI cost $0](https://img.shields.io/badge/AI_cost-%240-brightgreen)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6)
+**[Open the live demo](https://aduin-transaction-web.giathaowork.workers.dev)** · [Docs](docs/README.md) · [Architecture](docs/architecture/README.md)
 
-![Findings screen of the live app: the document on the left, findings with cited evidence on the right](docs/demo/img/03-findings.png)
+![Findings screen of the live app on sample 5: the document on the left, findings with cited evidence on the right, gate pill Blocked 2](docs/demo/img/readme-findings.png)
 
-Live version 493f2501-8920-43b5-95fd-e0878877ab1f (Findings v2 redesign on top of Variance Management, code b00241f; the database is unchanged at schema 6; Variance itself first went live in d9aaddd9 from main 0c6312e, which includes the AI review streaming, idle-timeout and no-duplicate-AI-findings fixes first shipped in 8a82ead2) · status: D1 `aduin-transaction-db` is live (schema v6 after migration 0006, demo seed: Partners Group workspace with 7 decisions and 1 proposed rule, plus three reference law firms), the Turnstile managed widget is live, and CSP is enforced (`style-src` keeps `unsafe-inline` for Radix). Rollback note: after migration 0006 the previous version 8a82ead2 refuses memory writes (it pins schema 5), so a rollback means rolling forward or a D1 restore; the chain is d9aaddd9 (and the Findings v2 builds after it), then 8a82ead2, b04f1a8c, 3d2c7301.
+## What it does for an analyst
 
-## At a glance
+1. **Open** a sub doc or a fund package (several files of one fund).
+2. **Deterministic checks** flag broken cross-references, broken conditional skips, unreachable sections, investor-type gaps, defined-term issues and missing package documents. Each finding quotes the document and says where.
+3. **Optional AI judgment** (ambiguity, contradictions, meaning-changing typos) is labelled as AI, must quote locatable text, and never gates.
+4. **Triage** each finding: **Ask counsel** or **Close issue** (a reason is required).
+5. **Counsel question sheet** (DOCX, grouped by owner: Counsel, GP, Fund admin) with answer tracking.
+6. **Digitization gate**: Blocked until every critical item is answered, then Ready.
+7. **Firm memory** remembers decisions per law firm, so a second fund from the same firm does not re-raise what was already decided.
+8. **Variance diff** against a baseline (earlier fund, feeder, parallel or prior draft) shows only meaningful changes, each with an impact line and an owner.
 
-|                        |                                                                                                                                                                                                                                                             |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Problem**            | Errors in a subscription agreement (dead cross-references, wrong conditional skips, unreachable sections, undefined terms) carry into the digital form; finding them by hand across versions is slow and uneven.                                            |
-| **Approach**           | Parse in the browser to a logic graph, run 13 deterministic detectors covering 15 issue classes plus package-level checks, diff related versions, and turn confirmed issues into a counsel query sheet with a digitization gate.                            |
-| **Fund packages**      | Upload several documents of one fund. Each gets a type and role (low-confidence ones need your confirmation); references and cross-document terms are resolved; a coverage line says what was and was not checked; missing documents become one GP request. |
-| **Variance**           | Pick a baseline from the same law firm (an earlier fund or draft) and Findings gets a **Changes** segment: meaningful changes only, each with an impact line from the logic graph and an owner (Counsel, GP or Fund admin); cosmetic changes are hidden and grouped. Deterministic, 0 model calls. |
-| **What AI does**       | Free OpenRouter models judge graph-selected clause neighborhoods (ambiguity, contradiction, meaning-changing typos) and read scanned pages (OCR).                                                                                                           |
-| **What AI never does** | See whole documents, parse, override a deterministic finding, or run without a quotable, locatable citation. The app works with AI switched off.                                                                                                            |
-| **Status**             | Live on Cloudflare Workers with D1 (schema 6) and Turnstile. Largest sample reviews in 169 ms, a ~50 KB sample in 104 ms; a six-file package runs to findings in about 229 ms (live smoke). Live AI/OCR calls 0, cost $0. Known misses are listed below.               |
+![Analyst workflow from opening a document to a Ready gate, with firm memory and variance diff feeding in](docs/demo/img/readme-flow.svg)
 
-## Contents
+## Expected outcome: less work
 
-- [At a glance](#at-a-glance)
-- [Architecture](#architecture)
-- [Screenshots](#screenshots)
-- [What and why](#what-and-why)
-- [Quick tour](#quick-tour)
-- [How it works](#how-it-works)
-- [Documentation](#documentation)
-- [Run it locally](#run-it-locally)
-- [Tests and gates](#tests-and-gates)
-- [Cost and limits](#cost-and-limits)
-- [Privacy and retention](#privacy-and-retention)
-- [Known misses](#known-misses)
-- [Not built for production](#not-built-for-production)
-- [Deploy](#deploy)
-- [Third-party notices](#third-party-notices)
+Counts below are measured on the bundled samples and demo packages. Nothing was timed with real analysts, so any time saving is an estimate and is not claimed here.
 
-## Architecture
+| Measure                                                   | Result                                                                                   | Source                                                                                                              |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Fund II reviewed after Fund I with firm memory            | 8 findings, 5 already handled by memory, 3 need action: **62.5% fewer to review**        | `process/general-plans/active/subdoc-qa-mvp_17-10-26/subdoc-qa-mvp_PHASE-10-deploy-final_REPORT_17-10-26.md` (AC59) |
+| Variance demo (Hartwell & Crane Fund III against Fund II) | 214 raw text changes, **7 shown** (3 new, 4 logic); 207 cosmetic hidden and grouped      | `process/features/variance-management/active/variance-mvp_17-10-26/variance-mvp_REPORT_17-10-26.md` (V4)            |
+| Speed of the checks (in the browser)                      | 379 KB sample in 169 ms; 50 KB sample in 104 ms; six-file package to findings in ~229 ms | Phase 10 report above; live smoke in `docs/architecture/status.md`                                                  |
+| Detectors and issue classes                               | 13 detectors, 15 issue classes (11 deterministic, 3 AI-only, 1 from version diff)        | `packages/core/src/detectors/registry.ts`, `packages/core/src/findings/taxonomy.ts`                                 |
 
-```mermaid
-flowchart LR
-  B["Browser: React app + engine Web Worker"] -- "static app, samples" --> W
-  B -- "/api/ai, /api/ocr, memory API" --> W["Cloudflare Worker: proxy, quotas, memory API"]
-  W --> D[("D1: memory, quotas, cache")]
-  W --> O["OpenRouter free models"]
-```
+What this replaces, by design:
 
-Parsing and checks run in the browser; the Worker never parses documents. The package layer (type and role detection, references, cross-document terms, coverage, GP request) is browser-only too: no new Worker route, no D1 change. Variance is computed in the browser as well; its only server footprint is migration 0006 (question owner, answer intent and scope, a regression-check table, three reference firms). Detail: [docs/architecture/README.md](docs/architecture/README.md).
+- Manual cross-reference tracing across a 40-page document, repeated for every version.
+- Hand-written query emails to counsel: the sheet is generated from confirmed findings.
+- Re-reviewing the same template points on a firm's next fund: memory and variance carry them over.
+- Digitizing with an unresolved critical issue: the gate blocks it.
 
-## Screenshots
+## How it was built
 
-|                                                                                       |                                                                                      |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| ![A finding expanded with its quoted evidence](docs/demo/img/04-finding-expanded.png) | ![Compare view with drift rows between two versions](docs/demo/img/08-compare.png)   |
-| Every finding cites the document text and its location.                               | Compare related versions: drift rows with a short narrative.                         |
-| ![Questions screen](docs/demo/img/09-counsel.png)                              | ![Digitization gate showing blocked until answers arrive](docs/demo/img/10-gate.png) |
-| Confirmed issues become questions, grouped by owner, exportable as DOCX.                        | The gate stays blocked until every blocking question has an answer.                  |
+- **Browser-first.** Parsing and checks run in the user's browser in a Web Worker. Full documents are never stored on the server.
+- **Deterministic first, LLM second.** The LLM only sees clause neighborhoods picked from the graph and cannot override a deterministic finding. The app works with AI off.
+- **Thin backend.** A Cloudflare Worker proxies AI and OCR (quotas, Turnstile, spend cap, content-hash cache) and serves the firm memory API on D1.
+- **Free models only**, with caching and daily quotas. Live AI and OCR cost: $0.
+- **Phased, spec-driven build** with tests at every phase (see Tests).
 
-Full shot list: `docs/demo/storyboard.md`.
+![Architecture: browser engine, Cloudflare Worker, D1 and OpenRouter](docs/demo/img/readme-architecture.svg)
 
-## What and why
+## How the technical flow works
 
-Before Anduin turns a subscription agreement into an online form, an analyst reads it for errors that
-would carry into the digital flow: a cross-reference that points nowhere, a conditional that skips the
-wrong section, a section no investor can reach, a defined term used but never defined. Doing that by hand
-across a 40-page document, and again for every feeder, parallel and prior version, is slow and uneven.
-This tool does the mechanical part deterministically and shows its evidence, then lets the analyst triage.
+1. **Upload and parse** in the browser: HTML, text PDF (unpdf), DOCX (mammoth) or scanned pages (OCR through the Worker).
+2. **Line stream** of the document text with locations.
+3. **Structurer** finds sections, cross-references, conditionals and defined terms.
+4. **Logic graph** of sections, references and investor-type paths.
+5. **Detectors** run on the graph and emit **findings with evidence** (quote plus location).
+6. **Findings render first.** Memory and AI load after, so the analyst never waits on them.
+7. **Optional AI pass** on graph-selected candidates: Turnstile-gated, cached by content hash, free model, output schema-checked, quotes must be locatable or the finding is dropped.
+8. **Memory lookup** by fingerprint. The server receives only masked snippets and hashes.
+9. **Triage, gate and counsel sheet** in the browser. Retention: documents and packages stay in the browser for 24 h.
 
-## Quick tour
+## Tech stack
 
-1. Open the live site and pick **sample 5** (Partners Group NGI 2024). Findings opens with the document on the
-   left and findings on the right. Each row shows a rule id or a model label, plus the quoted evidence.
-2. Triage with the keyboard: accept, dismiss (a reason is required) or send to counsel. Severity is always an
-   icon plus a word, never color alone.
-3. **Compare versions**: compare sample 5 against sample 6. Drift rows appear with a short AI narrative
-   (precomputed on the live samples).
-4. **Questions** (formerly Counsel questions): confirmed items become questions, with tabs for Counsel, GP and Fund admin and an export per owner. Export the counsel sheet as DOCX. The gate pill reads
-   "Blocked · N" until every blocking question has an answer. Broken cross-references in a routing context
-   (instructions, an answer option, a conditional block) are critical and block; elsewhere they are high and do
-   not. AI findings never gate, and with no document open the pill reads "No document".
-5. **Structure** shows the section tree, cross-reference graph and investor-type paths. The logic outline
-   exports as JSON.
-6. **Fund package**: open the Upload dialog and pick the demo package **Northgate Capital III** (6 files), or drop several
-   files of one fund. Confirm the type and role of each row, then Run checks. The Findings header shows a coverage line,
-   **Structure > Package** lists the documents, references and terms, and **Questions > For the GP** lists the
-   documents the sub agreement cites that are not in the package, with a request DOCX. Walkthrough:
-   [docs/walkthrough/demo-walkthrough.vi.md](docs/walkthrough/demo-walkthrough.vi.md) (Vietnamese).
-7. **Variance** (needs memory, so a human Turnstile session): upload Fund II first, then Fund III, both with firm **Hartwell & Crane LLP**
-   (the demo packages 01 Northgate and 02 Lotus Bay are pre-tagged Hartwell & Crane and Ostrander Pell; 03 Redwood Ridge has no firm, so it is a first review). In Findings choose
-   the **Changes** segment and the "vs <baseline>" control (same firm only; picker samples never act as a baseline). The demo shows 214 raw changes reduced to 7 shown
-   (3 new, 4 logic); cosmetic ones are hidden and grouped. Each change row has an impact line and an owner chip. In **Questions**, answer a firm-template
-   question such as "Appendix C must exist" with scope firm template: that records an R-01 regression check, and a later fund that lacks Appendix C shows
-   "Regression: confirmed in Fund II". The gate stays two-state (Blocked or Ready) and counts changes, regressions and unanswered owner questions.
-8. **Firm memory** remembers earlier decisions for a law firm and proposes a rule after three matching
-   dismissals. Reach it from the sidebar (a direct `#memory` link lands on Findings on first load by design:
-   routes are never persisted). Memory is shared and writable on the live site (D1 is live), behind the visitor session and Turnstile.
+| Layer   | What                                                                                                                                   |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Engine  | TypeScript 6 (ESM), htmlparser2 12, unpdf 1.9, mammoth 1.13, diff 9, zod 4.6, @noble/hashes 2.4 (`packages/core`)                      |
+| Web     | React 19.3, Vite 8, Tailwind 4, Zustand 5, Dexie 4 (IndexedDB), Comlink 4 (Web Worker), Radix dialog and popover, pdfjs-dist 6, docx 9 |
+| Backend | Cloudflare Workers (wrangler 4), D1, Turnstile, OpenRouter free models (`nvidia/nemotron-3-super-120b-a12b:free` for text)             |
+| Testing | Vitest 4 (with the Cloudflare vitest plugin for the Worker), Playwright 1.64, fast-check 4, axe-core                                   |
+| Tooling | pnpm 11 monorepo (`packages/core`, `apps/web`, `apps/worker`, `scripts`), eslint 10, prettier 3.9                                      |
 
-Screenshots: `docs/demo/img/` (captured from the live site; shot list in `docs/demo/storyboard.md`). Video and slides: `docs/demo/`.
+## Try it
 
-## How it works
+1. Open the [live demo](https://aduin-transaction-web.giathaowork.workers.dev) and pick **sample 5** (Partners Group NGI 2024). The gate pill reads **Blocked · 2** (samples 3 and 5 both block). Open a finding to see the quoted evidence, then use **Ask counsel** or **Close issue**.
+2. **Questions** shows the counsel sheet and the DOCX export. The pill stays Blocked until blocking questions have answers.
+3. **Compare versions**: sample 5 (PG NGI 2024) against sample 6 (PG NGI 2026) for the drift rows.
+4. **Fund package**: Open a document, then the demo package **Northgate Capital III** (6 files). Confirm each file's type and role, run checks, and read the coverage line and the **For the GP** questions.
+5. **Firm memory** is in the sidebar. A direct `#memory` link lands on Findings by design, because routes are not persisted.
 
-- **Deterministic first, LLM second.** The engine in `packages/core` parses to a logic graph and runs
-  **13 detectors covering 15 issue classes** plus package-level checks (references, cross-document terms, coverage):
-  11 classes come from the detectors, 3 are AI-only
-  (`logic_contradiction`, `ambiguity`, `meaningful_typo`) and 1 comes from version diff (`version_drift`).
-  The detector count is read from `packages/core/src/detectors/registry.ts`. Every finding cites clause text and
-  location. The app works with AI switched off.
-- **Fund package intake, rule-based.** `packages/core/src/package` detects each document's type and role from its name
-  and text (a rule table, with a reason shown per row), extracts references to other documents, resolves them against the
-  package, and computes coverage per check group. A missing sub agreement blocks the gate; a missing LPA or PPM only
-  warns (the policy is data). Packages are kept in the browser for 24 h. No LLM task is involved (0 model calls).
-- **LLMs only judge.** Free OpenRouter models see graph-selected clause neighborhoods, never whole documents.
-  Output is schema-checked, and quotes must be locatable in the document or the finding is dropped.
-  Results are cached by content hash.
-- **Browser does the parsing.** The Cloudflare Worker (`apps/worker`) serves the SPA and proxies AI and OCR calls
-  with quotas, a spend cap and a circuit breaker. It never parses documents.
-- **Variance, deterministic.** `packages/core/src/variance` aligns a document with its baseline, classifies each hunk as cosmetic or
-  meaningful (new, logic, ...), computes impact lines from the logic graph and routes each change to an owner. It adds no issue class (it
-  uses `version_drift`) and makes 0 LLM calls. Answers carry an intent and a scope (fund or firm template); a firm-template answer becomes an R-01 regression check.
-- **Memory.** A D1 database holds firm memory, decisions, counsel answers, regression checks and rules (snippets, hashes and metadata
-  only, no full documents).
+AI review needs a quick human verification (Turnstile) and the free model takes about 3 to 4 minutes (one measured run: 178 s). Bundled samples have precomputed AI results and make no upstream calls. The Variance demo (214 to 7) needs a memory session: upload Fund II, then Fund III, both tagged Hartwell & Crane LLP, and choose the **Changes** segment. Walkthrough: [docs/walkthrough/demo-walkthrough.vi.md](docs/walkthrough/demo-walkthrough.vi.md) (Vietnamese).
 
-| Package         | Role                                                                                           |
-| --------------- | ---------------------------------------------------------------------------------------------- |
-| `packages/core` | Parser, graph, detectors, findings, diff, package intake, LLM task framework, frozen contracts |
-| `apps/web`      | React 19 + Vite + Tailwind SPA; the engine runs in a Web Worker                                |
-| `apps/worker`   | Cloudflare Worker: static assets, `/api/ai`, `/api/ocr`, `/api/quota`, memory API, D1          |
-| `scripts`       | Guards, sample builder, live and conformance probes, deploy helpers                            |
+![Compare view of PG NGI 2024 against PG NGI 2026 with 59 changes](docs/demo/img/readme-compare.png)
 
-Detail: [docs/architecture/README.md](docs/architecture/README.md).
+## Run locally
 
-## Documentation
-
-- [docs/README.md](docs/README.md): reviewer's reading paths by time budget
-- [docs/architecture/README.md](docs/architecture/README.md): architecture overview, workflows, components, data model, decisions, status
-- [docs/DEPLOY.md](docs/DEPLOY.md): deploy, rollback and live checks
-- [docs/demo/](docs/demo/): narration script, storyboard and slides
-- [samples/sub-docs/README.md](samples/sub-docs/README.md): the real public SEC sub docs used as test inputs
-- [samples/packages/README.md](samples/packages/README.md): three fictional fund packages (demo and test inputs for Fund Package Intake) with answer keys
-
-## Run it locally
-
-<details>
-<summary>Requirements and commands (Node 24+, pnpm 11)</summary>
-
-Requires Node 24 or newer and pnpm 11.
+Node 24+ and pnpm 11.
 
 ```bash
 pnpm install
-pnpm --filter @aduin/web dev          # SPA only, no AI
-pnpm dev:stack                        # build the SPA and run the Worker locally (wrangler dev)
+pnpm --filter @aduin/web dev    # SPA only, no AI
+pnpm dev:stack                  # SPA plus the Worker locally (wrangler dev)
 ```
 
-Secrets stay outside the repo. For local AI, put `OPENROUTER_API_KEY` in the gitignored `apps/worker/.dev.vars`.
+For local AI, put `OPENROUTER_API_KEY` in the gitignored `apps/worker/.dev.vars`. Deploy and rollback: [docs/DEPLOY.md](docs/DEPLOY.md).
 
-</details>
+## Tests
 
-## Tests and gates
+There is no CI pipeline; every gate runs locally. Counts as of 18-10-26 (Findings v2 closeout; core, worker and scripts counts from the Variance closeout): core 3,190, worker 608, web unit 544, scripts 183, browser e2e 253 (plus 1 opt-in skip), stack-memory e2e 12.
 
-<details>
-<summary>Gate commands and final counts (core 3,190, worker 608, web unit 518, scripts 183, e2e 242, stack-memory 12)</summary>
+| Gate                          | Command                                                             |
+| ----------------------------- | ------------------------------------------------------------------- |
+| Core (unit, golden, property) | `pnpm --filter @aduin/core test`                                    |
+| Worker (local D1)             | `pnpm --filter @aduin/worker test`                                  |
+| Web unit                      | `pnpm --filter @aduin/web test`                                     |
+| Browser e2e                   | `pnpm --filter @aduin/web test:e2e`                                 |
+| Accessibility (axe)           | `pnpm --filter @aduin/web test:a11y`                                |
+| Stack with memory             | `pnpm --filter @aduin/web test:e2e:stack-memory`                    |
+| Types, lint, safety guards    | `pnpm typecheck`, `pnpm lint`, `pnpm guard:cf`, `pnpm secrets:scan` |
 
-| Gate                                  | Command                                                                                                                              |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Core (unit, golden, property, seeded) | `pnpm --filter @aduin/core test`                                                                                                     |
-| Worker (Vitest with local D1)         | `pnpm --filter @aduin/worker test`                                                                                                   |
-| Web unit                              | `pnpm --filter @aduin/web test`                                                                                                      |
-| Typecheck and lint                    | `pnpm typecheck` and `pnpm lint`                                                                                                     |
-| Browser (preview project)             | `pnpm --filter @aduin/web test:e2e`                                                                                                  |
-| Accessibility (axe)                   | `pnpm --filter @aduin/web test:a11y`                                                                                                 |
-| Stack with memory                     | `pnpm --filter @aduin/web test:e2e:stack-memory`                                                                                     |
-| Live smoke                            | `SLICE_BASE_URL=https://aduin-transaction-web.giathaowork.workers.dev pnpm --filter @aduin/web exec playwright test --project=stack` |
-| Safety guards                         | `pnpm guard:cf` and `pnpm secrets:scan`                                                                                              |
+Pass test file names as separate commands, not after a `--`. Live version: Worker `493f2501-8920-43b5-95fd-e0878877ab1f` (Findings v2 on top of Variance, D1 schema 6); see `process/context/worker/all-worker.md`.
 
-There is no CI pipeline; every gate runs locally. Counts at main 0c6312e: core 3,190 (plus 3 opt-in skips), worker 608, web unit 518,
-scripts 183, preview e2e 242 passed plus 1 opt-in skip, stack-memory 12; total 4,753. The tool has 13 detectors covering
-15 issue classes plus package-level checks.
+## Known limits
 
-</details>
+- **Turnstile and AI:** live AI and OCR need a Turnstile token. Automated browsers get one only sometimes, so scripted live AI runs are not reliable. The free model is slow (minutes per document) and its quality is unproven at scale.
+- **Structurer misses:** some heading styles are not recognized (for example sample 02 has no accepted sections; sample 12 sections 4 and 6). Some statutory citations and sub-letter references ("Section 4B") are misclassified.
+- **Package intake:** some references and cross-document terms are missed (on the Lotus Bay demo package 2 of 3 GP requests are produced). Two sub agreements in one package need the analyst to pick roles. Type detection is rule-based only.
+- **Compare** cannot diff scanned (OCR) documents. Editing a finding's text or severity is not built.
+- **Variance:** digit changes in operative text count as logic, so demo package 01 shows 9 change rows rather than the answer key's 7.
+- **Demo data:** public SEC documents and synthetic fund packages only. Free models can log prompts, so do not upload real investor data.
+- **Not built for production:** accounts or SSO, tenant isolation beyond the sandbox workspace, a zero-retention LLM provider, a paid-model path, CI.
 
-## Cost and limits
+Full lists with backlog pointers: [docs/architecture/status.md](docs/architecture/status.md).
 
-- Free OpenRouter models only. The paid fallback is disabled in code and a circuit breaker trips on any non-free
-  model or any billed usage. The text model is `nvidia/nemotron-3-super-120b-a12b:free`.
-- Per visitor per UTC day: 3 fresh-AI documents, 8 AI requests, 6 OCR pages. A global daily provider allowance caps
-  everything else. Bundled samples use precomputed AI and OCR results and make zero upstream calls.
-- Hosted on Cloudflare Workers Free with D1 Free; the binding limit is D1 `rows_written` (100k per day), handled by
-  write caps that refuse rather than overspend. Remote baseline measured at 238 `rows_written` for the day (migrations plus seed); the burst test was not run.
+## Documentation
 
-## Privacy and retention
+- [docs/README.md](docs/README.md): reading paths by time budget
+- [docs/architecture/README.md](docs/architecture/README.md), with [workflows](docs/architecture/workflows.md), [components](docs/architecture/components.md), [data model](docs/architecture/data-model.md), [decisions](docs/architecture/decisions.md) and [status](docs/architecture/status.md)
+- [docs/DEPLOY.md](docs/DEPLOY.md): deploy, rollback, live checks
+- [docs/demo/](docs/demo/): [script](docs/demo/script.md), [storyboard](docs/demo/storyboard.md), [slides](docs/demo/slides.html)
+- <!-- DRIVE_LINK --> Demo video and slides: (link coming)
+- [samples/sub-docs/README.md](samples/sub-docs/README.md) and [samples/packages/README.md](samples/packages/README.md): test inputs with known defects
+- [design/mockups/](design/mockups/): approved mockups
+- [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md): dependency licenses
 
-- Documents are parsed in the browser. Only clause neighborhoods (AI) or page images (OCR, only while AI review is on)
-  are sent to a third-party free model, after an in-app disclosure. Sensitive spans are masked before sending.
-- The database stores snippets, hashes and metadata, never full documents. Sandbox workspaces are purged after
-  30 days, quota counters after 2 days, AI cache after 7 days (daily cron).
-- Free models can log prompts; do not upload real investor data to the demo.
+## Author
 
-## Known misses
-
-<details>
-<summary>What the tool does not do or gets wrong today (structurer, citations, compare, live AI, Turnstile, CPU, burst)</summary>
-
-Honest list of what the tool does not do or gets wrong today.
-
-- **Structurer misses (P6-1a):** sample 02 accepts zero sections (duplicated application text); sample 12
-  sections 4 and 6 are not accepted though headings exist; sample 01 "14." is not accepted.
-- **Statutory cite misses (P6-1b):** some statutory or external references are classed internal or out of range
-  (for example "Sections 311" of the Patriot Act, a typo'd "Section 2O2(a)(22)", "18 U.S.C. Sections 1956").
-- **Sub-letter references (P6-1c):** "Section 4B / 3A / 3C" (Part B of a section) are not resolved to parts.
-- **Single-other-scope fallback (P6-1d):** `resolveScope` may hide false negatives on samples 03-06.
-- **Missing-target cross-reference detector** is not built: feasibility on the corpus was inconclusive.
-- **Compare cannot diff scanned (OCR) documents**, and diff-only rows cannot become counsel questions.
-- **Edit of finding text or severity (B-EDIT)** is not built; you can accept, dismiss or send to counsel.
-- **Live AI quality is unproven at scale:** one capped live sweep only; counsel drafts and drift narratives
-  were not measured against a human. OCR ground truth was transcribed by an agent and live OCR confidence is flat.
-  The live AI sweep was not run in Phase 10: automated browsers cannot get a Turnstile token. Samples 1 and 3 have
-  precomputed AI and recorded results; a human-operator live run is still pending and is a known miss.
-- **Automated browsers cannot get a Turnstile token**, so live AI and OCR from CI or scripts is untested.
-- **Worker CPU p99 was 16 ms**, above the 10 ms Free limit, with 0 errors observed (p50 1.6 ms).
-- **D4 burst (rows_written under load) was not measured.**
-- Investor-path detectors have no human-checked ground truth. The `#documents` screen is still a placeholder.
-
-Fund Package Intake (live) adds these known misses:
-
-- **Some references and terms are missed.** On the Lotus Bay II demo package 2 of 3 GP requests are produced (the "US Feeder
-  Subscription Agreement" is not extracted). Cross-document terms missed include Excused Investor, Key Person Event, Plan Assets,
-  Significant Participation and Hurdle Amount, and some proper nouns are listed as unverified.
-- **Schedule and Exhibit targets** and dash-style headings are not handled.
-- **Two subscription agreements in one package** always need the analyst to pick the roles (both rows start low confidence).
-- **The package Blocked path** (no sub agreement) is proven by unit tests only; it is not reachable in the e2e suite.
-- **The AI document-type suggester is a seam only**: no live model task ships, so type detection is rules only.
-- **Bundle grew by about 270 kB.** The Package lens has 1 serious contrast item and 4 label mismatches in the axe run.
-- **Operator residuals:** live AI/OCR on packages, real-session memory writes and a manual keyboard pass are not done.
-  Twelve backlog stubs are in `process/features/fund-package-intake/backlog/`.
-
-</details>
-
-Variance Management (live) adds these known gaps:
-
-- **Not re-run live:** the live probe re-run is deferred, the live write path of the R-01 regression check needs a human Turnstile session (operator run), and no manual keyboard pass was done.
-- **Package 01 shows 9 change rows** (2 new + 7 logic), not the answer key's 3 new + 4 logic, because digit changes in operative text count as logic.
-- **Owner routing:** the V7 trust-split change goes to the GP (SPEC A9); the answer key says Counsel.
-- **Fund-scoped answers can supersede across funds.**
-- **Layout:** the change chip overlaps the row title.
-- **Rollback:** the previous version refuses memory writes after migration 0006 (see above).
-
-## Not built for production
-
-<details>
-<summary>No accounts, no CI, no tenant isolation, no paid-model path</summary>
-
-No accounts or real authentication (visitor cookie plus Turnstile), no CI, no tenant isolation beyond the sandbox
-workspace model, no paid-model path, no audit export beyond the in-app trail, and no support for documents over the
-upload limits. This is a challenge build, not a product.
-
-</details>
-
-## Deploy
-
-See [docs/DEPLOY.md](docs/DEPLOY.md). Deploys go to `*.workers.dev` only.
-
-## Third-party notices
-
-<details>
-<summary>Dependency licenses and test-document sources</summary>
-
-Licenses of every direct dependency, the transitive license elections (sax BlueOak-1.0.0, pako, jszip under MIT) and the
-dev-only MPL-2.0 exception are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Test documents are real public SEC
-filings, listed with their known defects in [samples/sub-docs/README.md](samples/sub-docs/README.md).
-
-</details>
+Thao Dao, [LinkedIn](https://www.linkedin.com/in/thaodao0912/).
