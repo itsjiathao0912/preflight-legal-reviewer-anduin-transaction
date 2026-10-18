@@ -5,6 +5,7 @@ import { useSession } from './state/session';
 import { useReview } from './state/review';
 import { restoreLastDocument, saveLastDoc } from './state/last-doc';
 import { usePackage } from './state/package';
+import { loadRecent, mergeRecent, saveRecent } from './state/recent-docs';
 import { loadManifest, scanPagesOf } from './features/open-document/samples';
 
 let restoreStarted = false;
@@ -15,6 +16,8 @@ async function restoreOnStart(): Promise<void> {
   restoreStarted = true;
   const db = appDb();
   if (db) await purgeExpired(db).catch(() => undefined);
+  // read the stored switcher list before the restored open overwrites it
+  const stored = await loadRecent(db).catch(() => []);
   await restoreLastDocument({
     db,
     fetchBytes: async (path) => {
@@ -31,7 +34,10 @@ async function restoreOnStart(): Promise<void> {
     isEmpty: () => useReview.getState().phase === 'empty',
     open: (bytes, meta, opts) => useReview.getState().openDocument(bytes, meta, opts),
     restorePackage: (id) => usePackage.getState().restore(id),
-  });
+  }).catch(() => false);
+  const recent = mergeRecent(useReview.getState().recent, stored);
+  useReview.setState({ recent });
+  void saveRecent(recent, db);
 }
 
 /**

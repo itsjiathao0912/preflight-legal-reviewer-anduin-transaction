@@ -58,6 +58,7 @@ import {
 import { appDb } from '../storage/db';
 import { useFilters } from './filters';
 import { saveLastDoc } from './last-doc';
+import { saveRecent } from './recent-docs';
 import {
   ensureSession,
   ensureSessionWithin,
@@ -747,6 +748,7 @@ export const useReview = create<ReviewState>((set, get) => {
       const rows = buildRows(result.findings, memory, triage);
       const first = visibleRows(placement(rows).main, useFilters.getState())[0]?.f.id ?? null;
       set({ phase: 'ready', doc, recent, result, stages, memory, triage, selectedId: first });
+      void saveRecent(recent);
       // restore-on-reload: remember what is open (uploads stay in IndexedDB for 24 h)
       void saveLastDoc(meta);
       // by id: attachPackage (intake) replaces the doc object without superseding the load
@@ -793,10 +795,9 @@ export const useReview = create<ReviewState>((set, get) => {
       const doc = get().doc;
       if (!doc || doc.id !== docId || get().phase !== 'ready') return;
       const next: DocMeta = { ...doc, packageId };
-      set({
-        doc: next,
-        recent: get().recent.map((r) => (r.id === docId ? { ...r, packageId } : r)),
-      });
+      const recent = get().recent.map((r) => (r.id === docId ? { ...r, packageId } : r));
+      set({ doc: next, recent });
+      void saveRecent(recent);
     },
 
     select: (id) => set({ selectedId: id, selectSeq: get().selectSeq + 1 }),
