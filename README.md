@@ -2,7 +2,7 @@
 
 **Check a fund subscription document before it is digitized.** A web app for the Anduin Transactions Digitization Service Analyst. It reads a sub doc (HTML, text PDF, DOCX or scanned pages), builds a logic graph, flags what would break a digitized form, and turns confirmed issues into a counsel question sheet. A gate stays **Blocked** until every critical question is answered. It also takes a whole fund package (sub agreement, LPA, PPM, baseline, side letters), says which cited documents are missing and drafts one request to the GP.
 
-Built by Thao Dao for the Anduin Transactions job-application challenge. [LinkedIn](https://www.linkedin.com/in/thaodao0912/)
+Built by Thao Dao for the Anduin Transactions job-application challenge. [LinkedIn](https://www.linkedin.com/in/thaodao0912/) · [Website](https://itsjiathao.com/)
 
 **[Open the live demo](https://aduin-transaction-web.giathaowork.workers.dev)** · [Docs](docs/README.md) · [Architecture](docs/architecture/README.md)
 
@@ -136,4 +136,4 @@ Full lists with backlog pointers: [docs/architecture/status.md](docs/architectur
 
 ## Author
 
-Thao Dao, [LinkedIn](https://www.linkedin.com/in/thaodao0912/).
+Thao Dao, [LinkedIn](https://www.linkedin.com/in/thaodao0912/) · [website](https://itsjiathao.com/).

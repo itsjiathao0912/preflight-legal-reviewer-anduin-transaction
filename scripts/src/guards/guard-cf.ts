@@ -13,6 +13,14 @@ import {
 const ZONE_ID = ['894bc9f9', '3640fab2', '60bf1580', 'b5b48cb7'].join('');
 const ZONE_NAME = ['itsjiathao', 'com'].join('.');
 const PREFIX = 'aduin-transaction';
+/** The only allowed zone-name occurrence: the author website link in the root README. */
+const README_AUTHOR_LINK = `https://${ZONE_NAME}/`;
+
+function isAllowedZoneName(file: string, text: string, index: number): boolean {
+  if (file !== 'README.md') return false;
+  const start = index - 'https://'.length;
+  return start >= 0 && text.slice(start, start + README_AUTHOR_LINK.length) === README_AUTHOR_LINK;
+}
 
 /** Keys whose string value names a Cloudflare resource (Worker, D1, KV, R2, queue). */
 const NAME_KEYS = ['name', 'database_name', 'bucket_name', 'queue', 'service', 'script_name'];
@@ -28,7 +36,7 @@ export function scanText(file: string, text: string): Finding[] {
   ] as const) {
     let i = text.toLowerCase().indexOf(needle);
     while (i !== -1) {
-      add(i, rule);
+      if (!(rule === 'zone-name' && isAllowedZoneName(file, text, i))) add(i, rule);
       i = text.toLowerCase().indexOf(needle, i + 1);
     }
   }

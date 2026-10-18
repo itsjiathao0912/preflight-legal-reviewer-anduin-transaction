@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { guardCf } from '../src/guards/guard-cf';
+import { guardCf, scanText } from '../src/guards/guard-cf';
 import { tmpRepo } from './tmp-repo';
 
 // Forbidden values are assembled at runtime; never commit them as literals.
@@ -61,5 +61,36 @@ describe('guard:cf', () => {
         'samples/a.htm': zoneId,
       }),
     ).toEqual([]);
+  });
+
+  describe('README author link allowlist', () => {
+    const rules = (file: string, text: string) => scanText(file, text).map((f) => f.rule);
+    const link = `https://${zoneName}/`;
+
+    it('allows the exact author link in the root README', () => {
+      expect(rules('README.md', `[Website](${link})`)).toEqual([]);
+    });
+
+    it('rejects the same link in any other file', () => {
+      expect(rules('docs/x.md', `[Website](${link})`)).toEqual(['zone-name']);
+    });
+
+    it('rejects the http form in the README', () => {
+      expect(rules('README.md', `http://${zoneName}/`)).toEqual(['zone-name']);
+    });
+
+    it('rejects a subdomain in the README', () => {
+      expect(rules('README.md', `https://www.${zoneName}/`)).toEqual(['zone-name']);
+      expect(rules('README.md', `https://api.${zoneName}/`)).toEqual(['zone-name']);
+    });
+
+    it('rejects the bare domain and a link without the trailing slash in the README', () => {
+      expect(rules('README.md', `see ${zoneName} here`)).toEqual(['zone-name']);
+      expect(rules('README.md', `https://${zoneName}`)).toEqual(['zone-name']);
+    });
+
+    it('rejects the zone id in the README', () => {
+      expect(rules('README.md', `${link} ${zoneId}`)).toEqual(['zone-id']);
+    });
   });
 });
