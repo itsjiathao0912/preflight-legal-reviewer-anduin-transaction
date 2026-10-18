@@ -1706,10 +1706,10 @@ input[type='date'] {
   }
 }
 
-/* phone (<768): no fixed desktop width. The icon rail stays (it already carries the AI switch and
+/* narrow (<960, phones and small windows): no fixed desktop width. The icon rail stays (it already carries the AI switch and
    the analyst badge); the stage scrolls vertically with the findings column stacked above the
    document so the list and the "Open a document" call to action come first. */
-@media (max-width: 767px) {
+@media (max-width: 959px) {
   .app {
     min-width: 0;
   }

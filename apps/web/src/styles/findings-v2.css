@@ -829,8 +829,8 @@
   }
 }
 
-/* ---------- phone (<768): panel stacks above the document ---------- */
-@media (max-width: 767px) {
+/* ---------- narrow (<960): panel stacks above the document ---------- */
+@media (max-width: 959px) {
   .work.fv2-work {
     grid-template-columns: minmax(0, 1fr);
   }

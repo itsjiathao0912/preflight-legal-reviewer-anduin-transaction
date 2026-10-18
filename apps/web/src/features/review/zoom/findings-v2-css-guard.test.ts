@@ -150,7 +150,7 @@ describe('findings-v2-css-guard', () => {
     expect(SELECTORS).toContain('.work > .fv2');
     expect(bodyOf('.work > .fv2')).toContain('order: -1');
     expect(css).toMatch(/var\(--fpw/);
-    expect(css).toMatch(/@media \(max-width: 767px\)[\s\S]*\.fv2-resizer\s*\{\s*display: none/);
+    expect(css).toMatch(/@media \(max-width: 959px\)[\s\S]*\.fv2-resizer\s*\{\s*display: none/);
     expect(css).toMatch(/prefers-reduced-motion/);
   });
 
