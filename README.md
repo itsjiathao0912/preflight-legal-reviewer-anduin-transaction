@@ -1,4 +1,6 @@
-# Subscription Document QA
+# Preflight: Subscription Document QA
+
+**Anduin Transactions challenge: review legal agreements before digitization**
 
 **Check a fund subscription document before it is digitized.** A web app for the Anduin Transactions Digitization Service Analyst. It reads a sub doc (HTML, text PDF, DOCX or scanned pages), builds a logic graph, flags what would break a digitized form, and turns confirmed issues into a counsel question sheet. A gate stays **Blocked** until every critical question is answered. It also takes a whole fund package (sub agreement, LPA, PPM, baseline, side letters), says which cited documents are missing and drafts one request to the GP.
 
@@ -18,6 +20,29 @@ Built by Thao Dao for the Anduin Transactions job-application challenge. [Linked
 6. **Digitization gate**: Blocked until every critical item is answered, then Ready.
 7. **Firm memory** remembers decisions per law firm, so a second fund from the same firm does not re-raise what was already decided.
 8. **Variance diff** against a baseline (earlier fund, feeder, parallel or prior draft) shows only meaningful changes, each with an impact line and an owner.
+
+<details>
+<summary><b>The 13 deterministic detectors</b> (no AI; source: <code>packages/core/src/detectors/</code>)</summary>
+
+| #   | Detector                     | What it catches                                                                                                              | Default severity                              |
+| --- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| 1   | `ref-this-section`           | "this Section N" where N is not the section it sits in                                                                       | Critical in a routing context, otherwise high |
+| 2   | `ref-label-coherence`        | A reference whose label does not fit the cited target but fits another (e.g. swapped "Part B of Section 6")                  | Critical in a routing context, otherwise high |
+| 3   | `broken-conditional`         | "If ..., complete / skip / proceed to Section N" where the target section, part, annex or question does not exist            | Critical                                      |
+| 4   | `unreachable-flow`           | Jump instructions that form a cycle or leave a section unreachable                                                           | Critical                                      |
+| 5   | `investor-path-dead-end`     | An investor type whose path never reaches the signature page                                                                 | Critical                                      |
+| 6   | `investor-path-missing-item` | A required item missing from an investor type's path (e.g. told to "also complete Part C", but Part C is missing or skipped) | High                                          |
+| 7   | `option-gap-overlap`         | Option groups with numeric gaps or overlaps, or "check one" groups that offer "All of the above"                             | High                                          |
+| 8   | `footnote-requirement`       | Options in one group that carry footnote requirements inconsistently                                                         | High                                          |
+| 9   | `defined-term-issues`        | The same term defined twice, or used before its definition                                                                   | High / medium                                 |
+| 10  | `undefined-term`             | An offering-security noun (e.g. "Units" where the document defines "Shares") that is never defined                           | Medium                                        |
+| 11  | `flag-drafting-note`         | Internal drafting notes left in ("NTD:", "Note to draft")                                                                    | Medium                                        |
+| 12  | `flag-placeholder`           | Unfilled placeholders such as `[xx]`, `[insert ...]`, `[●]`                                                                  | Medium                                        |
+| 13  | `flag-sensitive`             | Bank account and routing numbers after a cue word (ABA, DDA, account), masked to the last 4 digits                           | Medium                                        |
+
+"Routing context" means the reference sits in instructions, an answer option or a conditional, where a wrong target would send the investor to the wrong place. These 13 detectors cover 11 issue classes. The other 4 classes are AI-only judgment (logic contradiction, ambiguity, meaningful typo) and version drift from the diff.
+
+</details>
 
 ![Analyst workflow from opening a document to a Ready gate, with firm memory and variance diff feeding in](docs/demo/img/readme-flow.svg)
 
