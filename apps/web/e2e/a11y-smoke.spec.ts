@@ -80,8 +80,8 @@ test.describe('a11y-smoke', () => {
     await audit(page, 'memory');
 
     await page.getByTestId('nav-documents').click();
-    await expect(page.getByTestId('placeholder-view')).toBeVisible();
-    await audit(page, 'placeholder');
+    await expect(page.getByTestId('documents-view')).toBeVisible();
+    await audit(page, 'documents');
 
     await page.getByTestId('nav-compare').click();
     await expect(page.getByTestId('compare-view')).toBeVisible();

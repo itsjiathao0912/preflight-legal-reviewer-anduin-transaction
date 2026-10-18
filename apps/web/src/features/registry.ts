@@ -5,6 +5,7 @@ import type { ComponentType } from 'react';
 import type { IconName } from '../icons/sprite';
 import { CompareScreen } from './compare/CompareScreen';
 import { CounselScreen } from './counsel/CounselScreen';
+import { DocumentsView } from './documents/DocumentsView';
 import { FindingsScreen } from './review/FindingsScreen';
 import { MemoryView } from './memory/MemoryView';
 import { placeholder } from './placeholders/PlaceholderView';
@@ -81,6 +82,8 @@ export const features: readonly FeatureModule[] = [
   },
   // Phase 08b: the real #memory view replaces the placeholder (last entry with an id wins)
   { id: 'memory', label: 'Firm memory', group: 'firm', icon: 'memory', component: MemoryView },
+  // Documents: the real #documents view replaces the placeholder (last entry with an id wins)
+  { id: 'documents', label: 'Documents', group: 'firm', icon: 'doc', component: DocumentsView },
 ];
 
 /** Resolve the view for a route: the last registered module with that id. */

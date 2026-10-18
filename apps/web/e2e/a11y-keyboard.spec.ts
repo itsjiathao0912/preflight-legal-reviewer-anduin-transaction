@@ -91,7 +91,7 @@ test.describe('a11y-keyboard', () => {
     for (const [nav, view] of [
       ['nav-counsel', 'counsel-view'],
       ['nav-memory', 'memory-view'],
-      ['nav-documents', 'placeholder-view'],
+      ['nav-documents', 'documents-view'],
       ['nav-structure', 'structure-view'],
     ] as const) {
       await page.getByTestId(nav).click();
