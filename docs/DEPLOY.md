@@ -18,8 +18,10 @@ Live URL: https://preflight-legal-reviewer.giathaowork.workers.dev
 
 The Worker was renamed from `aduin-transaction-web` on 19-10-26 (user-approved exception to the
 `aduin-transaction-*` naming rule for this Worker only). The old Worker
-`https://aduin-transaction-web.giathaowork.workers.dev` is kept running, untouched, with its own
-secrets; both share D1 `aduin-transaction-db`, and the Turnstile widget lists both hostnames.
+`https://aduin-transaction-web.giathaowork.workers.dev` was deleted on 19-10-26 (it now returns 404; its
+secrets and versions are gone). The Turnstile widget lists only the new hostname. Rollback is only
+within `preflight-legal-reviewer` versions (2737d371 is the pre-secrets version); the version lines
+below are history from the old Worker and are no longer rollback targets.
 Live Worker version: 23612b12-51c7-4d75-a324-f4f2f6392ba8 (code af59da6, render-first fix), deployed 2026-10-17. Previous version for rollback: 67c796ff-477c-4900-ba89-4ff3109e0c56 (code 38a3b2f).
 D1 `aduin-transaction-db` is live with migrations 0001-0005; its id is recorded in `apps/worker/wrangler.jsonc`.
 

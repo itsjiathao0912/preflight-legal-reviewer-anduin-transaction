@@ -1,7 +1,7 @@
 # Demo video script
 
 About 3 minutes. Demo input: **package 01, Northgate Infrastructure Fund III** (fictional, law firm Hartwell & Crane LLP; [answer key](../../samples/packages/01-northgate-infrastructure-iii/answer-key.md)).
-Live site: https://aduin-transaction-web.giathaowork.workers.dev
+Live site: https://preflight-legal-reviewer.giathaowork.workers.dev
 
 **Before recording:** use a normal browser at 1440 px, pass the Turnstile check once, set the sidebar switch to **No AI**, and rehearse once to see the real gate count and Changes count.
 
