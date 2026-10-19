@@ -72,7 +72,15 @@ pnpm exec wrangler secret put COOKIE_SIGNING_KEYS     # JSON map {"<kid>":"<rand
 pnpm exec wrangler secret put COOKIE_SIGNING_KID
 pnpm exec wrangler secret put OPENROUTER_API_KEY
 pnpm exec wrangler secret put TURNSTILE_SECRET        # from the Turnstile widget created for the workers.dev host
+pnpm exec wrangler secret put OPENAI_API_KEY          # needed when AI_PROVIDER is "openai"
 ```
+
+**AI provider.** `AI_PROVIDER` in `apps/worker/wrangler.jsonc` selects `openai` (`gpt-4.1-mini`, live default) or
+`openrouter`. When AI review or OCR is used with `openai`, sub-document text and scanned pages are sent to OpenAI.
+OpenAI spend is metered against a $10 lifetime cap in D1 (`quota_counter` row `spend|openai`, reserve then settle); the
+counter is authoritative, so a D1 Time Travel restore also rolls it back. Keep `OPENROUTER_API_KEY` set so a flip
+back works without a new secret. Switch provider: edit `AI_PROVIDER`, run `pnpm --filter @aduin/worker test`,
+commit, then deploy as in section 4.
 
 The Turnstile site key is public and goes in the web build env as `VITE_TURNSTILE_SITE_KEY` (names only in the
 `apps/web` env example file). Create the widget for the `*.workers.dev` hostname only.
@@ -116,6 +124,9 @@ pnpm exec wrangler rollback <previous-version-id>
 Rollback changes code only. D1 migrations are forward-only: do not roll back a migration; write a new one. To stop
 AI spend immediately without a redeploy, remove the secret: `pnpm exec wrangler secret delete OPENROUTER_API_KEY`
 (AI then fails closed and the rest of the app keeps working).
+
+Provider rollback: set `AI_PROVIDER` back to `"openrouter"` and redeploy, or `wrangler rollback <version>` to the last
+`openrouter` version. To stop OpenAI spend at once: `pnpm exec wrangler secret delete OPENAI_API_KEY`.
 
 ## Hard rules
 

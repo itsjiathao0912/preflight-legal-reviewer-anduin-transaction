@@ -144,6 +144,7 @@ Pass test file names as separate commands, not after a `--`. Live version: Worke
 - **Compare** cannot diff scanned (OCR) documents. Editing a finding's text or severity is not built.
 - **Variance:** digit changes in operative text count as logic, so demo package 01 shows 9 change rows rather than the answer key's 7.
 - **Demo data:** public SEC documents and synthetic fund packages only. Free models can log prompts, so do not upload real investor data.
+- **AI provider and privacy:** the Worker calls one provider chosen by `AI_PROVIDER` (`openai` with `gpt-4.1-mini` live, `openrouter` as fallback). When AI review or OCR is used, sub-document text and scanned pages are sent to OpenAI. OpenAI spend has a $10 lifetime cap enforced in D1 (fails closed).
 - **Not built for production:** accounts or SSO, tenant isolation beyond the sandbox workspace, a zero-retention LLM provider, a paid-model path, CI.
 
 Full lists with backlog pointers: [docs/architecture/status.md](docs/architecture/status.md).
