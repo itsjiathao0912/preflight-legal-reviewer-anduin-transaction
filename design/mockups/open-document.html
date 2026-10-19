@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open a document - mockup v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#e9ece9; --panel:#f4f6f3; --card:#fbfcfa; --paper:#fdfefd;
+  --ink:#15181b; --ink-2:#434a50; --ink-3:#5c646b;
+  --accent:#1d5c57; --accent-tint:#d9e8e5; --step:#dde2dd;
+  --block-fg:#8a1c1c; --block-bg:#f7e2df; --fix-fg:#734400; --fix-bg:#f5e8c8;
+  --note-fg:#38454f; --note-bg:#dfe6ea; --ok-fg:#1b5632; --ok-bg:#daeedf;
+  --r:4px;
+  --sans:'Geist',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --serif:'Newsreader',Georgia,serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box}
+body{margin:0;font:13px/1.45 var(--sans);color:var(--ink);background:var(--ground);min-height:100vh}
+button{font:inherit;color:inherit;cursor:pointer}
+
+/* mockup-only state switcher */
+.states{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:2px;padding:3px;background:var(--ink);border-radius:6px}
+.states button{border:0;background:transparent;color:#c9d0cc;padding:5px 10px;border-radius:4px;font-size:12px}
+.states button[aria-pressed=true]{background:#fff;color:var(--ink)}
+
+/* faux app behind */
+.app{display:grid;grid-template-columns:232px 1fr;height:100vh;filter:saturate(.6)}
+.app aside{background:var(--panel)}
+.app main{padding:22px 28px}
+.app h1{font:500 20px var(--serif);margin:0}
+.scrim{position:fixed;inset:0;background:rgba(21,24,27,.32);backdrop-filter:blur(1.5px)}
+
+/* dialog */
+.dlg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(640px,calc(100vw - 32px));max-height:calc(100vh - 64px);display:flex;flex-direction:column;background:var(--card);border-radius:10px;box-shadow:0 1px 0 rgba(0,0,0,.04),0 24px 60px -12px rgba(21,24,27,.28)}
+.hd{display:flex;align-items:flex-start;justify-content:space-between;padding:20px 22px 4px}
+.hd h2{font:500 22px/1.2 var(--serif);margin:0;letter-spacing:-.01em}
+.hd p{margin:4px 0 0;color:var(--ink-3)}
+.x{border:0;background:transparent;width:30px;height:30px;border-radius:6px;display:grid;place-items:center;color:var(--ink-3)}
+.x:hover{background:var(--panel);color:var(--ink)}
+.body{padding:14px 22px 18px;overflow:auto;display:flex;flex-direction:column;gap:14px}
+
+/* dropzone */
+.drop{position:relative;border:1.5px dashed #b9c2bc;border-radius:8px;background:var(--panel);padding:28px 20px;text-align:center;transition:background .2s var(--ease),border-color .2s var(--ease)}
+.drop:hover{border-color:var(--ink-3)}
+.drop.over{border-color:var(--accent);background:var(--accent-tint);border-style:solid}
+.drop .ic{width:40px;height:40px;margin:0 auto 10px;border-radius:10px;background:var(--card);display:grid;place-items:center;color:var(--accent);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.drop.over .ic{transform:translateY(-2px)}
+.drop strong{display:block;font-size:14px;font-weight:500}
+.drop .link{color:var(--accent);text-decoration:underline;text-underline-offset:2px;border:0;background:none;padding:0;font-weight:500}
+.drop small{display:block;margin-top:6px;color:var(--ink-3);font-size:12px}
+.drop.compact{padding:12px 14px;text-align:left;display:flex;align-items:center;gap:12px}
+.drop.compact .ic{margin:0;width:32px;height:32px}
+.drop.compact strong{font-size:13px}
+.drop.compact small{margin-top:1px}
+
+/* file list */
+.files{display:flex;flex-direction:column;gap:6px}
+.file{display:grid;grid-template-columns:28px 1fr auto auto;align-items:center;gap:10px;padding:8px 10px;background:var(--paper);border:1px solid var(--step);border-radius:6px}
+.ft{width:28px;height:32px;border-radius:3px;background:var(--note-bg);color:var(--note-fg);font-size:9px;font-weight:600;display:grid;place-items:end center;padding-bottom:4px;letter-spacing:.03em}
+.ft.pdf{background:var(--block-bg);color:var(--block-fg)}
+.ft.docx{background:var(--accent-tint);color:var(--accent)}
+.fn{min-width:0}
+.fn b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fn span{color:var(--ink-3);font-size:12px}
+.role{border:1px solid var(--step);background:var(--card);border-radius:var(--r);padding:3px 8px;font-size:12px;display:flex;gap:6px;align-items:center}
+.role.unsure{border-color:#e3cf9a;background:var(--fix-bg);color:var(--fix-fg)}
+.rm{border:0;background:none;color:var(--ink-3);width:24px;height:24px;border-radius:4px}
+.rm:hover{background:var(--panel);color:var(--ink)}
+
+/* fields */
+.fields{display:grid;grid-template-columns:1.3fr 1fr .8fr;gap:10px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--ink-2);font-weight:500}
+label.f input{font:inherit;color:var(--ink);border:1px solid var(--step);background:var(--paper);border-radius:6px;padding:7px 9px;outline:none}
+label.f input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-tint)}
+label.f em{font-style:normal;color:var(--ink-3);font-weight:400}
+
+/* privacy */
+.priv{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;background:var(--panel);border-radius:6px;color:var(--ink-2)}
+.priv input{margin:2px 0 0;accent-color:var(--accent)}
+.priv details{display:inline}
+.priv summary{display:inline;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:2px;list-style:none}
+.priv summary::-webkit-details-marker{display:none}
+.priv ul{margin:8px 0 0;padding-left:16px;color:var(--ink-3);font-size:12px}
+.priv li{margin:3px 0}
+
+/* demo collapsible */
+.demo{border-top:1px solid var(--step);padding-top:12px}
+.demo-tg{width:100%;display:flex;align-items:center;gap:10px;border:0;background:none;padding:4px 0;text-align:left}
+.demo-tg .chev{transition:transform .25s var(--ease);color:var(--ink-3)}
+.demo-tg[aria-expanded=true] .chev{transform:rotate(90deg)}
+.demo-tg b{font-weight:500}
+.demo-tg span{color:var(--ink-3)}
+.demo-tg .free{margin-left:auto;font-size:11px;color:var(--ok-fg);background:var(--ok-bg);padding:2px 7px;border-radius:20px}
+.demo-panel{display:none}
+.demo-panel.open{display:block;animation:fold .25s var(--ease)}
+@keyframes fold{from{transform:translateY(-4px)}}
+.list{margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px;max-height:236px;overflow:auto;padding-right:2px}
+.row{display:flex;align-items:center;gap:10px;border:0;background:none;text-align:left;padding:8px 10px;border-radius:6px}
+.row:hover{background:var(--panel)}
+.row .n{font-variant-numeric:tabular-nums;color:var(--ink-3);font-size:11px;width:18px}
+.row .t{min-width:0;flex:1}
+.row .t b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t span{display:block;font-size:12px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .go{opacity:0;color:var(--accent);transition:opacity .15s}
+.row:hover .go{opacity:1}
+
+/* footer */
+.ft-bar{display:flex;align-items:center;gap:8px;padding:12px 22px;border-top:1px solid var(--step);background:var(--panel);border-radius:0 0 10px 10px}
+.ft-bar .hint{color:var(--ink-3);font-size:12px;margin-right:auto}
+.btn{border:1px solid var(--step);background:var(--card);border-radius:6px;padding:7px 14px;font-weight:500}
+.btn:hover{background:var(--paper)}
+.btn.pri{background:var(--ink);border-color:var(--ink);color:#fff;display:flex;gap:7px;align-items:center}
+.btn.pri:disabled{background:#9aa29e;border-color:#9aa29e;cursor:not-allowed}
+
+[hidden]{display:none!important}
+@media (max-width:620px){.fields{grid-template-columns:1fr}.list{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="states" role="group" aria-label="Mockup state">
+  <button data-s="empty" aria-pressed="true">Empty</button>
+  <button data-s="drag" aria-pressed="false">Dragging</button>
+  <button data-s="files" aria-pressed="false">Files added</button>
+  <button data-s="demo" aria-pressed="false">Demo open</button>
+</div>
+
+<div class="app" aria-hidden="true"><aside></aside><main><h1>Documents</h1></main></div>
+<div class="scrim"></div>
+
+<section class="dlg" role="dialog" aria-labelledby="t">
+  <header class="hd">
+    <div>
+      <h2 id="t">Open a document</h2>
+      <p>Upload a sub doc or a whole fund package. Files stay in this browser for 24 hours.</p>
+    </div>
+    <button class="x" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+  </header>
+
+  <div class="body">
+    <!-- dropzone -->
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Upload files: drag here or browse">
+      <div class="ic"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13V3M6 7l4-4 4 4"/><path d="M3 13v2a2 2 0 002 2h10a2 2 0 002-2v-2"/></svg></div>
+      <div>
+        <strong id="dropT">Drag files here, or <button class="link" type="button">browse</button></strong>
+        <small id="dropS">HTML, PDF, DOCX, JPG, PNG · up to 12 files, 40 MB total · scans up to 30 pages</small>
+      </div>
+    </div>
+
+    <!-- files added -->
+    <div class="files" id="files" hidden>
+      <div class="file"><div class="ft docx">DOCX</div><div class="fn"><b>01-NG3-Subscription-Agreement.docx</b><span>412 KB · subscription document, found "Subscription Booklet" on page 1</span></div><span class="role">Sub doc ▾</span><button class="rm" aria-label="Remove">✕</button></div>
+      <div class="file"><div class="ft pdf">PDF</div><div class="fn"><b>02-NG3-LPA-Final.pdf</b><span>2.1 MB · title says "Limited Partnership Agreement"</span></div><span class="role">LPA ▾</span><button class="rm" aria-label="Remove">✕</button></div>
+      <div class="file"><div class="ft pdf">PDF</div><div class="fn"><b>05-annex-f.pdf</b><span>180 KB · not sure what this is</span></div><span class="role unsure">⚠ Confirm role ▾</span><button class="rm" aria-label="Remove">✕</button></div>
+    </div>
+
+    <div class="fields" id="fields" hidden>
+      <label class="f">Law firm <input value="Hartwell &amp; Crane LLP" list="firms"></label>
+      <label class="f">Fund name <input value="Northgate Capital III"></label>
+      <label class="f"><span>Version <em>optional</em></span><input placeholder="e.g. v3 draft"></label>
+    </div>
+
+    <div class="priv" id="priv" hidden>
+      <input type="checkbox" id="ok" checked>
+      <label for="ok">I have read the privacy notice.
+        <details><summary>What gets sent?</summary>
+          <ul>
+            <li>Uploads stay in this browser for 24 hours, then they are deleted.</li>
+            <li>AI review sends short snippets to a free AI model. Up to 3 fresh-AI documents per day; samples are free.</li>
+            <li>Scanned pages go to a third-party AI model to read the text, only while AI review is on.</li>
+            <li>Review memory keeps masked snippets, hashes and your decisions, never the full document.</li>
+          </ul>
+        </details>
+      </label>
+    </div>
+
+    <!-- demo data -->
+    <div class="demo">
+      <button class="demo-tg" id="demoTg" aria-expanded="false" aria-controls="demoP">
+        <svg class="chev" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 3l4 4-4 4"/></svg>
+        <b>Or try a demo package</b><span>7 packages</span>
+        <span class="free">Free, no AI quota</span>
+      </button>
+      <div class="demo-panel" id="demoP"><div>
+        <div class="list" id="list"></div>
+      </div></div>
+    </div>
+  </div>
+
+  <footer class="ft-bar">
+    <span class="hint" id="hint">Add files or pick a demo package to start.</span>
+    <button class="btn">Cancel</button>
+    <button class="btn pri" id="go" disabled>Upload and open</button>
+  </footer>
+</section>
+
+<script>
+const D={
+ packages:[["","Northgate Capital III","6 files"],["","Lotus Bay Asia II","6 files"],["","Redwood Ridge I","6 files"],["","Hartwell Fund III (synthetic)","3 files"],["","PG NGI 2024 + 2026","2 files"],["","RW Holdings scans","1 file · OCR"],["","Blackstone REIT Appendix B","1 file"]]
+};
+const list=document.getElementById('list');
+function renderList(k){list.innerHTML=D[k].map(([n,t,s])=>`<button class="row"><span class="t"><b>${t}</b><span>${s}</span></span><span class="go">Open →</span></button>`).join('')}
+renderList('packages');
+
+const tg=document.getElementById('demoTg'),P=document.getElementById('demoP');
+function setDemo(o){tg.setAttribute('aria-expanded',o);P.classList.toggle('open',o)}
+tg.onclick=()=>setDemo(tg.getAttribute('aria-expanded')!=='true');
+
+const drop=document.getElementById('drop');
+function setState(s){
+  document.querySelectorAll('.states button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.s===s));
+  const has=s==='files';
+  drop.classList.toggle('over',s==='drag');
+  drop.classList.toggle('compact',has);
+  document.getElementById('dropT').innerHTML=s==='drag'?'Drop to add 3 files':has?'Add more files, or <button class="link" type="button">browse</button>':'Drag files here, or <button class="link" type="button">browse</button>';
+  document.getElementById('dropS').textContent=has?'3 of 12 files · 2.7 of 40 MB':'HTML, PDF, DOCX, JPG, PNG · up to 12 files, 40 MB total · scans up to 30 pages';
+  ['files','fields','priv'].forEach(id=>document.getElementById(id).hidden=!has);
+  const go=document.getElementById('go');go.disabled=!has;
+  go.innerHTML=has?'Open package (3 files)':'Upload and open';
+  document.getElementById('hint').textContent=has?'1 file needs a role before review starts.':'Add files or pick a demo package to start.';
+  setDemo(s==='demo');
+}
+document.querySelectorAll('.states button').forEach(b=>b.onclick=()=>setState(b.dataset.s));
+['dragenter','dragover'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove('over');if(e==='drop')setState('files')}));
+</script>
+</body>
+</html>
