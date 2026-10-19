@@ -70,6 +70,8 @@ Nếu nút share mờ, đọc dòng nhỏ dưới nút. Ví dụ "Memory is read
 |---|---|---|---|
 | 4.1 | Panel phải, thanh **"All · Errors · Changes"** | Bấm **"Changes"** | 9 dòng thay đổi, mỗi dòng có nhãn **"Logic"** hoặc **"New"** và chip người phụ trách (Counsel / GP / Fund admin) |
 | 4.2 | Header: ô **"vs 04-NG2-Subscription-Agreement-2024.docx"** | Chỉ chuột, không bấm | Cho thấy đang so với Fund II |
+| 4.3 | Bấm dòng **Changed Section 4 Part A "Investor Details"** | — | Tài liệu tô vàng *"formed or organized outside the United States"*; panel ghi *US entities lose the investor details question*, người phụ trách **GP + Counsel** |
+| 4.4 | Chỉ chuột vào dòng **New Section 7A "Source of Funds Verification"** | Không bấm | Chip người phụ trách **Fund admin** |
 
 ---
 
