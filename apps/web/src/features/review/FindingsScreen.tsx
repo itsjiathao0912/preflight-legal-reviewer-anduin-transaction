@@ -1,4 +1,3 @@
-import { CoverageLine } from '../gate/CoverageLine';
 import { useReview } from '../../state/review';
 import { StageStatus } from '../processing/StageStatus';
 import { isScanResult } from '../scan/scan-model';
@@ -9,7 +8,6 @@ import { DocPane } from './components/DocPane';
 import { useReviewView } from './use-review-view';
 import { FindingsPanelV2 } from './v2';
 import { BaselineControl } from '../variance/BaselineControl';
-import { headerMeta } from '../variance/select';
 import { useShare } from '../counsel/counsel-share';
 import { Icon } from '../../components/ui/icon';
 import { CounselParticipants, ShareButton, ShareLine } from '../counsel/ShareControls';
@@ -40,10 +38,11 @@ export function FindingsScreen() {
           <h1 id="h-findings" tabIndex={-1}>
             Findings
           </h1>
-          <p className="meta" data-testid="findings-meta">
-            {doc ? headerMeta(view.counts, view.hasChanges) : (openError ?? 'No document open')}
-          </p>
-          <CoverageLine placement="header" />
+          {doc ? null : (
+            <p className="meta" data-testid="findings-meta">
+              {openError ?? 'No document open'}
+            </p>
+          )}
         </div>
         <div className="hacts">
           {readyAt ? (

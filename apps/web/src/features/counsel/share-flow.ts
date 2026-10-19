@@ -12,7 +12,7 @@ import { docRefOf } from '../open-document/demo-refs';
 import { encodePackageConfig, packageConfigOf } from '../open-document/package-config';
 import type { Row } from '../review/model';
 import type { QuestionItem } from '../variance/owner-groups';
-import { useShare } from './counsel-share';
+import { refreshSheet, useShare } from './counsel-share';
 import { NOT_RECORDED_NOTE, syncQuestions } from './export-flow';
 import { buildFinalDocx, DOCX_MIME, finalDocxFilename, type FinalQuestion } from './exportDocx';
 import { readingsFor } from './QuestionRow';
@@ -77,6 +77,8 @@ export async function shareWithCounsel(
       expiresAt: res.expires_at,
     };
     useShare.getState().setLink(link);
+    // read the sheet now: the shared questions show Awaiting counsel without waiting for a poll
+    void refreshSheet();
     return link;
   } catch (e) {
     if (e instanceof MemoryApiError && e.code === 'read_only') {

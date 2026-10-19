@@ -96,18 +96,11 @@ export function StructureScreen() {
         <h1 id="h-structure" tabIndex={-1}>
           Structure
         </h1>
-        <p className="meta" data-testid="structure-meta">
-          {view
-            ? `${view.badge} to check · ${view.sectionCount} sections, ${view.referenceCount} references`
-            : doc
-              ? 'No structure for this document'
-              : 'No document open'}
-        </p>
-        {view ? (
-          <p className="mut" data-testid="structure-hint">
-            Map of the document. Rows with a flag need checking — click a row to see why.
+        {view ? null : (
+          <p className="meta" data-testid="structure-meta">
+            {doc ? 'No structure for this document' : 'No document open'}
           </p>
-        ) : null}
+        )}
       </div>
       {view ? (
         <div className="hacts">

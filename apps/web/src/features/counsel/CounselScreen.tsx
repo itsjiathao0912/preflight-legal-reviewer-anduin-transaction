@@ -462,7 +462,7 @@ function AnalystQuestionsScreen() {
                   Already answered ({prior.answered.length}) · Awaiting counsel (
                   {prior.awaiting.length})
                 </span>
-                <span className="help">Not exported to counsel</span>
+                <span className="help">From earlier reviews, not on this sheet</span>
               </button>
               <div
                 className="prevlist"

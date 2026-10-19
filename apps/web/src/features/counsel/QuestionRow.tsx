@@ -17,13 +17,31 @@ export type RowMode = 'view' | 'edit' | 'answer';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
-function Tag({ state }: { state: QuestionState }) {
+/**
+ * State tag. `shared`: the question is on the counsel share link, so an unanswered one reads
+ * "Awaiting counsel"; `by`: who answered (counsel's joined name for a share-link answer).
+ */
+function Tag({
+  state,
+  shared,
+  by,
+}: {
+  state: QuestionState;
+  shared: boolean;
+  by?: string | undefined;
+}) {
+  if (shared && (state === 'new' || state === 'accepted'))
+    return (
+      <span className="tag t-st" data-testid="counsel-row-awaiting">
+        Awaiting counsel
+      </span>
+    );
   switch (state) {
     case 'answered':
       return (
-        <span className="tag t-ok">
+        <span className="tag t-ok" data-testid="counsel-row-answered">
           <Icon name="check" />
-          Answered
+          {by ? `Answered by ${by}` : 'Answered'}
         </span>
       );
     case 'unclear':
@@ -254,7 +272,7 @@ export function QuestionRow({
               {OWNER_LABEL[q.owner]}
             </span>
           ) : null}
-          <Tag state={state} />
+          <Tag state={state} shared={!!questionId} by={rec.by} />
           <span>{r.f.ref}</span>
         </span>
       </button>

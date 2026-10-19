@@ -90,9 +90,6 @@ describe('variance-counts-selector', () => {
     const keys = v.gate.reasons.map((r) => r.findingKey).sort();
     expect(keys).toEqual(['c1', 'c2', 'c3', 'e1']);
     expect(v.counts.blocked).toBe(4);
-    expect(sel.headerMeta(v.counts, true)).toBe(
-      '3 errors open · 2 changes to review · 4 block digitization',
-    );
     // toasts read the same gate
     expect(sel.gateLineText(v.gate)).toBe('4 items left on the gate.');
     expect(sel.dismissGateText(v.gate)).toBe('4 blocking reasons left.');
@@ -101,7 +98,6 @@ describe('variance-counts-selector', () => {
   it('without a baseline the gate and header are exactly the legacy ones', () => {
     const v = view(ERRORS, [], {}, undefined);
     expect(v.gate.reasons.map((r) => r.findingKey)).toEqual(['e1']);
-    expect(sel.headerMeta(v.counts, false)).toBe('4 open · 1 block digitization');
     expect(v.counts.chips).toEqual({ block: 2, fix: 1, note: 1 });
     // change rows without the policy never gate (policy only when a baseline resolved)
     const noPolicy = view(ERRORS, CHANGES, {}, undefined);

@@ -162,12 +162,6 @@ export function reviewCounts(
   };
 }
 
-/** Header meta line: unchanged when there are no change rows. */
-export function headerMeta(c: ReviewCounts, hasChanges: boolean): string {
-  if (!hasChanges) return `${c.open} open · ${c.blocked} block digitization`;
-  return `${c.errorsOpen} errors open · ${c.changesOpen} changes to review · ${c.blocked} block digitization`;
-}
-
 export interface CappedGroups {
   shown: CosmeticGroup[];
   moreGroups: number;

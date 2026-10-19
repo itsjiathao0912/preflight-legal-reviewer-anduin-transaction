@@ -3,7 +3,6 @@ import { Icon } from '../../components/ui/icon';
 import { downloadBlob } from '../../lib/download';
 import { useReview } from '../../state/review';
 import { finalizeOutline } from './finalizeOutline';
-import { OutlinePreview } from './OutlinePreview';
 
 /**
  * Structure header action (AC63): exports the form logic outline as JSON (reference only, client
@@ -41,9 +40,7 @@ export function ExportOutlineButton() {
         <Icon name="doc" />
         Export logic outline
       </button>
-      {outline ? (
-        <OutlinePreview outline={outline} />
-      ) : (
+      {outline ? null : (
         <p className="mut" id="outline-export-reason" data-testid="outline-export-disabled-reason">
           No structure for this document, so there is no outline to export.
         </p>
