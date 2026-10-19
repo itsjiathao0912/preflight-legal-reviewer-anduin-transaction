@@ -41,6 +41,8 @@ export function rememberDemoPackage(packageId: string, demoId: string): void {
 
 /** Test seam. */
 export function forgetDemoPackagesForTest(): void {
+  resolving.clear();
+  demoHashes = null;
   for (const k of Object.keys(refs)) delete refs[k];
   try {
     sessionStorage.removeItem(KEY);
@@ -59,4 +61,96 @@ export function docRefOf(doc: DocMeta | null | undefined): string | null {
   if (doc.source !== 'sample' || !doc.sampleId || !SAMPLE_ID_RE.test(doc.sampleId)) return null;
   const r = `sample:${doc.sampleId}`;
   return DOC_REF_RE.test(r) ? r : null;
+}
+
+/** What a content match needs from the open package (ids are content hashes). */
+export interface PackageForRef {
+  id: string;
+  firmId: string | null;
+  docIds: readonly string[];
+}
+
+/** Content hashes of one demo package's byte members; null when one cannot be fetched. */
+type DemoHashes = { id: string; firmId: string | null; count: number; hashes: string[] };
+
+let demoHashes: Promise<DemoHashes[]> | null = null;
+const resolving = new Map<string, Promise<string | null>>();
+
+async function loadDemoHashes(): Promise<DemoHashes[]> {
+  const [{ loadDemoPackages }, { loadManifest }, { sha256Hex }] = await Promise.all([
+    import('./demo-packages'),
+    import('./samples'),
+    import('../../engine/ocr-queue'),
+  ]);
+  const [pkgs, manifest] = await Promise.all([loadDemoPackages(), loadManifest()]);
+  const out: DemoHashes[] = [];
+  for (const p of pkgs) {
+    const hashes: string[] = [];
+    let ok = true;
+    for (const m of p.members) {
+      if (m.kind === 'scan') continue; // scan sets are matched by count only
+      const url =
+        m.kind === 'file'
+          ? m.url
+          : (() => {
+              const f = manifest.find((s) => s.id === m.sampleId)?.file;
+              return f ? `/samples/${f}` : null;
+            })();
+      if (!url) {
+        ok = false;
+        break;
+      }
+      const res = await fetch(url);
+      if (!res.ok) {
+        ok = false;
+        break;
+      }
+      hashes.push(await sha256Hex(new Uint8Array(await res.arrayBuffer())));
+    }
+    if (ok && hashes.length)
+      out.push({ id: p.id, firmId: p.firmId, count: p.members.length, hashes });
+  }
+  return out;
+}
+
+/** Pure content match: same firm, same member count, every demo byte member present by hash. */
+export function matchDemoPackage(pkg: PackageForRef, demos: readonly DemoHashes[]): string | null {
+  const ids = new Set(pkg.docIds);
+  const hit = demos.find(
+    (d) =>
+      d.firmId === pkg.firmId && d.count === pkg.docIds.length && d.hashes.every((h) => ids.has(h)),
+  );
+  return hit ? hit.id : null;
+}
+
+/**
+ * Derive the demo ref from CONTENT (restored package, "Earlier documents", new tab): the tab memory
+ * above is only a fast path. Remembers a hit so the sync `docRefOf` works afterwards. Never throws.
+ */
+export function resolveDocRef(
+  doc: DocMeta | null | undefined,
+  pkg: PackageForRef | null | undefined,
+): Promise<string | null> {
+  const fast = docRefOf(doc);
+  if (fast || !doc?.packageId || !pkg || pkg.id !== doc.packageId) return Promise.resolve(fast);
+  const key = `${pkg.id}|${pkg.docIds.join(',')}`;
+  let p = resolving.get(key);
+  if (!p) {
+    p = (async () => {
+      try {
+        demoHashes ??= loadDemoHashes().catch(() => {
+          demoHashes = null;
+          return [];
+        });
+        const id = matchDemoPackage(pkg, await demoHashes);
+        if (!id) return null;
+        rememberDemoPackage(pkg.id, id);
+        return docRefOf(doc);
+      } catch {
+        return null;
+      }
+    })();
+    resolving.set(key, p);
+  }
+  return p;
 }

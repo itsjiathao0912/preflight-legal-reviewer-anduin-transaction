@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { isRealMemoryApi, memoryApi } from '../../api/client';
 import { Icon } from '../../components/ui/icon';
 import { useReview } from '../../state/review';
 import { useSession } from '../../state/session';
-import { docRefOf } from '../open-document/demo-refs';
+import { docRefOf, resolveDocRef } from '../open-document/demo-refs';
+import { usePackage } from '../../state/package';
 import type { useReviewView } from '../review/use-review-view';
 
 type Rows = ReturnType<typeof useReviewView>['rows'];
@@ -19,14 +20,53 @@ export function fmtExpiry(ms: number): string {
   });
 }
 
-/** Share rules shared by Questions and Findings: a firm demo document on the live memory service. */
+export const NO_FIRM_REASON = 'Sharing needs a law firm tag on this document.';
+export const READ_ONLY_REASON =
+  'Memory is read-only in this session (verify you are human, then reload) so sharing is off.';
+export const MEMORY_OFF_REASON = 'Sharing needs the live memory service.';
+export const NO_QUESTIONS_REASON = 'Add a counsel question first (Ask counsel on a finding).';
+
+/**
+ * Share rules shared by Questions and Findings: a firm demo document on the live memory service.
+ * The demo ref is derived from the package CONTENT when this tab has no remembered ref (restored
+ * package, "Earlier documents", new tab).
+ */
 export function useShareRules() {
   const doc = useReview((s) => s.doc);
+  const current = usePackage((s) => s.current);
   const readOnly = useSession((s) => s.readOnly);
-  const canSync = !!doc?.firmId && !readOnly && isRealMemoryApi(memoryApi());
+  const realMemory = isRealMemoryApi(memoryApi());
+  const canSync = !!doc?.firmId && !readOnly && realMemory;
+  const fast = docRefOf(doc);
+  const [resolved, setResolved] = useState<{ key: string; ref: string | null } | null>(null);
+  const pkgKey = current ? `${current.id}|${current.docs.map((d) => d.id).join(',')}` : '';
+  const key = `${doc?.packageId ?? ''}|${pkgKey}`;
+  useEffect(() => {
+    if (fast || !doc?.packageId || !current) return;
+    let live = true;
+    void resolveDocRef(doc, {
+      id: current.id,
+      firmId: current.tag.firmId,
+      docIds: current.docs.map((d) => d.id),
+    }).then((ref) => {
+      if (live) setResolved({ key, ref });
+    });
+    return () => {
+      live = false;
+    };
+  }, [key, fast]);
   // counsel re-opens bundled files only: uploads and assembled packages cannot be shared
-  const shareable = !!docRefOf(doc);
-  return { canSync, shareable, canShare: canSync && shareable };
+  const shareable = !!fast || (resolved?.key === key && !!resolved.ref);
+  const reason: string | null = !shareable
+    ? DEMO_ONLY
+    : !doc?.firmId
+      ? NO_FIRM_REASON
+      : !realMemory
+        ? MEMORY_OFF_REASON
+        : readOnly
+          ? READ_ONLY_REASON
+          : null;
+  return { canSync, shareable, canShare: canSync && shareable, reason };
 }
 
 /** "Share with counsel" button (analyst only; callers hide it in counsel mode). */
@@ -34,53 +74,56 @@ export function ShareButton({ rows, testId = 'counsel-share' }: { rows: Rows; te
   const doc = useReview((s) => s.doc);
   const memory = useReview((s) => s.memory);
   const showToast = useReview((s) => s.showToast);
-  const { shareable, canShare } = useShareRules();
+  const { canShare, reason } = useShareRules();
   const items = useMemo(() => questionItems(rows), [rows]);
   const [sharing, setSharing] = useState(false);
+  const why = reason ?? (items.length ? null : NO_QUESTIONS_REASON);
   return (
-    <button
-      type="button"
-      className="btn"
-      data-testid={testId}
-      disabled={!canShare || sharing || !items.length}
-      title={
-        !shareable
-          ? DEMO_ONLY
-          : canShare
-            ? undefined
-            : 'Sharing needs a law firm tag and your own sandbox (not the read-only demo)'
-      }
-      onClick={async () => {
-        if (!doc) return;
-        setSharing(true);
-        try {
-          const l = await shareWithCounsel({
-            doc,
-            rows,
-            findings: rows.map((r) => r.f),
-            memory,
-            items,
-          });
-          let copied = false;
+    <span className="sharewrap" data-testid={`${testId}-wrap`}>
+      <button
+        type="button"
+        className="btn"
+        data-testid={testId}
+        disabled={!canShare || sharing || !items.length}
+        title={why ?? undefined}
+        aria-describedby={why ? `${testId}-why` : undefined}
+        onClick={async () => {
+          if (!doc) return;
+          setSharing(true);
           try {
-            await navigator.clipboard.writeText(l.url);
-            copied = true;
-          } catch {
-            /* the link stays visible below to copy by hand */
+            const l = await shareWithCounsel({
+              doc,
+              rows,
+              findings: rows.map((r) => r.f),
+              memory,
+              items,
+            });
+            let copied = false;
+            try {
+              await navigator.clipboard.writeText(l.url);
+              copied = true;
+            } catch {
+              /* the link stays visible below to copy by hand */
+            }
+            showToast(
+              `${copied ? 'Link copied.' : 'Link ready.'} Valid until ${fmtExpiry(l.expiresAt)}.`,
+            );
+          } catch (e) {
+            showToast(e instanceof ShareError ? e.message : 'The share link could not be created.');
+          } finally {
+            setSharing(false);
           }
-          showToast(
-            `${copied ? 'Link copied.' : 'Link ready.'} Valid until ${fmtExpiry(l.expiresAt)}.`,
-          );
-        } catch (e) {
-          showToast(e instanceof ShareError ? e.message : 'The share link could not be created.');
-        } finally {
-          setSharing(false);
-        }
-      }}
-    >
-      <Icon name="counsel" />
-      {sharing ? 'Sharing…' : 'Share with counsel'}
-    </button>
+        }}
+      >
+        <Icon name="counsel" />
+        {sharing ? 'Sharing…' : 'Share with counsel'}
+      </button>
+      {why ? (
+        <small className="sharewhy" id={`${testId}-why`} data-testid={`${testId}-why`}>
+          {why}
+        </small>
+      ) : null}
+    </span>
   );
 }
 
