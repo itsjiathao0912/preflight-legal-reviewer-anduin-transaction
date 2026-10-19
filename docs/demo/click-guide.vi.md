@@ -12,7 +12,8 @@ Link: https://preflight-legal-reviewer.giathaowork.workers.dev
 |---|---|---|---|
 | 0.1 | Mở link trên Chrome thường (không phải cửa sổ tự động), kích thước 1440 px | Nếu Cloudflare hỏi "Verify you are human" thì tick | Vào app |
 | 0.2 | Góc dưới menu trái: **"Start fresh"** | Hộp thoại **"Start fresh?"** → bấm **"Start fresh"** | App trống, không có tài liệu |
-| 0.3 | Menu trái, công tắc AI | Bấm **"No AI"** | Công tắc sáng ở "No AI" |
+| 0.3 | Menu trái, công tắc AI | Bấm **"AI on"**; lần đầu hiện hộp privacy thì bấm **"Accept and turn AI on"** | Công tắc sáng ở "AI on" |
+| 0.3b | Tập một lượt đầy đủ trước khi quay | Lần chạy đầu AI mất khoảng 3–4 phút. Kết quả được lưu cache, nên lần quay thật header nên hiện **"Checks done · AI review from cache"** gần như ngay (chưa kiểm tra trên live) | Có thêm các dòng gắn nhãn **AI** trong Findings |
 | 0.4 | Mở thêm một cửa sổ ẩn danh (Cmd+Shift+N) | Để trống, dùng cho vai counsel ở bước 4 | — |
 
 ---
@@ -42,6 +43,7 @@ Nếu "Run checks" vẫn mờ, đọc dòng nhắc ngay trên nút. Ví dụ "Co
 | 2.2 | Thanh dưới cùng panel: **"Ask counsel"** | — | Toast **"Sent to counsel · Counsel questions now 1 · Gate still blocked (10)"**, dòng kế tiếp tự mở |
 | 2.3 | Bấm dòng có **"[insert Final Closing Date]"** | — | Dòng mở rộng |
 | 2.4 | Thanh dưới cùng: **"Close issue"** | Hộp thoại **"Close issue"** → chọn **"Real issue — I'll handle it in the form build"** → bấm nút **"Close issue"** | Toast **"Closed as a real issue · Gate still blocked (…)"** |
+| 2.4b | Chỉ chuột vào một dòng có nhãn **AI** | Không bấm (nếu chưa có dòng AI thì bỏ qua) | Dòng AI có trích dẫn và nhãn AI; không ảnh hưởng gate |
 | 2.5 | Chỉ chuột vào ô gate ở góc dưới menu trái | Không bấm | **"Blocked · 10"** (đọc đúng số đang hiện) |
 
 ---
