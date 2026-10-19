@@ -311,7 +311,7 @@ flowchart LR
   TRY --> PUR["Purged after 30 days, demo seed kept"]
 ```
 
-- Limits: 5 sessions per IP and 300 per day, 3 fresh-AI documents per visitor per day (D-4).
+- Limits: 50 sessions per IP and 300 per day, 3 fresh-AI documents per visitor per day (D-4).
 - Writes to the shared demo workspace are blocked by database triggers; nobody holds a cookie bound to it.
 - Sandbox data is purged after 30 days; the demo seed is never purged.
 - Key code: [session.ts](../../apps/worker/src/routes/memory/session.ts), [seed-copy.ts](../../apps/worker/src/memory/seed-copy.ts), [demo.sql](../../apps/worker/seed/demo.sql), [purge.ts](../../apps/worker/src/memory/repo/purge.ts)

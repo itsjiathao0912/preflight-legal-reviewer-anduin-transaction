@@ -19,7 +19,7 @@ export { createRulesPort } from './rules';
  * 300 sessions/day stay near 25% of the 100k/day D1 Free write budget. Over the global cap the
  * session degrades to the read-only demo.
  */
-export const SESSION_CAPS = Object.freeze({ perIpPerDay: 5, globalPerDay: 300 });
+export const SESSION_CAPS = Object.freeze({ perIpPerDay: 50, globalPerDay: 300 });
 
 /**
  * Per-workspace daily memory write caps (review M1; `rate` scope, `mw|<kind>|<workspace>|<day>`):

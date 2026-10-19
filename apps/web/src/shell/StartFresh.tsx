@@ -33,7 +33,7 @@ export function StartFresh({ counsel = false }: { counsel?: boolean }) {
         description={
           counsel
             ? 'This ends your counsel access in this browser and opens a new demo workspace.'
-            : 'This clears documents, triage and questions in this browser and opens a new demo workspace. You can do this about 5 times a day.'
+            : 'This clears documents, triage and questions in this browser and opens a new demo workspace. You can do this about 50 times a day.'
         }
         testId="start-fresh-dialog"
       >

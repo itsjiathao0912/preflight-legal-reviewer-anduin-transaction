@@ -9,7 +9,7 @@ import {
 
 /**
  * Shared helpers for the Phase 08 `stack-memory` project (real Worker + seeded local D1 on :8788).
- * The Worker caps new sessions at 5 per IP per day and reads the IP only from `cf-connecting-ip`,
+ * The Worker caps new sessions at 50 per IP per day and reads the IP only from `cf-connecting-ip`,
  * so every browser context gets its own random 10.x.y.z address through `extraHTTPHeaders`.
  */
 export const CLIENT_HEADERS = { 'x-aduin-client': '1' } as const;

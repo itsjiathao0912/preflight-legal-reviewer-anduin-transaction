@@ -52,7 +52,7 @@ Thirteen architecture decisions in ADR form: what was chosen, why, what was reje
 - **Decision.** One Worker (`preflight-legal-reviewer`) serves the app and API on `*.workers.dev`. D1 is the system of record for memory, cache, counters and the spend ledger. Atomic counters use `UPDATE ... WHERE count < cap`.
 - **Context.** Free hosting, no stored uploads, a need for a shared audit trail and concurrent-safe quotas.
 - **Alternatives rejected.** R2 (nothing to store). Durable Objects (not on the free plan). KV (1,000 writes a day). IndexedDB-only memory (no shared audit trail, and breaks the snippets-on-server rule). No custom domain; the owner's personal domain is never touched, and only `*.workers.dev` is used.
-- **Consequences.** D1 Free allows 100k rows written a day, which is the main capacity risk; session minting is capped (5 per IP, 300 per day) to stay near a quarter of that. A daily cron purge exists, and a lazy purge from new sessions is the baseline. Free-plan CPU of 10 ms is why the Worker never parses.
+- **Consequences.** D1 Free allows 100k rows written a day, which is the main capacity risk; session minting is capped (50 per IP, 300 per day) to stay near a quarter of that. A daily cron purge exists, and a lazy purge from new sessions is the baseline. Free-plan CPU of 10 ms is why the Worker never parses.
 
 Update 17 Oct 2026: D1 + Turnstile live (version 23612b12); real D1 `aduin-transaction-db`, schema 5.
 

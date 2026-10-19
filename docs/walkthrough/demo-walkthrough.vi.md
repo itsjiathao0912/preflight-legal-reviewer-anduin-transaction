@@ -384,7 +384,7 @@ Kết quả #5 → #6 (khóa bằng golden test): **removed 1** (Appendix C), **
 
 **Sandbox và chế độ chỉ đọc:**
 - Mỗi visitor có một **sandbox riêng**, sao chép từ seed demo.
-- Giới hạn: tối đa 5 sandbox mới mỗi IP mỗi ngày; toàn hệ thống 300 sandbox mỗi ngày. Mở lại khi còn cookie thì dùng lại sandbox cũ.
+- Giới hạn: tối đa 50 sandbox mới mỗi IP mỗi ngày; toàn hệ thống 300 sandbox mỗi ngày. Mở lại khi còn cookie thì dùng lại sandbox cũ.
 - Vượt giới hạn toàn hệ thống thì visitor vào **chế độ chỉ đọc**: thấy thông báo "This demo workspace is read-only…", các nút ghi bị tắt, quyết định chỉ lưu trong trình duyệt.
 
 ---
