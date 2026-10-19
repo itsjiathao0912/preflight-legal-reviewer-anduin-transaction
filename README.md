@@ -338,7 +338,7 @@ Full lists with backlog pointers: [docs/architecture/status.md](docs/architectur
 - [docs/README.md](docs/README.md): reading paths by time budget
 - [docs/architecture/README.md](docs/architecture/README.md), with [workflows](docs/architecture/workflows.md), [components](docs/architecture/components.md), [data model](docs/architecture/data-model.md), [decisions](docs/architecture/decisions.md) and [status](docs/architecture/status.md)
 - [docs/DEPLOY.md](docs/DEPLOY.md): deploy, rollback, live checks
-- [docs/demo/](docs/demo/): [script](docs/demo/script.md), [storyboard](docs/demo/storyboard.md), [slides](docs/demo/slides.html)
+- [docs/demo/click-guide.vi.md](docs/demo/click-guide.vi.md): click-by-click demo guide (Vietnamese)
 - <!-- DRIVE_LINK --> Demo video and slides: (link coming)
 - [samples/sub-docs/README.md](samples/sub-docs/README.md) and [samples/packages/README.md](samples/packages/README.md): test inputs with known defects
 - [design/mockups/](design/mockups/): approved mockups
