@@ -9,6 +9,7 @@ import type { MemoryResult } from '../../memory/fingerprintFindings';
 import { ensureSession, flushOutbox, outboxDocFor, writesDisabled } from '../../state/memory-sync';
 import type { DocMeta } from '../../state/review';
 import { docRefOf } from '../open-document/demo-refs';
+import { encodePackageConfig, packageConfigOf } from '../open-document/package-config';
 import type { Row } from '../review/model';
 import type { QuestionItem } from '../variance/owner-groups';
 import { useShare } from './counsel-share';
@@ -35,8 +36,9 @@ export interface ShareInput {
 /**
  * Share with counsel (analyst): every question of this document is created on the server first
  * (counsel's browser shows "needs counsel" from there), then a fresh link is minted, bound to the
- * bundled document ref. The link is `<origin>/#counsel=<token>` and is valid min(7 days, sandbox
- * expiry). Uploads and assembled packages cannot be shared (counsel re-opens bundled files only).
+ * bundled document ref. The link is `<origin>/#counsel=<token>` (a package adds `&cfg=<config>`:
+ * the analyst's types and roles, so counsel's browser runs the same package and gets the same
+ * findings) and is valid min(7 days, sandbox expiry). Uploads and assembled packages cannot be shared (counsel re-opens bundled files only).
  */
 export async function shareWithCounsel(
   input: ShareInput,
@@ -69,7 +71,11 @@ export async function shareWithCounsel(
       input.items.map((q) => ({ findingKey: q.key, interpretations: readingsFor(q.row) })),
     );
     const res = await shareLink(docRef);
-    const link = { url: shareUrl(res.token), expiresAt: res.expires_at };
+    const cfg = packageConfigOf(doc);
+    const link = {
+      url: shareUrl(res.token, location.origin, cfg ? encodePackageConfig(cfg) : null),
+      expiresAt: res.expires_at,
+    };
     useShare.getState().setLink(link);
     return link;
   } catch (e) {

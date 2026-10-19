@@ -100,8 +100,13 @@ export function shareLink(docRef: string): Promise<CounselShareResponse> {
 }
 
 /** The link counsel opens: the token travels in the fragment only (never sent, never logged). */
-export function shareUrl(token: string, origin: string = location.origin): string {
-  return `${origin}/#counsel=${token}`;
+export function shareUrl(
+  token: string,
+  origin: string = location.origin,
+  cfg: string | null = null,
+): string {
+  // `cfg`: the analyst's package configuration (presentation only; a fragment never reaches a server)
+  return `${origin}/#counsel=${token}${cfg ? `&cfg=${cfg}` : ''}`;
 }
 
 /** Counsel: exchange the share token + typed name for the counsel cookie. */

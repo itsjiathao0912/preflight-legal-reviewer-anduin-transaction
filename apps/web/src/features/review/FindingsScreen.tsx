@@ -22,6 +22,7 @@ export function FindingsScreen() {
   const scanPages = useScan((s) => s.pageCount);
   const counselMode = useShare((s) => s.role === 'counsel');
   const readyAt = useShare((s) => s.readyAt);
+  const openError = useShare((s) => (s.role === 'counsel' ? s.openError : null));
   // Phase 06e: scanned documents show the page image beside the OCR text
   const scan = isScanResult(result) || (phase === 'loading' && scanPages > 0);
 
@@ -40,7 +41,7 @@ export function FindingsScreen() {
             Findings
           </h1>
           <p className="meta" data-testid="findings-meta">
-            {doc ? headerMeta(view.counts, view.hasChanges) : 'No document open'}
+            {doc ? headerMeta(view.counts, view.hasChanges) : (openError ?? 'No document open')}
           </p>
           <CoverageLine placement="header" />
         </div>

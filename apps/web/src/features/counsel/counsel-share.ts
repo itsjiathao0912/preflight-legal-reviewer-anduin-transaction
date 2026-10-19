@@ -19,6 +19,9 @@ import { isCounselMode, setCounselMode } from '../../state/share-role';
  *   opens the shared bundled document (`docRef`) on the normal Findings screen and overlays the
  *   shared state from the polled sheet (v2, 19-10-26).
  * - `pendingToken`: the `#counsel=<token>` fragment captured at boot (the URL is cleaned at once).
+ * - `pendingCfg` / `docCfg`: the analyst's package configuration from the same fragment
+ *   (`&cfg=<base64url>`, see open-document/package-config.ts), kept with the counsel session.
+ * - `openError`: counsel, the shared document could not be opened (shown on Findings, not blank).
  * - `sheet`: the last GET /api/counsel/sheet (both roles); `readyAt` from it or from Mark ready.
  * - `link`: the analyst's last share link (copy target + expiry).
  */
@@ -32,11 +35,16 @@ export interface ShareState {
   /** Counsel cookie expiry (counsel) or the share link expiry (analyst), epoch ms. */
   expiresAt: number | null;
   pendingToken: string | null;
+  pendingCfg: string | null;
+  /** Counsel: encoded package configuration of the shared package (null = defaults). */
+  docCfg: string | null;
+  openError: string | null;
   sheet: CounselSheetResponse | null;
   readyAt: number | null;
   link: { url: string; expiresAt: number } | null;
-  setPendingToken: (t: string | null) => void;
+  setPendingToken: (t: string | null, cfg?: string | null) => void;
   joined: (name: string, expiresAt: number, docRef: string) => void;
+  setOpenError: (e: string | null) => void;
   setSheet: (s: CounselSheetResponse) => void;
   addComment: (c: CounselComment) => void;
   setReadyAt: (at: number) => void;
@@ -49,15 +57,35 @@ export const useShare = create<ShareState>((set, get) => ({
   docRef: null,
   expiresAt: null,
   pendingToken: null,
+  pendingCfg: null,
+  docCfg: null,
+  openError: null,
   sheet: null,
   readyAt: null,
   link: null,
-  setPendingToken: (pendingToken) => set({ pendingToken }),
+  setPendingToken: (pendingToken, cfg = null) =>
+    set({ pendingToken, pendingCfg: pendingToken ? cfg : null }),
   joined: (counselName, expiresAt, docRef) => {
     enterCounselMode();
-    saveCounselSession({ name: counselName, expiresAt, docRef });
-    set({ role: 'counsel', counselName, expiresAt, docRef, pendingToken: null });
+    const docCfg = get().pendingCfg;
+    saveCounselSession({
+      name: counselName,
+      expiresAt,
+      docRef,
+      ...(docCfg ? { cfg: docCfg } : {}),
+    });
+    set({
+      role: 'counsel',
+      counselName,
+      expiresAt,
+      docRef,
+      docCfg,
+      openError: null,
+      pendingToken: null,
+      pendingCfg: null,
+    });
   },
+  setOpenError: (openError) => set({ openError }),
   setSheet: (sheet) => set({ sheet, readyAt: sheet.ready_at ?? get().readyAt }),
   addComment: (c) => {
     const s = get().sheet;
@@ -83,7 +111,11 @@ interface CounselSession {
   name: string;
   expiresAt: number;
   docRef: string;
+  /** Encoded package configuration from the link (optional; older links have none). */
+  cfg?: string;
 }
+
+const CFG_RE = /^[A-Za-z0-9_-]{1,4096}$/;
 
 function saveCounselSession(c: CounselSession): void {
   try {
@@ -126,16 +158,18 @@ export function resumeCounselSession(now: number = Date.now()): string | null {
     counselName: c.name,
     expiresAt: c.expiresAt,
     docRef: c.docRef,
+    docCfg: typeof c.cfg === 'string' && CFG_RE.test(c.cfg) ? c.cfg : null,
   });
   return c.docRef;
 }
 
-const FRAGMENT_RE = /^#counsel=([A-Za-z0-9_.-]{1,1024})$/;
+const FRAGMENT_RE = /^#counsel=([A-Za-z0-9_.-]{1,1024})(?:&cfg=([A-Za-z0-9_-]{1,4096}))?$/;
 
 /**
- * Boot step (before the shell rewrites the hash): take a `#counsel=<token>` fragment into memory and
- * remove it from the address bar right away, so the bearer token is not left in history or shown
- * on screen. Returns true when a token was captured.
+ * Boot step (before the shell rewrites the hash): take a `#counsel=<token>[&cfg=<config>]` fragment
+ * (the token and the analyst's package configuration) into memory and remove it from the address
+ * bar right away, so the bearer token is not left in history or shown on screen. Returns true when
+ * a token was captured.
  */
 export function captureCounselToken(
   loc: Pick<Location, 'hash' | 'pathname' | 'search'> = location,
@@ -143,7 +177,7 @@ export function captureCounselToken(
 ): boolean {
   const m = FRAGMENT_RE.exec(loc.hash);
   if (!m) return false;
-  useShare.getState().setPendingToken(m[1]!);
+  useShare.getState().setPendingToken(m[1]!, m[2] ?? null);
   try {
     hist.replaceState(null, '', `${loc.pathname}${loc.search}#counsel`);
   } catch {

@@ -4,6 +4,7 @@ import { useReview } from '../../../state/review';
 import { useSession } from '../../../state/session';
 import { AiBanner } from '../../ai/AiBanner';
 import { ScanNotices } from '../../scan/ScanNotices';
+import { useShare } from '../../counsel/counsel-share';
 
 export function Banners() {
   const aiOn = useSession((s) => s.aiOn);
@@ -11,8 +12,19 @@ export function Banners() {
   const memory = useReview((s) => s.memory);
   const result = useReview((s) => s.result);
   const retryMemory = useReview((s) => s.retryMemory);
+  const phase = useReview((s) => s.phase);
+  // counsel: the shared document could not be opened (persistent, not only a toast)
+  const openError = useShare((s) => (s.role === 'counsel' ? s.openError : null));
   return (
     <>
+      {openError && !(doc && phase === 'ready') ? (
+        <div className="banner on" role="alert" data-testid="counsel-doc-unavailable">
+          <Icon name="warn" />
+          <p className="bn-p">
+            <b>{openError}</b> Ask the analyst for a new link.
+          </p>
+        </div>
+      ) : null}
       {!aiOn ? (
         <div className="banner on" role="status" data-testid="ai-off-banner">
           <Icon name="warn" />
