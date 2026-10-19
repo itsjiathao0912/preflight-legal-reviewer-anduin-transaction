@@ -17,7 +17,7 @@ Live site: `https://preflight-legal-reviewer.giathaowork.workers.dev`. It runs w
 | Time | Read | You get |
 |---|---|---|
 | 5 min | This page, then [architecture/README.md](architecture/README.md) | The problem, five design principles, the runtime map |
-| 5 min | Open the live site or [design/mockups/app.html](../design/mockups/app.html), pick sample 5, then Compare 5 against 6 | The product in use |
+| 5 min | Open the live site or [design/mockups/app.html](../design/mockups/app.html), open the demo package Northgate Capital III, then PG NGI 2024 + 2026 for Compare | The product in use |
 | 5 min | On the live site open Upload and pick the demo package "Northgate Capital III", then see Structure > Package and Questions > For the GP | Fund Package Intake in use; steps in the [Vietnamese walkthrough](walkthrough/demo-walkthrough.vi.md) |
 | 20 min | [architecture/workflows.md](architecture/workflows.md), [architecture/status.md](architecture/status.md) | Who uses it, how each workflow runs, what is real today |
 | 20 min | [architecture/decisions.md](architecture/decisions.md) | Why it is built this way, and what was rejected |

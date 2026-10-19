@@ -98,10 +98,10 @@ What this replaces, by design:
 
 ## Try it
 
-1. Open the [live demo](https://preflight-legal-reviewer.giathaowork.workers.dev) and pick **sample 5** (Partners Group NGI 2024). The gate pill reads **Blocked · 2** (samples 3 and 5 both block). Open a finding to see the quoted evidence, then use **Ask counsel** or **Close issue**.
-2. **Questions** shows the counsel sheet and the DOCX export. The pill stays Blocked until blocking questions have answers.
-3. **Compare versions**: sample 5 (PG NGI 2024) against sample 6 (PG NGI 2026) for the drift rows.
-4. **Fund package**: Open a document, then the demo package **Northgate Capital III** (6 files). Confirm each file's type and role, run checks, and read the coverage line and the **For the GP** questions.
+1. Open the [live demo](https://preflight-legal-reviewer.giathaowork.workers.dev), choose **Open a document** → **Or try a demo package** → **Northgate Capital III** (6 files). Set file 01 to **To digitize** and file 04 to **Baseline (earlier version)**, tick **Confirmed**, then **Run checks**. Measured live (No AI): 16 findings (7 errors, 9 changes vs Fund II) and the gate pill reads **Blocked · 10**.
+2. Open a finding to see the quoted evidence (and its **Source File** when the check used another file in the package), then use **Ask counsel** or **Close issue**. **Share with counsel** creates a link counsel can answer on.
+3. **Questions** shows the questions per owner (Counsel, GP, Fund admin), the **For the GP** request (7 missing documents) and the DOCX export. The pill stays Blocked until blocking items are answered.
+4. **Real SEC filings**: the demo package **PG NGI 2024 + 2026** (Partners Group) shows the swapped "Part B" references and the drift between the two years in **Compare versions**.
 5. **Firm memory** is in the sidebar. A direct `#memory` link lands on Findings by design, because routes are not persisted.
 
 AI review needs a quick human verification (Turnstile) and the free model takes about 3 to 4 minutes (one measured run: 178 s). Bundled samples have precomputed AI results and make no upstream calls. The Variance demo (214 to 7) needs a memory session: upload Fund II, then Fund III, both tagged Hartwell & Crane LLP, and choose the **Changes** segment. Walkthrough: [docs/walkthrough/demo-walkthrough.vi.md](docs/walkthrough/demo-walkthrough.vi.md) (Vietnamese).
