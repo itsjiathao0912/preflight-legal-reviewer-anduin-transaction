@@ -6,7 +6,7 @@
 
 Built by Thao Dao for the Anduin Transactions job-application challenge. [LinkedIn](https://www.linkedin.com/in/thaodao0912/) · [Website](https://itsjiathao.com/)
 
-**[Open the live demo](https://aduin-transaction-web.giathaowork.workers.dev)** · [Docs](docs/README.md) · [Architecture](docs/architecture/README.md)
+**[Open the live demo](https://preflight-legal-reviewer.giathaowork.workers.dev)** · [Docs](docs/README.md) · [Architecture](docs/architecture/README.md)
 
 ![Findings screen of the live app on sample 5: the document on the left, findings with cited evidence on the right, gate pill Blocked 2](docs/demo/img/readme-findings.png)
 
@@ -98,7 +98,7 @@ What this replaces, by design:
 
 ## Try it
 
-1. Open the [live demo](https://aduin-transaction-web.giathaowork.workers.dev) and pick **sample 5** (Partners Group NGI 2024). The gate pill reads **Blocked · 2** (samples 3 and 5 both block). Open a finding to see the quoted evidence, then use **Ask counsel** or **Close issue**.
+1. Open the [live demo](https://preflight-legal-reviewer.giathaowork.workers.dev) and pick **sample 5** (Partners Group NGI 2024). The gate pill reads **Blocked · 2** (samples 3 and 5 both block). Open a finding to see the quoted evidence, then use **Ask counsel** or **Close issue**.
 2. **Questions** shows the counsel sheet and the DOCX export. The pill stays Blocked until blocking questions have answers.
 3. **Compare versions**: sample 5 (PG NGI 2024) against sample 6 (PG NGI 2026) for the drift rows.
 4. **Fund package**: Open a document, then the demo package **Northgate Capital III** (6 files). Confirm each file's type and role, run checks, and read the coverage line and the **For the GP** questions.

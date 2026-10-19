@@ -1,7 +1,7 @@
 # Hướng dẫn demo Sub-doc QA (bản live hiện tại)
 
 > Cập nhật ngày 18/10/2026, dựa trên code ở `main` (commit `0c6312e`) và bản live
-> https://aduin-transaction-web.giathaowork.workers.dev (version `493f2501-8920-43b5-95fd-e0878877ab1f`, Findings v2 trên nền Variance Management; D1 schema 6; chuỗi version: `f54aa9f6`, `cd06402a`, `d6f88c56`, `7db9e602`, `d9aaddd9`, `8a82ead2`, `b04f1a8c`, `3d2c7301`, `cde74507`, `328ca295`, `09e7a579`, `47d98295`, `23612b12`).
+> https://preflight-legal-reviewer.giathaowork.workers.dev (version `493f2501-8920-43b5-95fd-e0878877ab1f`, Findings v2 trên nền Variance Management; D1 schema 6; chuỗi version: `f54aa9f6`, `cd06402a`, `d6f88c56`, `7db9e602`, `d9aaddd9`, `8a82ead2`, `b04f1a8c`, `3d2c7301`, `cde74507`, `328ca295`, `09e7a579`, `47d98295`, `23612b12`).
 > **Không rollback về `8a82ead2` hoặc cũ hơn:** sau migration 0006 các bản đó từ chối ghi memory (chúng ghim schema 5); muốn lùi phải roll forward hoặc restore D1.
 > Màn **Counsel questions** nay tên là **Questions** (có tab Counsel / GP / Fund admin). Các mục cũ trong tài liệu này viết "Counsel questions" là cùng một màn hình đó.
 > Tên nút, nhãn và câu thông báo được giữ **nguyên tiếng Anh như trên màn hình**, để bạn đối chiếu khi demo.

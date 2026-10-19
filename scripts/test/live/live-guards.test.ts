@@ -13,6 +13,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  DEFAULT_BASE,
+  WORKER_NAME,
   analyticsRequest,
   ANALYTICS_TEMPLATES,
   assertCfRequest,
@@ -52,7 +54,14 @@ describe('live host allow-list', () => {
     expect(assertLiveBase(LIVE)).toBe(LIVE);
     expect(assertLiveBase(`${LIVE}/`)).toBe(LIVE);
   });
+  it('accepts the renamed preflight-legal-reviewer origin and the default base', () => {
+    const NEW = 'https://preflight-legal-reviewer.giathaowork.workers.dev';
+    expect(assertLiveBase(NEW)).toBe(NEW);
+    expect(DEFAULT_BASE).toBe(NEW);
+    expect(WORKER_NAME).toBe('preflight-legal-reviewer');
+  });
   it.each([
+    ['look-alike of renamed host', 'https://preflight-legal-reviewer-x.giathaowork.workers.dev'],
     ['http', LIVE.replace('https', 'http')],
     ['other workers.dev', 'https://evil.giathaowork.workers.dev'],
     ['other subdomain', 'https://aduin-transaction-web.other.workers.dev'],

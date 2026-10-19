@@ -1,9 +1,10 @@
 // Sub-doc QA Worker: serves the built SPA as static assets and /api/* from the Worker.
 // Rules (guard:cf enforces): no routes, no custom domains, no zone references; every
-// resource name starts with "aduin-transaction". Deploys go to *.workers.dev only.
+// resource name starts with "aduin-transaction" (sole exception: the Worker name
+// "preflight-legal-reviewer", user-approved 19-10-26). Deploys go to *.workers.dev only.
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "aduin-transaction-web",
+  "name": "preflight-legal-reviewer",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-01",
   "workers_dev": true,

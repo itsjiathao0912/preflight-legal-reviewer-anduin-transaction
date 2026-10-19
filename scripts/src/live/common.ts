@@ -22,8 +22,8 @@ import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'nod
 import { fileURLToPath } from 'node:url';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-export const DEFAULT_BASE = 'https://aduin-transaction-web.giathaowork.workers.dev';
-export const WORKER_NAME = 'aduin-transaction-web';
+export const DEFAULT_BASE = 'https://preflight-legal-reviewer.giathaowork.workers.dev';
+export const WORKER_NAME = 'preflight-legal-reviewer';
 export const COOKIE_NAME = '__Host-aduin_v';
 
 export class LiveGuardError extends Error {}
@@ -33,9 +33,10 @@ function fail(msg: string): never {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Target host allow-list: https, a `aduin-transaction-*` Worker on the `giathaowork` workers.dev
+// Target host allow-list: https, a `aduin-transaction-*` (or exactly `preflight-legal-reviewer`) Worker on the `giathaowork` workers.dev
 // subdomain, no credentials, no port, no path beyond `/`.
-const LIVE_HOST = /^aduin-transaction-[a-z0-9-]+\.giathaowork\.workers\.dev$/;
+const LIVE_HOST =
+  /^(?:aduin-transaction-[a-z0-9-]+|preflight-legal-reviewer)\.giathaowork\.workers\.dev$/;
 
 /** Returns the normalized origin or throws. */
 export function assertLiveBase(raw: string): string {

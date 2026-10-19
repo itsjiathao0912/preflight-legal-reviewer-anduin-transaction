@@ -80,8 +80,22 @@ describe('deploy:preflight wrangler config', () => {
   it('passes a prefixed workers.dev-only config (jsonc)', () => {
     expect(failed(checkWranglerConfig(ok))).toEqual([]);
   });
+  it('passes the approved exact Worker name preflight-legal-reviewer', () => {
+    expect(
+      failed(checkWranglerConfig(ok.replace('aduin-transaction-web', 'preflight-legal-reviewer'))),
+    ).toEqual([]);
+  });
   it.each([
-    ['unprefixed name', '{ "name": "web" }', 'worker name starts with aduin-transaction-'],
+    [
+      'unprefixed name',
+      '{ "name": "web" }',
+      'worker name starts with aduin-transaction- or is an approved exact name',
+    ],
+    [
+      'look-alike of the approved name',
+      '{ "name": "preflight-legal-reviewer-x" }',
+      'worker name starts with aduin-transaction- or is an approved exact name',
+    ],
     [
       'routes key',
       '{ "name": "aduin-transaction-web", "routes": [] }',

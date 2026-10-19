@@ -32,7 +32,7 @@ Status key: **Built / Partial / Planned / Not live yet**. Live in the table mean
 
 ## Live deployment
 
-URL: `https://aduin-transaction-web.giathaowork.workers.dev` (Worker `aduin-transaction-web`, `*.workers.dev` only). Version `493f2501-8920-43b5-95fd-e0878877ab1f` (Findings v2, code `b00241f`). Variance went live in `d9aaddd9-a62f-4850-8ff2-89889c8ef652`, built from `main` at `0c6312e`. D1 migration `0006_variance.sql` is applied (`schema_version` 6). It includes the AI review streaming, idle-timeout and no-duplicate-AI-findings fixes first shipped in `8a82ead2`, and a Preflight rename. Version chain: `493f2501`, `f54aa9f6`, `cd06402a`, `d6f88c56`, `7db9e602`, `d9aaddd9`, `8a82ead2`, `b04f1a8c`, `3d2c7301`, `cde74507`, `328ca295`, `09e7a579`, `47d98295`, `23612b12`.
+URL: `https://preflight-legal-reviewer.giathaowork.workers.dev` (Worker `preflight-legal-reviewer`, `*.workers.dev` only). Version `493f2501-8920-43b5-95fd-e0878877ab1f` (Findings v2, code `b00241f`). Variance went live in `d9aaddd9-a62f-4850-8ff2-89889c8ef652`, built from `main` at `0c6312e`. D1 migration `0006_variance.sql` is applied (`schema_version` 6). It includes the AI review streaming, idle-timeout and no-duplicate-AI-findings fixes first shipped in `8a82ead2`, and a Preflight rename. Version chain: `493f2501`, `f54aa9f6`, `cd06402a`, `d6f88c56`, `7db9e602`, `d9aaddd9`, `8a82ead2`, `b04f1a8c`, `3d2c7301`, `cde74507`, `328ca295`, `09e7a579`, `47d98295`, `23612b12`.
 
 **Rollback caveat:** after migration 0006, `8a82ead2` refuses memory writes because it pins schema 5. A rollback therefore means rolling forward to a fixed build or restoring D1 (Time Travel); `b04f1a8c` and older have the same limit.
 

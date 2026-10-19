@@ -9,7 +9,7 @@
 //   - stops (closes the browser) on usage.cost > 0, any 429, breaker / budget open;
 //   - reads the echoed `meta.rules_hash8`, fetches the active rules of that firm through the same
 //     browser context, and compares with core `rulesHash8(injectedRulesHash(texts))`;
-//   - with --tail, runs `wrangler tail aduin-transaction-web --format json` and records cpuTime /
+//   - with --tail, runs `wrangler tail preflight-legal-reviewer --format json` and records cpuTime /
 //     wallTime of the first `/api/ai` invocation (fallback: GraphQL workersInvocationsAdaptive).
 //
 // Flags: --base <origin>, --max-ai <n> (this run, default 2, max 2), --tail, --headless,

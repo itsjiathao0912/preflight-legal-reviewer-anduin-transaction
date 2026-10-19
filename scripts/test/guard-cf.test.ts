@@ -51,6 +51,21 @@ describe('guard:cf', () => {
     ]);
   });
 
+  it('allows exactly the approved Worker name preflight-legal-reviewer', () => {
+    const cfg =
+      '{ "name": "preflight-legal-reviewer", "d1_databases": [{ "database_name": "aduin-transaction-db" }] }';
+    expect(run({ 'apps/worker/wrangler.jsonc': cfg })).toEqual([]);
+  });
+
+  it('rejects look-alikes of the approved name and its use as a D1 name', () => {
+    const cfg =
+      '{ "name": "preflight-legal-reviewer-2", "d1_databases": [{ "database_name": "preflight-legal-reviewer" }] }';
+    expect(run({ 'wrangler.toml': cfg })).toEqual([
+      'wrangler.toml:unprefixed-name',
+      'wrangler.toml:unprefixed-database_name',
+    ]);
+  });
+
   it('ignores excluded and out-of-scope paths', () => {
     expect(
       run({

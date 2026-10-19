@@ -86,7 +86,7 @@ Refund rules in the proxy: refusals before dispatch refund everything; provider-
 
 ## Worker routes
 
-One Worker (`aduin-transaction-web`) serves static assets and `/api/*`. `/api/*` runs the Worker first; everything else is the SPA (single-page fallback). The route table is a small hand-rolled matcher in [app.ts](../../apps/worker/src/app.ts), with no web framework.
+One Worker (`preflight-legal-reviewer`) serves static assets and `/api/*`. `/api/*` runs the Worker first; everything else is the SPA (single-page fallback). The route table is a small hand-rolled matcher in [app.ts](../../apps/worker/src/app.ts), with no web framework.
 
 | Method and path | Group | Purpose |
 |---|---|---|

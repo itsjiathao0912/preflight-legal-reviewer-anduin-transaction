@@ -13,6 +13,8 @@ import {
 const ZONE_ID = ['894bc9f9', '3640fab2', '60bf1580', 'b5b48cb7'].join('');
 const ZONE_NAME = ['itsjiathao', 'com'].join('.');
 const PREFIX = 'aduin-transaction';
+/** User-approved exact-name exception (Worker only, 19-10-26). Not a prefix. */
+export const ALLOWED_EXACT_NAMES: readonly string[] = ['preflight-legal-reviewer'];
 /** The only allowed zone-name occurrence: the author website link in the root README. */
 const README_AUTHOR_LINK = `https://${ZONE_NAME}/`;
 
@@ -53,7 +55,8 @@ export function scanText(file: string, text: string): Finding[] {
     );
     for (const m of text.matchAll(keyRe)) {
       const value = m[2] ?? '';
-      if (!value.startsWith(PREFIX)) add(m.index ?? 0, `unprefixed-${m[1]}`);
+      if (!value.startsWith(PREFIX) && !(m[1] === 'name' && ALLOWED_EXACT_NAMES.includes(value)))
+        add(m.index ?? 0, `unprefixed-${m[1]}`);
     }
   }
   return findings;

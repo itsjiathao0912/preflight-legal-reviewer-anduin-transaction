@@ -1,7 +1,7 @@
 # Demo storyboard
 
 Shot table for the video in [script.md](script.md). Screenshots are captured later and saved to `docs/demo/img/`
-under the planned filenames below. Base URL: https://aduin-transaction-web.giathaowork.workers.dev
+under the planned filenames below. Base URL: https://preflight-legal-reviewer.giathaowork.workers.dev
 
 Route note: Firm memory is reached through the sidebar nav. A direct `#memory` link lands on Findings on first load
 (the route is never persisted), so do not open it by URL.

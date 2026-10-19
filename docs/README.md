@@ -10,7 +10,7 @@ A reviewer's guide to this repository. Pick a reading path by time budget, then 
 - Variance Management: pick a baseline from the same law firm and Findings gets a Changes segment (cosmetic changes hidden, impact lines, owner chips); Questions has owner tabs (Counsel, GP, Fund admin), answers record intent and scope, and a firm-template answer becomes a regression check for later funds. Deterministic, no model calls, no new screen.
 - Fund Package Intake: upload several documents of one fund (sub agreement, LPA, PPM, baseline, side letters). The app types each file, resolves references across them, reports which checks were not possible (coverage) and drafts one request for the missing documents. It adds no new screen: it lives in the Upload dialog, the Structure "Package" lens, the Findings header and the Counsel "For the GP" group.
 
-Live site: `https://aduin-transaction-web.giathaowork.workers.dev`. It runs with its real D1 database, Turnstile and an enforced CSP; shared memory is live and precomputed samples make zero upstream calls. Details in [architecture/status.md](architecture/status.md).
+Live site: `https://preflight-legal-reviewer.giathaowork.workers.dev`. It runs with its real D1 database, Turnstile and an enforced CSP; shared memory is live and precomputed samples make zero upstream calls. Details in [architecture/status.md](architecture/status.md).
 
 ## Reading path
 

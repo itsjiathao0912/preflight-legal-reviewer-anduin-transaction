@@ -1,20 +1,25 @@
 # Deploy guide
 
-Target: one Cloudflare Worker `aduin-transaction-web` on `*.workers.dev`, Workers Free plan, plus D1
+Target: one Cloudflare Worker `preflight-legal-reviewer` on `*.workers.dev`, Workers Free plan, plus D1
 `aduin-transaction-db`. No routes, no custom domain, no zone changes. `pnpm guard:cf` enforces this.
 
 ## Resources
 
 | Resource | Name | Notes |
 |---|---|---|
-| Worker (with static assets) | `aduin-transaction-web` | `apps/worker/wrangler.jsonc`, `workers_dev: true` |
+| Worker (with static assets) | `preflight-legal-reviewer` | `apps/worker/wrangler.jsonc`, `workers_dev: true` |
 | D1 database | `aduin-transaction-db` | binding `DB`, migrations `apps/worker/migrations/0001-0005` |
 | Cron | `17 3 * * *` | daily retention purge |
 | Secrets | `COOKIE_SIGNING_KEYS`, `COOKIE_SIGNING_KID`, `OPENROUTER_API_KEY`, `TURNSTILE_SECRET` | values never in the repo |
 | Plain vars | in `wrangler.jsonc` | `AI_TEXT_MODELS`, `AI_VISION_MODELS`, `AI_RESPONSE_MODE`, `PAID_FALLBACK_ENABLED=false`, `AI_UPLOADS_ENABLED`. The Worker config also reads an optional `TURNSTILE_SITE_KEY`; it is not set and nothing needs it, because the browser uses the key compiled into the web bundle |
 | Web build var | `VITE_TURNSTILE_SITE_KEY` | public Turnstile site key, read at web build time; not a secret |
 
-Live URL: https://aduin-transaction-web.giathaowork.workers.dev
+Live URL: https://preflight-legal-reviewer.giathaowork.workers.dev
+
+The Worker was renamed from `aduin-transaction-web` on 19-10-26 (user-approved exception to the
+`aduin-transaction-*` naming rule for this Worker only). The old Worker
+`https://aduin-transaction-web.giathaowork.workers.dev` is kept running, untouched, with its own
+secrets; both share D1 `aduin-transaction-db`, and the Turnstile widget lists both hostnames.
 Live Worker version: 23612b12-51c7-4d75-a324-f4f2f6392ba8 (code af59da6, render-first fix), deployed 2026-10-17. Previous version for rollback: 67c796ff-477c-4900-ba89-4ff3109e0c56 (code 38a3b2f).
 D1 `aduin-transaction-db` is live with migrations 0001-0005; its id is recorded in `apps/worker/wrangler.jsonc`.
 
@@ -90,9 +95,9 @@ Record the printed version id in the umbrella plan and in `README.md`.
 ## 5. Verify
 
 ```bash
-curl -s https://aduin-transaction-web.giathaowork.workers.dev/api/health
-curl -sI https://aduin-transaction-web.giathaowork.workers.dev/ | head -20     # status 200 and security headers
-SLICE_BASE_URL=https://aduin-transaction-web.giathaowork.workers.dev \
+curl -s https://preflight-legal-reviewer.giathaowork.workers.dev/api/health
+curl -sI https://preflight-legal-reviewer.giathaowork.workers.dev/ | head -20     # status 200 and security headers
+SLICE_BASE_URL=https://preflight-legal-reviewer.giathaowork.workers.dev \
   pnpm --filter @aduin/web exec playwright test --project=stack
 ```
 

@@ -22,6 +22,8 @@ export const E2E_MARKER = '__aduinE2E';
 export const E2E_SITE_KEY_MARKER = '__aduinTurnstileSiteKey';
 export const E2E_MARKERS: readonly string[] = [E2E_MARKER, E2E_SITE_KEY_MARKER];
 const PREFIX = 'aduin-transaction-';
+/** User-approved exact Worker name exception (19-10-26). Exact match only. */
+export const ALLOWED_WORKER_NAMES: readonly string[] = ['preflight-legal-reviewer'];
 // The vite outDir name is assembled so no shell command or hook pattern needs the literal.
 export const DEFAULT_WEB_OUT = join(ROOT, 'apps', 'web', ['d', 'i', 's', 't'].join(''));
 export const DEFAULT_WRANGLER = join(ROOT, 'apps', 'worker', 'wrangler.jsonc');
@@ -144,7 +146,10 @@ export function checkWranglerConfig(text: string): Check[] {
   const name = typeof cfg['name'] === 'string' ? cfg['name'] : '';
   return [
     { name: 'wrangler config parses', ok: true },
-    { name: `worker name starts with ${PREFIX}`, ok: name.startsWith(PREFIX) },
+    {
+      name: `worker name starts with ${PREFIX} or is an approved exact name`,
+      ok: name.startsWith(PREFIX) || ALLOWED_WORKER_NAMES.includes(name),
+    },
     {
       name: 'no routes / custom_domain / zone keys',
       ok: hits.length === 0,
