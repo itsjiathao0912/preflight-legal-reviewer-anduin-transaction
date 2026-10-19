@@ -170,11 +170,12 @@ export function ExpandedBlock({ row, twin }: { row: Row; twin?: FindingView | un
                   <button
                     key={e.doc.id}
                     type="button"
-                    className="btn ghost sm"
+                    className="btn ghost sm fv2-src-file"
                     data-testid="finding-source-file-open"
                     title="Open this file in the reading pane"
                     onClick={() => openPackageFile(pkg, e.doc.id, e.blockIndex)}
                   >
+                    <Icon name="file" />
                     {fileLabel(e.doc)}
                   </button>
                 ))}

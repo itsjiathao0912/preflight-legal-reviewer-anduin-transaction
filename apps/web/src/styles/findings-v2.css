@@ -855,3 +855,14 @@
     transform: none;
   }
 }
+
+/* Finding Details: provenance and Source File links align with the other grid values */
+.fv2-kv [data-provenance='rule'] > .i {
+  display: none;
+}
+.fv2-kv .btn.fv2-src-file {
+  margin-left: -9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

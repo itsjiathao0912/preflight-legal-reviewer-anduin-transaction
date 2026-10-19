@@ -115,7 +115,7 @@ describe('source-file: terms location', () => {
       docId: LPA,
       label: 'LPA',
       blockIndex: 9,
-      backLabel: 'Subscription agreement',
+      backLabel: 'Subscription Agreement',
     });
   });
 

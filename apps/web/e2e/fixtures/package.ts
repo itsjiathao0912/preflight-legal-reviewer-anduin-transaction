@@ -77,7 +77,10 @@ export async function uploadPackage(page: Page, files: UploadFile[], tag: Packag
 /** Open a demo package from the Demo packages list (confirmation table or auto-run follows). */
 export async function openDemoPackage(page: Page, id: string) {
   if (!(await page.getByTestId('open-document-dialog').isVisible())) await openDialog(page);
-  await page.locator(`[data-testid="package-sample-option"][data-package-id="${id}"]`).click();
+  const option = page.locator(`[data-testid="package-sample-option"][data-package-id="${id}"]`);
+  // The demo list starts collapsed: expand it when the option is not shown yet.
+  if (!(await option.isVisible())) await page.getByTestId('demo-toggle').click();
+  await option.click();
 }
 
 /** Confirm every unconfirmed row of the confirmation table. */

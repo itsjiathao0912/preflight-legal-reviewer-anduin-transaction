@@ -12,6 +12,22 @@ export function definitionLocationText(loc: DefinitionLocation): string {
   return `${sec ? `${maskAndClamp(sec, 80)}, ` : ''}¶ ${loc.blockIndex + 1}`;
 }
 
+const QUOTE_MARKS = /^[\s"'“”‘’«»]+|[\s"'“”‘’«»]+$/g;
+
+/**
+ * Display text of a stored term quote inside <q> (which adds its own quote marks): outer quote
+ * marks are stripped so they do not double up, and a quote that does not end a sentence was cut
+ * by the stored-quote clamp, so it ends at a word boundary with "…".
+ */
+export function termQuoteText(quote: string): string {
+  let s = maskQuote(quote.replace(QUOTE_MARKS, ''));
+  if (s.endsWith('…')) s = s.slice(0, -1);
+  if (/[.;:!?)]$/.test(s)) return s;
+  const cut = s.lastIndexOf(' ');
+  if (cut > s.length / 2) s = s.slice(0, cut);
+  return `${s.replace(/[\s,;:(–—-]+$/, '')}…`;
+}
+
 const REASON: Record<NonNullable<CrossDocTerm['reason']>, string> = {
   no_reference_document: 'No LPA in the package',
   not_in_reference_documents: 'Not found in the reference documents',
@@ -63,7 +79,9 @@ export function PackageTerms({ view }: { view: PackageView }) {
                   </button>
                 ) : null}
               </div>
-              {defined && t.quote ? <q className="pkg-lens-quote">{maskQuote(t.quote)}</q> : null}
+              {defined && t.quote ? (
+                <q className="pkg-lens-quote">{termQuoteText(t.quote)}</q>
+              ) : null}
             </li>
           );
         })}
