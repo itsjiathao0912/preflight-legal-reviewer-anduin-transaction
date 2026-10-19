@@ -26,7 +26,9 @@ async function expectNoPackageUi(page: Page) {
   await expect(page.getByTestId('gp-group')).toHaveCount(0);
   await page.getByTestId('nav-structure').click();
   await expect(page.getByTestId('structure-view')).toBeVisible();
-  await expect(page.getByTestId('structure-lens-package')).toHaveCount(0);
+  await expect(page.getByTestId('structure-lens-terms')).toHaveText(/^Defined terms/);
+  await page.getByTestId('structure-lens-terms').click();
+  await expect(page.getByTestId('structure-group-package')).toHaveCount(0);
   await page.getByTestId('nav-findings').click();
 }
 
@@ -56,6 +58,6 @@ test.describe('intake-no-package-ui-on-samples', () => {
     await upload(page, 'sections-parts.html', SECTIONS);
     await expect(page.getByTestId('findings-coverage-line')).toHaveText(/^Coverage: partial/);
     await page.getByTestId('nav-structure').click();
-    await expect(page.getByTestId('structure-lens-package')).toBeVisible();
+    await expect(page.getByTestId('structure-lens-terms')).toHaveText(/^Terms & package/);
   });
 });

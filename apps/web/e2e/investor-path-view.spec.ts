@@ -35,7 +35,7 @@ const sampleView = (id: string) =>
 
 async function openInvestors(page: Page) {
   await page.getByTestId('nav-structure').click();
-  await page.getByTestId('structure-lens-investors').click();
+  await page.getByTestId('structure-lens-logic').click();
 }
 
 test.describe('investor-path-view', () => {

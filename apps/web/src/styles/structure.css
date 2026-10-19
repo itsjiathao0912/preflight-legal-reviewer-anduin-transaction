@@ -355,3 +355,30 @@ table.t tr.sel td:first-child {
   margin: 0;
   font-size: 12px;
 }
+
+/* Structure v2: grouped sub-lists inside the Logic and Terms & package tabs */
+.stgroup + .stgroup {
+  margin-top: 8px;
+}
+.stgroup > .sechead h2 {
+  margin: 0;
+  font: 500 15px/1.3 var(--sans);
+}
+.stgroup > .sechead .fl {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+  background: var(--fix-bg);
+  color: var(--fix-fg);
+  border-radius: 3px;
+  padding: 0 5px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.stgroup > .sechead .fl svg {
+  width: 12px;
+  height: 12px;
+}
+.st-none {
+  margin: 4px 0 8px;
+}

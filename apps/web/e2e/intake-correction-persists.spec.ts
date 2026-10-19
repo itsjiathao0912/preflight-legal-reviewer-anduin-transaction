@@ -24,7 +24,7 @@ const unitsFinding = (page: Page) =>
 
 async function openLens(page: Page) {
   await page.getByTestId('nav-structure').click();
-  await page.getByTestId('structure-lens-package').click();
+  await page.getByTestId('structure-lens-terms').click();
   await expect(page.getByTestId('package-lens')).toBeVisible();
 }
 

@@ -32,7 +32,7 @@ test.describe('intake-reload-restores-package', () => {
     await expect(page.getByTestId('findings-coverage-line')).toHaveText(text);
     await expect(page.getByTestId('open-document-dialog')).toHaveCount(0);
     await page.getByTestId('nav-structure').click();
-    await page.getByTestId('structure-lens-package').click();
+    await page.getByTestId('structure-lens-terms').click();
     await expect(page.getByTestId('package-lens')).toBeVisible();
     await expect(page.getByTestId('package-lens-doc')).toHaveCount(3);
   });

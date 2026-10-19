@@ -1,27 +1,44 @@
 import type { LensId, StructureView } from '@aduin/core';
 
-/** Lens order and labels (app.html #structure segmented control). */
-export const LENSES: ReadonlyArray<{ id: LensId; label: string }> = [
-  { id: 'sections', label: 'Sections' },
-  { id: 'crossrefs', label: 'Cross-references' },
-  { id: 'conditions', label: 'Conditions' },
-  { id: 'options', label: 'Option groups' },
-  { id: 'terms', label: 'Defined terms' },
-  { id: 'investors', label: 'Investor types' },
-];
+/** Lens labels (sub-headings inside the three Structure tabs). */
+export const LENS_LABEL: Record<LensId, string> = {
+  sections: 'Sections',
+  crossrefs: 'Cross-references',
+  conditions: 'Conditions',
+  options: 'Option groups',
+  terms: 'Defined terms',
+  investors: 'Investor types',
+};
 
-/** Default lens on first open (app.html: Cross-references). */
-export const DEFAULT_LENS: LensId = 'crossrefs';
-
-/** Intake Phase 3a: the Package lens id (web-local, not a core LensId). */
+/** Intake Phase 3a: the Package group id (web-local, not a core LensId). */
 export const PACKAGE_LENS = 'package';
-export type StructureLensId = LensId | typeof PACKAGE_LENS;
 
-/** The six lenses, plus a trailing Package lens only when a package is open. */
-export function lensesFor(
-  hasPackage: boolean,
-): ReadonlyArray<{ id: StructureLensId; label: string }> {
-  return hasPackage ? [...LENSES, { id: PACKAGE_LENS, label: 'Package' }] : LENSES;
+/**
+ * The Structure screen has three tabs. Sections is the map; Logic merges cross-references,
+ * conditions, option groups and investor types; Terms & package merges defined terms and the
+ * package group (only when a package is open).
+ */
+export type StructureTabId = 'sections' | 'logic' | 'terms';
+export const DEFAULT_TAB: StructureTabId = 'sections';
+
+/** Core lenses shown in each tab, in order. */
+export const TAB_LENSES: Record<StructureTabId, readonly LensId[]> = {
+  sections: ['sections'],
+  logic: ['crossrefs', 'conditions', 'options', 'investors'],
+  terms: ['terms'],
+};
+
+export function tabsFor(hasPackage: boolean): ReadonlyArray<{ id: StructureTabId; label: string }> {
+  return [
+    { id: 'sections', label: 'Sections' },
+    { id: 'logic', label: 'Logic' },
+    { id: 'terms', label: hasPackage ? 'Terms & package' : 'Defined terms' },
+  ];
+}
+
+/** Summed issue count of a tab (the tab badge). */
+export function tabCount(v: StructureView, tab: StructureTabId): number {
+  return TAB_LENSES[tab].reduce((n, l) => n + (v.counts[l] ?? 0), 0);
 }
 
 /** Rows shown for a lens: "Issues only" (default) or everything. */
@@ -32,11 +49,13 @@ export function visibleCount(v: StructureView, lens: LensId, all: boolean): numb
   return v[lens].filter((r) => r.issue).length;
 }
 
-export function lineFor(v: StructureView, lens: LensId, all: boolean): string {
-  if (lens === 'investors')
-    return 'Pick the investor type to see what that investor fills in, in document order.';
-  if (all) return `Showing everything: ${v.totals[lens]} rows.`;
-  return `Issues only: ${visibleCount(v, lens, false)} of ${v.totals[lens]}. Turn on Show everything for the full list.`;
+/** The status line under the tabs; investor types are a picker, not a row list, so not summed. */
+export function lineFor(v: StructureView, tab: StructureTabId, all: boolean): string {
+  const lenses = TAB_LENSES[tab].filter((l) => l !== 'investors');
+  const total = lenses.reduce((n, l) => n + v.totals[l], 0);
+  if (all) return `Showing everything: ${total} rows.`;
+  const shown = lenses.reduce((n, l) => n + visibleCount(v, l, false), 0);
+  return `Issues only: ${shown} of ${total}. Turn on Show everything for the full list.`;
 }
 
 export const REF_STATUS = {

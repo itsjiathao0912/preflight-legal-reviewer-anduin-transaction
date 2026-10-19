@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { maskQuote, type ExternalReference } from '@aduin/core';
 import { usePackage } from '../../state/package';
 import { render } from '../../test-utils';
-import { lensesFor } from '../structure/model';
+import { tabsFor } from '../structure/model';
 import type { PackageDocView, PackageView } from './contract';
 import { PackageLens } from './PackageLens';
 
@@ -195,9 +195,9 @@ describe('package-lens', () => {
     expect(el.textContent).not.toContain(SSN);
   });
 
-  it('has no Package tab without a package view', () => {
-    expect(lensesFor(false).some((l) => l.id === 'package')).toBe(false);
-    expect(lensesFor(true).at(-1)).toEqual({ id: 'package', label: 'Package' });
-    expect(lensesFor(false)).toHaveLength(6);
+  it('names the third tab for the package only when a package view exists', () => {
+    expect(tabsFor(false).map((t) => t.label)).toEqual(['Sections', 'Logic', 'Defined terms']);
+    expect(tabsFor(true).at(-1)).toEqual({ id: 'terms', label: 'Terms & package' });
+    expect(tabsFor(true)).toHaveLength(3);
   });
 });

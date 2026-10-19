@@ -67,7 +67,13 @@ function Row({
   );
 }
 
-function Empty() {
+function Empty({ compact }: { compact?: boolean }) {
+  if (compact)
+    return (
+      <p className="dim st-none" data-testid="structure-empty-lens">
+        Nothing to check here.
+      </p>
+    );
   return (
     <div className="empty2" data-testid="structure-empty-lens">
       <p className="ph-t">
@@ -83,19 +89,26 @@ export function TableLens({
   all,
   selected,
   onRow,
+  compact,
 }: {
   v: StructureView;
   lens: Exclude<LensId, 'investors'>;
   all: boolean;
   selected: string | null;
   onRow: RowHandler;
+  /** inside a grouped tab: an empty list is one quiet line, not a full empty state */
+  compact?: boolean;
 }) {
   const props = { selected, onRow };
+  const none = <Empty compact={compact} />;
   if (lens === 'sections') {
     const rows = all ? v.sections : v.sections.filter((s) => s.depth === 0 && s.flags > 0);
-    if (!rows.length) return <Empty />;
+    if (!rows.length) return none;
     return (
-      <Table caption="Sections" head={['Section', 'Numbering', 'References', 'Flags']}>
+      <Table
+        caption="Sections"
+        head={all ? ['Section', 'Numbering', 'References', 'To check'] : ['Section', 'To check']}
+      >
         {rows.map((s) => (
           <Row key={s.id} k={s.id} {...props}>
             <td>
@@ -104,19 +117,23 @@ export function TableLens({
                 <span>{s.title}</span>
               </button>
             </td>
-            <td>
-              {s.restart ? (
-                <>
-                  <Badge cls="b-note" icon="undo">
-                    Restarts
-                  </Badge>{' '}
-                </>
-              ) : null}
-              <span className="dim">{s.numbering}</span>
-            </td>
-            <td className="dim">
-              {s.refsIn} in · {s.refsOut} out
-            </td>
+            {all ? (
+              <>
+                <td>
+                  {s.restart ? (
+                    <>
+                      <Badge cls="b-note" icon="undo">
+                        Restarts
+                      </Badge>{' '}
+                    </>
+                  ) : null}
+                  <span className="dim">{s.numbering}</span>
+                </td>
+                <td className="dim">
+                  {s.refsIn} in · {s.refsOut} out
+                </td>
+              </>
+            ) : null}
             <td>
               {s.flags ? (
                 <Badge cls="b-fix" icon="warn">
@@ -161,7 +178,7 @@ export function TableLens({
             })}
           </Table>
         ) : (
-          <Empty />
+          none
         )}
         {all ? (
           <div data-testid="structure-external">
@@ -197,7 +214,7 @@ export function TableLens({
   }
   if (lens === 'conditions') {
     const rows = all ? v.conditions : v.conditions.filter((c) => c.issue);
-    if (!rows.length) return <Empty />;
+    if (!rows.length) return none;
     return (
       <Table
         caption="Conditional instructions"
@@ -241,7 +258,7 @@ export function TableLens({
   }
   if (lens === 'options') {
     const rows = all ? v.options : v.options.filter((o) => o.issue);
-    if (!rows.length) return <Empty />;
+    if (!rows.length) return none;
     return (
       <Table caption="Option groups" head={['Question', 'Where', 'Options', 'How many']}>
         {rows.map((o) => (
@@ -273,7 +290,7 @@ export function TableLens({
     );
   }
   const rows = all ? v.terms : v.terms.filter((t) => t.issue);
-  if (!rows.length) return <Empty />;
+  if (!rows.length) return none;
   return (
     <Table caption="Defined terms" head={['Term', 'Defined at', 'Uses', 'Status']}>
       {rows.map((t) => {

@@ -22,7 +22,7 @@ test.describe('intake-coverage-visible', () => {
     await expect(page.getByTestId('gate-coverage-line')).toHaveText(text);
     await page.keyboard.press('Escape');
     await page.getByTestId('nav-structure').click();
-    await page.getByTestId('structure-lens-package').click();
+    await page.getByTestId('structure-lens-terms').click();
     await expect(page.getByTestId('package-lens-line')).toHaveText(text);
   });
 });

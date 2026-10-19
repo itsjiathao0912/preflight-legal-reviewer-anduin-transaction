@@ -7,12 +7,23 @@ import { ExportOutlineButton } from '../outline/ExportOutlineButton';
 import { InvestorTypesLens } from '../investor-paths/InvestorTypesLens';
 import { PackageLens } from '../package/PackageLens';
 import { usePackageView } from '../package/package-view';
-import { DEFAULT_LENS, lensesFor, lineFor, PACKAGE_LENS, type StructureLensId } from './model';
+import type { LensId } from '@aduin/core';
+import type { ReactNode } from 'react';
+import {
+  DEFAULT_TAB,
+  LENS_LABEL,
+  lineFor,
+  TAB_LENSES,
+  tabCount,
+  tabsFor,
+  type StructureTabId,
+} from './model';
 import { StructureDrawer } from './StructureDrawer';
 import { TableLens } from './StructureLenses';
 
 /**
- * #structure (AC17, app.html "SCREEN: Structure"): six lenses with issue counts, "Issues only" by
+ * #structure (AC17): three tabs (Sections, Logic, Terms & package) grouping the six lenses with
+ * summed issue counts, "Issues only" by
  * default, "Show everything" (full lists, external citations, flow list), row detail in a right
  * drawer. Reads the engine's StructureView from the review store (types only from core).
  */
@@ -24,7 +35,7 @@ export function StructureScreen() {
   const select = useReview((s) => s.select);
   const setRoute = useShell((s) => s.setRoute);
   const pkg = usePackageView();
-  const [lens, setLens] = useState<StructureLensId>(DEFAULT_LENS);
+  const [tab, setTab] = useState<StructureTabId>(DEFAULT_TAB);
   const [all, setAll] = useState(false);
   const [flow, setFlow] = useState(false);
   const [row, setRow] = useState<string | null>(null);
@@ -38,12 +49,7 @@ export function StructureScreen() {
     setType(null);
   }, [docKey]);
 
-  // the Package lens falls back to the default only when the open document has no package
-  // (never while a store-initiated re-open runs: the view stays non-null with refreshing)
-  useEffect(() => {
-    if (lens === PACKAGE_LENS && phase === 'ready' && !pkg) setLens(DEFAULT_LENS);
-  }, [lens, phase, pkg]);
-  const lenses = lensesFor(!!pkg);
+  const tabs = tabsFor(!!pkg);
 
   const closeDrawer = (refocus = false) => {
     setRow(null);
@@ -63,18 +69,17 @@ export function StructureScreen() {
     );
   };
 
-  const pickLens = (id: StructureLensId) => {
-    setLens(id);
+  const pickTab = (id: StructureTabId) => {
+    setTab(id);
     closeDrawer();
     requestAnimationFrame(() => document.getElementById(`st-l-${id}`)?.focus());
   };
 
   const onTabKey = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-    const i = lenses.findIndex((l) => l.id === lens);
-    const n =
-      e.key === 'ArrowRight' ? (i + 1) % lenses.length : (i - 1 + lenses.length) % lenses.length;
-    pickLens(lenses[n]!.id);
+    const i = tabs.findIndex((t) => t.id === tab);
+    const n = e.key === 'ArrowRight' ? (i + 1) % tabs.length : (i - 1 + tabs.length) % tabs.length;
+    pickTab(tabs[n]!.id);
     e.preventDefault();
   };
 
@@ -98,8 +103,13 @@ export function StructureScreen() {
               ? 'No structure for this document'
               : 'No document open'}
         </p>
+        {view ? (
+          <p className="mut" data-testid="structure-hint">
+            Map of the document. Rows with a flag need checking — click a row to see why.
+          </p>
+        ) : null}
       </div>
-      {view && lens !== PACKAGE_LENS ? (
+      {view ? (
         <div className="hacts">
           <button
             className="btn"
@@ -144,6 +154,115 @@ export function StructureScreen() {
   }
 
   const investorType = type ?? view.investors.preselected;
+  const flowBox = all ? (
+    <>
+      <div style={{ margin: '0 0 10px' }}>
+        <button
+          type="button"
+          className="btn"
+          aria-expanded={flow}
+          aria-controls="st-flow"
+          data-testid="structure-flow-toggle"
+          onClick={() => setFlow((f) => !f)}
+        >
+          <Icon name="jump" />
+          {flow ? 'Hide' : 'Show'} flow diagram
+        </button>
+      </div>
+      <div className="flowbox" id="st-flow" hidden={!flow}>
+        <ol className="mut" style={{ margin: 0, paddingLeft: 20 }}>
+          {view.sections
+            .filter((s) => s.depth === 0)
+            .map((s) => (
+              <li key={s.id}>
+                {s.number}. {s.title}
+                {view.conditions
+                  .filter((c) => c.where === `Section ${s.number}`)
+                  .map((c) => (
+                    <div key={c.id} className="dim">
+                      Only when “{c.condition}”: {c.target}
+                    </div>
+                  ))}
+              </li>
+            ))}
+        </ol>
+      </div>
+    </>
+  ) : null;
+
+  const group = (id: string, label: string, count: ReactNode, children: ReactNode) => (
+    <section
+      key={id}
+      className="stgroup"
+      aria-labelledby={`st-g-${id}`}
+      data-testid={`structure-group-${id}`}
+    >
+      <div className="sechead">
+        <h2 id={`st-g-${id}`}>{label}</h2>
+        {count}
+      </div>
+      {children}
+    </section>
+  );
+
+  const lensCount = (l: LensId) =>
+    view.counts[l] ? (
+      <span className="fl" data-testid={`structure-issue-count-${l}`}>
+        <Icon name="warn" />
+        {view.counts[l]}
+        <span className="sr"> to check</span>
+      </span>
+    ) : null;
+
+  const lensBody = (l: LensId) =>
+    l === 'investors' ? (
+      <InvestorTypesLens
+        view={view.investors}
+        type={investorType}
+        onType={(t) => {
+          setType(t);
+          closeDrawer();
+        }}
+        selected={row}
+        onRow={openRow}
+        onShow={showInDoc}
+      />
+    ) : (
+      <>
+        {l === 'conditions' ? flowBox : null}
+        <TableLens v={view} lens={l} all={all} selected={row} onRow={openRow} compact />
+      </>
+    );
+
+  const panel =
+    tab === 'sections' ? (
+      <TableLens v={view} lens="sections" all={all} selected={row} onRow={openRow} />
+    ) : tab === 'logic' ? (
+      TAB_LENSES.logic.map((l) => group(l, LENS_LABEL[l], lensCount(l), lensBody(l)))
+    ) : pkg ? (
+      <>
+        {group('terms', LENS_LABEL.terms, lensCount('terms'), lensBody('terms'))}
+        {group(
+          'package',
+          'Package',
+          pkg.coverageStatus !== 'full' ? (
+            <span className="fl" data-testid="structure-package-warn">
+              <Icon name="warn" />
+              <span className="sr"> coverage partial</span>
+            </span>
+          ) : null,
+          <>
+            <p className="mut" role="status" data-testid="package-lens-line">
+              {pkg.coverageLine}
+            </p>
+            <PackageLens view={pkg} onShow={(blockId) => showInDoc(blockId, null)} />
+          </>,
+        )}
+      </>
+    ) : (
+      <TableLens v={view} lens="terms" all={all} selected={row} onRow={openRow} />
+    );
+
   return (
     <section
       className="view"
@@ -155,101 +274,39 @@ export function StructureScreen() {
       {header}
       <div className="subbar">
         <div className="seg segx" role="tablist" aria-label="Structure lists" onKeyDown={onTabKey}>
-          {lenses.map((l) => (
-            <button
-              key={l.id}
-              type="button"
-              role="tab"
-              id={`st-l-${l.id}`}
-              data-testid={`structure-lens-${l.id}`}
-              aria-selected={lens === l.id}
-              tabIndex={lens === l.id ? 0 : -1}
-              onClick={() => pickLens(l.id)}
-            >
-              {l.label}
-              {l.id === PACKAGE_LENS ? (
-                pkg && pkg.coverageStatus !== 'full' ? (
-                  <span className="fl" data-testid="structure-package-warn">
+          {tabs.map((t) => {
+            const c = tabCount(view, t.id);
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                id={`st-l-${t.id}`}
+                data-testid={`structure-lens-${t.id}`}
+                aria-selected={tab === t.id}
+                aria-controls="st-panel"
+                tabIndex={tab === t.id ? 0 : -1}
+                onClick={() => pickTab(t.id)}
+              >
+                {t.label}
+                {c ? (
+                  <span className="fl" data-testid={`structure-tab-count-${t.id}`}>
                     <Icon name="warn" />
-                    <span className="sr"> coverage partial</span>
+                    {c}
+                    <span className="sr"> to check</span>
                   </span>
-                ) : null
-              ) : view.counts[l.id] ? (
-                <span className="fl" data-testid={`structure-issue-count-${l.id}`}>
-                  <Icon name="warn" />
-                  {view.counts[l.id]}
-                  <span className="sr"> to check</span>
-                </span>
-              ) : null}
-            </button>
-          ))}
+                ) : null}
+              </button>
+            );
+          })}
         </div>
-        {lens === PACKAGE_LENS ? (
-          <p className="mut" role="status" data-testid="package-lens-line">
-            {pkg?.coverageLine ?? ''}
-          </p>
-        ) : (
-          <p className="mut" role="status" data-testid="structure-line">
-            {lineFor(view, lens, all)}
-          </p>
-        )}
+        <p className="mut" role="status" data-testid="structure-line">
+          {lineFor(view, tab, all)}
+        </p>
       </div>
       <div className={`stwrap${row ? ' has-drawer' : ''}`}>
-        <div className="pgbody" role="tabpanel" aria-labelledby={`st-l-${lens}`}>
-          {lens === 'conditions' && all ? (
-            <>
-              <div style={{ margin: '0 0 10px' }}>
-                <button
-                  type="button"
-                  className="btn"
-                  aria-expanded={flow}
-                  aria-controls="st-flow"
-                  data-testid="structure-flow-toggle"
-                  onClick={() => setFlow((f) => !f)}
-                >
-                  <Icon name="jump" />
-                  {flow ? 'Hide' : 'Show'} flow diagram
-                </button>
-              </div>
-              <div className="flowbox" id="st-flow" hidden={!flow}>
-                <ol className="mut" style={{ margin: 0, paddingLeft: 20 }}>
-                  {view.sections
-                    .filter((s) => s.depth === 0)
-                    .map((s) => (
-                      <li key={s.id}>
-                        {s.number}. {s.title}
-                        {view.conditions
-                          .filter((c) => c.where === `Section ${s.number}`)
-                          .map((c) => (
-                            <div key={c.id} className="dim">
-                              Only when “{c.condition}”: {c.target}
-                            </div>
-                          ))}
-                      </li>
-                    ))}
-                </ol>
-              </div>
-            </>
-          ) : null}
-          {lens === PACKAGE_LENS ? (
-            pkg ? (
-              <PackageLens view={pkg} onShow={(blockId) => showInDoc(blockId, null)} />
-            ) : null
-          ) : lens === 'investors' ? (
-            <InvestorTypesLens
-              view={view.investors}
-              type={investorType}
-              onType={(t) => {
-                setType(t);
-                closeDrawer();
-              }}
-              selected={row}
-              onRow={openRow}
-              onShow={showInDoc}
-            />
-          ) : (
-            <TableLens v={view} lens={lens} all={all} selected={row} onRow={openRow} />
-          )}
+        <div className="pgbody" role="tabpanel" id="st-panel" aria-labelledby={`st-l-${tab}`}>
+          {panel}
         </div>
         {row ? (
           <StructureDrawer

@@ -41,7 +41,7 @@ async function openAndRun(page: Page, id: string, files: FileSpec) {
 
 async function openLens(page: Page) {
   await page.getByTestId('nav-structure').click();
-  await page.getByTestId('structure-lens-package').click();
+  await page.getByTestId('structure-lens-terms').click();
   await expect(page.getByTestId('package-lens')).toBeVisible();
 }
 
@@ -96,7 +96,9 @@ test.describe('intake-package-lens', () => {
     await openSample(page, '03');
     await page.getByTestId('nav-structure').click();
     await expect(page.getByTestId('structure-view')).toBeVisible();
-    await expect(page.getByTestId('structure-lens-package')).toHaveCount(0);
+    await expect(page.getByTestId('structure-lens-terms')).toHaveText(/^Defined terms/);
+    await page.getByTestId('structure-lens-terms').click();
+    await expect(page.getByTestId('structure-group-package')).toHaveCount(0);
   });
 
   test('should show the Northgate III baseline and references from expected.json', async ({

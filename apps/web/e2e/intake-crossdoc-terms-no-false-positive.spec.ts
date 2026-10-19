@@ -23,7 +23,7 @@ test.describe('intake-crossdoc-terms-no-false-positive', () => {
       titles.filter({ hasText: '"Units" is used for the offered security' }),
     ).toHaveCount(0);
     await page.getByTestId('nav-structure').click();
-    await page.getByTestId('structure-lens-package').click();
+    await page.getByTestId('structure-lens-terms').click();
     const units = page
       .getByTestId('package-term')
       .filter({ has: page.locator('strong', { hasText: /^Units$/ }) });

@@ -97,7 +97,7 @@ test.describe('a11y-smoke', () => {
     await page.getByTestId('structure-row').first().click();
     await expect(page.getByTestId('structure-drawer')).toBeVisible();
     await audit(page, 'structure drawer');
-    await page.getByTestId('structure-lens-investors').click();
+    await page.getByTestId('structure-lens-logic').click();
     await audit(page, 'structure investor types');
   });
 });

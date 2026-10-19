@@ -22,7 +22,7 @@ test.describe('intake-terms-unverified-without-lpa', () => {
       titles.filter({ hasText: '"Stock" is used for the offered security' }),
     ).toHaveCount(1);
     await page.getByTestId('nav-structure').click();
-    await page.getByTestId('structure-lens-package').click();
+    await page.getByTestId('structure-lens-terms').click();
     const terms = page.getByTestId('package-term');
     await expect(terms.first()).toBeVisible();
     const n = await terms.count();

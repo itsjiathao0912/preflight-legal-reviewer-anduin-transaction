@@ -152,7 +152,7 @@ test.describe('intake-a11y-keyboard', () => {
 
     // Package lens
     await page.getByTestId('nav-structure').click();
-    await page.getByTestId('structure-lens-package').click();
+    await page.getByTestId('structure-lens-terms').click();
     await expect(page.getByTestId('package-lens')).toBeVisible();
     await audit(page, 'package lens');
 

@@ -47,7 +47,7 @@ async function runTwoLpas(page: Page) {
   await confirmAllRows(page);
   await runPackage(page);
   await page.getByTestId('nav-structure').click();
-  await page.getByTestId('structure-lens-package').click();
+  await page.getByTestId('structure-lens-terms').click();
   const lpa = page.locator('[data-testid="package-reference"][data-target-key="lpa"]');
   await expect(lpa.first()).toHaveAttribute('data-resolution', 'unclear');
   await expect(lpa.first()).toContainText('Needs confirmation');
