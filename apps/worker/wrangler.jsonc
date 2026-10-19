@@ -32,5 +32,11 @@
     "AI_RESPONSE_MODE": "json_schema",
     "AI_VISION_MODELS": "nvidia/nemotron-3.5-super-vl:free",
     "AI_UPLOADS_ENABLED": "true",
+    // Demo quota raised at the user's request: 30 fresh-AI documents per visitor per UTC day.
+    // Requests per visitor and the shared daily cap are raised to match; the $10 lifetime spend cap is unchanged.
+    "VISITOR_AI_DOCS_PER_DAY": "30",
+    "VISITOR_AI_REQS_PER_DAY": "90",
+    "GLOBAL_PROVIDER_REQS_PER_DAY": "150",
+    "PROVIDER_ALLOWANCE_PER_DAY": "150",
   },
 }
