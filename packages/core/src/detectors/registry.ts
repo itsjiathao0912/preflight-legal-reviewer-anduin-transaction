@@ -16,6 +16,7 @@ import { flagPlaceholder } from './flag-placeholder';
 import { flagSensitive } from './flag-sensitive';
 import { investorPathDeadEnd } from './investor-path-dead-end';
 import { investorPathMissingItem } from './investor-path-missing-item';
+import { optionConditionCoverage } from './option-condition-coverage';
 
 /** Facts a detector uses to explain a finding (AC9). */
 export type ExplainFacts = Record<string, string | number | boolean | null>;
@@ -51,6 +52,7 @@ export const detectors: readonly Detector[] = [
   flagSensitive,
   investorPathDeadEnd,
   investorPathMissingItem,
+  optionConditionCoverage,
 ];
 
 export function detectorById(id: string): Detector | undefined {

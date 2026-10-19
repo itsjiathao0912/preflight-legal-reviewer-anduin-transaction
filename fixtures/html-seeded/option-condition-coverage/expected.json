@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "detector": "option-condition-coverage",
+  "issue_class": "option_gap_overlap",
+  "cases": [
+    {
+      "file": "clean.html",
+      "kind": "clean",
+      "note": "the conditional names every type in the joined option (partnership and LLC)",
+      "expect": []
+    },
+    {
+      "file": "partial-named.html",
+      "kind": "defect",
+      "note": "\"Partnership or LLC\" but the conditional names only partnerships",
+      "expect": [
+        {
+          "detector_id": "option-condition-coverage",
+          "issue_class": "option_gap_overlap",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

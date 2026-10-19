@@ -576,6 +576,44 @@ export const SEEDED: SeededClass[] = [
       },
     ],
   },
+  {
+    detector: 'option-condition-coverage',
+    issue_class: 'option_gap_overlap',
+    cases: [
+      {
+        file: 'clean.html',
+        kind: 'clean',
+        note: 'the conditional names every type in the joined option (partnership and LLC)',
+        lines: [
+          sec(1, 'TYPE OF SUBSCRIBER'),
+          p('Subscriber type (check one):'),
+          p('☐ Individual ☐ Joint tenants ☐ Trust ☐ Corporation ☐ Partnership or LLC'),
+          p(
+            'If the Subscriber is a trust, corporation, partnership or LLC, also complete Section 2.',
+          ),
+          sec(2, 'ENTITY INFORMATION'),
+          p('Formation date: ____________'),
+          ...signature(3),
+        ],
+        expect: [],
+      },
+      {
+        file: 'partial-named.html',
+        kind: 'defect',
+        note: '"Partnership or LLC" but the conditional names only partnerships',
+        lines: [
+          sec(1, 'TYPE OF SUBSCRIBER'),
+          p('Subscriber type (check one):'),
+          p('☐ Individual ☐ Joint tenants ☐ Trust ☐ Corporation ☐ Partnership or LLC'),
+          p('If the Subscriber is a trust, corporation or partnership, also complete Section 2.'),
+          sec(2, 'ENTITY INFORMATION'),
+          p('Formation date: ____________'),
+          ...signature(3),
+        ],
+        expect: [e('option-condition-coverage', 'option_gap_overlap')],
+      },
+    ],
+  },
 ];
 
 // ---------------------------------------------------------------- memory fixtures (fund I / II / Y)
