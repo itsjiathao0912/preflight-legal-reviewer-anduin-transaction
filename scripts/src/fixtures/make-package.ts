@@ -79,7 +79,7 @@ function subAgreement(fund: 'III' | 'II'): string {
     p('Fees are still payable by each Excused Investor on the Management Fee schedule.'),
     p('No Investor may claim that it subscribed for the Stock of any portfolio company.'),
     h('3. ERISA'),
-    p('If the Investor is a Benefit Plan Investor, complete Annex F.'),
+    p('If the Investor is a Benefit Plan Investor, please complete Annex F.'),
     p('The Investor shall deliver Annex F (Investor Questionnaire) with this agreement.'),
     h('4. TAX'),
     p('Each non-U.S. Investor shall deliver a properly completed Form W-8BEN-E to the Fund.'),
@@ -302,7 +302,7 @@ export const EXPECTED = {
       ],
       resolved: ['lpa', 'ppm'],
       quotes: [
-        'If the Investor is a Benefit Plan Investor, complete Annex F.',
+        'If the Investor is a Benefit Plan Investor, please complete Annex F.',
         'Capitalized terms used but not defined herein have the meanings given to them in the Partnership Agreement.',
       ],
       definedInPackage: [

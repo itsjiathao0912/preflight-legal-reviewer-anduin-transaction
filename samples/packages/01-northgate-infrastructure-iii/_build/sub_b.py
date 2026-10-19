@@ -55,7 +55,7 @@ def build_b(d, c, fn):
     # ---------- Section 9 ----------
     h1(d, "9. ERISA and Benefit Plan Investors")
     h2(d, "9.1 Benefit Plan Status")
-    P("The Investor shall indicate in Item 6 of Annex A whether it is, or is acting on behalf of, a Benefit Plan Investor. If the Investor is a Benefit Plan Investor, complete Annex F. The additional representations that a Benefit Plan Investor must make are set out in Annex F (ERISA Representations).")
+    P("The Investor shall indicate in Item 6 of Annex A whether it is, or is acting on behalf of, a Benefit Plan Investor. If the Investor is a Benefit Plan Investor, please complete Annex F. The additional representations that a Benefit Plan Investor must make are set out in Annex F (ERISA Representations).")
     P("The Investor shall notify the General Partner immediately if its status as a Benefit Plan Investor, or the percentage of its assets that constitute plan assets, changes at any time after it has delivered this Agreement. A change in status that would cause the Fund’s assets to be treated as plan assets may result in the compulsory redemption of the Investor’s {I}.")
     h2(d, "9.2 Plan Asset Limitation")
     P("The Investor understands that the General Partner intends to limit investment by Benefit Plan Investors to less than twenty-five percent of the total value of each class of equity interests in the Fund, so that the assets of the Fund are not treated as plan assets for the purposes of ERISA and the Code. For this purpose the value of interests held by the General Partner, the Manager and their affiliates, other than Benefit Plan Investors, is disregarded.")

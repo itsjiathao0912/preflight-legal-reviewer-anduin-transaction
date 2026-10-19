@@ -106,8 +106,8 @@ def build_a(d, c, fn):
     P("For this purpose a beneficial owner is any individual who, directly or indirectly, owns or controls twenty-five percent or more of the equity or voting rights of the Investor, and any individual who exercises control over the Investor by other means. The Investor shall also identify any person on whose behalf it is acting as nominee or agent, and shall deliver the identification documents for each beneficial owner that are listed in Annex D.")
     P("If the Investor is a publicly listed company, a regulated financial institution, a governmental entity or a similar entity, it may instead provide the evidence of its status that is described in Annex D, and the Administrator will determine whether further information about its beneficial owners is required.")
     h2(d, "4.3 Jurisdiction of Formation or Residence")
-    P("The Investor shall indicate the jurisdiction in which it is formed, organized or resident by checking one box below. The General Partner will accept subscriptions only from Investors in the jurisdictions listed, unless it consents in writing to another jurisdiction after receiving advice of counsel.")
-    rows = [["Check one", "Jurisdiction", "Additional information"],
+    P("The Investor shall indicate the jurisdiction in which it is formed, organized or resident (select only one). The General Partner will accept subscriptions only from Investors in the jurisdictions listed, unless it consents in writing to another jurisdiction after receiving advice of counsel.")
+    rows = [["Select one", "Jurisdiction", "Additional information"],
             [CHK, "United States", "State of formation or residence: ____________"],
             [CHK, "Canada", "Province: ____________"],
             [CHK, "United Kingdom", "Country within the United Kingdom: ____________"],
@@ -145,18 +145,21 @@ def build_a(d, c, fn):
     h1(d, "6. Investor Classification")
     h3(d, "Part A – Investor Type and Tax Status")
     h2(d, "6.1 Investor Type")
-    P("The Investor shall indicate its type by checking one box below. The type determines the information and documents that the Investor must deliver under Annex C and Annex D.")
-    rows = [["Check one", "Investor type"],
-            [CHK, "Natural person (individual)"],
-            [CHK, "Joint tenants or tenants in common"],
-            [CHK, "Corporation"],
-            [CHK, "Limited liability company"],
-            [CHK, "Partnership"]]
+    P("INVESTOR TYPE (select only one). The type determines the information and documents that the Investor must deliver under Annex C and Annex D.")
+    PA = "Please complete Part A of Section 6"
+    PAB = "Please complete Part A and Part B of Section 6"
+    ENT = "Please complete Part A of Section 6 and Item 8 of Annex A"
+    rows = [["Select one", "Investor type", "Instructions"],
+            [CHK, "Natural person (individual)", PA],
+            [CHK, "Joint tenants or tenants in common", PA],
+            [CHK, "Corporation", ENT],
+            [CHK, "Limited liability company", ENT],
+            [CHK, "Partnership", ENT]]
     if III:
-        rows += [[CHK, "Revocable trust (grantor trust)"], [CHK, "Irrevocable trust"]]
+        rows += [[CHK, "Revocable trust (grantor trust)", PAB], [CHK, "Irrevocable trust", PAB]]
     else:
-        rows += [[CHK, "Trust"]]
-    rows += [[CHK, "Governmental plan"], [CHK, "Employee benefit plan or other Benefit Plan Investor"], [CHK, "Other entity (please describe)"]]
+        rows += [[CHK, "Trust", PAB]]
+    rows += [[CHK, "Governmental plan", PAB], [CHK, "Employee benefit plan or other Benefit Plan Investor", "Please complete Part A of Section 6 and Item 6 of Annex A"], [CHK, "Other entity (please describe)", ENT]]
     T(rows)
     h2(d, "6.2 Tax Status")
     if III:

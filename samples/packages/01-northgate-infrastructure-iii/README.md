@@ -54,10 +54,10 @@ All five commitments are at or above $1,000,000, so every investor falls under t
 
 | File | Expected type | Expected role | Purpose | Approx. words |
 |---|---|---|---|---|
-| `01-NG3-Subscription-Agreement.docx` | Subscription agreement (with investor questionnaire annexes) | digitize | The document under review. Sections 1-14 plus 7A, Annex A (questionnaire), B (wire), C (tax forms guide), D (AML/KYC documents), E (signature pages). 18-19 est. pages | 8,860 |
+| `01-NG3-Subscription-Agreement.docx` | Subscription agreement (with investor questionnaire annexes) | digitize | The document under review. Sections 1-14 plus 7A, Annex A (questionnaire), B (wire), C (tax forms guide), D (AML/KYC documents), E (signature pages). 18-19 est. pages | 8,970 |
 | `02-NG3-LPA-Definitions-and-Key-Terms.docx` | LPA (extract: definitions and key articles) | reference | Defines the terms the sub agreement relies on; economics, default, transfer, ERISA 25% test, MFN | 3,930 |
 | `03-NG3-PPM-Summary-of-Terms.docx` | PPM (summary of terms) | reference | Same economics; minimum $5,000,000 | 2,170 |
-| `04-NG2-Subscription-Agreement-2024.docx` | Subscription agreement, prior fund (same firm) | baseline | Fund II on the same template; differs from 01 by exactly the seven variance items plus cosmetics | 8,400 |
+| `04-NG2-Subscription-Agreement-2024.docx` | Subscription agreement, prior fund (same firm) | baseline | Fund II on the same template; differs from 01 by exactly the seven variance items plus cosmetics | 8,490 |
 | `05-Meridale-AML-KYC-Requirements.docx` | AML/KYC requirements (administrator) | reference (a "requirement" role is also acceptable; it is not turned into a form) | KYC matrix by investor type, $1,000,000 source-of-funds threshold, consistent with Section 7A | 1,290 |
 | `06-GP-Email-Requirements-Note.docx` | GP requirements note (email) | requirement | "accept Singapore investors", "minimum $5M, waivable", "sanctions rep required" and more | 570 |
 

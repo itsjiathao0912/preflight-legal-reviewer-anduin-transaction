@@ -52,7 +52,7 @@ def build_c(d, c, fn):
     T([["Mark", "Response", "Category in Section 12 (1, 2, 3 or 4)"],
        [CHK, "Yes", "____"],
        [CHK, "No", "Not applicable"]])
-    P("If the Investor is not a Qualified Purchaser, skip Item 5 and go to Item 6.")
+    P("If the Investor is not a Qualified Purchaser, please skip Item 5 and proceed to Item 6.")
     h3(d, "Item 5. Qualified Purchaser Details")
     T([["Field", "Response"],
        ["Date as of which investments were valued", ""],

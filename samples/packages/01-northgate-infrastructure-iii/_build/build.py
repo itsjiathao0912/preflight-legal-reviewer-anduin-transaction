@@ -46,7 +46,7 @@ SEEDS = {
     "D3": "the offered Units will not be registered",
     "D4": "[NTD: Hartwell & Crane to confirm the Class S minimum with tax counsel before filing.]",
     "D5": "[insert Final Closing Date]",
-    "D6": "If the Investor is a Benefit Plan Investor, complete Annex F.",
+    "D6": "If the Investor is a Benefit Plan Investor, please complete Annex F.",
     "D6b": "Annex F (ERISA Representations)",
     "D7": "Eligible Transferee Certificate",
     "D9": "minimum Capital Commitment of $2,500,000",

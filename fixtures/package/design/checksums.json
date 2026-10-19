@@ -1,7 +1,7 @@
 {
   "fixtures/package/design/northgate-iii/01-NG3-Subscription-Agreement.docx": {
     "source": "samples/packages/01-northgate-infrastructure-iii/docs/01-NG3-Subscription-Agreement.docx",
-    "sha256": "acd2389264500fd7150090b82a436af302ccea300607a83f3dc51aa5bdb57520"
+    "sha256": "7351e141bdf48c7c8c6d388c195f25ed7a7b55544cbbbea620a542a14714b44d"
   },
   "fixtures/package/design/northgate-iii/02-NG3-LPA-Definitions-and-Key-Terms.docx": {
     "source": "samples/packages/01-northgate-infrastructure-iii/docs/02-NG3-LPA-Definitions-and-Key-Terms.docx",
@@ -13,7 +13,7 @@
   },
   "fixtures/package/design/northgate-iii/04-NG2-Subscription-Agreement-2024.docx": {
     "source": "samples/packages/01-northgate-infrastructure-iii/docs/04-NG2-Subscription-Agreement-2024.docx",
-    "sha256": "d9491de91f5c1fe7d74668cc5a5d5b5d496bd40285227e78db3f2746ae6c7f8a"
+    "sha256": "6efd06d241f1aca1763a914d482056f07292a5bef637ede65cc08d7d22f00909"
   },
   "fixtures/package/design/northgate-iii/05-Meridale-AML-KYC-Requirements.docx": {
     "source": "samples/packages/01-northgate-infrastructure-iii/docs/05-Meridale-AML-KYC-Requirements.docx",
