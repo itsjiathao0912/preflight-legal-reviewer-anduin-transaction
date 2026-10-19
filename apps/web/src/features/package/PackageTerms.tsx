@@ -1,4 +1,10 @@
-import { maskAndClamp, maskQuote, type CrossDocTerm, type DefinitionLocation } from '@aduin/core';
+import {
+  QUOTE_MAX,
+  maskAndClamp,
+  maskQuote,
+  type CrossDocTerm,
+  type DefinitionLocation,
+} from '@aduin/core';
 import { Icon } from '../../components/ui/icon';
 import { TYPE_LABELS } from '../open-document/PackageConfirmTable';
 import type { PackageView } from './contract';
@@ -16,11 +22,13 @@ const QUOTE_MARKS = /^[\s"'“”‘’«»]+|[\s"'“”‘’«»]+$/g;
 
 /**
  * Display text of a stored term quote inside <q> (which adds its own quote marks): outer quote
- * marks are stripped so they do not double up, and a quote that does not end a sentence was cut
- * by the stored-quote clamp, so it ends at a word boundary with "…".
+ * marks are stripped so they do not double up. Only a quote cut by core's stored-quote clamp (its
+ * stored length is at QUOTE_MAX) and not ending a sentence ends at a word boundary with "…";
+ * shorter quotes render unchanged.
  */
 export function termQuoteText(quote: string): string {
   let s = maskQuote(quote.replace(QUOTE_MARKS, ''));
+  if (quote.length < QUOTE_MAX) return s;
   if (s.endsWith('…')) s = s.slice(0, -1);
   if (/[.;:!?)]$/.test(s)) return s;
   const cut = s.lastIndexOf(' ');

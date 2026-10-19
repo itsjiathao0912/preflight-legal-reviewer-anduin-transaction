@@ -138,9 +138,9 @@ test.describe('intake-a11y-keyboard', () => {
     await expect(page.getByTestId('open-document-dialog')).toBeHidden();
     await waitForChecks(page);
 
-    // Findings header with the coverage line, and the gate popover open by keyboard
-    await expect(page.getByTestId('findings-coverage-line')).toBeVisible();
-    await audit(page, 'findings with coverage line');
+    // Findings header, and the gate popover (which holds the coverage line) open by keyboard
+    await expect(page.getByTestId('findings-header')).toBeVisible();
+    await audit(page, 'findings');
     await tabTo(page, 'gate-button', 150);
     await page.keyboard.press('Enter');
     await expect(page.getByTestId('gate-popover')).toBeVisible();

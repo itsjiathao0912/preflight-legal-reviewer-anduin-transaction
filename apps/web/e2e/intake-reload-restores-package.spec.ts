@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { gotoApp } from './fixtures/app';
 import {
   confirmAllRows,
@@ -11,6 +11,17 @@ import {
 
 // Intake Phase 3 join J0 (AC-I8 reload half, ruling R2): a plain reload reopens the remembered
 // fund package (not only its primary document), without using Recent packages.
+/** The package coverage line lives in the gate popover (dropped from the Findings header in 93245b2). */
+async function coverageText(page: Page): Promise<string> {
+  await page.getByTestId('gate-button').click();
+  const line = page.getByTestId('gate-coverage-line');
+  await expect(line).toBeVisible({ timeout: 60_000 });
+  const text = (await line.textContent()) ?? '';
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('gate-popover')).toBeHidden();
+  return text;
+}
+
 test.describe('intake-reload-restores-package', () => {
   test('should restore the Hartwell package view on reload', async ({ page }) => {
     test.setTimeout(150_000);
@@ -22,14 +33,11 @@ test.describe('intake-reload-restores-package', () => {
     });
     await confirmAllRows(page);
     await runPackage(page);
-    const line = page.getByTestId('findings-coverage-line');
-    await expect(line).toBeVisible();
-    const text = (await line.textContent()) ?? '';
+    const text = await coverageText(page);
 
     await page.reload();
     await waitForChecks(page);
-    await expect(page.getByTestId('findings-coverage-line')).toBeVisible({ timeout: 60_000 });
-    await expect(page.getByTestId('findings-coverage-line')).toHaveText(text);
+    expect(await coverageText(page)).toBe(text);
     await expect(page.getByTestId('open-document-dialog')).toHaveCount(0);
     await page.getByTestId('nav-structure').click();
     await page.getByTestId('structure-lens-terms').click();
@@ -54,11 +62,11 @@ test.describe('intake-reload-restores-package', () => {
     const version = page.getByTestId('package-version-input');
     if (!(await version.inputValue())) await version.fill('v1');
     await runPackage(page);
-    await expect(page.getByTestId('findings-coverage-line')).toBeVisible();
+    await coverageText(page);
 
     await page.reload();
     await waitForChecks(page);
-    await expect(page.getByTestId('findings-coverage-line')).toBeVisible({ timeout: 60_000 });
+    await coverageText(page);
     await expect(page.getByTestId('open-document-dialog')).toHaveCount(0);
   });
 });

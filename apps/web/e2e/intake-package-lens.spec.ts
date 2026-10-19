@@ -1,8 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
-import { gotoApp, openSample } from './fixtures/app';
+import { gotoApp } from './fixtures/app';
 import { confirmAllRows, openDemoPackage, runPackage } from './fixtures/package';
+import { uploadOne } from './fixtures/variance';
 
 // Intake Phase 3 track 3a (AC-I17 lens half, AC-I9 lens): the Package lens in Structure lists
 // documents, references, terms and the five coverage groups; a baseline is markable from the lens.
@@ -91,9 +92,15 @@ test.describe('intake-package-lens', () => {
     await expect(lpaRole.locator('option[value="baseline"]')).toBeDisabled();
   });
 
-  test('should show no Package tab for sample #3 opened from Samples', async ({ page }) => {
+  test('should show no Package group for a classic (non-package) document', async ({ page }) => {
     await gotoApp(page);
-    await openSample(page, '03');
+    // The Samples list left the Open a document dialog in 0c3a6a2, and a single sub-agreement
+    // upload is a one-document package (by design), so a classic non-sub-doc upload stands in.
+    await uploadOne(
+      page,
+      { name: 'note.html', buffer: Buffer.from('<html><body><p>Cover note.</p></body></html>') },
+      { firm: 'Other / no firm', fund: 'Test Fund' },
+    );
     await page.getByTestId('nav-structure').click();
     await expect(page.getByTestId('structure-view')).toBeVisible();
     await expect(page.getByTestId('structure-lens-terms')).toHaveText(/^Defined terms/);

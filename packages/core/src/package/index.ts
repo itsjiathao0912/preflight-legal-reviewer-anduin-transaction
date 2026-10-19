@@ -47,3 +47,4 @@ export { computeCoverage, coverageLineText } from './coverage';
 export { buildDocumentRequests } from './request';
 export { eligibleBaselines } from './baseline';
 export { analyzePackage, packageRunReadiness, type AnalyzePackageInput } from './analyze';
+export { QUOTE_MAX } from './quote';

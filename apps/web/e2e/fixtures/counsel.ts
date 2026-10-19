@@ -121,7 +121,8 @@ export async function gotoCounsel(page: Page): Promise<void> {
 
 export async function gotoFindings(page: Page): Promise<void> {
   await page.getByTestId('nav-findings').click();
-  await expect(page.getByTestId('findings-meta')).toBeVisible();
+  // The header subtitle (findings-meta) only shows with no document open since 93245b2.
+  await expect(page.getByTestId('findings-header')).toBeVisible();
 }
 
 /**
