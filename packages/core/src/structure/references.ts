@@ -126,6 +126,16 @@ export function extractReferences(ctx: Ctx): RefInfo[] {
     acc += blockText(b).length + 1;
   }
   const statutoryAt: Array<{ number: string; pos: number }> = [];
+  // Subsection labels present in the text ("3.2 Notice and Funding" inside Section 3), keyed
+  // scopeId|N.M. A decimal ref "Section 3.2" resolves to its parent section only when that
+  // labelled subsection exists in the parent (DOCX numbered sub-clauses); otherwise it stays
+  // unresolved as before.
+  const subsections = new Set<string>();
+  ctx.blocks.forEach((b, i) => {
+    const sec = ctx.info[i]?.section;
+    const m = /^\s{0,4}(\d{1,4}[A-Z]?)\.(\d{1,3})(?!\d|\.\d)/.exec(blockText(b));
+    if (sec && m && m[1] === sec.number) subsections.add(`${sec.scopeId}|${m[1]}.${m[2]}`);
+  });
 
   const push = (r: RefInfo) => out.push(r);
 
@@ -246,6 +256,17 @@ export function extractReferences(ctx: Ctx): RefInfo[] {
       if (rule === 'decimal-section') {
         kind = 'internal';
         status = 'unresolved';
+        const sub = /^\.(\d{1,3})(?!\d|\.\d)/.exec(after);
+        const scope = sub ? resolveScope(ctx, info.scope, number, undefined, qualifier) : undefined;
+        if (
+          sub &&
+          scope &&
+          findSection(scope, number) &&
+          subsections.has(`${scope.id}|${number}.${sub[1]}`)
+        ) {
+          status = 'resolved';
+          target = { sectionNumber: number, scopeId: scope.id };
+        }
       } else if (rule) {
         kind = 'statutory';
       } else {
