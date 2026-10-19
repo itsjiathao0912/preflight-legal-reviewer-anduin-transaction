@@ -25,7 +25,7 @@
   "triggers": { "crons": ["17 3 * * *"] },
   "vars": {
     // OpenAI provider plan: "openrouter" (free models) or "openai" (gpt-4.1-mini, $10 lifetime cap)
-    "AI_PROVIDER": "openrouter",
+    "AI_PROVIDER": "openai",
     "PAID_FALLBACK_ENABLED": "false",
     "OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
     "AI_TEXT_MODELS": "nvidia/nemotron-3-super-120b-a12b:free",
