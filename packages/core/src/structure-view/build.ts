@@ -229,6 +229,7 @@ function conditionKind(c: Conditional): ConditionKind {
 }
 
 function questionOf(s: Structure, g: OptionGroup): string {
+  if (g.question) return g.question;
   const first = g.blockIndices[0]!;
   for (let i = first - 1; i >= Math.max(0, first - 2); i--) {
     const b = s.blocks[i]!;

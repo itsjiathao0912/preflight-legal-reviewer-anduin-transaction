@@ -1,6 +1,7 @@
 import { sha256Hex } from '../model/hash';
 import type { Line } from '../model/types';
 import { isCaps } from '../model/line-stream';
+import { cellTextsOf } from '../adapters/cell-texts';
 import type { Scope, ScopeKind } from './types';
 
 /**
@@ -22,6 +23,8 @@ export function scopeOpener(line: Line): ScopeKind | null {
   if (/^\s*(\d|\(|☐|☒)/.test(text)) return null;
   if (/[.;:]\s*$/.test(text)) return null;
   if (!line.cue.bold && !isCaps(text)) return null;
+  // a multi-cell table header row ("Select one | Investor type | Instructions") names columns
+  if (cellTextsOf(line).length >= 2) return null;
   for (const o of OPENERS) if (o.re.test(text)) return o.kind;
   return null;
 }

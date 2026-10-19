@@ -31,6 +31,14 @@ export const ROLE_ROW_RE = /^([A-Z][A-Za-z/ ,'-]{2,60}?)\s+Please\s+(complete|sk
 export const ROW_TARGET_RE =
   /\b(Parts?\s+[A-Z](?:\s*(?:&|and|or)\s*[A-Z]){0,3}\s+of\s+Section\s+\d{1,2}|Section\s+\d{1,2}[A-Z]?)/g;
 
+/** "If the Investor is a Benefit Plan Investor, please" -> "If the Investor is a Benefit Plan Investor". */
+export function withoutPlease(trigger: string): string {
+  return trigger
+    .trim()
+    .replace(/[\s,]*\bplease$/i, '')
+    .trim();
+}
+
 function actionOf(verb: string): Conditional['action'] {
   const v = verb.toLowerCase();
   if (v.includes('complete')) return 'complete';
@@ -86,7 +94,7 @@ function conditionalsInClause(
     start,
     end,
     text: c.text.slice(trig.index, end - c.start),
-    trigger: c.text.slice(trig.index, afterTrig + verb.index).trim(),
+    trigger: withoutPlease(c.text.slice(trig.index, afterTrig + verb.index)),
     action: actionOf(v),
     negative: v.startsWith('do not') || v.startsWith('need not') || v === 'skip',
     targets,

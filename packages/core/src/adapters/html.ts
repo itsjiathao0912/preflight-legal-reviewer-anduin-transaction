@@ -5,6 +5,7 @@ import { sha256Hex } from '../model/hash';
 import { isCaps } from '../model/line-stream';
 import type { Cue, Line } from '../model/types';
 import { setSupSegments, type SupSegment } from './sup-segments';
+import { setCellTexts } from './cell-texts';
 
 /**
  * HTML adapter: htmlparser2 SAX -> Line[] with cues.
@@ -171,11 +172,27 @@ export const MAX_FRAME_DEPTH = 256;
  */
 export const MAX_PARSE_DEPTH = 16384;
 
+/** Per-cell texts of a merged table row (whitespace-collapsed, glyph-normalized; '' = empty). */
+function cellTextsFrom(runs: readonly Run[]): string[] {
+  const out: string[] = [];
+  for (const r of runs) {
+    if (!r.cell) continue;
+    out[r.cell - 1] = (out[r.cell - 1] ?? '') + r.text;
+  }
+  return Array.from(out, (c) => {
+    let t = (c ?? '').replace(/\s+/g, ' ').trim();
+    for (const rule of GLYPH_RULES) t = t.replace(new RegExp(rule.from.source, 'g'), rule.to);
+    return t;
+  });
+}
+
 interface Run {
   text: string;
   bold: boolean;
   /** Text inside a <sup> element (footnote marker side channel, A3/E5). */
   sup?: boolean;
+  /** 1-based <td>/<th> index inside the current <tr> (0 or absent outside a cell). */
+  cell?: number;
 }
 
 // <sup> side channel (E5) lives in sup-segments.ts (Phase 06 D2, shared with the OCR adapter).
@@ -265,6 +282,7 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
   const stack: Frame[] = [];
   let skipDepth = 0;
   let trDepth = 0;
+  let cellIdx = 0;
   let runs: Run[] = [];
   let supDepth = 0;
   let lineAlign: Frame['align'];
@@ -282,6 +300,7 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
   const flush = () => {
     lineHasText = false;
     if (runs.length === 0) return;
+    const cellRuns = runs;
     // collapse whitespace across runs, keeping per-char bold (array build: linear time)
     const chars: string[] = [];
     const boldMask: boolean[] = [];
@@ -394,8 +413,10 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
       if (t) sups.push({ start: i, end: j, text: t });
       i = j;
     }
+    const cells = cellTextsFrom(cellRuns);
     let cursor = 0;
-    for (const part of splitLong(text, limits.maxLineChars)) {
+    const parts = splitLong(text, limits.maxLineChars);
+    for (const part of parts) {
       const line: Line = { text: part, cue: { ...cue } };
       if (sups.length) {
         const at = text.indexOf(part, cursor);
@@ -406,6 +427,7 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
         setSupSegments(line, own);
         cursor = base + part.length;
       }
+      if (parts.length === 1 && cells.length) setCellTexts(line, cells);
       lines.push(line);
     }
     lineAlign = undefined;
@@ -436,7 +458,9 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
         if (name === 'tr') {
           flush();
           trDepth++;
+          cellIdx = 0;
         } else if ((name === 'td' || name === 'th') && trDepth > 0) {
+          cellIdx++;
           runs.push({ text: ' ', bold: false });
         } else if (BLOCK_TAGS.has(name) && trDepth === 0) {
           flush();
@@ -496,8 +520,9 @@ export function htmlToLines(input: string | Uint8Array): HtmlAdapterResult {
         if (/\S/.test(text)) lineHasText = true;
         if (bold && source && text.trim()) lineSource = lineSource ?? source;
         if (t?.effHasClass) lineHasClass = true;
-        if (supDepth > 0) runs.push({ text, bold, sup: true });
-        else runs.push({ text, bold });
+        const cell = trDepth > 0 && cellIdx > 0 ? { cell: cellIdx } : {};
+        if (supDepth > 0) runs.push({ text, bold, sup: true, ...cell });
+        else runs.push({ text, bold, ...cell });
       },
       onclosetag(name) {
         if (skipDepth > 0) {

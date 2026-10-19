@@ -86,6 +86,11 @@ export interface OptionItem {
   blockIndex: number;
   /** Text of a <sup> footnote marker that ends the option label (HTML only; omitted when absent). */
   footnote_marker?: string;
+  /**
+   * Routing instruction from a separate table column ("Please complete Part A of Section 6"),
+   * kept out of `label`. Omitted when the option row has no instruction column.
+   */
+  instruction?: string;
 }
 
 export interface OptionGroup {
@@ -94,6 +99,11 @@ export interface OptionGroup {
   options: OptionItem[];
   exclusive: boolean;
   cue?: string;
+  /**
+   * Question text from the option table's header row (the label column's header, e.g.
+   * "Investor type"). Omitted when the group has no table header row.
+   */
+  question?: string;
 }
 
 export interface Field {

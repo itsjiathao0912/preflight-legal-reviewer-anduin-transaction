@@ -17,6 +17,8 @@ const ALLOWED = new Set([
   'describeAssertion',
   'mask',
   'limits',
+  // Source File polish: term quote clamp length (ellipsis only on clamped quotes)
+  'QUOTE_MAX',
   // firm list functions
   'LAW_FIRMS',
   'resolveFirm',
