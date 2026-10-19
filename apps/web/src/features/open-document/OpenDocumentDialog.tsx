@@ -8,11 +8,7 @@ import { useSession } from '../../state/session';
 import { useShell } from '../../state/shell';
 import { loadDemoPackages, type DemoPackage } from './demo-packages';
 import { openUpload } from './open-actions';
-import {
-  openDemoPackage,
-  prepareUploadDraft,
-  runPackageDraft,
-} from './package-actions';
+import { openDemoPackage, prepareUploadDraft, runPackageDraft } from './package-actions';
 import { PackageConfirmTable } from './PackageConfirmTable';
 import { privacyLines } from './privacy-copy';
 import { loadFirms, type FirmEntry } from './samples';
@@ -57,6 +53,10 @@ export function OpenDocumentDialog() {
     if (!open) {
       // intake: closing the modal drops an unconfirmed draft (a running one is left alone)
       if (usePackage.getState().draft?.status === 'ready') usePackage.getState().clearDraft();
+      // drop the picked files so the next open starts empty (submit and every close path land here)
+      setFiles([]);
+      setDragging(false);
+      if (inputRef.current) inputRef.current.value = '';
       return;
     }
     void loadFirms().then(setFirms);
@@ -102,7 +102,8 @@ export function OpenDocumentDialog() {
     const f = list[0] ?? null;
     setFiles(list);
     // Reject an unsupported, empty or oversized file as soon as it is picked.
-    const check = list.length > 1 ? checkPackageFiles(list) : f ? checkUpload(f.name, f.size) : null;
+    const check =
+      list.length > 1 ? checkPackageFiles(list) : f ? checkUpload(f.name, f.size) : null;
     setError(check && !check.ok ? check.message : '');
   };
 
