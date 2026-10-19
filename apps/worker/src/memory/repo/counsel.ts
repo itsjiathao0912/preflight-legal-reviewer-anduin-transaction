@@ -32,6 +32,14 @@ export const COUNSEL_SQL = {
     "WHERE workspace_id = ?1 AND status = 'active' AND answered_at > ?2 ORDER BY answered_at, id LIMIT 2000",
   readyAt:
     "SELECT MAX(at) AS at FROM audit_event WHERE workspace_id = ?1 AND action = 'ready_to_digitize'",
+  /** Counsel who joined the share link: distinct names, newest join first. */
+  participants:
+    "SELECT actor_name AS name, MAX(at) AS joined_at FROM audit_event WHERE workspace_id = ?1 AND action = 'counsel_joined' " +
+    'GROUP BY actor_name ORDER BY joined_at DESC LIMIT 20',
+  /** One audit row per counsel name per hour (re-joins inside the hour are ignored). */
+  insertJoin:
+    'INSERT OR IGNORE INTO audit_event (workspace_id, id, client_op_id, at, analyst_id, actor_name, action) ' +
+    "VALUES (?1, ?2, ?3, ?4, ?5, ?6, 'counsel_joined')",
   findingQuote:
     'SELECT quote_hash, quote_snippet, section_path FROM finding WHERE workspace_id = ?1 AND review_run_id = ?2 AND finding_key = ?3',
   decisionQuote:

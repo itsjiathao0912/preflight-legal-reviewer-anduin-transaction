@@ -16,7 +16,7 @@ const CAPS: Record<string, number> = {
   revoke: 8,
   counsel_question: 10,
   counsel_answer: 13,
-  counsel_sheet: 6, // measured 19-10-26: liveness + questions, answers, comments, ready, decisions
+  counsel_sheet: 7, // measured 19-10-26: liveness + questions, answers, comments, ready, decisions, participants
   rules_list: 3,
   rule_approve: 8, // +1 bounded active-rule cap count (review M3)
   firm: 5,

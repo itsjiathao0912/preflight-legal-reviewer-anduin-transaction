@@ -264,6 +264,8 @@ export const AUDIT_ACTIONS = [
   'regression_check_created',
   // counsel share link (additive, 19-10-26): the analyst marks the sheet ready to digitize
   'ready_to_digitize',
+  // counsel joined the share link (actor_name = typed counsel name; no DB CHECK on action)
+  'counsel_joined',
 ] as const;
 export const AuditEventSchema = z.object({
   id: Id,

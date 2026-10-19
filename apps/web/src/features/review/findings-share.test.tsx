@@ -28,7 +28,7 @@ afterEach(() => {
   mounted?.unmount();
   mounted = null;
   setCounselMode(false);
-  useShare.setState({ role: 'analyst' } as never);
+  useShare.setState({ role: 'analyst', sheet: null } as never);
 });
 
 describe('Findings header share action', () => {
@@ -42,5 +42,35 @@ describe('Findings header share action', () => {
     useShare.setState({ role: 'counsel' } as never);
     mounted = h.renderV2(<FindingsScreen />);
     expect(q('findings-share')).toBeNull();
+  });
+
+  it('should show joined counsel as avatars with names for the analyst', () => {
+    const now = Date.now();
+    useShare.setState({
+      sheet: {
+        participants: [
+          { name: 'Rita Moreno', joined_at: now - 5 * 60_000 },
+          { name: 'Sam', joined_at: now - 3_600_000 },
+          { name: 'Ann Lee', joined_at: now - 7_200_000 },
+          { name: 'Bo Diaz', joined_at: now - 9_000_000 },
+        ],
+      },
+    } as never);
+    mounted = h.renderV2(<FindingsScreen />);
+    const people = document.body.querySelectorAll('[data-testid="counsel-participant"]');
+    expect(people).toHaveLength(3);
+    expect(people[0]?.textContent).toBe('RMRita Moreno');
+    expect(people[0]?.getAttribute('title')).toBe('Rita Moreno joined 5 min ago');
+    expect(q('counsel-participants-more')?.textContent).toBe('+1');
+  });
+
+  it('should hide joined counsel in counsel mode', () => {
+    setCounselMode(true);
+    useShare.setState({
+      role: 'counsel',
+      sheet: { participants: [{ name: 'Rita', joined_at: Date.now() }] },
+    } as never);
+    mounted = h.renderV2(<FindingsScreen />);
+    expect(q('counsel-participants')).toBeNull();
   });
 });

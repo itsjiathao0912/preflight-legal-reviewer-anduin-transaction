@@ -1230,6 +1230,30 @@
         "pattern": "^(package|sample):[a-z0-9-]{1,40}$",
         "type": "string"
       },
+      "participants": {
+        "default": [],
+        "items": {
+          "properties": {
+            "joined_at": {
+              "maximum": 9007199254740991,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "name": {
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "joined_at"
+          ],
+          "type": "object"
+        },
+        "maxItems": 20,
+        "type": "array"
+      },
       "questions": {
         "items": {
           "properties": {
@@ -2879,7 +2903,8 @@
           "rule_revoked",
           "counsel_sheet_exported",
           "regression_check_created",
-          "ready_to_digitize"
+          "ready_to_digitize",
+          "counsel_joined"
         ],
         "type": "string"
       },
@@ -2967,7 +2992,8 @@
                 "rule_revoked",
                 "counsel_sheet_exported",
                 "regression_check_created",
-                "ready_to_digitize"
+                "ready_to_digitize",
+                "counsel_joined"
               ],
               "type": "string"
             },
@@ -3846,7 +3872,8 @@
                 "rule_revoked",
                 "counsel_sheet_exported",
                 "regression_check_created",
-                "ready_to_digitize"
+                "ready_to_digitize",
+                "counsel_joined"
               ],
               "type": "string"
             },

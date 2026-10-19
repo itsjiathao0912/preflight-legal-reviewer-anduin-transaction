@@ -42,6 +42,7 @@ vi.mock('../../api/counselShareApi', async (orig) => ({
 
 const FP = 'a'.repeat(64);
 const SHEET: CounselSheetResponse = {
+  participants: [],
   role: 'counsel',
   doc_ref: 'package:northgate-iii',
   questions: [

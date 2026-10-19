@@ -8,7 +8,7 @@ import type { useReviewView } from '../review/use-review-view';
 
 type Rows = ReturnType<typeof useReviewView>['rows'];
 import { questionItems } from '../variance/owner-groups';
-import { useShare } from './counsel-share';
+import { useCounselPoll, useShare } from './counsel-share';
 import { DEMO_ONLY, ShareError, shareWithCounsel } from './share-flow';
 
 export function fmtExpiry(ms: number): string {
@@ -115,6 +115,64 @@ export function ShareLine() {
       >
         Copy link
       </button>
+    </div>
+  );
+}
+
+/** Initials for an avatar circle: first letters of the first two words. */
+export function initialsOf(name: string): string {
+  const w = name.trim().split(/\s+/).filter(Boolean);
+  return ((w[0]?.[0] ?? '') + (w[1]?.[0] ?? '')).toUpperCase() || '?';
+}
+
+/** "just now", "5 min ago", "3 h ago", "2 d ago". */
+export function relTime(ms: number, now: number = Date.now()): string {
+  const s = Math.max(0, Math.round((now - ms) / 1000));
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
+  return `${Math.floor(s / 86400)} d ago`;
+}
+
+const SHOWN = 3;
+const NONE: readonly { name: string; joined_at: number }[] = [];
+
+/** Who joined the counsel link (analyst only; callers hide it in counsel mode). Polls ~20 s. */
+export function CounselParticipants() {
+  const { canShare } = useShareRules();
+  useCounselPoll(canShare);
+  const people = useShare((s) => s.sheet?.participants ?? NONE);
+  if (!people.length) return null;
+  const shown = people.slice(0, SHOWN);
+  const more = people.length - shown.length;
+  const label = `Counsel joined: ${people.map((p) => p.name).join(', ')}`;
+  return (
+    <div className="cpeople" data-testid="counsel-participants" aria-label={label} role="group">
+      {shown.map((p) => (
+        <span
+          key={p.name}
+          className="cperson"
+          data-testid="counsel-participant"
+          title={`${p.name} joined ${relTime(p.joined_at)}`}
+        >
+          <span className="av" aria-hidden="true">
+            {initialsOf(p.name)}
+          </span>
+          <span className="cnm">{p.name}</span>
+        </span>
+      ))}
+      {more > 0 ? (
+        <span
+          className="av cmore"
+          data-testid="counsel-participants-more"
+          title={people
+            .slice(SHOWN)
+            .map((p) => `${p.name} joined ${relTime(p.joined_at)}`)
+            .join('\n')}
+        >
+          +{more}
+        </span>
+      ) : null}
     </div>
   );
 }

@@ -152,7 +152,7 @@ describe('rows-written (AC40 interim, M1)', () => {
 
   // Counsel share link (0007, E2): measured, not guessed. Own measurement (query-budget key set
   // unchanged). A comment writes the comment row + its PK/ix_comment_q entries + the mw|req and
-  // mw|rows claim rows; ready writes one audit row (+ index) + claims; share/join/sheet write 0.
+  // mw|rows claim rows; ready writes one audit row (+ index) + claims; join writes one audit row; share/sheet write 0.
   test('counsel share link: comment, ready, share, join and sheet stay within their weights', async () => {
     const h = makeMem();
     const s = await session(h);
@@ -170,7 +170,9 @@ describe('rows-written (AC40 interim, M1)', () => {
     h.resetStats();
     const j = await call(h, 'POST', '/api/counsel/join', { token: share.body.token, name: 'Rita' });
     expect(j.status).toBe(200);
-    expect(h.stats.rowsWritten).toBe(0);
+    // join writes one counsel_joined audit row (+ its index entries)
+    expect(h.stats.rowsWritten).toBeGreaterThan(0);
+    expect(h.stats.rowsWritten).toBeLessThanOrEqual(W.other);
     const counsel = await counselFor(h, s, 'Rita');
     const sizes: number[] = [];
     for (const cookie of [s.cookie, counsel]) {
@@ -186,9 +188,9 @@ describe('rows-written (AC40 interim, M1)', () => {
       sizes.push(h.stats.rowsWritten);
     }
     h.resetStats();
-    expect(
-      (await call(h, 'GET', '/api/counsel/sheet', undefined, { cookie: counsel })).status,
-    ).toBe(200);
+    const sheet = await call(h, 'GET', '/api/counsel/sheet', undefined, { cookie: counsel });
+    expect(sheet.status).toBe(200);
+    expect(sheet.body.participants.map((p: { name: string }) => p.name)).toEqual(['Rita']);
     expect(h.stats.rowsWritten).toBe(0);
     h.resetStats();
     expect(

@@ -12,7 +12,7 @@ import { BaselineControl } from '../variance/BaselineControl';
 import { headerMeta } from '../variance/select';
 import { useShare } from '../counsel/counsel-share';
 import { Icon } from '../../components/ui/icon';
-import { ShareButton, ShareLine } from '../counsel/ShareControls';
+import { CounselParticipants, ShareButton, ShareLine } from '../counsel/ShareControls';
 
 export function FindingsScreen() {
   const view = useReviewView();
@@ -53,6 +53,7 @@ export function FindingsScreen() {
             </span>
           ) : null}
           {counselMode ? null : <BaselineControl />}
+          {counselMode ? null : <CounselParticipants />}
           {counselMode ? null : <ShareButton rows={view.rows} testId="findings-share" />}
           <StageStatus />
         </div>

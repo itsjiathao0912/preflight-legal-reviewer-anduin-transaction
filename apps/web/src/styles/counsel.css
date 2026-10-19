@@ -503,3 +503,29 @@ ul.ev .l1 {
 .join-form .err.on {
   display: block;
 }
+
+/* Who joined the counsel link (analyst Findings header) */
+.cpeople {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cperson {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 160px;
+}
+.cperson .av,
+.cpeople .cmore {
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+}
+.cperson .cnm {
+  font-size: 13px;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -38,6 +38,8 @@ export type DocRef = z.infer<typeof DocRefSchema>;
 
 /** Most active decisions returned by the counsel sheet. */
 export const COUNSEL_SHEET_DECISIONS_MAX = 500;
+/** Most joined counsel returned by the counsel sheet. */
+export const COUNSEL_PARTICIPANTS_MAX = 20;
 
 /** POST /api/counsel/share (analyst only) */
 export const CounselShareRequestSchema = z.object({ doc_ref: DocRefSchema });
@@ -141,6 +143,11 @@ export const CounselSheetResponseSchema = z.object({
   /** Workspace ACTIVE decisions (closed / accepted states), matched to findings by fingerprint. */
   decisions: z.array(ActiveDecisionSchema).max(COUNSEL_SHEET_DECISIONS_MAX),
   ready_at: EpochMs.nullable(),
+  /** Counsel who joined the link (distinct names, newest join first). Additive, 19-10-26. */
+  participants: z
+    .array(z.object({ name: z.string().min(1).max(COUNSEL_NAME_MAX), joined_at: EpochMs }))
+    .max(COUNSEL_PARTICIPANTS_MAX)
+    .default([]),
 });
 export type CounselSheetResponse = z.infer<typeof CounselSheetResponseSchema>;
 

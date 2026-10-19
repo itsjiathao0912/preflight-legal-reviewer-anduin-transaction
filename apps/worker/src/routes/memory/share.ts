@@ -30,7 +30,7 @@ import {
   type CounselSheetQuestion,
 } from '@aduin/core';
 import type { Handler } from '../../app';
-import { ID_RE } from '../../db/ids';
+import { ID_RE, newId } from '../../db/ids';
 import { classifyBatchError } from '../../db/tx';
 import { MEMORY_WRITE_WEIGHTS } from '../../platform/index';
 import { ProxyError } from '../../proxy/errors';
@@ -92,7 +92,7 @@ export function shareHandler(deps: MemoryDeps): Handler {
   });
 }
 
-/** POST /api/counsel/join — the token is the credential; sets the counsel cookie. No DB write. */
+/** POST /api/counsel/join — the token is the credential; sets the counsel cookie; one `counsel_joined` audit row. */
 export function joinHandler(deps: MemoryDeps): Handler {
   return handle(deps, 'counsel_join', async (request, env) => {
     writeHeaderGuards(request);
@@ -121,6 +121,16 @@ export function joinHandler(deps: MemoryDeps): Handler {
     // never outlive the sandbox (a token minted before an expiry change stays bounded)
     const exp = Math.min(v.claims.exp, Math.floor(live.expires_at / 1000));
     if (exp <= nowS) throw new ProxyError('invalid_session', 'share_expired');
+    // Record the join so the analyst sees who joined (best effort: never blocks joining).
+    try {
+      const op = `cj_${sha256Hex(`cj|${v.claims.w}|${name}|${Math.floor(now / 3_600_000)}`).slice(0, 40)}`;
+      await db
+        .prepare(COUNSEL_SQL.insertJoin)
+        .bind(v.claims.w, newId('ae', now), op, now, v.claims.a, name)
+        .run();
+    } catch {
+      /* join still succeeds; the participant list just misses this entry */
+    }
     const cookie = await signCounselCookie(
       {
         w: v.claims.w,
@@ -248,12 +258,16 @@ export function sheetHandler(deps: MemoryDeps): Handler {
     const ctx = await counselCtx(request, env, deps.now(), { write: false });
     const since = sinceParam(request);
     const docRef = sheetDocRef(request, ctx);
-    const [qs, as, comments, ready, ds] = await Promise.all([
+    const [qs, as, comments, ready, ds, ps] = await Promise.all([
       ctx.db.prepare(COUNSEL_SQL.sheetQuestions).bind(ctx.workspaceId).all<SheetQuestionRow>(),
       ctx.db.prepare(COUNSEL_SQL.sheetAnswers).bind(ctx.workspaceId, since).all<SheetAnswerRow>(),
       listCommentsSince(ctx, since),
       ctx.db.prepare(COUNSEL_SQL.readyAt).bind(ctx.workspaceId).first<{ at: number | null }>(),
       ctx.db.prepare(DECISION_SQL.listActive).bind(ctx.workspaceId).all<DecisionDbRow>(),
+      ctx.db
+        .prepare(COUNSEL_SQL.participants)
+        .bind(ctx.workspaceId)
+        .all<{ name: string; joined_at: number }>(),
     ]);
     const decisions: ActiveDecision[] = ds.results.map(toActiveDecision);
     return ok(CounselSheetResponseSchema, {
@@ -266,6 +280,7 @@ export function sheetHandler(deps: MemoryDeps): Handler {
       comments,
       decisions,
       ready_at: ready?.at ?? null,
+      participants: ps.results.map((p) => ({ name: p.name, joined_at: p.joined_at })),
     });
   });
 }
