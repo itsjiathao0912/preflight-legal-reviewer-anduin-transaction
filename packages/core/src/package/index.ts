@@ -22,9 +22,19 @@ export {
   buildPackageFacts,
   extractPrimaryFacts,
   scopeLabelsOf,
+  packageViewBlocks,
   type PackageFactsInput,
+  type PackageViewBlock,
 } from './facts';
 export { extractPackageDefinitions } from './definitions';
+export {
+  MAX_PARTS,
+  extractParts,
+  partAt,
+  citedPartLabel,
+  resolvedPartOf,
+  definitionLocationOf,
+} from './parts';
 export { extractExternalReferences, NAMED_DOCUMENTS, type ReferenceContext } from './references';
 export {
   applyPackageDefinitions,

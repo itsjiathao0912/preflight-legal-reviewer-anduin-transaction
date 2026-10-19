@@ -7,6 +7,7 @@ import type {
   EngineResult,
   EngineSettings,
   ReadPackageDocResponse,
+  ReadPackageViewResponse,
   RegressionCheck,
   RunRegressionRef,
   RunRegressionResponse,
@@ -111,6 +112,17 @@ export async function readPackageDocInWorker(
 ): Promise<ReadPackageDocResponse> {
   try {
     return await engine().readPackageDoc(input, opts);
+  } catch {
+    return { ok: false, code: 'unknown' };
+  }
+}
+
+/** Source File viewer: read-only blocks of one package member (code-only failure). */
+export async function readPackageViewInWorker(
+  input: AnalyzeInput,
+): Promise<ReadPackageViewResponse> {
+  try {
+    return await engine().readPackageView(input);
   } catch {
     return { ok: false, code: 'unknown' };
   }

@@ -3,6 +3,7 @@ import { Icon } from '../../components/ui/icon';
 import { usePackage } from '../../state/package';
 import { useReview } from '../../state/review';
 import type { PackageDocView, PackageView } from './contract';
+import { openPackageFile, typeLabel } from './open-file';
 
 const NONE = 'none';
 
@@ -30,11 +31,16 @@ function Mention({
   const blockId = useReview((s) => s.result?.blocks[r.location.blockIndex]?.id ?? null);
   const label = maskAndClamp(r.targetLabel, 80);
   const target = view.documents.find((d) => d.id === r.resolvedDocId);
+  const part = r.resolution === 'resolved' && target ? r.resolvedPart : undefined;
   const status =
     r.resolution === 'resolved'
       ? {
           icon: 'check' as const,
-          word: `Resolved to ${target ? maskAndClamp(target.name, 120) : 'a document'}`,
+          word: part
+            ? `Resolved to ${typeLabel(target!.type)} · Section ${maskAndClamp(part.label, 12)}${
+                part.title ? ` (${maskAndClamp(part.title, 80)})` : ''
+              }`
+            : `Resolved to ${target ? maskAndClamp(target.name, 120) : 'a document'}`,
         }
       : r.resolution === 'not_in_package'
         ? { icon: 'stop' as const, word: 'Not in package' }
@@ -82,6 +88,17 @@ function Mention({
           >
             <Icon name="eye" />
             Show in document
+          </button>
+        ) : null}
+        {part && target ? (
+          <button
+            type="button"
+            className="btn"
+            data-testid="package-reference-open"
+            aria-label={`Open Section ${maskAndClamp(part.label, 12)} in ${typeLabel(target.type)}`}
+            onClick={() => openPackageFile(view, target.id, part.blockIndex)}
+          >
+            {`Open in ${typeLabel(target.type)} →`}
           </button>
         ) : null}
       </div>

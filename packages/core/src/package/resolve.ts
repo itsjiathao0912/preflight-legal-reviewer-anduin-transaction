@@ -1,3 +1,4 @@
+import { resolvedPartOf } from './parts';
 import { referenceId } from './references';
 import type {
   ExternalReference,
@@ -74,7 +75,13 @@ export function resolveReferences(
 ): ExternalReference[] {
   const factsById = new Map(facts.map((f) => [f.contentHash, f]));
   const others = docs.filter((d) => d.id !== primaryId);
-  return raw.map((r) => {
+  const withPart = (e: ExternalReference): ExternalReference => {
+    if (e.resolution !== 'resolved' || !e.resolvedDocId) return e;
+    const part = resolvedPartOf(e, factsById.get(e.resolvedDocId));
+    return part ? { ...e, resolvedPart: part } : e;
+  };
+  return raw.map((r) => withPart(resolveOne(r)));
+  function resolveOne(r: RawReference): ExternalReference {
     const base = { ...r, id: referenceId(primaryId, r), confirmedByAnalyst: false };
     const confirmed = confirmedTargets[r.targetKey];
     if (confirmed !== undefined) {
@@ -99,5 +106,5 @@ export function resolveReferences(
     if (cands.length === 1 && (cands[0]!.confidence === 'high' || cands[0]!.confirmed))
       return { ...base, resolution: 'resolved', resolvedDocId: cands[0]!.id };
     return { ...base, resolution: 'unclear' };
-  });
+  }
 }

@@ -1,6 +1,7 @@
 import { family } from '../detectors/undefined-term';
 import type { Finding } from '../findings/schema';
 import type { Block } from '../model/types';
+import { definitionLocationOf } from './parts';
 import { blockTextOf, locationOf } from './quote';
 import type {
   CrossDocDefinition,
@@ -215,6 +216,7 @@ export function applyPackageDefinitions(
       findingId: f.id,
       definingDocId: def.docId,
       quote: def.quote,
+      definitionLocation: definitionLocationOf(def),
     });
   }
   return { findings: kept, suppressed };
@@ -239,6 +241,7 @@ export function buildCrossDocTerms(
       mentions: 1,
       definingDocId: s.definingDocId,
       quote: s.quote,
+      ...(s.definitionLocation ? { definitionLocation: s.definitionLocation } : {}),
     });
   if (primary.carveOutTarget) {
     for (const u of primary.usedTerms) {
@@ -253,6 +256,7 @@ export function buildCrossDocTerms(
               mentions: u.mentions,
               definingDocId: def.docId,
               quote: def.quote,
+              definitionLocation: definitionLocationOf(def),
             }
           : {
               term: u.term,

@@ -7,6 +7,9 @@ import { AI_SUGGESTION, Provenance } from '../../ai/Provenance';
 import { useCounsel } from '../../counsel/counsel-store';
 import { FindingCounselBlock } from '../../counsel/FindingCounselBlock';
 import { EMPTY_DRAFTS, wordingFor } from '../../counsel/sheet-model';
+import { fileLabel, openPackageFile } from '../../package/open-file';
+import { usePackageView } from '../../package/package-view';
+import { sourceFilesFor } from '../../package/source-files';
 import { memoryLabelText } from '../memory-labels';
 import type { Row } from '../model';
 import { reasonLabel } from '../reasons';
@@ -39,6 +42,12 @@ export function ExpandedBlock({ row, twin }: { row: Row; twin?: FindingView | un
   useEffect(() => {
     void loadDrafts(docId);
   }, [docId, loadDrafts]);
+  const pkg = usePackageView();
+  const blockIndex = useReview((s) => {
+    const i = s.result?.blocks.findIndex((b) => b.id === f.anchor.blockId) ?? -1;
+    return i < 0 ? null : i;
+  });
+  const sources = sourceFilesFor(f, pkg, blockIndex);
   const readings = f.detail.interpretations;
   const question = wordingFor(row, drafts).text;
   const qOpen = isBlocking(row) || readings.length > 0;
@@ -150,6 +159,30 @@ export function ExpandedBlock({ row, twin }: { row: Row; twin?: FindingView | un
               <dd>
                 {twin.model ?? 'AI'} · {twin.provenance === 'cache' ? 'from cache' : 'fresh'} ·
                 flagged the same place and class (agrees)
+              </dd>
+            </>
+          ) : null}
+          {sources && pkg ? (
+            <>
+              <dt>Source File</dt>
+              <dd data-testid="finding-source-file">
+                {sources.files.map((e) => (
+                  <button
+                    key={e.doc.id}
+                    type="button"
+                    className="btn ghost sm"
+                    data-testid="finding-source-file-open"
+                    title="Open this file in the reading pane"
+                    onClick={() => openPackageFile(pkg, e.doc.id, e.blockIndex)}
+                  >
+                    {fileLabel(e.doc)}
+                  </button>
+                ))}
+                {sources.missing.map((m) => (
+                  <span key={m} className="dim">
+                    {m}
+                  </span>
+                ))}
               </dd>
             </>
           ) : null}

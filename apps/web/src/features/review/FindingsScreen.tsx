@@ -1,3 +1,4 @@
+import { useRefView } from '../../state/ref-view';
 import { useReview } from '../../state/review';
 import { StageStatus } from '../processing/StageStatus';
 import { isScanResult } from '../scan/scan-model';
@@ -18,6 +19,7 @@ export function FindingsScreen() {
   const doc = useReview((s) => s.doc);
   const result = useReview((s) => s.result);
   const scanPages = useScan((s) => s.pageCount);
+  const refOpen = useRefView((s) => s.target !== null);
   const counselMode = useShare((s) => s.role === 'counsel');
   const readyAt = useShare((s) => s.readyAt);
   const openError = useShare((s) => (s.role === 'counsel' ? s.openError : null));
@@ -60,7 +62,7 @@ export function FindingsScreen() {
       {counselMode ? null : <ShareLine />}
       <Banners />
       <div className="work fv2-work">
-        {scan ? <ScanPane rows={view.rows} /> : <DocPane rows={markRows} />}
+        {scan && !refOpen ? <ScanPane rows={view.rows} /> : <DocPane rows={markRows} />}
         <FindingsPanelV2 view={view} />
       </div>
     </section>

@@ -1,7 +1,16 @@
-import { maskAndClamp, maskQuote, type CrossDocTerm } from '@aduin/core';
+import { maskAndClamp, maskQuote, type CrossDocTerm, type DefinitionLocation } from '@aduin/core';
 import { Icon } from '../../components/ui/icon';
 import { TYPE_LABELS } from '../open-document/PackageConfirmTable';
 import type { PackageView } from './contract';
+import { openPackageFile } from './open-file';
+
+/** "Section 1.1, ¶ 4" (numbered part) or "Article I. Definitions, ¶ 12" (block in the file). */
+export function definitionLocationText(loc: DefinitionLocation): string {
+  if (loc.sectionLabel && loc.paragraph)
+    return `Section ${maskAndClamp(loc.sectionLabel, 12)}, ¶ ${loc.paragraph}`;
+  const sec = loc.sectionPath.at(-1);
+  return `${sec ? `${maskAndClamp(sec, 80)}, ` : ''}¶ ${loc.blockIndex + 1}`;
+}
 
 const REASON: Record<NonNullable<CrossDocTerm['reason']>, string> = {
   no_reference_document: 'No LPA in the package',
@@ -22,6 +31,8 @@ export function PackageTerms({ view }: { view: PackageView }) {
         {view.terms.map((t) => {
           const def = view.documents.find((d) => d.id === t.definingDocId);
           const defined = t.status === 'defined_in_package';
+          const where = defined && t.definitionLocation ? t.definitionLocation : null;
+          const label = def ? TYPE_LABELS[def.type] : 'a reference document';
           return (
             <li
               key={t.term}
@@ -33,11 +44,24 @@ export function PackageTerms({ view }: { view: PackageView }) {
               <span className="mut">
                 ({t.mentions} {t.mentions === 1 ? 'mention' : 'mentions'})
               </span>
-              <div className="pkg-lens-st">
-                <Icon name={defined ? 'check' : 'info'} />
-                {defined
-                  ? `Defined in ${def ? TYPE_LABELS[def.type] : 'a reference document'}`
-                  : `Unverified: ${t.reason ? REASON[t.reason] : REASON.not_in_reference_documents}`}
+              <div className="pkg-lens-row">
+                <span className="pkg-lens-st" data-testid="package-term-status">
+                  <Icon name={defined ? 'check' : 'info'} />
+                  {defined
+                    ? `Defined in ${label}${where ? ` · ${definitionLocationText(where)}` : ''}`
+                    : `Unverified: ${t.reason ? REASON[t.reason] : REASON.not_in_reference_documents}`}
+                </span>
+                {defined && def && !def.isPrimary ? (
+                  <button
+                    type="button"
+                    className="btn"
+                    data-testid="package-term-open"
+                    aria-label={`Open the definition of ${maskAndClamp(t.term, 120)} in ${label}`}
+                    onClick={() => openPackageFile(view, def.id, where ? where.blockIndex : null)}
+                  >
+                    {`Open in ${label} →`}
+                  </button>
+                ) : null}
               </div>
               {defined && t.quote ? <q className="pkg-lens-quote">{maskQuote(t.quote)}</q> : null}
             </li>

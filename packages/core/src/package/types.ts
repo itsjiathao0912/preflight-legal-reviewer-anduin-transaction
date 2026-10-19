@@ -52,13 +52,37 @@ export const DocLocationSchema = z.strictObject({
 });
 export type DocLocation = z.infer<typeof DocLocationSchema>;
 
+/**
+ * Source File traceability (additive): a numbered part of a package document ("3.2 Permitted
+ * Uses", "Section 7 Transfers"). Only labels that occur once in the document are kept.
+ */
+export const PackagePartSchema = z.strictObject({
+  label: z.string().min(1).max(12),
+  title: z.string().max(80),
+  blockIndex: z.number().int().nonnegative(),
+});
+export type PackagePart = z.infer<typeof PackagePartSchema>;
+
 export const CrossDocDefinitionSchema = z.strictObject({
   docId: Hex64,
   term: z.string().min(1).max(120),
   quote: z.string().max(240),
   location: DocLocationSchema,
+  /** Additive: label of the numbered part holding the definition ("1.1"), when known. */
+  sectionLabel: z.string().min(1).max(12).optional(),
+  /** Additive: 1-based paragraph inside that part (the part's own block is paragraph 1). */
+  paragraph: z.number().int().positive().optional(),
 });
 export type CrossDocDefinition = z.infer<typeof CrossDocDefinitionSchema>;
+
+/** Additive: where a cross-document term is defined inside its defining document. */
+export const DefinitionLocationSchema = z.strictObject({
+  blockIndex: z.number().int().nonnegative(),
+  sectionPath: z.array(z.string()),
+  sectionLabel: z.string().min(1).max(12).optional(),
+  paragraph: z.number().int().positive().optional(),
+});
+export type DefinitionLocation = z.infer<typeof DefinitionLocationSchema>;
 
 export const PackageFactsSchema = z.strictObject({
   contentHash: Hex64,
@@ -70,6 +94,8 @@ export const PackageFactsSchema = z.strictObject({
   headText: z.string().max(1500),
   headings: z.array(z.string().max(120)).max(200),
   definitions: z.array(CrossDocDefinitionSchema),
+  /** Additive (Source File): unique numbered parts; absent on facts cached before it existed. */
+  parts: z.array(PackagePartSchema).max(400).optional(),
 });
 export type PackageFacts = z.infer<typeof PackageFactsSchema>;
 
@@ -92,6 +118,11 @@ export const ExternalReferenceSchema = RawReferenceSchema.extend({
   id: z.string().regex(/^[0-9a-f]{16}$/),
   resolution: ReferenceResolutionSchema,
   resolvedDocId: Hex64.optional(),
+  /**
+   * Additive (Source File): the cited part of the resolved document ("Section 3.2 of the
+   * Partnership Agreement"), only when that exact label exists in it. Never guessed.
+   */
+  resolvedPart: PackagePartSchema.optional(),
   confirmedByAnalyst: z.boolean(),
 }).strict();
 export type ExternalReference = z.infer<typeof ExternalReferenceSchema>;
@@ -108,6 +139,7 @@ export const SuppressedTermSchema = z.strictObject({
   findingId: z.string(),
   definingDocId: Hex64,
   quote: z.string().max(240),
+  definitionLocation: DefinitionLocationSchema.optional(),
 });
 export type SuppressedTerm = z.infer<typeof SuppressedTermSchema>;
 
@@ -130,6 +162,8 @@ export const CrossDocTermSchema = z.strictObject({
   definingDocId: Hex64.optional(),
   quote: z.string().max(240).optional(),
   reason: z.enum(['no_reference_document', 'not_in_reference_documents']).optional(),
+  /** Additive (Source File): where the defining document defines the term. */
+  definitionLocation: DefinitionLocationSchema.optional(),
 });
 export type CrossDocTerm = z.infer<typeof CrossDocTermSchema>;
 

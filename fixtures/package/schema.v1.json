@@ -144,6 +144,27 @@
             "type": "string",
             "pattern": "^[0-9a-f]{64}$"
           },
+          "resolvedPart": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 12
+              },
+              "title": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "blockIndex": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": ["label", "title", "blockIndex"],
+            "additionalProperties": false
+          },
           "confirmedByAnalyst": {
             "type": "boolean"
           }
@@ -191,6 +212,34 @@
           "reason": {
             "type": "string",
             "enum": ["no_reference_document", "not_in_reference_documents"]
+          },
+          "definitionLocation": {
+            "type": "object",
+            "properties": {
+              "blockIndex": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "sectionPath": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "sectionLabel": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 12
+              },
+              "paragraph": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": ["blockIndex", "sectionPath"],
+            "additionalProperties": false
           }
         },
         "required": ["term", "status", "mentions"],

@@ -10,6 +10,7 @@ import {
   applyPackageDefinitions,
   buildAiCandidatesWithSites,
   buildPackageFacts,
+  packageViewBlocks,
   extractPrimaryFacts,
   buildOutlineDraft,
   buildDocGraph,
@@ -834,6 +835,15 @@ export const api: EngineApi = {
         ...(scanOnly ? { needsOcr: true } : {}),
       });
       return { ok: true, facts };
+    } catch (e) {
+      return { ok: false, code: codeOf(e) };
+    }
+  },
+
+  async readPackageView(input) {
+    try {
+      const read = await readInput(normalizeInput(input), () => {});
+      return { ok: true, blocks: packageViewBlocks(read.docHash, read.lines) };
     } catch (e) {
       return { ok: false, code: codeOf(e) };
     }

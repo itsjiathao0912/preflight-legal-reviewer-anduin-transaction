@@ -1,10 +1,11 @@
 import { annexLabels } from '../detectors/flow';
 import { CARVE_OUT_RE } from '../detectors/undefined-term';
 import type { DocGraph } from '../graph/graph';
-import type { Line } from '../model/types';
+import type { Block, Line } from '../model/types';
 import { structure } from '../structure/structurer';
 import type { Structure } from '../structure/types';
 import { extractPackageDefinitions } from './definitions';
+import { extractParts, partAt } from './parts';
 import { blockTextOf } from './quote';
 import { extractExternalReferences } from './references';
 import { extractUsedTerms } from './terms';
@@ -61,7 +62,12 @@ export function buildPackageFacts(input: PackageFactsInput): PackageFacts {
     .filter((b) => b.kind === 'heading')
     .slice(0, FACTS_LIMITS.headings)
     .map((b) => blockTextOf(b).trim().slice(0, FACTS_LIMITS.headingChars));
-  base.definitions = extractPackageDefinitions(input.contentHash, s.blocks);
+  const parts = extractParts(s.blocks);
+  base.parts = parts;
+  base.definitions = extractPackageDefinitions(input.contentHash, s.blocks).map((d) => {
+    const at = partAt(s.blocks, parts, d.location.blockIndex);
+    return at ? { ...d, ...at } : d;
+  });
   return base;
 }
 
@@ -112,4 +118,21 @@ export function extractPrimaryFacts(
     scopeLabels,
     suppressed: [...suppressed],
   };
+}
+
+/** Source File viewer: the blocks of one package member, indexed exactly like its facts. */
+export interface PackageViewBlock {
+  id: string;
+  kind: Block['kind'];
+  text: string;
+  section: string | null;
+}
+
+export function packageViewBlocks(contentHash: string, lines: readonly Line[]): PackageViewBlock[] {
+  return structure(contentHash, [...lines]).blocks.map((b) => ({
+    id: b.id,
+    kind: b.kind,
+    text: blockTextOf(b),
+    section: b.section_path[0] ?? null,
+  }));
 }

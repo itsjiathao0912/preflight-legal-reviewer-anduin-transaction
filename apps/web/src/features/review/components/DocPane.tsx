@@ -1,9 +1,15 @@
 import { mask } from '@aduin/core';
-import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Icon } from '../../../components/ui/icon';
 import { Popover } from '../../../components/ui/popover';
 import type { BlockView, DocSource, SectionView } from '../../../engine/types';
 import { useFilters } from '../../../state/filters';
+import {
+  saveSubDocScroll,
+  takeSubDocScroll,
+  useRefView,
+  type RefBlock,
+} from '../../../state/ref-view';
 import { useReview } from '../../../state/review';
 import type { Row } from '../model';
 import { DocZoomControls, scrollIntoViewVertically, useDocZoom } from '../zoom';
@@ -98,7 +104,7 @@ const Block = memo(function Block({
   masks,
   selectedId,
 }: {
-  b: BlockView;
+  b: Pick<BlockView, 'id' | 'kind' | 'text'>;
   marks: Mark[];
   masks: Mask[];
   selectedId: string | null;
@@ -200,14 +206,64 @@ function JumpMenu({ sections, rows }: { sections: SectionView[]; rows: Row[] }) 
   );
 }
 
+/** Source File viewer: a package reference file, read-only, with no finding highlights. */
+function RefArticle({ name, blocks }: { name: string; blocks: RefBlock[] }) {
+  return (
+    <article className="paper" data-testid="ref-view-paper">
+      <h1>{name}</h1>
+      <p className="sub">Reference file · read-only</p>
+      {blocks.map((b) => (
+        <Block key={b.id} b={b} marks={[]} masks={NO_MASKS} selectedId={null} />
+      ))}
+    </article>
+  );
+}
+
 export function DocPane({ rows }: { rows: Row[] }) {
   const result = useReview((s) => s.result);
   const doc = useReview((s) => s.doc);
   const selectedId = useReview((s) => s.selectedId);
   const selectSeq = useReview((s) => s.selectSeq);
   const revealed = useReview((s) => s.revealed);
+  const ref = useRefView((s) => s.target);
+  const refStatus = useRefView((s) => s.status);
+  const refBlocks = useRefView((s) => s.blocks);
+  const refSeq = useRefView((s) => s.seq);
   const scrollRef = useRef<HTMLDivElement>(null);
   const zoom = useDocZoom(scrollRef, selectedId);
+  const docId = doc?.id ?? null;
+
+  // a different open document closes the reference file
+  const lastDoc = useRef(docId);
+  useEffect(() => {
+    if (lastDoc.current === docId) return;
+    lastDoc.current = docId;
+    if (useRefView.getState().target) useRefView.getState().back();
+  }, [docId]);
+
+  // reference file shown: scroll to the target block and flash it; Back: restore the sub doc scroll
+  const wasRef = useRef(false);
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    if (ref && refStatus === 'ready') {
+      wasRef.current = true;
+      const blk = ref.blockIndex !== null ? refBlocks[ref.blockIndex] : undefined;
+      const target = blk ? document.getElementById(`blk-${blk.id}`) : null;
+      if (!target) {
+        el.scrollTop = 0;
+        return;
+      }
+      scrollIntoViewVertically(target, 'center');
+      target.classList.remove('ref-flash');
+      void target.offsetWidth;
+      target.classList.add('ref-flash');
+    } else if (!ref && wasRef.current) {
+      wasRef.current = false;
+      const top = takeSubDocScroll();
+      if (top !== null) el.scrollTop = top;
+    }
+  }, [ref, refStatus, refBlocks, refSeq]);
 
   const byBlock = useMemo(() => {
     const m = new Map<string, { marks: Mark[]; masks: Mask[] }>();
@@ -240,12 +296,26 @@ export function DocPane({ rows }: { rows: Row[] }) {
   }, [selectedId, selectSeq]);
 
   return (
-    <section className="docpane" aria-label="Document reading view">
+    <section className={`docpane${ref ? ' docpane-ref' : ''}`} aria-label="Document reading view">
+      {ref ? (
+        <div className="refbar" data-testid="ref-view-bar">
+          <span className="refbar-t">{`Viewing ${ref.label} (reference file)`}</span>
+          <span aria-hidden="true">·</span>
+          <button
+            type="button"
+            className="btn ghost sm"
+            data-testid="ref-view-back"
+            onClick={() => useRefView.getState().back()}
+          >
+            {`← Back to ${ref.backLabel}`}
+          </button>
+        </div>
+      ) : null}
       <div className="docbar fv2-docbar">
         <span className="fv2-src" title="Reading view: text extracted from the document">
-          {SOURCE_LABEL[result?.source ?? 'html']}
+          {ref ? 'Reference file' : SOURCE_LABEL[result?.source ?? 'html']}
         </span>
-        <JumpMenu sections={result?.sections ?? []} rows={rows} />
+        <JumpMenu sections={ref ? [] : (result?.sections ?? [])} rows={rows} />
         <DocZoomControls pct={zoom.pct} mode={zoom.state.mode} dispatch={zoom.dispatch} />
       </div>
       <div
@@ -257,8 +327,22 @@ export function DocPane({ rows }: { rows: Row[] }) {
         role="region"
         aria-label="Document text"
         data-testid="doc-pane"
+        data-ref-view={ref ? ref.docId : undefined}
+        onScroll={(e) => {
+          if (!ref) saveSubDocScroll(e.currentTarget.scrollTop);
+        }}
       >
-        {result && doc ? (
+        {ref ? (
+          refStatus === 'ready' ? (
+            <RefArticle name={ref.name} blocks={refBlocks} />
+          ) : (
+            <p className="mut" data-testid="ref-view-status">
+              {refStatus === 'loading'
+                ? `Opening ${ref.label}…`
+                : `${ref.label} could not be opened here (scanned or no longer stored).`}
+            </p>
+          )
+        ) : result && doc ? (
           <article className="paper">
             <h1>{doc.name}</h1>
             <p className="sub">

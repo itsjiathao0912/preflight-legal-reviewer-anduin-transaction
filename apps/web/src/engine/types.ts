@@ -143,6 +143,11 @@ export interface EngineResult {
 export type ReadPackageDocResponse =
   { ok: true; facts: PackageFacts } | { ok: false; code: string };
 
+/** Source File viewer: blocks of one package member (indexed like its facts). */
+export type ReadPackageViewResponse =
+  | { ok: true; blocks: Array<Pick<BlockView, 'id' | 'kind' | 'text' | 'section'>> }
+  | { ok: false; code: string };
+
 /** Phase 06: document source kinds. */
 export type DocSource = 'html' | 'pdf' | 'docx' | 'ocr';
 
@@ -312,6 +317,8 @@ export interface EngineApi {
    * buildPackageFacts). Never throws across Comlink.
    */
   readPackageDoc(input: AnalyzeInput, opts: { name: string }): Promise<ReadPackageDocResponse>;
+  /** Source File viewer: read-only blocks of one package member (read + structure). Never throws. */
+  readPackageView(input: AnalyzeInput): Promise<ReadPackageViewResponse>;
   /**
    * Variance Phase 02 (C1): the variance pass of the current document against one same-firm
    * baseline (core runVariance). Reuses the prepare helper; never touches session, Turnstile or
