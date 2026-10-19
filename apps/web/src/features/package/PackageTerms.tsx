@@ -1,14 +1,9 @@
-import {
-  QUOTE_MAX,
-  maskAndClamp,
-  maskQuote,
-  type CrossDocTerm,
-  type DefinitionLocation,
-} from '@aduin/core';
+import { maskAndClamp, type CrossDocTerm, type DefinitionLocation } from '@aduin/core';
 import { Icon } from '../../components/ui/icon';
 import { TYPE_LABELS } from '../open-document/PackageConfirmTable';
 import type { PackageView } from './contract';
 import { openPackageFile } from './open-file';
+import { quoteText } from './quote-text';
 
 /** "Section 1.1, ¶ 4" (numbered part) or "Article I. Definitions, ¶ 12" (block in the file). */
 export function definitionLocationText(loc: DefinitionLocation): string {
@@ -18,23 +13,8 @@ export function definitionLocationText(loc: DefinitionLocation): string {
   return `${sec ? `${maskAndClamp(sec, 80)}, ` : ''}¶ ${loc.blockIndex + 1}`;
 }
 
-const QUOTE_MARKS = /^[\s"'“”‘’«»]+|[\s"'“”‘’«»]+$/g;
-
-/**
- * Display text of a stored term quote inside <q> (which adds its own quote marks): outer quote
- * marks are stripped so they do not double up. Only a quote cut by core's stored-quote clamp (its
- * stored length is at QUOTE_MAX) and not ending a sentence ends at a word boundary with "…";
- * shorter quotes render unchanged.
- */
-export function termQuoteText(quote: string): string {
-  let s = maskQuote(quote.replace(QUOTE_MARKS, ''));
-  if (quote.length < QUOTE_MAX) return s;
-  if (s.endsWith('…')) s = s.slice(0, -1);
-  if (/[.;:!?)]$/.test(s)) return s;
-  const cut = s.lastIndexOf(' ');
-  if (cut > s.length / 2) s = s.slice(0, cut);
-  return `${s.replace(/[\s,;:(–—-]+$/, '')}…`;
-}
+/** Kept for existing callers: the shared package quote display helper. */
+export const termQuoteText = quoteText;
 
 const REASON: Record<NonNullable<CrossDocTerm['reason']>, string> = {
   no_reference_document: 'No LPA in the package',

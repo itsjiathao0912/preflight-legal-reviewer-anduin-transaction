@@ -200,4 +200,20 @@ describe('package-lens', () => {
     expect(tabsFor(true).at(-1)).toEqual({ id: 'terms', label: 'Terms & package' });
     expect(tabsFor(true)).toHaveLength(3);
   });
+
+  it('offers "Open in LPA" for a reference resolved to a whole file', () => {
+    const v: PackageView = {
+      ...VIEW,
+      references: [
+        ref({ resolution: 'resolved', resolvedDocId: H('b'), quote: '““Interests” means x.' }),
+      ],
+    };
+    const el = render(<PackageLens view={v} onShow={() => undefined} />);
+    const open = q(el, 'package-reference-open');
+    expect(open).toHaveLength(1);
+    expect(open[0]!.textContent).toBe('Open in LPA →');
+    expect(q(el, 'package-reference')[0]!.querySelector('q')!.textContent).toBe(
+      'Interests” means x.',
+    );
+  });
 });

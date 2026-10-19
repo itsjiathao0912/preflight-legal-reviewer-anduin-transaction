@@ -15,7 +15,7 @@ export function PackageLens({
   onShow,
 }: {
   view: PackageView;
-  onShow: (blockId: string) => void;
+  onShow: (blockId: string, quote?: string | null) => void;
 }) {
   const firm = view.firmId ? maskAndClamp(view.firmName, 120) : 'Other / no firm';
   return (

@@ -157,7 +157,11 @@ describe('source-file: external reference part', () => {
       <PackageReferences view={view({ references: [ref({})] })} onShow={() => undefined} />,
     );
     expect(q(el, 'package-reference')[0]!.textContent).toContain(`Resolved to ${LPA_DOC.name}`);
-    expect(q(el, 'package-reference-open')).toHaveLength(0);
+    const open = q(el, 'package-reference-open') as HTMLButtonElement[];
+    expect(open).toHaveLength(1);
+    expect(open[0]!.textContent).toBe('Open in LPA →');
+    act(() => open[0]!.click());
+    expect(useRefView.getState().target?.blockIndex).toBeNull();
   });
 });
 

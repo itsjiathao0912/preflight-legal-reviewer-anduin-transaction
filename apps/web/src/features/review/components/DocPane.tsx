@@ -10,6 +10,7 @@ import {
   useRefView,
   type RefBlock,
 } from '../../../state/ref-view';
+import { useDocFocus, locateQuote, textRange } from '../../../state/doc-focus';
 import { useReview } from '../../../state/review';
 import type { Row } from '../model';
 import { DocZoomControls, scrollIntoViewVertically, useDocZoom } from '../zoom';
@@ -264,6 +265,41 @@ export function DocPane({ rows }: { rows: Row[] }) {
       if (top !== null) el.scrollTop = top;
     }
   }, [ref, refStatus, refBlocks, refSeq]);
+
+  // "Show in document" (no finding needed): scroll to the block, flash it, and keep the block and
+  // the quoted span highlighted until the next navigation
+  const focus = useDocFocus((s) => s.focus);
+  const focusSeq = useDocFocus((s) => s.seq);
+  const blockCount = result?.blocks.length ?? 0;
+  useLayoutEffect(() => {
+    const root = scrollRef.current;
+    if (!root) return;
+    for (const old of root.querySelectorAll('.doc-focus'))
+      old.classList.remove('doc-focus', 'ref-flash');
+    const hl = (globalThis as { CSS?: { highlights?: Map<string, unknown> } }).CSS?.highlights;
+    hl?.delete('doc-focus');
+    if (!focus || ref) return;
+    const target = document.getElementById(`blk-${focus.blockId}`);
+    if (!target) return;
+    scrollIntoViewVertically(target, 'center');
+    target.classList.add('doc-focus');
+    void target.offsetWidth;
+    target.classList.add('ref-flash');
+    const H = (globalThis as { Highlight?: new (r: Range) => unknown }).Highlight;
+    if (focus.quote && hl && H) {
+      const at = locateQuote(target.textContent ?? '', focus.quote);
+      const range = at ? textRange(target, at.start, at.end) : null;
+      if (range) hl.set('doc-focus', new H(range));
+    }
+  }, [focus, focusSeq, ref, blockCount]);
+
+  // the next navigation (a finding selected, another document) ends the highlight
+  const lastNav = useRef({ selectSeq, docId });
+  useEffect(() => {
+    const prev = lastNav.current;
+    lastNav.current = { selectSeq, docId };
+    if (prev.selectSeq !== selectSeq || prev.docId !== docId) useDocFocus.getState().clear();
+  }, [selectSeq, docId]);
 
   const byBlock = useMemo(() => {
     const m = new Map<string, { marks: Mark[]; masks: Mask[] }>();

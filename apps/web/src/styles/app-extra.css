@@ -538,3 +538,12 @@ mark.q.sev-note {
     background: rgba(243, 214, 118, 0.3);
   }
 }
+/* "Show in document": the block stays marked until the next navigation; the quote is highlighted */
+.paper .doc-focus {
+  border-radius: 4px;
+  box-shadow: -6px 0 0 0 rgba(243, 214, 118, 0.9);
+  background: rgba(243, 214, 118, 0.14);
+}
+::highlight(doc-focus) {
+  background-color: rgba(243, 214, 118, 0.6);
+}

@@ -1,9 +1,10 @@
-import { maskAndClamp, maskQuote, type ExternalReference } from '@aduin/core';
+import { maskAndClamp, type ExternalReference } from '@aduin/core';
 import { Icon } from '../../components/ui/icon';
 import { usePackage } from '../../state/package';
 import { useReview } from '../../state/review';
 import type { PackageDocView, PackageView } from './contract';
 import { openPackageFile, typeLabel } from './open-file';
+import { quoteText } from './quote-text';
 
 const NONE = 'none';
 
@@ -26,7 +27,7 @@ function Mention({
 }: {
   r: ExternalReference;
   view: PackageView;
-  onShow: (blockId: string) => void;
+  onShow: (blockId: string, quote?: string | null) => void;
 }) {
   const blockId = useReview((s) => s.result?.blocks[r.location.blockIndex]?.id ?? null);
   const label = maskAndClamp(r.targetLabel, 80);
@@ -53,7 +54,7 @@ function Mention({
       data-resolution={r.resolution}
       data-target-key={r.targetKey}
     >
-      <q className="pkg-lens-quote">{maskQuote(r.quote)}</q>
+      <q className="pkg-lens-quote">{quoteText(r.quote)}</q>
       <div className="mut">{locationText(r)}</div>
       <div className="pkg-lens-row">
         <span className="pkg-lens-st">
@@ -84,7 +85,7 @@ function Mention({
             className="btn"
             data-testid="package-reference-show"
             aria-label={`Show ${label} reference in the document`}
-            onClick={() => onShow(blockId)}
+            onClick={() => onShow(blockId, r.quote)}
           >
             <Icon name="eye" />
             Show in document
@@ -100,6 +101,16 @@ function Mention({
           >
             {`Open in ${typeLabel(target.type)} →`}
           </button>
+        ) : r.resolution === 'resolved' && target && !target.isPrimary ? (
+          <button
+            type="button"
+            className="btn"
+            data-testid="package-reference-open"
+            aria-label={`Open ${maskAndClamp(target.name, 120)} in ${typeLabel(target.type)}`}
+            onClick={() => openPackageFile(view, target.id, null)}
+          >
+            {`Open in ${typeLabel(target.type)} →`}
+          </button>
         ) : null}
       </div>
     </li>
@@ -111,7 +122,7 @@ export function PackageReferences({
   onShow,
 }: {
   view: PackageView;
-  onShow: (blockId: string) => void;
+  onShow: (blockId: string, quote?: string | null) => void;
 }) {
   const groups = new Map<string, ExternalReference[]>();
   for (const r of view.references) {

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import '../../styles/structure.css';
 import { Icon } from '../../components/ui/icon';
 import { useReview } from '../../state/review';
+import { useDocFocus } from '../../state/doc-focus';
+import { useRefView } from '../../state/ref-view';
 import { useShell } from '../../state/shell';
 import { ExportOutlineButton } from '../outline/ExportOutlineButton';
 import { InvestorTypesLens } from '../investor-paths/InvestorTypesLens';
@@ -61,12 +63,11 @@ export function StructureScreen() {
     setRow(key);
   };
 
-  const showInDoc = (blockId: string, findingId: string | null) => {
+  const showInDoc = (blockId: string, findingId: string | null, quote?: string | null) => {
+    if (useRefView.getState().target) useRefView.getState().back();
     setRoute('findings');
     if (findingId) select(findingId);
-    requestAnimationFrame(() =>
-      document.getElementById(`blk-${blockId}`)?.scrollIntoView({ block: 'center' }),
-    );
+    else useDocFocus.getState().show(blockId, quote ?? null);
   };
 
   const pickTab = (id: StructureTabId) => {
@@ -248,7 +249,7 @@ export function StructureScreen() {
             <p className="mut" role="status" data-testid="package-lens-line">
               {pkg.coverageLine}
             </p>
-            <PackageLens view={pkg} onShow={(blockId) => showInDoc(blockId, null)} />
+            <PackageLens view={pkg} onShow={(blockId, quote) => showInDoc(blockId, null, quote)} />
           </>,
         )}
       </>
