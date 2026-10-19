@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useDocFocus } from '../../state/doc-focus';
 import { useReview } from '../../state/review';
 import { render } from '../../test-utils';
@@ -32,5 +32,28 @@ describe('DocPane show-in-document focus', () => {
     act(() => useReview.getState().select('f1'));
     expect(useDocFocus.getState().focus).toBeNull();
     expect(b1.classList.contains('doc-focus')).toBe(false);
+  });
+
+  it('scrolls to the focused block and the stale selected finding does not override it', () => {
+    const calls: string[] = [];
+    const proto = Element.prototype as { scrollIntoView?: unknown };
+    const orig = proto.scrollIntoView;
+    proto.scrollIntoView = vi.fn(function (this: Element) {
+      calls.push(this.id || this.getAttribute('data-finding-id') || '?');
+    });
+    try {
+      useReview.setState({
+        result: { blocks, sections: [], source: 'html' },
+        doc: { id: 'd2', name: 'y.html' },
+        selectedId: 'f0',
+        selectSeq: 3,
+      } as never);
+      useDocFocus.getState().show('b1', null);
+      render(<DocPane rows={[]} />);
+      expect(calls).toContain('blk-b1');
+      expect(calls.at(-1)).toBe('blk-b1');
+    } finally {
+      proto.scrollIntoView = orig;
+    }
   });
 });

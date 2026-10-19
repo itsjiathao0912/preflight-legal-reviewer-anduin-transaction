@@ -220,6 +220,10 @@ function RefArticle({ name, blocks }: { name: string; blocks: RefBlock[] }) {
   );
 }
 
+/** How long "Show in document" keeps re-centring its block while the pane settles. */
+const SETTLE_MS = 1500;
+const USER_SCROLL_EVENTS = ['wheel', 'touchstart', 'keydown', 'pointerdown'] as const;
+
 export function DocPane({ rows }: { rows: Row[] }) {
   const result = useReview((s) => s.result);
   const doc = useReview((s) => s.doc);
@@ -285,12 +289,41 @@ export function DocPane({ rows }: { rows: Row[] }) {
     target.classList.add('doc-focus');
     void target.offsetWidth;
     target.classList.add('ref-flash');
+    // the flash ends; drop it so the persistent .doc-focus tint is what remains
+    const endFlash = () => target.classList.remove('ref-flash');
+    target.addEventListener('animationend', endFlash, { once: true });
     const H = (globalThis as { Highlight?: new (r: Range) => unknown }).Highlight;
     if (focus.quote && hl && H) {
       const at = locateQuote(target.textContent ?? '', focus.quote);
       const range = at ? textRange(target, at.start, at.end) : null;
       if (range) hl.set('doc-focus', new H(range));
     }
+    // The pane mounts while the zoom fit and the page layout are still settling, so one scroll can
+    // land far from the block. Re-centre it for a short window until it stays in view; a user
+    // scroll (wheel, touch, key, pointer) ends the window at once.
+    let raf = 0;
+    let done = false;
+    const until = performance.now() + SETTLE_MS;
+    const stop = () => {
+      done = true;
+      cancelAnimationFrame(raf);
+      for (const ev of USER_SCROLL_EVENTS) root.removeEventListener(ev, stop);
+    };
+    for (const ev of USER_SCROLL_EVENTS) root.addEventListener(ev, stop, { passive: true });
+    const tick = () => {
+      if (done) return;
+      if (!target.isConnected) return stop();
+      const box = root.getBoundingClientRect();
+      const r = target.getBoundingClientRect();
+      if (r.bottom < box.top || r.top > box.bottom) scrollIntoViewVertically(target, 'center');
+      if (performance.now() >= until) return stop();
+      raf = requestAnimationFrame(tick);
+    };
+    if (typeof requestAnimationFrame === 'function') raf = requestAnimationFrame(tick);
+    return () => {
+      stop();
+      target.removeEventListener('animationend', endFlash);
+    };
   }, [focus, focusSeq, ref, blockCount]);
 
   // the next navigation (a finding selected, another document) ends the highlight
@@ -321,6 +354,8 @@ export function DocPane({ rows }: { rows: Row[] }) {
 
   useEffect(() => {
     if (!selectedId || selectSeq === 0) return;
+    // a "Show in document" target owns the scroll for this navigation
+    if (useDocFocus.getState().focus) return;
     const el = scrollRef.current?.querySelector<HTMLElement>(
       `[data-testid="doc-highlight"][data-finding-id="${CSS.escape(selectedId)}"]`,
     );
