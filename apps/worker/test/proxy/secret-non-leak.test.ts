@@ -3,6 +3,16 @@ import { okAi } from '../fakes/openrouter-stub';
 import { API_KEY, baseEnv, bodyText, makeHarness, send } from '../fakes/harness';
 import { NET_GUARD_MESSAGE } from '../setup';
 import { createLogger } from '../../src/proxy/log';
+import { configFor } from '../../src/proxy/pipeline';
+import proxyRoutesSrc from '../../src/routes/proxy/index.ts?raw';
+import { aiAnswer } from '../fakes/openai-stub';
+import { makeOpenAiHarness, openAiEnv, OPENAI_TEST_KEY } from '../fakes/openai-harness';
+
+/** The production logger wiring (routes/proxy/index.ts) for an OpenAI config. */
+function createLoggerFor(lines: string[]) {
+  const cfg = configFor(openAiEnv());
+  return createLogger((l) => lines.push(l), [cfg.apiKey, cfg.turnstileSecret, cfg.openaiApiKey]);
+}
 
 const LEAK = 'UPSTREAM-ERROR-BODY-MARKER';
 
@@ -106,6 +116,45 @@ describe('secret-non-leak (AC26/AC39)', () => {
     expect(out).not.toContain(API_KEY);
     expect(out).not.toContain('raw-body');
     expect(JSON.parse(lines[0]!).nested.ok).toBe(1);
+  });
+
+  test('OPENAI_API_KEY never appears in any response, header or log line (AC17, AC18)', async () => {
+    const h = makeOpenAiHarness();
+    h.oa.reply(
+      { answer: aiAnswer() },
+      { status: 500, text: `${LEAK} key=${OPENAI_TEST_KEY}` },
+      { status: 401, json: { error: { message: `${LEAK} ${OPENAI_TEST_KEY}` } } },
+      {
+        status: 429,
+        json: { error: { message: `${LEAK} ${OPENAI_TEST_KEY}`, code: 'insufficient_quota' } },
+      },
+      { answer: `${LEAK} ${OPENAI_TEST_KEY}` },
+      { throws: `${LEAK} ${OPENAI_TEST_KEY}` },
+    );
+    const seen: string[] = [];
+    for (let i = 0; i < 6; i++) {
+      const res = await send(h, {
+        body: {
+          v: 1,
+          law_firm_id: null,
+          candidates: [{ id: `c${i}`, quote: `q${i}`, section_path: [] }],
+          settings: {},
+        },
+      });
+      res.headers.forEach((v, k) => seen.push(`${k}: ${v}`));
+      seen.push(await bodyText(res));
+    }
+    seen.push(await bodyText(await send(h, { path: '/api/quota' })));
+    // the logger scrubs the key even when a log field carries it (secret list includes it)
+    const lines: string[] = [];
+    createLoggerFor(lines).log('probe', { note: `k=${OPENAI_TEST_KEY}` });
+    expect(proxyRoutesSrc).toContain('cfg?.openaiApiKey'); // the real logger secret list
+    const all = [...seen, ...h.logs, ...lines].join('\n');
+    expect(h.logs.length).toBeGreaterThan(0);
+    expect(all).not.toContain(OPENAI_TEST_KEY);
+    expect(all).not.toContain(LEAK);
+    expect(h.oa.calls[0]!.headers['authorization']).toBe(`Bearer ${OPENAI_TEST_KEY}`);
+    expect(h.oa.calls.every((c) => !c.body.includes(OPENAI_TEST_KEY))).toBe(true);
   });
 
   test('net guard: an unmocked global fetch throws (no live network in tests)', () => {

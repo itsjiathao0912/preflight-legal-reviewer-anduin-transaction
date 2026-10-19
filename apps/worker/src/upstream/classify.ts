@@ -32,6 +32,8 @@ export type Classified =
       model: string;
       /** usage.cost in USD (0 when absent). */
       costUsd: number;
+      /** provider token usage, when the reply reported both counts (metered providers settle on it) */
+      tokens?: Tokens;
     }
   | {
       ok: false;
@@ -52,7 +54,15 @@ export type Classified =
        * 200-with-error bodies (inducible via prompt injection) leave it unset -> keep all.
        */
       providerFault?: boolean;
+      /** token usage when a failed reply still reported it (e.g. malformed / truncated by length) */
+      tokens?: Tokens;
     };
+
+/** Prompt + completion token counts reported by the provider. */
+export interface Tokens {
+  in: number;
+  out: number;
+}
 
 /** Upstream statuses rejected before generation (OpenRouter does not bill these). */
 export const NON_CONSUMING_STATUS: ReadonlySet<number> = new Set([400, 401, 403, 413, 415, 422]);
@@ -112,6 +122,19 @@ function usageOf(u: unknown): LlmUsage | undefined {
 export interface ClassifyHooks {
   onActivity?: () => void;
   signal?: AbortSignal;
+  /** provider OCR normaliser, applied to the parsed reply before OcrResultSchema (OpenAI) */
+  normalizeOcr?: (raw: unknown) => unknown;
+  /** provider-specific error classes, checked before the shared ones (OpenAI) */
+  classifyError?: (res: Response) => Promise<Classified | undefined>;
+}
+
+/** Both token counts, or undefined (a partial count is never used for settling). */
+export function tokensOf(u: unknown): Tokens | undefined {
+  if (typeof u !== 'object' || u === null) return undefined;
+  const r = u as Record<string, unknown>;
+  const tin = tokenCount(r['prompt_tokens']);
+  const tout = tokenCount(r['completion_tokens']);
+  return tin !== undefined && tout !== undefined ? { in: tin, out: tout } : undefined;
 }
 
 export async function classify(
@@ -120,6 +143,10 @@ export async function classify(
   ai?: AiClassifyContext,
   hooks?: ClassifyHooks,
 ): Promise<Classified> {
+  if (hooks?.classifyError) {
+    const c = await hooks.classifyError(res);
+    if (c) return c;
+  }
   if (res.status === 429) {
     await res.body?.cancel().catch(() => {});
     const ra = retryAfter(res);
@@ -186,6 +213,7 @@ export async function classify(
       kind,
       { content: s.content, finishReason: s.finishReason, model: s.model, usage: s.usage },
       ai,
+      hooks?.normalizeOcr,
     );
   }
   const text = await readCapped(res);
@@ -221,6 +249,7 @@ export async function classify(
       usage: j.usage,
     },
     ai,
+    hooks?.normalizeOcr,
   );
 }
 
@@ -237,25 +266,29 @@ function finish(
   kind: ProxyKind,
   r: { content: unknown; finishReason: unknown; model: unknown; usage: unknown },
   ai?: AiClassifyContext,
+  normalizeOcr?: (raw: unknown) => unknown,
 ): Classified {
   const { content } = r;
-  if (typeof content !== 'string') return MALFORMED;
+  const tokens = tokensOf(r.usage);
+  const malformed: Classified = tokens ? { ...MALFORMED, tokens } : MALFORMED;
+  if (typeof content !== 'string') return malformed;
   let data: AiResult | OcrResult;
   if (kind === 'ai') {
     // fail closed: the AI path always validates with its task
-    if (!ai) return MALFORMED;
-    if (r.finishReason === 'length') return MALFORMED;
+    if (!ai) return malformed;
+    if (r.finishReason === 'length') return malformed;
     const v = ai.task.validate(parseContent(content), ai.input, usageOf(r.usage));
-    if (!v.ok) return MALFORMED;
+    if (!v.ok) return malformed;
     data = v.result;
   } else {
-    const p = OcrResultSchema.safeParse(parseContent(content));
-    if (!p.success) return MALFORMED;
+    const parsed = parseContent(content);
+    const p = OcrResultSchema.safeParse(normalizeOcr ? normalizeOcr(parsed) : parsed);
+    if (!p.success) return malformed;
     data = p.data;
   }
   const model =
     typeof r.model === 'string' && /^[A-Za-z0-9._/:-]{1,120}$/.test(r.model) ? r.model : 'unknown';
   const u = typeof r.usage === 'object' && r.usage !== null ? (r.usage as { cost?: unknown }) : {};
   const cost = typeof u.cost === 'number' && Number.isFinite(u.cost) ? u.cost : 0;
-  return { ok: true, kind, data, model, costUsd: Math.max(0, cost) };
+  return { ok: true, kind, data, model, costUsd: Math.max(0, cost), ...(tokens ? { tokens } : {}) };
 }

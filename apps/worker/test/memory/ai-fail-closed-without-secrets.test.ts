@@ -28,6 +28,7 @@ const quotaRows = async () =>
     n: number;
   }>())!.n;
 const vars = (apiKey: boolean) => ({
+  AI_PROVIDER: 'openrouter',
   COOKIE_SIGNING_KEYS: JSON.stringify(KEYS),
   COOKIE_SIGNING_KID: 'k1',
   ...(apiKey ? { OPENROUTER_API_KEY: API_KEY } : {}),

@@ -38,24 +38,29 @@ import {
   type Visitor,
 } from '../limits/visitor';
 import { createTurnstile, TURNSTILE_HEADER } from '../identity/turnstile';
-import { classify, type AiClassifyContext, type Classified } from '../upstream/classify';
+import {
+  classify,
+  type AiClassifyContext,
+  type Classified,
+  type ClassifyHooks,
+} from '../upstream/classify';
 import {
   freeModelsFor,
   paidModelsFor,
-  servedTier,
   PROMPT_VER,
   SCHEMA_VER,
   type ProxyKind,
 } from '../upstream/models-config';
+import { costMicroUsd, worstCaseMicroUsd } from '../upstream/openai';
 import {
   aiMessages,
-  aiResponseFormat,
   buildBody,
   callOpenRouter,
   digestHex,
   ocrMessages,
-  ocrResponseFormat,
 } from '../upstream/openrouter';
+import { providerFor, type Provider } from '../upstream/provider';
+import type { SettleWith, SpendPort, SpendToken } from '../platform/spend';
 import { errorResponse, messageFor, ProxyError } from './errors';
 import {
   BODY_CAPS,
@@ -166,6 +171,69 @@ function refusalError(r: Refusal): ProxyError {
 
 const unavailable = () => new ProxyError('quota_exhausted', 'ai_unavailable');
 
+/**
+ * Settle rule for a metered call (plan M2 item 2.4): success with usage -> actual cost; success
+ * without usage -> keep the worst case; malformed (incl. finish_reason length) with usage ->
+ * actual, without -> worst; a definite non-consuming outcome (never dispatched, client abort
+ * before dispatch, 400 / 401 / 403, insufficient_quota) -> release; every other failure (5xx,
+ * 429 rate limit, network, timeout, truncated stream, client abort after dispatch) -> keep.
+ */
+export function settleRule(outcome: Classified): SettleWith {
+  if (outcome.ok)
+    return outcome.tokens ? costMicroUsd(outcome.tokens.in, outcome.tokens.out) : 'keep';
+  if (!outcome.consumed) return 'release';
+  if (outcome.reason === 'malformed' && outcome.tokens)
+    return costMicroUsd(outcome.tokens.in, outcome.tokens.out);
+  return 'keep';
+}
+
+/** One `proxy.spend` operator line (wrangler tail); never carries a key or a body. */
+function logSpend(
+  log: Logger,
+  kind: ProxyKind,
+  outcome: 'actual' | 'keep' | 'release' | 'overrun' | 'refused',
+  reserved: number,
+  actual: number,
+  total: number | null,
+  cap: number,
+): void {
+  log.log('proxy.spend', {
+    kind,
+    provider: 'openai',
+    outcome,
+    reserved_micro_usd: reserved,
+    actual_micro_usd: actual,
+    total_micro_usd: total,
+    cap_micro_usd: cap,
+  });
+}
+
+/** Settle a held reservation once; storage errors leave the worst case counted (safe side). */
+async function settleSpend(
+  spend: SpendPort,
+  token: SpendToken,
+  outcome: Classified,
+  log: Logger,
+  kind: ProxyKind,
+): Promise<number> {
+  const rule = settleRule(outcome);
+  if (outcome.ok && !outcome.tokens) log.log('proxy.usage_missing', { kind });
+  try {
+    const r = await spend.settle(token, rule);
+    if (r.outcome === 'overrun')
+      log.log('proxy.spend_overrun', {
+        kind,
+        reserved_micro_usd: token.units,
+        actual_micro_usd: r.settled,
+      });
+    logSpend(log, kind, r.outcome, token.units, r.settled, r.total, spend.cap());
+    return r.settled;
+  } catch {
+    log.log('proxy.spend_settle_failed', { kind });
+    return token.units;
+  }
+}
+
 /** Shaped request (body read and validated); AI messages are built after identity + rules. */
 type Prepared =
   | { kind: 'ai'; ai: ShapedAi; units: 1; docHeader: string | undefined }
@@ -256,9 +324,17 @@ export async function handleProxy(
       throw unavailable();
     }
     const log = ctx.logger(cfg);
+    // 2. provider (before the cache read: the cache key carries the provider's model).
+    // invalid/missing AI_PROVIDER -> AI/OCR off with zero port calls and no upstream.
+    const provider = providerFor(cfg);
+    if (!provider) {
+      log.log('proxy.config_invalid_provider', { kind });
+      throw unavailable();
+    }
     // 3. identity
     visitor = await resolveVisitor(request, cfg, nowMs);
-    const models = freeModelsFor(kind, cfg);
+    // OpenRouter free list (fallback order); unused by the OpenAI provider
+    const models = provider.id === 'openrouter' ? freeModelsFor(kind, cfg) : [];
     // 3b. AI: firm rules -> messages from the task registry -> inputHash over those messages
     let fwd: Forward;
     let inputHash: string;
@@ -280,7 +356,7 @@ export async function handleProxy(
       fwd = {
         kind,
         messagesJson: JSON.stringify(messages),
-        responseFormatJson: aiResponseFormat(task, cfg.aiResponseMode),
+        responseFormatJson: provider.responseFormat.ai(task, cfg.aiResponseMode),
         ai: { task, input: { candidates: p.ai.candidates } },
       };
     } else {
@@ -290,7 +366,7 @@ export async function handleProxy(
       fwd = {
         kind,
         messagesJson: p.messagesJson,
-        responseFormatJson: ocrResponseFormat(),
+        responseFormatJson: provider.responseFormat.ocr(),
         ai: undefined,
       };
     }
@@ -298,7 +374,7 @@ export async function handleProxy(
     const key = cacheKey({
       kind,
       input_hash: inputHash,
-      model: models[0]!,
+      model: provider.modelFor(kind),
       prompt_ver: promptVer,
       schema_ver: schemaVer,
       rules_hash: rulesHash,
@@ -326,7 +402,10 @@ export async function handleProxy(
     }
     // 5. miss: fail-closed preconditions, then Turnstile
     if (!cfg.uploadsEnabled) throw new ProxyError('quota_exhausted', 'ai_disabled');
-    if (!cfg.apiKey || !visitor) throw unavailable();
+    if (!provider.apiKey(cfg) || !visitor) throw unavailable();
+    // a metered provider without a spend counter must never dispatch (fail closed)
+    const spend = provider.metered ? ctx.platform.spend : undefined;
+    if (provider.metered && !spend) throw unavailable();
     if (await breakerTripped(ctx, cfg)) throw new ProxyError('budget_cap', 'circuit_breaker');
     if (!turnstileFresh(visitor.claims, nowMs, cfg.turnstilePassTtlMs)) {
       const token = request.headers.get(TURNSTILE_HEADER);
@@ -366,10 +445,40 @@ export async function handleProxy(
       await claims.refundAll();
       throw refusalError(refusal);
     }
+    // 6b. metered provider: reserve the worst-case cost LAST, against the lifetime counter
+    let spendToken: SpendToken | undefined;
+    if (spend) {
+      const reserved = worstCaseMicroUsd(kind, fwd.messagesJson, fwd.responseFormatJson);
+      let r: Awaited<ReturnType<SpendPort['reserve']>>;
+      try {
+        r = await spend.reserve(reserved);
+      } catch {
+        await claims.refundAll();
+        throw unavailable();
+      }
+      if (!r.ok) {
+        await claims.refundAll();
+        let total: number | null = null;
+        try {
+          total = await spend.peek();
+        } catch {
+          total = null;
+        }
+        logSpend(log, kind, 'refused', reserved, 0, total, spend.cap());
+        throw new ProxyError('budget_cap', 'spend_cap');
+      }
+      spendToken = r.token;
+    }
     // 7. upstream, hold-open
     const activeCfg = cfg;
     const run = async (signal: AbortSignal): Promise<Frame> => {
-      const outcome = await callWithFallback(fwd, models, activeCfg, ctx, claims, k, signal);
+      const outcome =
+        provider.id === 'openrouter'
+          ? await callWithFallback(fwd, models, activeCfg, ctx, claims, k, signal)
+          : await once(fwd, sendVia(provider, fwd, ctx), activeCfg, ctx, signal, hooksOf(provider));
+      // single settle point for every exit path of a metered call
+      let settled: number | undefined;
+      if (spend && spendToken) settled = await settleSpend(spend, spendToken, outcome, log, kind);
       if (!outcome.ok) {
         if (outcome.consumed && outcome.providerFault) {
           await claims.refundVisitorScoped();
@@ -383,18 +492,16 @@ export async function handleProxy(
         log.log('proxy.upstream_failed', { kind, code: outcome.code, reason: outcome.reason });
         return errFrame(outcome.code, outcome.reason, outcome.retry_after_s);
       }
-      if (!activeCfg.paidEnabled) {
-        const tier = servedTier(outcome.model, outcome.costUsd, activeCfg);
-        if (tier === 'paid') {
-          try {
-            await ctx.breaker.trip(utcDay(ctx.now()), activeCfg.fingerprint);
-          } catch {
-            log.log('proxy.circuit_breaker_persist_failed', { kind });
-          }
-          log.log('proxy.circuit_breaker', { kind, model: outcome.model });
-        } else if (tier === 'unknown') {
-          log.log('proxy.served_model_unknown', { kind });
+      const verdict = provider.checkServed(outcome.model, outcome.costUsd);
+      if (verdict === 'trip') {
+        try {
+          await ctx.breaker.trip(utcDay(ctx.now()), activeCfg.fingerprint);
+        } catch {
+          log.log('proxy.circuit_breaker_persist_failed', { kind });
         }
+        log.log('proxy.circuit_breaker', { kind, model: outcome.model });
+      } else if (verdict === 'unknown') {
+        log.log('proxy.served_model_unknown', { kind });
       }
       const created_at = ctx.now();
       try {
@@ -413,7 +520,7 @@ export async function handleProxy(
           kind: kind === 'ai' ? 'llm' : 'ocr',
           model: outcome.model,
           units: p.units,
-          cost_usd: outcome.costUsd,
+          cost_usd: settled !== undefined ? settled / 1_000_000 : outcome.costUsd,
           cache: 'miss',
           at: created_at,
         });
@@ -456,12 +563,34 @@ export async function handleProxy(
  * the NDJSON heartbeats keep the client connection open.
  * The idle check is CPU-cheap: a read only writes a timestamp; ONE timer re-checks it.
  */
+/** Dispatch through a non-fallback provider (OpenAI). */
+function sendVia(
+  provider: Provider,
+  fwd: Forward,
+  ctx: ProxyContext,
+): (signal: AbortSignal) => Promise<Response> {
+  return (signal) =>
+    provider.call(
+      ctx.fetch,
+      provider.buildBody(fwd.kind, fwd.messagesJson, fwd.responseFormatJson),
+      signal,
+    );
+}
+
+function hooksOf(provider: Provider): Pick<ClassifyHooks, 'normalizeOcr' | 'classifyError'> {
+  return {
+    ...(provider.normalizeOcr ? { normalizeOcr: provider.normalizeOcr } : {}),
+    ...(provider.classifyError ? { classifyError: provider.classifyError } : {}),
+  };
+}
+
 async function once(
   fwd: Forward,
-  models: readonly string[],
+  send: (signal: AbortSignal) => Promise<Response>,
   cfg: ProxyConfig,
   ctx: ProxyContext,
   signal: AbortSignal,
+  providerHooks: Pick<ClassifyHooks, 'normalizeOcr' | 'classifyError'> = {},
 ): Promise<Classified> {
   // An abort that lands before the request leaves the Worker is the only abort we refund.
   if (signal.aborted) {
@@ -504,14 +633,13 @@ async function once(
   let dispatched = false;
   try {
     dispatched = true;
-    const res = await callOpenRouter(
-      ctx.fetch,
-      cfg,
-      buildBody(fwd.kind, models, fwd.messagesJson, fwd.responseFormatJson),
-      ac.signal,
-    );
+    const res = await send(ac.signal);
     onActivity(); // headers arrived
-    return await classify(fwd.kind, res, fwd.ai, { onActivity, signal: ac.signal });
+    return await classify(fwd.kind, res, fwd.ai, {
+      onActivity,
+      signal: ac.signal,
+      ...providerHooks,
+    });
   } catch (e) {
     // class name only: never log error messages (they can carry upstream bodies)
     log.log('proxy.upstream_exception', {
@@ -550,7 +678,16 @@ async function callWithFallback(
   k: ReturnType<typeof keys>,
   signal: AbortSignal,
 ): Promise<Classified> {
-  const first = await once(fwd, freeModels, cfg, ctx, signal);
+  const via =
+    (models: readonly string[]) =>
+    (sig: AbortSignal): Promise<Response> =>
+      callOpenRouter(
+        ctx.fetch,
+        cfg,
+        buildBody(fwd.kind, models, fwd.messagesJson, fwd.responseFormatJson),
+        sig,
+      );
+  const first = await once(fwd, via(freeModels), cfg, ctx, signal);
   if (first.ok || !first.retryable || signal.aborted) return first;
   const paid = paidModelsFor(cfg);
   if (paid.length === 0) return first;
@@ -572,7 +709,7 @@ async function callWithFallback(
       ...(first.providerFault ? { providerFault: true } : {}),
     };
   }
-  const second = await once(fwd, paid, cfg, ctx, signal);
+  const second = await once(fwd, via(paid), cfg, ctx, signal);
   if (second.ok) return second;
   // the paid call did not consume: release just the spend reservation
   if (!second.consumed) await claims.refundFrom(mark);

@@ -2,6 +2,7 @@
 // Validation is strict and fails closed: an invalid value throws ConfigError and the
 // proxy routes degrade (no upstream call) instead of running with a weaker policy.
 import { limits, type AiResponseMode, type KeyMap } from '@aduin/core';
+import { OPENAI_MODEL } from './upstream/openai';
 
 export class ConfigError extends Error {
   constructor(message: string) {
@@ -10,7 +11,14 @@ export class ConfigError extends Error {
   }
 }
 
+/** Active AI/OCR provider. `invalid` (missing or unknown AI_PROVIDER) turns AI/OCR off. */
+export type AiProvider = 'openrouter' | 'openai' | 'invalid';
+
 export interface ProxyConfig {
+  /** From AI_PROVIDER (soft-parsed, never throws). */
+  aiProvider: AiProvider;
+  /** Secret OPENAI_API_KEY. Never logged, never echoed. Absent => OpenAI AI/OCR fail closed. */
+  openaiApiKey: string | undefined;
   /** Secret. Never logged, never echoed. Absent => AI/OCR fail closed. */
   apiKey: string | undefined;
   baseUrl: string;
@@ -102,6 +110,24 @@ function bool(env: EnvLike, name: string, def: boolean): boolean {
   throw new ConfigError(`${name} must be "true" or "false"`);
 }
 
+/**
+ * Soft parse (SPEC AC1): exactly `openrouter` or `openai` after trimming; anything else (missing,
+ * empty, other case, non-string) is `invalid`. Never throws, so memory routes keep working.
+ */
+export function parseAiProvider(v: unknown): AiProvider {
+  if (typeof v !== 'string') return 'invalid';
+  const t = v.trim();
+  return t === 'openrouter' || t === 'openai' ? t : 'invalid';
+}
+
+/** Soft secret read: a non-string value is treated as absent (never throws). */
+function softSecret(env: EnvLike, name: string): string | undefined {
+  const v = env[name];
+  if (typeof v !== 'string') return undefined;
+  const t = v.trim();
+  return t.length === 0 ? undefined : t;
+}
+
 function responseMode(env: EnvLike): AiResponseMode {
   const v = str(env, 'AI_RESPONSE_MODE');
   if (v === undefined) return DEFAULT_AI_RESPONSE_MODE;
@@ -160,6 +186,8 @@ export function loadConfig(env: EnvLike): ProxyConfig {
   const paidEnabled = exactTrue(env['PAID_FALLBACK_ENABLED']);
   const { keys, kid } = cookieKeys(env);
   const cfg: Omit<ProxyConfig, 'fingerprint'> = {
+    aiProvider: parseAiProvider(env['AI_PROVIDER']),
+    openaiApiKey: softSecret(env, 'OPENAI_API_KEY'),
     apiKey: str(env, 'OPENROUTER_API_KEY'),
     baseUrl: baseUrl(env),
     textModels,
@@ -188,13 +216,17 @@ export function loadConfig(env: EnvLike): ProxyConfig {
   };
   if (cfg.spendCapMicroUsd > limits.spendCapUsd * 1_000_000)
     throw new ConfigError('SPEND_CAP_MICRO_USD must not exceed the $10 ceiling');
-  const fingerprint = JSON.stringify([
-    cfg.textModels,
-    cfg.visionModels,
-    cfg.paidModels,
-    cfg.paidEnabled,
-    cfg.spendCapMicroUsd,
-  ]);
+  // OpenRouter fingerprint is byte-identical to before the provider seam (breaker continuity)
+  const fingerprint =
+    cfg.aiProvider === 'openai'
+      ? JSON.stringify(['openai', OPENAI_MODEL, cfg.spendCapMicroUsd])
+      : JSON.stringify([
+          cfg.textModels,
+          cfg.visionModels,
+          cfg.paidModels,
+          cfg.paidEnabled,
+          cfg.spendCapMicroUsd,
+        ]);
   return Object.freeze({ ...cfg, fingerprint });
 }
 

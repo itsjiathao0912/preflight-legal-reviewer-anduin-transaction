@@ -175,6 +175,7 @@ export async function measureAi(): Promise<{
   or.other = ts.handle;
   or.reply(okAi());
   const e = {
+    AI_PROVIDER: 'openrouter',
     COOKIE_SIGNING_KEYS: JSON.stringify(KEYS),
     COOKIE_SIGNING_KID: 'k1',
     OPENROUTER_API_KEY: API_KEY,

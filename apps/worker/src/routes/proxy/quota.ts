@@ -7,6 +7,25 @@ import { resolveVisitor, visitorSetCookie, type Visitor } from '../../limits/vis
 import { errorResponse, jsonNoStore, ProxyError } from '../../proxy/errors';
 import { checkClientHeader } from '../../proxy/guards';
 import { configFor, type ProxyContext } from '../../proxy/pipeline';
+import { ocrWorstCaseMicroUsd, providerFor } from '../../upstream/provider';
+
+/**
+ * Provider part of `global_ok`: false when AI_PROVIDER is invalid or the active provider's key is
+ * missing; for the metered OpenAI provider also false when the lifetime spend headroom is below
+ * one OCR page's worst case (one peek read). Spend numbers never reach the visitor body.
+ */
+async function providerOk(ctx: ProxyContext, cfg: ProxyConfig): Promise<boolean> {
+  const provider = providerFor(cfg);
+  if (!provider || !provider.apiKey(cfg)) return false;
+  if (!provider.metered) return true;
+  const spend = ctx.platform.spend;
+  if (!spend) return false;
+  try {
+    return spend.cap() - (await spend.peek()) >= ocrWorstCaseMicroUsd();
+  } catch {
+    return false;
+  }
+}
 
 /**
  * GET /api/quota — read-only (never claims, never writes). Fails soft: when config or the
@@ -45,7 +64,7 @@ export function quotaHandler(ctx: ProxyContext): Handler {
               .usage();
             body.ai.used = u.ai.used;
             body.ocr_pages.used = u.ocr_pages.used;
-            body.global_ok = u.global_ok && Boolean(cfg.apiKey) && cfg.uploadsEnabled;
+            body.global_ok = u.global_ok && cfg.uploadsEnabled && (await providerOk(ctx, cfg));
           } catch {
             // platform unavailable: keep the fail-soft defaults
           }

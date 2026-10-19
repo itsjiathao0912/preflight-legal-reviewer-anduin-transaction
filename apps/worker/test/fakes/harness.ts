@@ -18,6 +18,7 @@ export const T0 = Date.UTC(2026, 9, 17, 12, 0, 0);
 
 export function baseEnv(over: Record<string, string | undefined> = {}): Record<string, string> {
   const env: Record<string, string | undefined> = {
+    AI_PROVIDER: 'openrouter',
     OPENROUTER_API_KEY: API_KEY,
     COOKIE_SIGNING_KEYS: JSON.stringify({
       k1: COOKIE_KEY,

@@ -2,6 +2,7 @@
 // Phase 04b (`src/platform`); until then the entry wires none and `unavailablePlatform()`
 // makes AI/OCR fail closed while `/api/quota` still answers (read-only, zero writes).
 import type { CachePort, LedgerPort, QuotaKey, QuotaPort, RulesPort } from '@aduin/core';
+import type { SpendPort } from '../platform/spend';
 
 /** Keys a visitor-bound QuotaPort reads for `usage()` (max over each list). */
 export interface UsageKeys {
@@ -22,6 +23,11 @@ export interface ProxyPlatform {
    * Undefined when no rules store is wired: a request that needs firm rules then refuses.
    */
   rulesFor?: (workspaceId: string) => RulesPort;
+  /**
+   * Lifetime spend counter for a metered provider (OpenAI). Undefined -> a metered provider
+   * refuses AI/OCR (fail closed); the free OpenRouter path never uses it.
+   */
+  spend?: SpendPort;
 }
 
 export class PortUnavailableError extends Error {

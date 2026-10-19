@@ -10,6 +10,7 @@ import {
   type RulesPort,
 } from '@aduin/core';
 import type { ProxyPlatform, UsageKeys } from '../../src/proxy/ports';
+import { OPENAI_SPEND_KEY, type SpendPort } from '../../src/platform/spend';
 
 export interface FakePlatformOptions {
   capFor: (key: QuotaKey) => number;
@@ -112,6 +113,61 @@ export class FakePlatform implements ProxyPlatform {
     activeRules: async (_firm: string) => {
       this.tick(false);
       return { texts: [] as string[], rules_hash: 'none' };
+    },
+  };
+
+  /** OpenAI provider plan: in-memory lifetime spend counter, same claim semantics as the SQL. */
+  readonly spendLog: {
+    op: 'reserve' | 'settle' | 'peek';
+    units?: number;
+    ok?: boolean;
+    with?: unknown;
+  }[] = [];
+  /** spend port calls throw while true */
+  spendDown = false;
+
+  get spendTotal(): number {
+    return this.count(OPENAI_SPEND_KEY);
+  }
+
+  spend: SpendPort = {
+    cap: () => this.opts.capFor(OPENAI_SPEND_KEY),
+    peek: async () => {
+      this.tick(false);
+      if (this.spendDown) throw new Error('spend down');
+      this.spendLog.push({ op: 'peek' });
+      return this.spendTotal;
+    },
+    reserve: async (units) => {
+      this.tick(true);
+      if (this.spendDown) throw new Error('spend down');
+      const cur = this.spendTotal;
+      const ok = cur + units <= this.opts.capFor(OPENAI_SPEND_KEY);
+      this.spendLog.push({ op: 'reserve', units, ok });
+      if (!ok) {
+        this.writes--;
+        return { ok: false };
+      }
+      this.set(OPENAI_SPEND_KEY, cur + units);
+      return { ok: true, token: { units }, total: cur + units };
+    },
+    settle: async (token, w) => {
+      this.tick(w !== 'keep');
+      if (this.spendDown) throw new Error('spend down');
+      this.spendLog.push({ op: 'settle', units: token.units, with: w });
+      const cur = this.spendTotal;
+      if (w === 'keep') return { outcome: 'keep', settled: token.units, total: cur };
+      if (w === 'release') {
+        this.set(OPENAI_SPEND_KEY, Math.max(0, cur - token.units));
+        return { outcome: 'release', settled: 0, total: this.spendTotal };
+      }
+      const actual = Math.max(0, Math.ceil(w));
+      this.set(OPENAI_SPEND_KEY, Math.max(0, cur - token.units + actual));
+      return {
+        outcome: actual > token.units ? 'overrun' : 'actual',
+        settled: actual,
+        total: this.spendTotal,
+      };
     },
   };
 

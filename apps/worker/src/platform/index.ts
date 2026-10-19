@@ -8,6 +8,7 @@ import type { Db } from '../db/meta';
 import { createD1Cache } from './cache';
 import { createD1Ledger } from './ledger';
 import { createD1Quota } from './quota';
+import { createD1Spend } from './spend';
 
 export { createD1Breaker } from './breaker';
 export { createRulesPort } from './rules';
@@ -125,5 +126,6 @@ export function createD1Platform(db: Db, opts: D1PlatformOptions): ProxyPlatform
     quota: (keys) => createD1Quota(db, qopts, keys),
     cache: createD1Cache(db, now),
     ledger: createD1Ledger(db),
+    spend: createD1Spend(db, qopts),
   };
 }

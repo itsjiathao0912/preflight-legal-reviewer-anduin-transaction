@@ -31,7 +31,7 @@ export function mountProxyRoutes(app: App, deps: AppDeps): void {
     upstreamIdleMs: p.upstreamIdleMs ?? UPSTREAM_IDLE_MS,
     upstreamOcrTimeoutMs: p.upstreamOcrTimeoutMs ?? UPSTREAM_OCR_TIMEOUT_MS,
     preLimiter: createPreLimiter(),
-    logger: (cfg) => createLogger(sink, [cfg?.apiKey, cfg?.turnstileSecret]),
+    logger: (cfg) => createLogger(sink, [cfg?.apiKey, cfg?.turnstileSecret, cfg?.openaiApiKey]),
     breaker: p.breaker ?? memoryBreaker(),
   };
   app.route('POST', '/api/ai', aiHandler(ctx));
