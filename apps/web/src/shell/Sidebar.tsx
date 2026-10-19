@@ -8,6 +8,7 @@ import { AnalystBadge } from './AnalystBadge';
 import { DocSwitcher } from './DocSwitcher';
 import { GateButton } from './GateButton';
 import { NavGroup } from './NavGroup';
+import { StartFresh } from './StartFresh';
 import { useShare } from '../features/counsel/counsel-share';
 import { UnsyncedChip } from './UnsyncedChip';
 
@@ -84,6 +85,7 @@ export function Sidebar() {
             <AnalystBadge />
           </>
         )}
+        <StartFresh counsel={counselMode} />
       </div>
     </aside>
   );

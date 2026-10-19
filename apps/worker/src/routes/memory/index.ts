@@ -27,6 +27,7 @@ import { memoryHealthHandler } from './health';
 import { lookupHandler } from './lookup';
 import { createRuleHandler, listRulesHandler, ruleActionHandler } from './rules';
 import { createRunHandler, storeFindingsHandler } from './runs';
+import { sessionResetHandler } from './reset';
 import { sessionHandler } from './session';
 import {
   joinHandler,
@@ -40,6 +41,7 @@ import {
 /** The 04b route table (method, path), in registration order (+ counsel share link, 19-10-26). */
 export const MEMORY_ROUTES = [
   'POST /api/session',
+  'POST /api/session/reset',
   'POST /api/memory/lookup',
   'POST /api/runs',
   'POST /api/runs/:id/findings',
@@ -69,6 +71,7 @@ export const MEMORY_ROUTES = [
 export function mountMemoryRoutes(app: App, deps: AppDeps): void {
   const d = memoryDeps(deps);
   app.route('POST', '/api/session', sessionHandler(d));
+  app.route('POST', '/api/session/reset', sessionResetHandler(d));
   app.route('POST', '/api/memory/lookup', lookupHandler(d));
   app.route('POST', '/api/runs', createRunHandler(d));
   app.route('POST', '/api/runs/:id/findings', storeFindingsHandler(d));

@@ -71,21 +71,22 @@ describe('memory-guards-matrix (AC39)', () => {
 
   // POST /api/counsel/join is cookieless by design (the share token in the body is the credential;
   // its 401s are covered by counsel-share-token).
-  test.each(POSTS.filter((p) => p !== '/api/session' && p !== '/api/counsel/join'))(
-    'POST %s: a missing or forged cookie is 401 before the body is read (L5)',
-    async (path) => {
-      const h = makeMem();
-      for (const cookie of [undefined, '__Host-aduin_v=forged.sig']) {
-        const r = await call(h, 'POST', path, undefined, {
-          raw: JSON.stringify({ pad: 'x'.repeat(200 * 1024) }),
-          ...(cookie ? { cookie } : {}),
-        });
-        expect(r.status, path).toBe(401);
-        expect(r.body.error.code).toBe('invalid_session');
-      }
-      expect(h.stats.queries).toBe(0);
-    },
-  );
+  test.each(
+    POSTS.filter(
+      (p) => p !== '/api/session' && p !== '/api/session/reset' && p !== '/api/counsel/join',
+    ),
+  )('POST %s: a missing or forged cookie is 401 before the body is read (L5)', async (path) => {
+    const h = makeMem();
+    for (const cookie of [undefined, '__Host-aduin_v=forged.sig']) {
+      const r = await call(h, 'POST', path, undefined, {
+        raw: JSON.stringify({ pad: 'x'.repeat(200 * 1024) }),
+        ...(cookie ? { cookie } : {}),
+      });
+      expect(r.status, path).toBe(401);
+      expect(r.body.error.code).toBe('invalid_session');
+    }
+    expect(h.stats.queries).toBe(0);
+  });
 
   test('findings chunks accept bodies between 64 KB and 128 KB (then fail auth, not size)', async () => {
     const h = makeMem();

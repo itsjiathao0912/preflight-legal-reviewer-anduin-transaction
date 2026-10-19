@@ -544,3 +544,26 @@ ul.ev .l1 {
   color: var(--ink-3, #6b6b6b);
   text-align: right;
 }
+
+/* Sidebar footer: Start fresh / Leave shared review (small, secondary). */
+.sb-fresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  padding: 3px 4px;
+  border-radius: 3px;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  align-self: flex-start;
+}
+.sb-fresh:hover {
+  color: var(--ink);
+}
+.sb-fresh:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
