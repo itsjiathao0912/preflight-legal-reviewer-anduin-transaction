@@ -9,6 +9,7 @@ import type { Row } from '../review/model';
 import { SEV } from '../review/severity';
 import { OWNER_LABEL, type QuestionItem } from '../variance/owner-groups';
 import { AnswerForm, fmtDay, RecordedAnswerView } from './AnswerForm';
+import { CommentList } from './CommentList';
 import { useCounsel } from './counsel-store';
 import { baseWording, itemState, wordingFor, type QuestionState } from './sheet-model';
 
@@ -169,6 +170,7 @@ export function QuestionRow({
   mode,
   defaultBy,
   candidate,
+  questionId,
   onToggle,
   onMode,
 }: {
@@ -179,6 +181,8 @@ export function QuestionRow({
   defaultBy: string;
   /** Variance: worker-decoded `assertion_candidate` of a change question (firm-template preview). */
   candidate?: AssertionCandidate | undefined;
+  /** Counsel share link: server question id (shared questions show their comment thread). */
+  questionId?: string | undefined;
   onToggle: () => void;
   onMode: (m: RowMode) => void;
 }) {
@@ -349,6 +353,7 @@ export function QuestionRow({
               </button>
             </div>
           )}
+          {questionId ? <CommentList questionId={questionId} /> : null}
         </div>
       ) : null}
     </li>

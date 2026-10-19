@@ -8,6 +8,7 @@ import { AnalystBadge } from './AnalystBadge';
 import { DocSwitcher } from './DocSwitcher';
 import { GateButton } from './GateButton';
 import { NavGroup } from './NavGroup';
+import { useShare } from '../features/counsel/counsel-share';
 import { UnsyncedChip } from './UnsyncedChip';
 
 const GROUPS: { id: NavGroupId; label: string }[] = [
@@ -23,7 +24,10 @@ export function Sidebar() {
   const firmName = useReview((s) => s.doc?.firmName ?? '');
   const { open, counsel } = useReviewView();
   const structureIssues = useReview((s) => s.result?.structure?.badge ?? 0);
-  const mods = navModules();
+  // counsel share link: counsel mode shows Findings only (no upload, export, memory or AI controls)
+  const counselMode = useShare((s) => s.role === 'counsel');
+  const counselName = useShare((s) => s.counselName);
+  const mods = counselMode ? navModules().filter((m) => m.id === 'findings') : navModules();
   const badges = {
     findings: { n: open, sr: 'Open' },
     counsel: { n: counsel, sr: 'Needs counsel' },
@@ -52,9 +56,15 @@ export function Sidebar() {
           <Icon name="panel" />
         </button>
       </div>
-      <DocSwitcher />
+      {counselMode ? (
+        <p className="dim sb-counsel" data-testid="counsel-mode-note">
+          Shared review · answering as {counselName ?? 'Counsel'}
+        </p>
+      ) : (
+        <DocSwitcher />
+      )}
       <nav className="snav" id="snav" aria-label="Main">
-        {GROUPS.map((g) => (
+        {GROUPS.filter((g) => mods.some((m) => m.group === g.id)).map((g) => (
           <NavGroup
             key={g.id}
             id={g.id}
@@ -67,9 +77,13 @@ export function Sidebar() {
       </nav>
       <div className="sbbot">
         <GateButton />
-        <UnsyncedChip />
-        <AiSwitch />
-        <AnalystBadge />
+        {counselMode ? null : (
+          <>
+            <UnsyncedChip />
+            <AiSwitch />
+            <AnalystBadge />
+          </>
+        )}
       </div>
     </aside>
   );

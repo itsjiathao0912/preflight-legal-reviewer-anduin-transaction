@@ -68,6 +68,19 @@ const ALLOWED = new Set([
   // Variance Phase 04: the one question-key helper pair (composite `<findingId>@<owner>`)
   'questionKey',
   'parseQuestionKey',
+  // counsel share link (19-10-26): pure zod response contracts and their caps
+  'CounselShareResponseSchema',
+  'CounselJoinResponseSchema',
+  'CounselSheetResponseSchema',
+  'CounselCommentListResponseSchema',
+  'CounselCommentPostResponseSchema',
+  'CounselReadyResponseSchema',
+  'COUNSEL_COMMENT_MAX',
+  'COUNSEL_NAME_MAX',
+  'SHARE_TOKEN_MAX',
+  'DOC_REF_RE',
+  'DocRefSchema',
+  'CounselShareRequestSchema',
 ]);
 
 function files(dir: string): string[] {

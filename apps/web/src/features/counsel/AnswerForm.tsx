@@ -71,6 +71,7 @@ export function AnswerForm({
   onSave,
   onCancel,
   variance,
+  counselName,
 }: {
   id: string;
   /** Interpretation texts for A/B/C (at most three are offered). */
@@ -91,13 +92,18 @@ export function AnswerForm({
    * worker-decoded `assertion_candidate` (a firm-template answer then creates that check).
    */
   variance?: { candidate: AssertionCandidate | undefined; owner: string };
+  /**
+   * Counsel share link: counsel answers under the name typed when joining (from the counsel
+   * cookie); the who / date fields are replaced by a fixed line and the date is today.
+   */
+  counselName?: string;
 }) {
   // change questions mark option A as the default (D1); error questions keep no preselection
   const [option, setOption] = useState<CounselOption | null>(
     initial?.option ?? (variance ? 'A' : null),
   );
   const [note, setNote] = useState(initial?.note ?? '');
-  const [by, setBy] = useState(initial?.by ?? defaultBy);
+  const [by, setBy] = useState(counselName ?? initial?.by ?? defaultBy);
   const [when, setWhen] = useState(initial?.at ? isoDay(initial.at) : today());
   // intent is human text only: no default value, no auto-fill, no AI draft path (AC-V15)
   const [intent, setIntent] = useState(initial?.intent ?? '');
@@ -141,7 +147,12 @@ export function AnswerForm({
       });
       return;
     }
-    void onSave({ option, note: note.trim(), by: by.trim(), at: dateMs(when) });
+    void onSave({
+      option,
+      note: note.trim(),
+      by: by.trim(),
+      at: counselName ? Date.now() : dateMs(when),
+    });
   };
   return (
     <form
@@ -244,31 +255,37 @@ export function AnswerForm({
           {scope === 'firm_template' ? <AssertionPreview candidate={variance.candidate} /> : null}
         </>
       ) : null}
-      <div className="two">
-        <label className="f">
-          Answered by
-          <input
-            type="text"
-            autoComplete="off"
-            maxLength={120}
-            data-testid="answer-by"
-            value={by}
-            onChange={(e) => {
-              setBy(e.target.value);
-              setErr(false);
-            }}
-          />
-        </label>
-        <label className="f">
-          Date
-          <input
-            type="date"
-            data-testid="answer-date"
-            value={when}
-            onChange={(e) => setWhen(e.target.value)}
-          />
-        </label>
-      </div>
+      {counselName ? (
+        <p className="dim" data-testid="answer-as">
+          Answering as <b>{counselName}</b>
+        </p>
+      ) : (
+        <div className="two">
+          <label className="f">
+            Answered by
+            <input
+              type="text"
+              autoComplete="off"
+              maxLength={120}
+              data-testid="answer-by"
+              value={by}
+              onChange={(e) => {
+                setBy(e.target.value);
+                setErr(false);
+              }}
+            />
+          </label>
+          <label className="f">
+            Date
+            <input
+              type="date"
+              data-testid="answer-date"
+              value={when}
+              onChange={(e) => setWhen(e.target.value)}
+            />
+          </label>
+        </div>
+      )}
       <div className={err || intentErr ? 'err on' : 'err'} role="alert" data-testid="answer-error">
         {err ? (
           <>

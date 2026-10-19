@@ -20,6 +20,7 @@ import {
   type WriteKind,
 } from '../platform/index';
 import { secondsToReset } from '../limits/clock';
+import { COUNSEL_COOKIE, verifyCounselCookie } from './share';
 
 /** Analyst marker of a read-only demo session (no `w`): reads bind ws_demo, writes get 403. */
 export const READ_ONLY_ANALYST = 'ro';
@@ -180,3 +181,80 @@ const WRITE_REASON: Record<WriteKind, string> = {
   run: 'workspace_run_limit',
   fnd: 'workspace_findings_limit',
 };
+
+/** Who is acting on a counsel-sheet route (19-10-26 counsel share link). */
+export type CounselActor = 'analyst' | 'counsel';
+
+export interface CounselMemoryCtx extends MemoryCtx {
+  actor: CounselActor;
+  /** Self-declared counsel name from the counsel cookie (masked at join); counsel actor only. */
+  counselName?: string;
+  /** Bundled doc ref from the counsel cookie (`d`); counsel actor only. */
+  docRef?: string;
+}
+
+export interface VerifiedActor {
+  s: VerifiedSession;
+  actor: CounselActor;
+  counselName?: string;
+  docRef?: string;
+}
+
+/**
+ * Step 1 for the four counsel-accepting routes (sheet, answers, comments GET/POST): a valid counsel
+ * cookie (`__Host-aduin_c`) wins; otherwise the analyst cookie is verified exactly as `verifySession`.
+ * An invalid/expired counsel cookie is ignored (falls back to the analyst cookie). No DB query.
+ * The workspace always comes from the verified cookie, never from the body or URL.
+ */
+export async function verifyActor(
+  request: Request,
+  env: { DB?: D1Database },
+  now: number,
+  opts: { write: boolean },
+): Promise<VerifiedActor> {
+  const raw = readCookie(request, COUNSEL_COOKIE);
+  if (raw) {
+    const cfg = memoryConfig(env);
+    const db = memoryDb(env);
+    const v = await verifyCounselCookie(raw, cfg.cookieKeys!, Math.floor(now / 1000));
+    if (v.ok)
+      return {
+        s: { db, w: v.claims.w, a: v.claims.a, now, write: opts.write },
+        actor: 'counsel',
+        counselName: v.claims.n,
+        docRef: v.claims.d,
+      };
+  }
+  return { s: await verifySession(request, env, now, opts), actor: 'analyst' };
+}
+
+/**
+ * Step 2: the same liveness/health/claim path as `resolveSession` (a counsel cookie names the
+ * sharing analyst, whose row must still exist). Counsel acts under the name `Counsel: <n>`.
+ */
+export async function resolveActor(
+  v: VerifiedActor,
+  weight: number = MEMORY_WRITE_WEIGHTS.other,
+): Promise<CounselMemoryCtx> {
+  const ctx = await resolveSession(v.s, weight);
+  if (v.actor === 'counsel') {
+    if (ctx.readOnly || !v.counselName) throw new ProxyError('invalid_session', 'bad_cookie');
+    return {
+      ...ctx,
+      analystName: `Counsel: ${v.counselName}`,
+      actor: 'counsel',
+      counselName: v.counselName,
+      ...(v.docRef ? { docRef: v.docRef } : {}),
+    };
+  }
+  return { ...ctx, actor: 'analyst' };
+}
+
+export async function counselCtx(
+  request: Request,
+  env: { DB?: D1Database },
+  now: number,
+  opts: { write: boolean; weight?: number },
+): Promise<CounselMemoryCtx> {
+  return resolveActor(await verifyActor(request, env, now, opts), opts.weight);
+}

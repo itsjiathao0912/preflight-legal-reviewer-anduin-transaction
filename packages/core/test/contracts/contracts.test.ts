@@ -3,6 +3,7 @@ import { z } from 'zod';
 import * as ai from '../../src/contracts/ai';
 import * as cacheKeyMod from '../../src/contracts/cache-key';
 import * as claims from '../../src/contracts/claims';
+import * as counselShare from '../../src/contracts/counsel-share';
 import * as errors from '../../src/contracts/errors';
 import * as frames from '../../src/contracts/frames';
 import * as memory from '../../src/contracts/memory';
@@ -26,6 +27,7 @@ const MODULES: Record<string, Record<string, unknown>> = {
   ai,
   cacheKey: cacheKeyMod,
   claims,
+  counselShare,
   errors,
   frames,
   memory,
@@ -453,5 +455,47 @@ describe('ports conformance (type-level)', () => {
     await ledger.record({ kind: 'llm', model: 'm', units: 1, cache: 'miss', at: 1 });
     expect(await rules.activeRules('firm-x')).toEqual({ texts: [], rules_hash: 'none' });
     expect(await turnstile.verify('t', 'ip')).toEqual({ ok: false });
+  });
+});
+
+describe('counsel share doc_ref contracts (19-10-26)', () => {
+  it('DocRefSchema accepts bundled package/sample refs and rejects anything else', () => {
+    for (const ok of ['package:hartwell', 'package:lotus-bay-asia-ii', 'sample:09'])
+      expect(counselShare.DocRefSchema.safeParse(ok).success).toBe(true);
+    for (const bad of [
+      '',
+      'upload:x',
+      'package:',
+      'package:Hart',
+      'sample:09/../x',
+      `package:${'a'.repeat(41)}`,
+    ])
+      expect(counselShare.DocRefSchema.safeParse(bad).success).toBe(false);
+    expect(counselShare.DOC_REF_RE.test('sample:01')).toBe(true);
+  });
+
+  it('share request requires doc_ref; join and sheet responses carry doc_ref (+ decisions)', () => {
+    expect(counselShare.CounselShareRequestSchema.safeParse({}).success).toBe(false);
+    expect(counselShare.CounselShareRequestSchema.parse({ doc_ref: 'sample:03' })).toEqual({
+      doc_ref: 'sample:03',
+    });
+    const join = { workspace_id: 'w1', counsel_name: 'N', expires_at: 1 };
+    expect(counselShare.CounselJoinResponseSchema.safeParse(join).success).toBe(false);
+    expect(
+      counselShare.CounselJoinResponseSchema.safeParse({ ...join, doc_ref: 'package:hartwell' })
+        .success,
+    ).toBe(true);
+    const sheet = {
+      role: 'counsel',
+      doc_ref: 'package:hartwell',
+      questions: [],
+      answers: [],
+      comments: [],
+      decisions: [],
+      ready_at: null,
+    };
+    expect(counselShare.CounselSheetResponseSchema.safeParse(sheet).success).toBe(true);
+    const { decisions: _d, ...noDecisions } = sheet;
+    expect(counselShare.CounselSheetResponseSchema.safeParse(noDecisions).success).toBe(false);
   });
 });

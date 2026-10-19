@@ -262,6 +262,8 @@ export const AUDIT_ACTIONS = [
   'rule_revoked',
   'counsel_sheet_exported',
   'regression_check_created',
+  // counsel share link (additive, 19-10-26): the analyst marks the sheet ready to digitize
+  'ready_to_digitize',
 ] as const;
 export const AuditEventSchema = z.object({
   id: Id,

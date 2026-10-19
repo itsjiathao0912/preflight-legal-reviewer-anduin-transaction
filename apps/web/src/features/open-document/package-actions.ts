@@ -2,6 +2,7 @@ import { usePackage, type PackageMemberInput, type PrepareResult } from '../../s
 import { useShell } from '../../state/shell';
 import type { PackageTag } from '../package/contract';
 import { loadDemoPackages, type DemoPackage } from './demo-packages';
+import { rememberDemoPackage } from './demo-refs';
 import { loadFirms, loadManifest, scanPagesOf } from './samples';
 
 /** Intake Phase 2: package entry points used by the Upload modal. */
@@ -80,8 +81,12 @@ export async function openDemoPackage(id: string): Promise<PrepareResult> {
 /** Run the confirmed draft (findings screen opens; findings render before package analysis). */
 export async function runPackageDraft(): Promise<void> {
   if (!usePackage.getState().draftReadiness().ok) return;
+  const demoId = usePackage.getState().draft?.demoId;
   useShell.getState().setRoute('findings');
   await usePackage.getState().runDraft();
+  // counsel share link: a demo package run keeps its bundled ref (Share works for it)
+  const current = usePackage.getState().current;
+  if (demoId && current) rememberDemoPackage(current.id, demoId);
 }
 
 /** Restore a stored package (24 h) and re-open its primary. */

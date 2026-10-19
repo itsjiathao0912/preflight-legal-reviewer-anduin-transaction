@@ -410,3 +410,96 @@ ul.ev .l1 {
   background: var(--panel);
   color: var(--ink);
 }
+
+/* counsel share link (19-10-26): comments, share line, ready pill */
+.cmts {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+.cmts ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.cmts li {
+  background: var(--panel);
+  border-radius: var(--r);
+  padding: 8px 10px;
+}
+.cmts li .h {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.cmts li p {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.cmts form {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+.cmts textarea {
+  flex: 1;
+  background: var(--card);
+  border: 0;
+  border-radius: var(--r);
+  padding: 6px 8px;
+  font: inherit;
+  color: var(--ink);
+  resize: vertical;
+}
+.shareline {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  background: var(--accent-tint);
+  border-radius: var(--r);
+  padding: 8px 12px;
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+.shareline input {
+  flex: 1;
+  min-width: 200px;
+  background: var(--card);
+  border: 0;
+  border-radius: var(--r);
+  padding: 4px 8px;
+  font: inherit;
+  color: var(--ink);
+}
+.join-form {
+  display: grid;
+  gap: 10px;
+}
+.join-form input {
+  background: var(--card);
+  border: 0;
+  border-radius: var(--r);
+  padding: 6px 8px;
+  font: inherit;
+  color: var(--ink);
+}
+.join-form label.f {
+  display: grid;
+  gap: 4px;
+  color: var(--ink-3);
+  font-size: 13px;
+}
+.join-form .err {
+  display: none;
+  color: var(--block-fg);
+  font-size: 13px;
+}
+.join-form .err.on {
+  display: block;
+}

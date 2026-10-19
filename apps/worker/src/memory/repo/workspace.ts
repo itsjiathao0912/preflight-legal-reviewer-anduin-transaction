@@ -11,12 +11,15 @@ export const WORKSPACE_SQL = {
   insertSandbox:
     'INSERT INTO workspace (id, kind, status, seed_version, created_at, last_active_at, expires_at) ' +
     "VALUES (?1, 'sandbox', 'active', (SELECT CAST(value AS INTEGER) FROM app_meta WHERE key = 'seed_version'), ?2, ?2, ?3)",
+  /** Counsel share (19-10-26): the live sandbox expiry for the share link cap. */
+  expiry:
+    "SELECT w.expires_at FROM workspace w WHERE w.id = ?1 AND w.kind = 'sandbox' AND w.status = 'active'",
   insertAnalyst:
     'INSERT INTO analyst (workspace_id, id, display_name, is_seed, created_at) VALUES (?1, ?2, ?3, 0, ?4)',
 } as const;
 
 /** `workspace` itself is keyed by `id` (the workspace id); the lint treats `w.id = ?1` as scoped. */
-export const WORKSPACE_ID_SCOPED = ['liveness', 'insertSandbox'] as const;
+export const WORKSPACE_ID_SCOPED = ['liveness', 'insertSandbox', 'expiry'] as const;
 
 export interface LivenessRow {
   kind: 'demo' | 'sandbox';

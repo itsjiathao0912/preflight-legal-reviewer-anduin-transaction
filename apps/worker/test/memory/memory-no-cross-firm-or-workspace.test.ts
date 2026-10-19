@@ -7,6 +7,7 @@ import { LEDGER_SQL } from '../../src/platform/ledger';
 import { BREAKER_SQL } from '../../src/platform/breaker';
 import { RULES_PORT_SQL } from '../../src/platform/rules';
 import { AUDIT_SQL } from '../../src/memory/repo/audit';
+import { COMMENT_SQL } from '../../src/memory/repo/comment';
 import { COUNSEL_SQL } from '../../src/memory/repo/counsel';
 import { DECISION_SQL } from '../../src/memory/repo/decision';
 import { DOCUMENT_SQL } from '../../src/memory/repo/document';
@@ -37,6 +38,7 @@ const SCOPED: Record<string, Record<string, string>> = {
   RULES_PORT_SQL,
   AUDIT_SQL,
   COUNSEL_SQL,
+  COMMENT_SQL,
   DECISION_SQL,
   DOCUMENT_SQL,
   FINDING_SQL,

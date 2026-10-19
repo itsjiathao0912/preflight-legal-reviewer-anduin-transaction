@@ -96,3 +96,95 @@ export async function buildCounselDocx(
   });
   return Packer.toBlob(doc);
 }
+
+/** One answered question of the final (ready to digitize) DOCX. */
+export interface FinalQuestion {
+  number: number;
+  text: string;
+  location: string;
+  /** Masked quote (shown in quotes). */
+  quote: string;
+  interpretations: readonly string[];
+  /** Recorded answer: A/B/C/unclear, or null when none was recorded. */
+  option: 'A' | 'B' | 'C' | 'unclear' | null;
+  note?: string | undefined;
+  by?: string | undefined;
+  at?: number | undefined;
+}
+
+/** `final-answers-<fund>.docx` */
+export function finalDocxFilename(meta: CounselSheet['meta']): string {
+  const base = slug(meta.fund || meta.title || 'document');
+  return `final-answers-${base || 'document'}.docx`;
+}
+
+/**
+ * Final DOCX handed to digitization (counsel share link, "Mark ready to digitize"): every question
+ * with the recorded answer (option + the chosen reading), counsel's note and who answered when.
+ * Every free-text field is masked and clamped like the query sheet.
+ */
+export async function buildFinalDocx(
+  meta: CounselSheet['meta'],
+  questions: readonly FinalQuestion[],
+  readyAt: Date = new Date(),
+): Promise<Blob> {
+  const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import('docx');
+  const title = maskAndClamp(meta.title || 'Counsel answers', META_MAX);
+  const facts = [
+    meta.firm ? `Law firm: ${maskAndClamp(meta.firm, META_MAX)}` : 'Law firm: not tagged',
+    meta.fund ? `Fund: ${maskAndClamp(meta.fund, META_MAX)}` : null,
+    meta.version ? `Version: ${maskAndClamp(meta.version, META_MAX)}` : null,
+  ].filter((x): x is string => x !== null);
+  const children = [
+    new Paragraph({ heading: HeadingLevel.TITLE, children: [new TextRun(title)] }),
+    new Paragraph({ children: [new TextRun(facts.join(' · '))] }),
+    new Paragraph({
+      children: [
+        new TextRun(
+          `Ready to digitize · ${questions.length} question${questions.length === 1 ? '' : 's'} answered · ${readyAt.toISOString().slice(0, 10)}`,
+        ),
+      ],
+    }),
+  ];
+  for (const q of questions) {
+    const i = q.option && q.option !== 'unclear' ? LETTERS.indexOf(q.option) : -1;
+    const reading = i >= 0 ? q.interpretations[i] : undefined;
+    const answer =
+      q.option === null
+        ? 'No answer recorded'
+        : q.option === 'unclear'
+          ? 'Unclear'
+          : `Option ${q.option}${reading ? `: ${maskAndClamp(reading, WORDING_MAX)}` : ''}`;
+    const by = q.by ? maskAndClamp(q.by, 120) : 'not recorded';
+    const when = q.at ? ` on ${new Date(q.at).toISOString().slice(0, 10)}` : '';
+    children.push(
+      new Paragraph({
+        heading: HeadingLevel.HEADING_2,
+        children: [
+          new TextRun({
+            text: `${q.number}. ${maskAndClamp(q.text || 'Please confirm this clause.', WORDING_MAX)}`,
+            bold: true,
+          }),
+        ],
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: `${maskAndClamp(q.location || 'Clause', LOCATION_MAX)} · "${maskAndClamp(q.quote, WORDING_MAX)}"`,
+            italics: true,
+          }),
+        ],
+      }),
+      new Paragraph({ children: [new TextRun(`Answer: ${answer}`)] }),
+      ...(q.note
+        ? [new Paragraph({ children: [new TextRun(`Note: ${maskAndClamp(q.note, 1000)}`)] })]
+        : []),
+      new Paragraph({ children: [new TextRun(`Answered by: ${by}${when}`)] }),
+    );
+  }
+  if (!questions.length) {
+    children.push(new Paragraph({ children: [new TextRun('No questions on this sheet.')] }));
+  }
+  const doc = new Document({ creator: 'Sub-doc QA', title, sections: [{ children }] });
+  return Packer.toBlob(doc);
+}

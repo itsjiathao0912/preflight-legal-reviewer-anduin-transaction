@@ -21,6 +21,9 @@ export const TRIGGER_TEXTS = [
   'regression_check_append_only',
   'regression_check_cap',
   'question_owner_immutable',
+  // 0007 counsel comments
+  'comment_append_only',
+  'comment_cap',
 ] as const;
 export type TriggerText = (typeof TRIGGER_TEXTS)[number];
 

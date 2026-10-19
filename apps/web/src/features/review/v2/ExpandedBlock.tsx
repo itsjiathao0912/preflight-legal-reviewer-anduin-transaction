@@ -5,6 +5,7 @@ import { useReview } from '../../../state/review';
 import { LocatorChip } from '../../ai/Locator';
 import { AI_SUGGESTION, Provenance } from '../../ai/Provenance';
 import { useCounsel } from '../../counsel/counsel-store';
+import { FindingCounselBlock } from '../../counsel/FindingCounselBlock';
 import { EMPTY_DRAFTS, wordingFor } from '../../counsel/sheet-model';
 import { memoryLabelText } from '../memory-labels';
 import type { Row } from '../model';
@@ -126,6 +127,7 @@ export function ExpandedBlock({ row, twin }: { row: Row; twin?: FindingView | un
           )}
         </p>
       </details>
+      <FindingCounselBlock row={row} />
       <details className="fv2-details" data-testid="finding-details">
         <summary className="fv2-sec-h">
           <Icon name="chev" />

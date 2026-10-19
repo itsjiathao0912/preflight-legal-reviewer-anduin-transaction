@@ -115,46 +115,60 @@ async function recordInMemory(api: MemoryApi, input: ExportInput): Promise<numbe
   await flushOutbox();
   const key = await outboxDocFor(doc);
   const { run_id } = await api.ensureRun({ ...key, client_op_id: newClientOpId() });
-  if (doc.firmId && sheet.questions.length) {
-    const have = await readQuestionIds(doc.id);
-    const byId = new Map(input.findings.map((f) => [f.id, f]));
-    const rowById = new Map(input.rows.map((r) => [r.f.id, r]));
-    // Variance P04 (H2(c)): a question key `<findingId>@<owner>` resolves its finding by the plain
-    // id; change rows are not in memory.byId, so their fingerprint is computed locally (H1)
-    const need = sheet.questions.flatMap((q) => {
-      const { findingId, owner } = parseQuestionKey(q.findingKey);
-      const f = byId.get(findingId);
-      const fp =
-        input.memory?.byId[findingId]?.fingerprint ?? (f ? fingerprintFor(f, doc.firmId) : null);
-      return !have[q.findingKey] && f && fp ? [{ q, f, fp, owner }] : [];
-    });
-    if (need.length) {
-      const wires = new Map(need.map((n) => [n.f.id, toFindingWire(n.f, n.fp)]));
-      await api.storeFindings(run_id, [...wires.values()]);
-      const created = await api.createQuestions(
-        run_id,
-        need.map((n) => ({
-          client_op_id: newClientOpId(),
-          finding_ref: n.q.findingKey,
-          fingerprint: n.fp,
-          interpretations: n.q.interpretations,
-          ...(n.owner
-            ? {
-                owner: n.owner,
-                owner_source: rowById.get(n.f.id)?.triage?.ownerSource ?? 'suggested',
-              }
-            : {}),
-        })),
-      );
-      await saveQuestionIds(
-        doc.id,
-        Object.fromEntries(created.map((c) => [c.finding_ref, c.question_id])),
-      );
-    }
-  }
+  await syncQuestions(api, run_id, input, sheet.questions);
   const res = await api.exportRun(run_id, {
     question_count: sheet.questions.length,
     client_op_id: newClientOpId(),
   });
   return res.sheet_exported_at;
+}
+
+/**
+ * Create the Worker counsel questions not created yet for this document (firm documents only), in
+ * one batch, and remember their ids. Shared by Export and Share with counsel (a shared sheet needs
+ * every question on the server before counsel opens the link).
+ */
+export async function syncQuestions(
+  api: MemoryApi,
+  run_id: string,
+  input: Pick<ExportInput, 'doc' | 'rows' | 'findings' | 'memory'>,
+  questions: readonly { findingKey: string; interpretations: readonly string[] }[],
+): Promise<number> {
+  const { doc } = input;
+  if (!doc.firmId || !questions.length) return 0;
+  const have = await readQuestionIds(doc.id);
+  const byId = new Map(input.findings.map((f) => [f.id, f]));
+  const rowById = new Map(input.rows.map((r) => [r.f.id, r]));
+  // Variance P04 (H2(c)): a question key `<findingId>@<owner>` resolves its finding by the plain
+  // id; change rows are not in memory.byId, so their fingerprint is computed locally (H1)
+  const need = questions.flatMap((q) => {
+    const { findingId, owner } = parseQuestionKey(q.findingKey);
+    const f = byId.get(findingId);
+    const fp =
+      input.memory?.byId[findingId]?.fingerprint ?? (f ? fingerprintFor(f, doc.firmId) : null);
+    return !have[q.findingKey] && f && fp ? [{ q, f, fp, owner }] : [];
+  });
+  if (!need.length) return 0;
+  const wires = new Map(need.map((n) => [n.f.id, toFindingWire(n.f, n.fp)]));
+  await api.storeFindings(run_id, [...wires.values()]);
+  const created = await api.createQuestions(
+    run_id,
+    need.map((n) => ({
+      client_op_id: newClientOpId(),
+      finding_ref: n.q.findingKey,
+      fingerprint: n.fp,
+      interpretations: n.q.interpretations.slice(0, 6).map((t) => t.slice(0, 500)),
+      ...(n.owner
+        ? {
+            owner: n.owner,
+            owner_source: rowById.get(n.f.id)?.triage?.ownerSource ?? 'suggested',
+          }
+        : {}),
+    })),
+  );
+  await saveQuestionIds(
+    doc.id,
+    Object.fromEntries(created.map((c) => [c.finding_ref, c.question_id])),
+  );
+  return created.length;
 }

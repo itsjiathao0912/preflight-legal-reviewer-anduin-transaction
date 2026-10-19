@@ -8,6 +8,7 @@ import { measureAi, measureEndpoints } from './budget-probe';
 import { call, decide, makeMem, newRun, op, session } from './memory-harness';
 import { answer, askQuestion, withAssertion } from './variance-harness';
 import { counselAnswerWeight } from '../../src/platform/index';
+import { counselFor } from './counsel-harness';
 
 // Fix cycle 2 (N1): each write route's global-budget weight must cover its measured rows written,
 // so the 30k-unit budget really bounds memory D1 rows/day. Sessions are bounded by SESSION_CAPS.
@@ -147,5 +148,66 @@ describe('rows-written (AC40 interim, M1)', () => {
       extra: { owner: 'gp', owner_source: 'override' },
     });
     expect(h.stats.rowsWritten).toBe(plainAsk);
+  });
+
+  // Counsel share link (0007, E2): measured, not guessed. Own measurement (query-budget key set
+  // unchanged). A comment writes the comment row + its PK/ix_comment_q entries + the mw|req and
+  // mw|rows claim rows; ready writes one audit row (+ index) + claims; share/join/sheet write 0.
+  test('counsel share link: comment, ready, share, join and sheet stay within their weights', async () => {
+    const h = makeMem();
+    const s = await session(h);
+    const q = await askQuestion(h, s);
+    h.resetStats();
+    const share = await call(
+      h,
+      'POST',
+      '/api/counsel/share',
+      { doc_ref: 'package:hartwell' },
+      { cookie: s.cookie },
+    );
+    expect(share.status).toBe(200);
+    expect(h.stats.rowsWritten).toBe(0);
+    h.resetStats();
+    const j = await call(h, 'POST', '/api/counsel/join', { token: share.body.token, name: 'Rita' });
+    expect(j.status).toBe(200);
+    expect(h.stats.rowsWritten).toBe(0);
+    const counsel = await counselFor(h, s, 'Rita');
+    const sizes: number[] = [];
+    for (const cookie of [s.cookie, counsel]) {
+      h.resetStats();
+      const c = await call(
+        h,
+        'POST',
+        '/api/counsel/comments',
+        { question_id: q.questionId, body: 'x'.repeat(1000), client_op_id: op('cm') },
+        { cookie },
+      );
+      expect(c.status).toBe(200);
+      sizes.push(h.stats.rowsWritten);
+    }
+    h.resetStats();
+    expect(
+      (await call(h, 'GET', '/api/counsel/sheet', undefined, { cookie: counsel })).status,
+    ).toBe(200);
+    expect(h.stats.rowsWritten).toBe(0);
+    h.resetStats();
+    expect(
+      (
+        await call(
+          h,
+          'POST',
+          '/api/counsel/ready',
+          { client_op_id: op('rd') },
+          { cookie: s.cookie },
+        )
+      ).status,
+    ).toBe(200);
+    const ready = h.stats.rowsWritten;
+    console.log(`counsel share rows_written: comment ${sizes.join('/')}, ready ${ready}`);
+    for (const n of sizes) {
+      expect(n).toBeGreaterThan(0);
+      expect(n).toBeLessThanOrEqual(W.counselComment);
+    }
+    expect(ready).toBeLessThanOrEqual(W.other);
   });
 });

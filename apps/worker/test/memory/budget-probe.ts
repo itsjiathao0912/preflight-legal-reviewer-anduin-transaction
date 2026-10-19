@@ -127,6 +127,10 @@ export async function measureEndpoints(): Promise<Record<string, Measured>> {
     { cookie: s.cookie },
   );
   take('counsel_answer');
+  await call(h, 'GET', '/api/counsel/sheet?doc_ref=package:hartwell', undefined, {
+    cookie: s.cookie,
+  });
+  take('counsel_sheet');
   const rules = await call(h, 'GET', '/api/rules?law_firm_id=firm-x', undefined, {
     cookie: s.cookie,
   });

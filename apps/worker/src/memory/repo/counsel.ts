@@ -19,6 +19,23 @@ export const COUNSEL_SQL = {
     'VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)',
   markAnswered:
     "UPDATE counsel_question SET status = 'answered' WHERE workspace_id = ?1 AND id = ?2",
+  /** Counsel share sheet (19-10-26): quote/location come from the persisted finding of the plain
+   * finding id (a question key `<findingId>@<owner>` is cut at '@'). */
+  sheetQuestions:
+    'SELECT q.id, q.finding_key, q.fingerprint, q.issue_class, q.owner, q.draft_text, q.edited_text, q.status, ' +
+    'q.interpretations_json, q.created_at, f.severity, f.section_path, f.quote_snippet ' +
+    'FROM counsel_question q LEFT JOIN finding f ON f.workspace_id = q.workspace_id AND f.review_run_id = q.review_run_id ' +
+    "AND f.finding_key = (CASE WHEN instr(q.finding_key, '@') > 0 THEN substr(q.finding_key, 1, instr(q.finding_key, '@') - 1) ELSE q.finding_key END) " +
+    'WHERE q.workspace_id = ?1 ORDER BY q.position, q.created_at, q.id LIMIT 500',
+  sheetAnswers:
+    'SELECT id, question_id, option, note, answered_by_name, answered_at, intent, scope FROM counsel_answer ' +
+    "WHERE workspace_id = ?1 AND status = 'active' AND answered_at > ?2 ORDER BY answered_at, id LIMIT 2000",
+  readyAt:
+    "SELECT MAX(at) AS at FROM audit_event WHERE workspace_id = ?1 AND action = 'ready_to_digitize'",
+  findingQuote:
+    'SELECT quote_hash, quote_snippet, section_path FROM finding WHERE workspace_id = ?1 AND review_run_id = ?2 AND finding_key = ?3',
+  decisionQuote:
+    'SELECT quote_hash, quote_snippet FROM decision WHERE workspace_id = ?1 AND id = ?2',
   markExported:
     "UPDATE counsel_question SET status = 'exported', exported_at = ?3 WHERE workspace_id = ?1 AND review_run_id = ?2 AND status = 'drafted'",
 } as const;
@@ -83,6 +100,8 @@ export function insertAnswerStmt(
     note: string | null;
     intent?: string | null;
     scope?: string | null;
+    /** Defaults to the acting analyst's name; the counsel actor passes the counsel name. */
+    answeredBy?: string;
   },
 ): D1PreparedStatement {
   return db
@@ -93,7 +112,7 @@ export function insertAnswerStmt(
       a.questionId,
       a.option,
       a.note,
-      ctx.analystName,
+      a.answeredBy ?? ctx.analystName,
       ctx.now,
       a.intent ?? null,
       a.scope ?? null,

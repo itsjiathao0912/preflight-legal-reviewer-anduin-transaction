@@ -19,7 +19,11 @@ const GETS = MEMORY_ROUTES.filter(
       ? '?law_firm_id=firm-x'
       : r.endsWith('/audit')
         ? '?limit=1'
-        : ''),
+        : r.endsWith('/counsel/comments')
+          ? '?question_id=x1'
+          : r.endsWith('/counsel/sheet')
+            ? '?doc_ref=package:hartwell'
+            : ''),
 );
 
 function expectHeaders(res: Response) {
@@ -65,7 +69,9 @@ describe('memory-guards-matrix (AC39)', () => {
     expectHeaders(big.res);
   });
 
-  test.each(POSTS.filter((p) => p !== '/api/session'))(
+  // POST /api/counsel/join is cookieless by design (the share token in the body is the credential;
+  // its 401s are covered by counsel-share-token).
+  test.each(POSTS.filter((p) => p !== '/api/session' && p !== '/api/counsel/join'))(
     'POST %s: a missing or forged cookie is 401 before the body is read (L5)',
     async (path) => {
       const h = makeMem();
@@ -100,7 +106,11 @@ describe('memory-guards-matrix (AC39)', () => {
     expect(r.body.error.reason).toBe('client_header');
     expectHeaders(r.res);
     const okr = await call(h, 'GET', path, undefined, { cookie: s.cookie });
-    expect(okr.status, path).toBe(200);
+    // counsel comments of an unknown question: a typed 400 after the guards (never 200 / 5xx)
+    if (path.includes('/counsel/comments')) {
+      expect(okr.status, path).toBe(400);
+      expect(okr.body.error.reason).toBe('question_not_found');
+    } else expect(okr.status, path).toBe(200);
     expectHeaders(okr.res);
   });
 

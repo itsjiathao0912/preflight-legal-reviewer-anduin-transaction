@@ -1,8 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Icon } from '../../../components/ui/icon';
 import { useFilters } from '../../../state/filters';
 import { useReview } from '../../../state/review';
 import { useShell } from '../../../state/shell';
+import { pushSharedQuestions } from '../../counsel/share-flow';
+import { useShare } from '../../counsel/counsel-share';
+import { questionItems } from '../../variance/owner-groups';
 import { CosmeticGroups } from '../../variance/CosmeticGroups';
 import { NoBaselineLine } from '../../variance/NoBaselineLine';
 import { useVariance, varianceLines } from '../../variance/variance-store';
@@ -48,6 +51,10 @@ export function FindingsPanelV2({ view }: { view: ReviewView }) {
   const vIgnored = useVariance((s) => s.ignored);
   const vDoc = useVariance((s) => s.docId);
   const setOpenDoc = useShell((s) => s.setOpenDoc);
+  // counsel share link: counsel sees the same canvas but answers and comments only
+  const counselMode = useShare((s) => s.role === 'counsel');
+  const viewRef = useRef(view);
+  viewRef.current = view;
 
   const groups = useMemo(() => groupRows(view.visible), [view.visible]);
   const flat = useMemo(() => flatOrder(groups), [groups]);
@@ -74,10 +81,28 @@ export function FindingsPanelV2({ view }: { view: ReviewView }) {
       void done.then((ok) => {
         const id = useReview.getState().selectedId;
         if (ok && id) focusRow(id);
+        // counsel share link: once a link exists, a new "Ask counsel" reaches counsel at once
+        if (ok && plan.call !== 'restore') void pushShared();
       });
     }
   };
+  const pushShared = async () => {
+    if (!useShare.getState().link) return;
+    // the view re-renders after the store write; read the fresh rows on the next frame
+    await new Promise<void>((r) => setTimeout(r, 0));
+    const s = useReview.getState();
+    if (!s.doc) return;
+    const rows = viewRef.current.rows;
+    await pushSharedQuestions({
+      doc: s.doc,
+      rows,
+      findings: rows.map((r) => r.f),
+      memory: s.memory,
+      items: questionItems(rows),
+    });
+  };
   const barEnabled = (c: Control): boolean => {
+    if (counselMode) return false;
     if (!ready || !selectedRow || actions.busy) return false;
     if (c === 'ask-counsel') return bar.primary === 'ask-counsel' && !owners.askDisabled;
     if (c === 'close-issue') return bar.closeEnabled;
@@ -198,20 +223,24 @@ export function FindingsPanelV2({ view }: { view: ReviewView }) {
           </div>
         ) : null}
       </div>
-      <ActionBar
-        row={ready ? selectedRow : null}
-        busy={actions.busy}
-        askDisabled={owners.askDisabled}
-        askTitle={owners.askTitle}
-        onControl={onControl}
-      />
-      <CloseIssueModal
-        row={modalRow}
-        open={modalFor !== null}
-        onClose={() => setModalFor(null)}
-        onSubmit={onSubmitClose}
-        focusAfterClose={focusAfterClose}
-      />
+      {counselMode ? null : (
+        <>
+          <ActionBar
+            row={ready ? selectedRow : null}
+            busy={actions.busy}
+            askDisabled={owners.askDisabled}
+            askTitle={owners.askTitle}
+            onControl={onControl}
+          />
+          <CloseIssueModal
+            row={modalRow}
+            open={modalFor !== null}
+            onClose={() => setModalFor(null)}
+            onSubmit={onSubmitClose}
+            focusAfterClose={focusAfterClose}
+          />
+        </>
+      )}
     </aside>
   );
 }

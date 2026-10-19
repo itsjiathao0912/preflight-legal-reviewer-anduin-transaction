@@ -17,6 +17,7 @@ import {
 } from '@aduin/core';
 import { describe, expect, test } from 'vitest';
 import { RunExportResponseSchema } from '../../src/routes/memory/export';
+import { MEMORY_ROUTES } from '../../src/routes/memory/index';
 import {
   call,
   cookieOf,
@@ -272,7 +273,20 @@ describe('memory-endpoint-contract (frozen Contracts v1)', () => {
     );
     expect(ids.size).toBe(page.events.length + au2.body.events.length); // keyset: no overlap
     const health = await call(h, 'GET', '/api/memory/health');
-    expect(health.body).toMatchObject({ ok: true, schema_version: '6', seed_mode: '0' });
+    expect(health.body).toMatchObject({ ok: true, schema_version: '7', seed_mode: '0' });
     expect((await call(h, 'GET', '/api/health')).body).toEqual({ ok: true });
+  });
+
+  test('counsel share link routes are registered (19-10-26)', () => {
+    for (const r of [
+      'POST /api/counsel/share',
+      'POST /api/counsel/join',
+      'GET /api/counsel/sheet',
+      'GET /api/counsel/comments',
+      'POST /api/counsel/comments',
+      'POST /api/counsel/ready',
+      'POST /api/counsel/answers',
+    ])
+      expect(MEMORY_ROUTES as readonly string[]).toContain(r);
   });
 });

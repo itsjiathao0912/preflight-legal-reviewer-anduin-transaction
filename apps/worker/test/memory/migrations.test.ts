@@ -1,4 +1,4 @@
-// Migrations 0001-0006 apply on local D1: 21 tables, schema_version set LAST by each migration.
+// Migrations 0001-0007 apply on local D1: 22 tables, schema_version set LAST by each migration.
 import { env } from 'cloudflare:test';
 import { describe, expect, test } from 'vitest';
 import { EXPECTED_SCHEMA_VERSION } from '../../src/memory/health';
@@ -9,6 +9,7 @@ const TABLES = [
   'app_meta',
   'audit_event',
   'counsel_answer',
+  'counsel_comment',
   'counsel_question',
   'decision',
   'document',
@@ -28,7 +29,7 @@ const TABLES = [
 ];
 
 describe('migrations (AC42, AC43, AC47)', () => {
-  test('0001-0006 are applied in order and recorded', async () => {
+  test('0001-0007 are applied in order and recorded', async () => {
     const r = await env.DB.prepare('SELECT name FROM d1_migrations ORDER BY id').all<{
       name: string;
     }>();
@@ -39,10 +40,11 @@ describe('migrations (AC42, AC43, AC47)', () => {
       '0004_cache_quota_ledger.sql',
       '0005_demo_protection_gaps.sql',
       '0006_variance.sql',
+      '0007_counsel_comment.sql',
     ]);
   });
 
-  test('exactly the 21 designed tables exist (9 + 8 + 3 + 1 variance)', async () => {
+  test('exactly the 22 designed tables exist (9 + 8 + 3 + 1 variance + 1 counsel comment)', async () => {
     const r = await env.DB.prepare(
       "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' AND name <> 'd1_migrations' ORDER BY name",
     ).all<{ name: string }>();
@@ -64,6 +66,7 @@ describe('migrations (AC42, AC43, AC47)', () => {
       'rule_evidence',
       'audit_event',
       'regression_check',
+      'counsel_comment',
     ]) {
       const row = await env.DB.prepare('SELECT sql FROM sqlite_master WHERE name = ?1')
         .bind(t)
@@ -102,6 +105,7 @@ describe('migrations (AC42, AC43, AC47)', () => {
       'ix_cache_exp',
       'ix_ws_expiry',
       'ix_regression_check_scope',
+      'ix_comment_q',
     ])
       expect(by[i], i).toBeDefined();
   });
@@ -132,5 +136,37 @@ describe('migrations (AC42, AC43, AC47)', () => {
     ).toEqual(['source_answer_id', 'workspace_id']);
     expect(fks.some((f) => f.table === 'law_firm' && f.from === 'law_firm_id')).toBe(true);
     expect(fks.some((f) => f.table === 'workspace' && f.from === 'workspace_id')).toBe(true);
+  });
+
+  test('0007 adds counsel_comment with a composite FK to counsel_question and schema_version 7 last', async () => {
+    const fks = (
+      await env.DB.prepare('PRAGMA foreign_key_list(counsel_comment)').all<{
+        table: string;
+        from: string;
+      }>()
+    ).results;
+    expect(
+      fks
+        .filter((f) => f.table === 'counsel_question')
+        .map((f) => f.from)
+        .sort(),
+    ).toEqual(['question_id', 'workspace_id']);
+    const m = env.TEST_MIGRATIONS.at(-1)!;
+    expect(m.name).toBe('0007_counsel_comment.sql');
+    const last = m.queries.filter((q) => q.trim().length > 0).at(-1) ?? '';
+    expect(last).toMatch(/'schema_version', '7'/);
+    expect(EXPECTED_SCHEMA_VERSION).toBe('7');
+    const triggers = (
+      await env.DB.prepare(
+        "SELECT name FROM sqlite_master WHERE type = 'trigger' AND tbl_name = 'counsel_comment' ORDER BY name",
+      ).all<{ name: string }>()
+    ).results.map((r) => r.name);
+    expect(triggers).toEqual([
+      'comment_cap',
+      'comment_no_delete',
+      'comment_no_update',
+      'demo_ro_counsel_comment',
+      'demo_ro_counsel_comment_delete',
+    ]);
   });
 });

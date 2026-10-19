@@ -64,6 +64,12 @@ export const MEMORY_WRITE_WEIGHTS = Object.freeze({
    */
   counselAnswerWithAssertion: 23,
   findingsBase: 5,
+  /**
+   * Counsel share link (0007): measured 4 rows per comment on local D1 (comment row + ix_comment_q
+   * entry + the mw|req and mw|rows claim rows; rows-written counsel share test), + margin 6 -> 10.
+   * POST /api/counsel/ready uses `other` (measured 5); share, join and sheet write 0 rows.
+   */
+  counselComment: 10,
   other: 10,
 });
 

@@ -4,7 +4,7 @@
 //   1. generate random per-run COOKIE_SIGNING_KEYS ({kid: >= 32-byte string}) + COOKIE_SIGNING_KID
 //      (in memory only: never printed, never written, no `.dev.vars` is ever created);
 //   2. recreate a throwaway persist dir under apps/worker/.wrangler/ (gitignored);
-//   3. apply migrations 0001-0006, then the demo seed built by buildDemoSeedSql(spec, PHASE02_SPEC)
+//   3. apply migrations 0001-0007, then the demo seed built by buildDemoSeedSql(spec, PHASE02_SPEC)
 //      from fixtures/memory/demo-seed-spec.json (seed:gen is NOT run; apps/worker/seed/demo.sql
 //      is untouched);
 //   4. self-check the D1 holds sd01-sd03 and the proposed rule sr01 for partners-group;
@@ -24,7 +24,7 @@ const MIGRATIONS_DIR = join(WORKER_DIR, 'migrations');
 const PERSIST_DIR = join(WORKER_DIR, '.wrangler', 'e2e-stack-memory');
 const DB_NAME = 'aduin-transaction-db';
 const PORT = '8788';
-const EXPECTED_MIGRATIONS = ['0001', '0002', '0003', '0004', '0005', '0006'];
+const EXPECTED_MIGRATIONS = ['0001', '0002', '0003', '0004', '0005', '0006', '0007'];
 const SECRET_ENV =
   /OPENROUTER|TURNSTILE|COOKIE_SIGNING|CLOUDFLARE_API|CF_API|API_KEY|SECRET|TOKEN/i;
 
@@ -102,8 +102,8 @@ function selfCheck(): void {
     "SELECT key, value FROM app_meta WHERE key IN ('schema_version','seed_mode')",
   );
   const get = (k: string) => meta.find((m) => m.key === k)?.value;
-  if (get('schema_version') !== '6' || get('seed_mode') !== '0')
-    fail('seed self-check: schema_version must be 6 and seed_mode 0');
+  if (get('schema_version') !== '7' || get('seed_mode') !== '0')
+    fail('seed self-check: schema_version must be 7 and seed_mode 0');
   log('self-check ok: sd01-sd03 + proposed sr01 (partners-group), schema 6, seed_mode 0');
 }
 

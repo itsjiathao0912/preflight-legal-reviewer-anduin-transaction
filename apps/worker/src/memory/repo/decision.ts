@@ -13,6 +13,10 @@ export const DECISION_SQL = {
   currentActive:
     `SELECT ${DECISION_COLS} FROM decision d INDEXED BY uq_decision_active WHERE d.workspace_id = ?1 ` +
     "AND d.law_firm_id = ?2 AND d.fingerprint = ?3 AND d.status = 'active'",
+  /** Counsel sheet (19-10-26): workspace ACTIVE decisions, newest first, capped. */
+  listActive:
+    `SELECT ${DECISION_COLS} FROM decision d WHERE d.workspace_id = ?1 AND d.status = 'active' ` +
+    'ORDER BY d.decided_at DESC, d.id LIMIT 500',
   supersede:
     "UPDATE decision SET status = 'superseded', superseded_by_id = ?3 WHERE workspace_id = ?1 AND id = ?2 AND status = 'active'",
   revoke:

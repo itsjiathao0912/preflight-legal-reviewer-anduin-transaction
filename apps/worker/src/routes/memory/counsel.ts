@@ -23,7 +23,15 @@ import {
 import type { Handler } from '../../app';
 import { ProxyError, jsonNoStore } from '../../proxy/errors';
 import { newId } from '../../db/ids';
-import { handle, ok, parseWith, postEntry, type MemoryDeps } from '../../memory/http';
+import {
+  counselPostEntry,
+  handle,
+  ok,
+  parseWith,
+  postEntry,
+  type MemoryDeps,
+} from '../../memory/http';
+import type { MemoryCtx } from '../../memory/ctx';
 import { maskFree, maskOpt, snippetOf } from '../../memory/mask';
 import { auditStmt, replayed } from '../../memory/repo/audit';
 import { countActiveChecks, insertRegressionCheckStmt } from '../../memory/repo/regression';
@@ -117,25 +125,34 @@ export function counselQuestionHandler(deps: MemoryDeps): Handler {
 
 export function counselAnswerHandler(deps: MemoryDeps): Handler {
   return handle(deps, 'counsel_answers', async (request, env) => {
-    const { ctx, raw } = await postEntry(request, env, deps.now(), {
-      write: true,
+    // Counsel share link: the counsel cookie is accepted here (fund-scope answers only).
+    const { ctx, raw } = await counselPostEntry(request, env, deps.now(), {
       weight: counselAnswerWeight,
     });
     const body = parseWith(CounselAnswerRequestSchema, raw);
+    const isCounsel = ctx.actor === 'counsel';
+    if (isCounsel && (body.assertion || body.scope === 'firm_template'))
+      throw new ProxyError('invalid_request', 'counsel_scope');
     // N1/E1: a replay of an already-recorded answer returns the stored result BEFORE any cap
     // pre-check, so a replay at the cap never turns into regression_check_cap.
     if (body.assertion && (await replayed(ctx, body.client_op_id)))
       return replayResponse(ctx, body.client_op_id, 'answer_recorded');
     const q = await questionById(ctx, body.question_id);
     if (!q) throw new ProxyError('invalid_request', 'question_not_found');
+    // Counsel has no document: the quote comes from the persisted finding (or the prior decision),
+    // never from the body; the fingerprint must still equal the question's.
     if (
       body.fingerprint !== q.fingerprint ||
-      !fingerprintOk(body.quote_text, q.law_firm_id, q.issue_class, body.fingerprint)
+      (!isCounsel &&
+        !fingerprintOk(body.quote_text, q.law_firm_id, q.issue_class, body.fingerprint))
     )
       throw new ProxyError('fingerprint_mismatch');
     const run = await runContext(ctx, q.review_run_id);
     if (!run) throw new ProxyError('invalid_request', 'run_not_found');
     const prev = await currentActive(ctx, q.law_firm_id, q.fingerprint);
+    const quote = isCounsel
+      ? await storedQuote(ctx, q, prev)
+      : { hash: quoteHash(body.quote_text), snippet: snippetOf(body.quote_text) };
     const answerId = newId('ca', ctx.now);
     const note = maskOpt(body.note);
     const intent = maskOpt(body.intent);
@@ -160,8 +177,8 @@ export function counselAnswerHandler(deps: MemoryDeps): Handler {
       fingerprint: q.fingerprint,
       issue_class: q.issue_class,
       pattern_key: prev?.pattern_key ?? null,
-      quote_hash: quoteHash(body.quote_text),
-      quote_snippet: snippetOf(body.quote_text),
+      quote_hash: quote.hash,
+      quote_snippet: quote.snippet,
       section_path: null,
       fund_name: run.fund_name,
       doc_version_label: run.version_label,
@@ -196,6 +213,7 @@ export function counselAnswerHandler(deps: MemoryDeps): Handler {
             decision_id: d.id,
             ...(scope ? { scope } : {}),
             ...(intent !== null ? { intent_len: intent.length } : {}),
+            ...(isCounsel ? { actor: 'counsel' } : {}),
           },
           result,
         }),
@@ -206,6 +224,7 @@ export function counselAnswerHandler(deps: MemoryDeps): Handler {
           note,
           intent,
           scope,
+          ...(isCounsel && ctx.counselName ? { answeredBy: ctx.counselName } : {}),
         }),
         ...(check ? checkStmts(ctx, body.client_op_id, q.law_firm_id, answerId, run, check) : []),
         ...(prev ? [supersedeStmt(ctx.db, ctx, prev.id, d.id)] : []),
@@ -227,6 +246,30 @@ export function counselAnswerHandler(deps: MemoryDeps): Handler {
     }
     return jsonNoStore(result);
   });
+}
+
+/**
+ * Counsel answers (share link): the quote of the persisted finding (plain finding id of the question
+ * key), else the quote of the prior decision on the same fingerprint; neither -> 400.
+ */
+async function storedQuote(
+  ctx: MemoryCtx,
+  q: { review_run_id: string; finding_key: string },
+  prev: { id: string } | null,
+): Promise<{ hash: string; snippet: string }> {
+  const f = await ctx.db
+    .prepare(COUNSEL_SQL.findingQuote)
+    .bind(ctx.workspaceId, q.review_run_id, parseQuestionKey(q.finding_key).findingId)
+    .first<{ quote_hash: string; quote_snippet: string }>();
+  if (f) return { hash: f.quote_hash, snippet: f.quote_snippet };
+  if (prev) {
+    const d = await ctx.db
+      .prepare(COUNSEL_SQL.decisionQuote)
+      .bind(ctx.workspaceId, prev.id)
+      .first<{ quote_hash: string; quote_snippet: string }>();
+    if (d) return { hash: d.quote_hash, snippet: d.quote_snippet };
+  }
+  throw new ProxyError('invalid_request', 'quote_unavailable');
 }
 
 /** The check row (FK to the answer inserted just before it) and its own audit row. */

@@ -1,4 +1,6 @@
 import { useAiLaneEffects } from '../features/ai/ai-lane';
+import { CounselJoinDialog } from '../features/counsel/CounselJoinDialog';
+import { useCounselEffects, useShare } from '../features/counsel/counsel-share';
 import { featureFor } from '../features/registry';
 import { OpenDocumentDialog } from '../features/open-document/OpenDocumentDialog';
 import { PrivacyPrompt } from '../features/open-document/PrivacyPrompt';
@@ -12,7 +14,11 @@ export function AppShell() {
   useShellEffects();
   useAiLaneEffects();
   const rail = useShell(isRail);
-  const route = useShell((s) => s.route);
+  useCounselEffects();
+  const counselMode = useShare((s) => s.role === 'counsel');
+  const shellRoute = useShell((s) => s.route);
+  // counsel share link: counsel mode has the Findings screen only
+  const route = counselMode ? 'findings' : shellRoute;
   const View = featureFor(route)?.component ?? featureFor('findings')!.component;
   return (
     <>
@@ -33,8 +39,13 @@ export function AppShell() {
           <View key={route} />
         </main>
       </div>
-      <OpenDocumentDialog />
-      <PrivacyPrompt />
+      {counselMode ? null : (
+        <>
+          <OpenDocumentDialog />
+          <PrivacyPrompt />
+        </>
+      )}
+      <CounselJoinDialog />
       <UndoToast />
     </>
   );

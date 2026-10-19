@@ -69,6 +69,8 @@ describe('memory write limits (review M1)', () => {
       // Variance Phase 03: measured 18 rows (plain answer 13, +5 for the check) -> 18 + 5
       counselAnswerWithAssertion: 23,
       findingsBase: 5,
+      // counsel share link (0007): measured in rows-written (counsel comment), see there
+      counselComment: 10,
       other: 10,
     });
   });

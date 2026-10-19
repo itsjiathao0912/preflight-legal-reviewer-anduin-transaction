@@ -49,6 +49,7 @@ export * from './contracts/ai';
 export * from './contracts/ocr';
 export * from './contracts/quota';
 export * from './contracts/memory';
+export * from './contracts/counsel-share';
 export type * from './contracts/ports';
 export * from './contracts/seed-spec';
 

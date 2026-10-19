@@ -21,6 +21,7 @@ export const PURGE_CHILD_TABLES = [
   'firm_rule',
   'decision',
   'regression_check',
+  'counsel_comment',
   'counsel_answer',
   'counsel_question',
   'review_run',

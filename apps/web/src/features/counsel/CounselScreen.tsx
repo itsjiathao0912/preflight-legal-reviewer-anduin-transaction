@@ -1,5 +1,6 @@
 import { parseQuestionKey, type Owner } from '@aduin/core';
 import { useEffect, useMemo, useState } from 'react';
+import { isRealMemoryApi, memoryApi } from '../../api/client';
 import { Icon } from '../../components/ui/icon';
 import { useReview } from '../../state/review';
 import { useSession } from '../../state/session';
@@ -17,6 +18,9 @@ import {
 import { useVariance } from '../variance/variance-store';
 import { fetchAiDrafts } from './ai-draft';
 import { useCounsel } from './counsel-store';
+import { questionIdsByKey, useCounselPoll, useShare } from './counsel-share';
+import { DEMO_ONLY, markReadyToDigitize, ShareError, shareWithCounsel } from './share-flow';
+import { docRefOf } from '../open-document/demo-refs';
 import { ExportDialog } from './ExportDialog';
 import { GpRequestGroup } from './GpRequestGroup';
 import { exportCounselSheet } from './export-flow';
@@ -42,6 +46,19 @@ type OwnerTab = 'all' | Owner;
  * and one export per owner appear; Intake's GP request group stays on every tab.
  */
 export function CounselScreen() {
+  // counsel share link v2: counsel mode never routes here (the shell shows Findings only)
+  return <AnalystQuestionsScreen />;
+}
+
+function fmtExpiry(ms: number): string {
+  return new Date(ms).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function AnalystQuestionsScreen() {
   const view = useReviewView();
   const rows = view.rows;
   const doc = useReview((s) => s.doc);
@@ -73,6 +90,19 @@ export function CounselScreen() {
   const [answeringPrior, setAnsweringPrior] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const [metricsSeq, setMetricsSeq] = useState(0);
+  const shareSheet = useShare((s) => s.sheet);
+  const link = useShare((s) => s.link);
+  const readyAt = useShare((s) => s.readyAt);
+  const [sharing, setSharing] = useState(false);
+  const [readyBusy, setReadyBusy] = useState(false);
+  // counsel's answers and comments are read only for a firm document with the live memory service
+  const canSync = !!doc?.firmId && !readOnly && isRealMemoryApi(memoryApi());
+  // counsel re-opens bundled files only: uploads and assembled packages cannot be shared
+  const shareable = !!docRefOf(doc);
+  const canShare = canSync && shareable;
+  // the sheet is read only for a shareable (demo) document: the Worker needs its doc_ref
+  useCounselPoll(canShare);
+  const qidByKey = useMemo(() => questionIdsByKey(shareSheet), [shareSheet]);
 
   useEffect(() => {
     void load(doc?.id ?? null);
@@ -210,6 +240,12 @@ export function CounselScreen() {
             {doc
               ? `${items.length} question${items.length === 1 ? '' : 's'} · ${openItems.length} unanswered`
               : 'No document open'}
+            {readyAt ? (
+              <span className="tag t-ok" data-testid="counsel-ready-pill">
+                <Icon name="check" />
+                Ready to digitize
+              </span>
+            ) : null}
           </p>
         </div>
         {doc ? (
@@ -271,6 +307,75 @@ export function CounselScreen() {
               <Icon name="doc" />
               {tab === 'all' ? 'Export DOCX' : `Export for ${OWNER_LABEL[tab]} (DOCX)`}
             </button>
+            <button
+              type="button"
+              className="btn"
+              data-testid="counsel-share"
+              disabled={!canShare || sharing || !items.length}
+              title={
+                !shareable
+                  ? DEMO_ONLY
+                  : canShare
+                    ? undefined
+                    : 'Sharing needs a law firm tag and your own sandbox (not the read-only demo)'
+              }
+              onClick={async () => {
+                if (!doc) return;
+                setSharing(true);
+                try {
+                  const l = await shareWithCounsel({
+                    doc,
+                    rows,
+                    findings: rows.map((r) => r.f),
+                    memory,
+                    items,
+                  });
+                  let copied = false;
+                  try {
+                    await navigator.clipboard.writeText(l.url);
+                    copied = true;
+                  } catch {
+                    /* the link stays visible below to copy by hand */
+                  }
+                  showToast(
+                    `${copied ? 'Link copied.' : 'Link ready.'} Valid until ${fmtExpiry(l.expiresAt)}.`,
+                  );
+                } catch (e) {
+                  showToast(
+                    e instanceof ShareError ? e.message : 'The share link could not be created.',
+                  );
+                } finally {
+                  setSharing(false);
+                }
+              }}
+            >
+              <Icon name="counsel" />
+              {sharing ? 'Sharing…' : 'Share with counsel'}
+            </button>
+            <button
+              type="button"
+              className="btn pri"
+              data-testid="counsel-mark-ready"
+              disabled={gateN > 0 || phase !== 'ready' || readyBusy}
+              title={gateN > 0 ? 'Every critical item needs a counsel answer first' : undefined}
+              onClick={async () => {
+                if (!doc || gateN > 0) return;
+                setReadyBusy(true);
+                try {
+                  const out = await markReadyToDigitize({ doc, items, drafts });
+                  showToast(
+                    `Ready to digitize. Final answers downloaded.${out.note ? ` ${out.note}` : ''}`,
+                  );
+                } catch {
+                  showToast('The final DOCX could not be built. Try again.');
+                } finally {
+                  setReadyBusy(false);
+                }
+              }}
+            >
+              <Icon name="unlock" />
+              Mark ready to digitize
+            </button>
           </div>
         ) : null}
       </header>
@@ -316,6 +421,33 @@ export function CounselScreen() {
           <Icon name="info" />
           This demo workspace is read-only: answers and exports are not written to memory.
         </p>
+      ) : null}
+      {doc && link ? (
+        <div className="shareline" data-testid="counsel-share-line">
+          <Icon name="counsel" />
+          <span>Counsel link, valid until {fmtExpiry(link.expiresAt)}:</span>
+          <input
+            type="text"
+            readOnly
+            aria-label="Counsel link"
+            data-testid="counsel-share-url"
+            value={link.url}
+            onFocus={(e) => e.currentTarget.select()}
+          />
+          <button
+            type="button"
+            className="btn sm"
+            data-testid="counsel-share-copy"
+            onClick={() =>
+              void navigator.clipboard.writeText(link.url).then(
+                () => showToast('Link copied.'),
+                () => showToast('Select the link and copy it.'),
+              )
+            }
+          >
+            Copy link
+          </button>
+        </div>
       ) : null}
       <div className="pgbody">
         {!doc || phase !== 'ready' ? (
@@ -380,6 +512,7 @@ export function CounselScreen() {
                         mode={sel === q.key ? mode : 'view'}
                         defaultBy={defaultBy}
                         candidate={q.change ? candidateOf(q.findingId) : undefined}
+                        questionId={qidByKey[q.key]}
                         onToggle={() => {
                           setSel(sel === q.key ? null : q.key);
                           setMode('view');

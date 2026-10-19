@@ -28,8 +28,16 @@ import { lookupHandler } from './lookup';
 import { createRuleHandler, listRulesHandler, ruleActionHandler } from './rules';
 import { createRunHandler, storeFindingsHandler } from './runs';
 import { sessionHandler } from './session';
+import {
+  joinHandler,
+  listCommentsHandler,
+  postCommentHandler,
+  readyHandler,
+  shareHandler,
+  sheetHandler,
+} from './share';
 
-/** The 04b route table (method, path), in registration order. */
+/** The 04b route table (method, path), in registration order (+ counsel share link, 19-10-26). */
 export const MEMORY_ROUTES = [
   'POST /api/session',
   'POST /api/memory/lookup',
@@ -40,6 +48,12 @@ export const MEMORY_ROUTES = [
   'POST /api/decisions/:id/revoke',
   'POST /api/counsel/questions',
   'POST /api/counsel/answers',
+  'POST /api/counsel/share',
+  'POST /api/counsel/join',
+  'GET /api/counsel/sheet',
+  'GET /api/counsel/comments',
+  'POST /api/counsel/comments',
+  'POST /api/counsel/ready',
   'GET /api/rules',
   'POST /api/rules',
   'POST /api/rules/:id/approve',
@@ -63,6 +77,12 @@ export function mountMemoryRoutes(app: App, deps: AppDeps): void {
   app.route('POST', '/api/decisions/:id/revoke', revokeDecisionHandler(d));
   app.route('POST', '/api/counsel/questions', counselQuestionHandler(d));
   app.route('POST', '/api/counsel/answers', counselAnswerHandler(d));
+  app.route('POST', '/api/counsel/share', shareHandler(d));
+  app.route('POST', '/api/counsel/join', joinHandler(d));
+  app.route('GET', '/api/counsel/sheet', sheetHandler(d));
+  app.route('GET', '/api/counsel/comments', listCommentsHandler(d));
+  app.route('POST', '/api/counsel/comments', postCommentHandler(d));
+  app.route('POST', '/api/counsel/ready', readyHandler(d));
   app.route('GET', '/api/rules', listRulesHandler(d));
   app.route('POST', '/api/rules', createRuleHandler(d));
   app.route('POST', '/api/rules/:id/approve', ruleActionHandler(d, 'approve'));

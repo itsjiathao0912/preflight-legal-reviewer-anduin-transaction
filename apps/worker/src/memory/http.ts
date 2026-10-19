@@ -22,7 +22,14 @@ import {
 } from '../proxy/guards';
 import { classifyBatchError, TRIGGER_INVALID_REQUEST } from '../db/tx';
 import { ID_RE } from '../db/ids';
-import { resolveSession, verifySession, type MemoryCtx } from './ctx';
+import {
+  resolveActor,
+  resolveSession,
+  verifyActor,
+  verifySession,
+  type CounselMemoryCtx,
+  type MemoryCtx,
+} from './ctx';
 
 export const MEMORY_BODY_CAP = limits.otherBodyBytes; // 64 KB
 export const FINDINGS_BODY_CAP = limits.aiBodyBytes; // 128 KB
@@ -123,6 +130,26 @@ export async function postEntry(
   const raw = parseJsonObject(await readBodyCapped(request, opts.cap ?? MEMORY_BODY_CAP));
   const w = typeof opts.weight === 'function' ? opts.weight(raw) : opts.weight;
   return { ctx: await resolveSession(s, w), raw };
+}
+
+/**
+ * `postEntry` for the counsel-accepting POST routes (answers, comments): same order (header guards,
+ * cookie signature without DB, capped body, liveness + claims), but a counsel cookie is accepted.
+ */
+export async function counselPostEntry(
+  request: Request,
+  env: { DB?: D1Database },
+  now: number,
+  opts: {
+    cap?: number;
+    weight?: number | ((raw: Record<string, unknown>) => number);
+  },
+): Promise<{ ctx: CounselMemoryCtx; raw: Record<string, unknown> }> {
+  writeHeaderGuards(request);
+  const v = await verifyActor(request, env, now, { write: true });
+  const raw = parseJsonObject(await readBodyCapped(request, opts.cap ?? MEMORY_BODY_CAP));
+  const w = typeof opts.weight === 'function' ? opts.weight(raw) : opts.weight;
+  return { ctx: await resolveActor(v, w), raw };
 }
 
 /** Read guards (GET): client header only, no body. */

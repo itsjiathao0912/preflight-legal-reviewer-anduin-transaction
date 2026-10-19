@@ -8,6 +8,7 @@ import type { FindingView } from '../engine/types';
 import { markUserIntent } from '../features/ai/turnstile';
 import { appDb } from '../storage/db';
 import { cleanAnalystName, DEFAULT_ANALYST_NAME, useSession } from './session';
+import { isCounselMode } from './share-role';
 
 /**
  * Phase 08 S2: wiring between the review state and the memory write path.
@@ -59,7 +60,7 @@ export function onSyncEvent(fn: (e: OutboxEvent) => void): () => void {
 
 /** True when memory writes are disabled (read-only demo session). */
 export function writesDisabled(): boolean {
-  return useSession.getState().readOnly;
+  return isCounselMode() || useSession.getState().readOnly;
 }
 
 const WORKSPACE_CHANGED =
@@ -73,6 +74,8 @@ const REFUSED: Record<string, string> = {
 
 /** The app-wide outbox (null when IndexedDB is unavailable: writes stay local). */
 export function outbox(): Outbox | null {
+  // counsel share link: counsel mode never queues or drains memory writes
+  if (isCounselMode()) return null;
   if (box) return box;
   const db = appDb();
   if (!db) return null;
@@ -233,6 +236,8 @@ export async function currentWorkspace(): Promise<string | null> {
  * on its first call and a lookup failure shows "Memory unavailable".
  */
 export function ensureSession(): Promise<void> {
+  // counsel share link: never mint a sandbox (POST /api/session) in counsel mode
+  if (isCounselMode()) return Promise.resolve();
   const a = memoryApi();
   if (!isRealMemoryApi(a)) return loadAnalystName().then(() => undefined);
   let p = booted.get(a);

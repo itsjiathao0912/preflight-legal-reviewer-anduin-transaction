@@ -7,6 +7,9 @@ import { restoreLastDocument, saveLastDoc } from './state/last-doc';
 import { usePackage } from './state/package';
 import { loadRecent, mergeRecent, saveRecent } from './state/recent-docs';
 import { loadManifest, scanPagesOf } from './features/open-document/samples';
+import { openSharedDocument } from './features/counsel/counsel-boot';
+import { useShare } from './features/counsel/counsel-share';
+import { isCounselMode } from './state/share-role';
 
 let restoreStarted = false;
 
@@ -60,6 +63,14 @@ function watchPackageAttach(): void {
 export function App() {
   const refreshAllowance = useSession((s) => s.refreshAllowance);
   useEffect(() => {
+    // counsel share link: a counsel tab opens only the shared document and calls no analyst API;
+    // a pending link skips the analyst restore (the join opens the shared document)
+    if (isCounselMode()) {
+      const ref = useShare.getState().docRef;
+      if (ref) void openSharedDocument(ref);
+      return;
+    }
+    if (useShare.getState().pendingToken) return;
     watchPackageAttach();
     void restoreOnStart().catch(() => undefined);
     void refreshAllowance();

@@ -1,12 +1,15 @@
 import { create } from 'zustand';
 import {
   fingerprintFor,
+  parseQuestionKey,
   questionKey,
   templateInterpretations,
   type AnswerAssertion,
   type AnswerScope,
   type CrossDocDefinition,
+  type ActiveDecision,
   type CounselOption,
+  type CounselSheetQuestion,
   type FindingWire,
   type Owner,
   type ReasonCode,
@@ -72,6 +75,7 @@ import {
   writesDisabled,
 } from './memory-sync';
 import { useSession } from './session';
+import { isCounselMode } from './share-role';
 import { markUserIntent } from '../features/ai/turnstile';
 
 /** Why an Accept/Dismiss was not written to firm memory ('' when nothing to say). */
@@ -183,6 +187,23 @@ interface ReviewState {
    */
   recordAnswer: (id: string, answer: RecordedAnswer, owner?: Owner) => Promise<void>;
   /**
+   * Counsel share link: apply answers recorded elsewhere (counsel's browser) to this document's
+   * triage, local only (no write is sent back). An answer equal to the local one, or older than the
+   * local answer time, is skipped. Returns how many questions changed.
+   */
+  mergeRemoteAnswers: (answers: readonly RemoteAnswer[]) => Promise<number>;
+  /**
+   * Counsel share link (counsel mode only): rebuild this document's triage in memory from the shared
+   * workspace state. A question sets `counsel` (needs counsel); an active dismissed/accepted decision
+   * (matched by fingerprint) sets closed/accepted. Nothing is persisted or sent; questions and
+   * decisions that match no local finding are ignored. Answers are merged after this call with
+   * `mergeRemoteAnswers`. Returns how many findings carry remote state.
+   */
+  mergeRemoteStates: (
+    questions: readonly CounselSheetQuestion[],
+    decisions: readonly ActiveDecision[],
+  ) => number;
+  /**
    * Phase 08b (memory page): re-read memory for the open document after a write made elsewhere.
    * When `revokedDecisionId` is given (Reopen), any triage entry of this document whose decisionId
    * equals it is reset to `open`, so the finding is New on this review too (AC50).
@@ -219,6 +240,16 @@ export interface RecordedAnswer {
   scope?: AnswerScope;
   /** Variance P04: regression assertion (firm_template only), from the worker-decoded meta. */
   assertion?: AnswerAssertion;
+}
+
+/** An answer read from GET /api/counsel/sheet, mapped to this document's finding (and owner). */
+export interface RemoteAnswer {
+  findingId: string;
+  owner?: Owner;
+  option: CounselOption;
+  note?: string;
+  by: string;
+  at: number;
 }
 
 /** Variance P04: owners asked by one Ask click and where the owner came from. */
@@ -471,7 +502,8 @@ export const useReview = create<ReviewState>((set, get) => {
     if (t) triage[id] = t;
     else delete triage[id];
     set({ triage });
-    await saveTriage(doc.id, triage);
+    // counsel share link: counsel's triage is an overlay of the shared state, never stored
+    if (!isCounselMode()) await saveTriage(doc.id, triage);
   };
 
   /** Wire findings for keys of the open document (fingerprinted ones only). */
@@ -735,7 +767,8 @@ export const useReview = create<ReviewState>((set, get) => {
       const stages: Partial<Record<StageId, StageReport>> = {};
       for (const s of result.stages) stages[s.id] = s;
       void recordOpen(doc.id, t0);
-      const triage = await loadTriage(doc.id);
+      // counsel share link: counsel starts from the shared state only (no local triage)
+      const triage = isCounselMode() ? {} : await loadTriage(doc.id);
       if (seq !== loadSeq) return;
       // Render first: deterministic findings never wait on the network or Turnstile. Labels start
       // as New (fingerprints computed locally, no lookup); memory and AI arrive in the background.
@@ -748,6 +781,9 @@ export const useReview = create<ReviewState>((set, get) => {
       const rows = buildRows(result.findings, memory, triage);
       const first = visibleRows(placement(rows).main, useFilters.getState())[0]?.f.id ?? null;
       set({ phase: 'ready', doc, recent, result, stages, memory, triage, selectedId: first });
+      // counsel share link: deterministic findings only (finding ids must equal the analyst's), no
+      // AI lane, no memory session, nothing remembered in this browser
+      if (isCounselMode()) return;
       void saveRecent(recent);
       // restore-on-reload: remember what is open (uploads stay in IndexedDB for 24 h)
       void saveLastDoc(meta);
@@ -905,6 +941,100 @@ export const useReview = create<ReviewState>((set, get) => {
       await writeTriage(id, { ...prev, counselAnswer: option });
     },
 
+    mergeRemoteAnswers: async (answers) => {
+      let changed = 0;
+      for (const a of answers) {
+        if (!rowFinding(a.findingId)) continue;
+        const prev = get().triage[a.findingId] ?? null;
+        const base: Triage = prev ?? { status: 'counsel' };
+        const note = a.note?.trim().slice(0, 1000);
+        const by = a.by.trim().slice(0, 120);
+        if (a.owner) {
+          const info = prev?.ownerAnswerInfo?.[a.owner];
+          const same =
+            prev?.ownerAnswers?.[a.owner] === a.option && info?.by === by && info?.note === note;
+          if (same || (info && info.at > a.at)) continue;
+          await writeTriage(a.findingId, {
+            ...base,
+            ownerAnswers: { ...(base.ownerAnswers ?? {}), [a.owner]: a.option },
+            ownerAnswerInfo: {
+              ...(base.ownerAnswerInfo ?? {}),
+              [a.owner]: { by, at: a.at, ...(note ? { note } : {}) },
+            },
+            ownerAnswerIds: { ...(base.ownerAnswerIds ?? {}), [a.owner]: null },
+          });
+        } else {
+          const same =
+            prev?.counselAnswer === a.option &&
+            prev.answeredBy === by &&
+            (prev.counselNote ?? undefined) === (note || undefined);
+          if (
+            same ||
+            (prev?.answeredAt !== undefined && prev.counselAnswer && prev.answeredAt > a.at)
+          )
+            continue;
+          const next: Triage = {
+            ...base,
+            counselAnswer: a.option,
+            answeredBy: by,
+            answeredAt: a.at,
+            // the server already holds this answer: nothing local to revoke on a later change
+            answerId: null,
+          };
+          if (note) next.counselNote = note;
+          else delete next.counselNote;
+          await writeTriage(a.findingId, next);
+        }
+        changed++;
+      }
+      return changed;
+    },
+    mergeRemoteStates: (questions, decisions) => {
+      if (!isCounselMode()) return 0;
+      const { result, memory, doc } = get();
+      if (!result || !doc) return 0;
+      const ids = new Set(result.findings.map((f) => f.id));
+      // fingerprint -> finding id (local fingerprints; counsel mode has no memory lookup)
+      const byFp = new Map<string, string>();
+      for (const f of result.findings) {
+        let fp = memory?.byId[f.id]?.fingerprint ?? null;
+        if (!fp && doc.firmId) {
+          try {
+            fp = fingerprintFor(f, doc.firmId);
+          } catch {
+            fp = null; // a finding without a quote hash cannot match remote state
+          }
+        }
+        if (fp && !byFp.has(fp)) byFp.set(fp, f.id);
+      }
+      const triage: Record<string, Triage> = {};
+      for (const q of questions) {
+        const { findingId, owner } = parseQuestionKey(q.finding_key);
+        const id = ids.has(findingId) ? findingId : byFp.get(q.fingerprint);
+        if (!id) continue;
+        const prev = triage[id];
+        const next: Triage = { ...(prev ?? {}), status: 'counsel' };
+        if (owner && owner !== 'counsel')
+          next.ownerAnswers = { ...(prev?.ownerAnswers ?? {}), [owner as Owner]: null };
+        triage[id] = next;
+      }
+      for (const d of decisions) {
+        if (d.status !== 'active') continue;
+        if (d.decision !== 'dismissed' && d.decision !== 'accepted') continue;
+        const id = byFp.get(d.fingerprint);
+        if (!id) continue;
+        triage[id] =
+          d.decision === 'dismissed'
+            ? {
+                status: 'dismissed',
+                ...(d.reason_code ? { reasonCode: d.reason_code } : {}),
+                ...(d.note ? { note: d.note } : {}),
+              }
+            : { status: 'accepted' };
+      }
+      set({ triage });
+      return Object.keys(triage).length;
+    },
     recordAnswer: async (id, a, owner) => {
       const prev = get().triage[id] ?? null;
       const base: Triage = prev ?? { status: 'open' };

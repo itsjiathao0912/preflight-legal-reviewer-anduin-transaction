@@ -10,10 +10,15 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import { memoryApi } from './api/client';
 import { App } from './App';
+import { captureCounselToken, resumeCounselSession } from './features/counsel/counsel-share';
 import './features/ai/turnstile-register';
 import { installE2eHook } from './e2e-hook';
 import { loadAnalystName } from './state/memory-sync';
 import { useReview } from './state/review';
+
+// a shared counsel link (`#counsel=<token>`) is read before the shell rewrites the hash; a reload
+// of an already joined counsel tab re-enters counsel mode (the App opens the shared document)
+if (!captureCounselToken()) resumeCounselSession();
 
 installE2eHook({
   memory: () => memoryApi(),

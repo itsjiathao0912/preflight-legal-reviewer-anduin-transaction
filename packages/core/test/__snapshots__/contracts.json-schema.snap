@@ -512,6 +512,872 @@
     ],
     "type": "object"
   },
+  "counselShare.CounselCommentListResponseSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+      "comments": {
+        "items": {
+          "properties": {
+            "author_name": {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            "author_role": {
+              "enum": [
+                "analyst",
+                "counsel"
+              ],
+              "type": "string"
+            },
+            "body": {
+              "maxLength": 1000,
+              "minLength": 1,
+              "type": "string"
+            },
+            "created_at": {
+              "maximum": 9007199254740991,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "id": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            "question_id": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "question_id",
+            "author_role",
+            "author_name",
+            "body",
+            "created_at"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "comments"
+    ],
+    "type": "object"
+  },
+  "counselShare.CounselCommentPostResponseSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+      "comment": {
+        "properties": {
+          "author_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "author_role": {
+            "enum": [
+              "analyst",
+              "counsel"
+            ],
+            "type": "string"
+          },
+          "body": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "created_at": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          },
+          "question_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "question_id",
+          "author_role",
+          "author_name",
+          "body",
+          "created_at"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "comment"
+    ],
+    "type": "object"
+  },
+  "counselShare.CounselCommentPostSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+      "body": {
+        "maxLength": 1000,
+        "type": "string"
+      },
+      "client_op_id": {
+        "maxLength": 64,
+        "minLength": 8,
+        "type": "string"
+      },
+      "question_id": {
+        "maxLength": 64,
+        "minLength": 1,
+        "type": "string"
+      }
+    },
+    "required": [
+      "question_id",
+      "body",
+      "client_op_id"
+    ],
+    "type": "object"
+  },
+  "counselShare.CounselCommentSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+      "author_name": {
+        "maxLength": 120,
+        "minLength": 1,
+        "type": "string"
+      },
+      "author_role": {
+        "enum": [
+          "analyst",
+          "counsel"
+        ],
+        "type": "string"
+      },
+      "body": {
+        "maxLength": 1000,
+        "minLength": 1,
+        "type": "string"
+      },
+      "created_at": {
+        "maximum": 9007199254740991,
+        "minimum": 0,
+        "type": "integer"
+      },
+      "id": {
+        "maxLength": 64,
+        "minLength": 1,
+        "type": "string"
+      },
+      "question_id": {
+        "maxLength": 64,
+        "minLength": 1,
+        "type": "string"
+      }
+    },
+    "required": [
+      "id",
+      "question_id",
+      "author_role",
+      "author_name",
+      "body",
+      "created_at"
+    ],
+    "type": "object"
+  },
+  "counselShare.CounselJoinRequestSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+      "name": {
+        "maxLength": 80,
+        "type": "string"
+      },
+      "token": {
+        "maxLength": 1024,
+        "minLength": 1,
+        "type": "string"
+      }
+    },
+    "required": [
+      "token",
+      "name"
+    ],
+    "type": "object"
+  },
+  "counselShare.CounselJoinResponseSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+      "counsel_name": {
+        "maxLength": 80,
+        "minLength": 1,
+        "type": "string"
+      },
+      "doc_ref": {
+        "maxLength": 48,
+        "pattern": "^(package|sample):[a-z0-9-]{1,40}$",
+        "type": "string"
+      },
+      "expires_at": {
+        "maximum": 9007199254740991,
+        "minimum": 0,
+        "type": "integer"
+      },
+      "workspace_id": {
+        "maxLength": 64,
+        "minLength": 1,
+        "type": "string"
+      }
+    },
+    "required": [
+      "workspace_id",
+      "counsel_name",
+      "expires_at",
+      "doc_ref"
+    ],
+    "type": "object"
+  },
+  "counselShare.CounselReadyRequestSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+      "client_op_id": {
+        "maxLength": 64,
+        "minLength": 8,
+        "type": "string"
+      }
+    },
+    "required": [
+      "client_op_id"
+    ],
+    "type": "object"
+  },
+  "counselShare.CounselReadyResponseSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+      "ready_at": {
+        "maximum": 9007199254740991,
+        "minimum": 0,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "ready_at"
+    ],
+    "type": "object"
+  },
+  "counselShare.CounselRoleSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "enum": [
+      "analyst",
+      "counsel"
+    ],
+    "type": "string"
+  },
+  "counselShare.CounselShareRequestSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+      "doc_ref": {
+        "maxLength": 48,
+        "pattern": "^(package|sample):[a-z0-9-]{1,40}$",
+        "type": "string"
+      }
+    },
+    "required": [
+      "doc_ref"
+    ],
+    "type": "object"
+  },
+  "counselShare.CounselShareResponseSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+      "expires_at": {
+        "maximum": 9007199254740991,
+        "minimum": 0,
+        "type": "integer"
+      },
+      "token": {
+        "maxLength": 1024,
+        "minLength": 1,
+        "type": "string"
+      }
+    },
+    "required": [
+      "token",
+      "expires_at"
+    ],
+    "type": "object"
+  },
+  "counselShare.CounselSheetAnswerSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+      "answered_at": {
+        "maximum": 9007199254740991,
+        "minimum": 0,
+        "type": "integer"
+      },
+      "answered_by_name": {
+        "maxLength": 120,
+        "minLength": 1,
+        "type": "string"
+      },
+      "id": {
+        "maxLength": 64,
+        "minLength": 1,
+        "type": "string"
+      },
+      "intent": {
+        "maxLength": 500,
+        "type": "string"
+      },
+      "note": {
+        "maxLength": 1000,
+        "type": "string"
+      },
+      "option": {
+        "enum": [
+          "A",
+          "B",
+          "C",
+          "unclear"
+        ],
+        "type": "string"
+      },
+      "question_id": {
+        "maxLength": 64,
+        "minLength": 1,
+        "type": "string"
+      },
+      "scope": {
+        "enum": [
+          "fund",
+          "firm_template"
+        ],
+        "type": "string"
+      }
+    },
+    "required": [
+      "id",
+      "question_id",
+      "option",
+      "answered_by_name",
+      "answered_at"
+    ],
+    "type": "object"
+  },
+  "counselShare.CounselSheetQuestionSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+      "created_at": {
+        "maximum": 9007199254740991,
+        "minimum": 0,
+        "type": "integer"
+      },
+      "draft_text": {
+        "maxLength": 2000,
+        "type": "string"
+      },
+      "edited_text": {
+        "maxLength": 2000,
+        "type": "string"
+      },
+      "finding_id": {
+        "maxLength": 64,
+        "minLength": 1,
+        "type": "string"
+      },
+      "finding_key": {
+        "maxLength": 64,
+        "minLength": 1,
+        "type": "string"
+      },
+      "fingerprint": {
+        "pattern": "^[0-9a-f]{64}$",
+        "type": "string"
+      },
+      "id": {
+        "maxLength": 64,
+        "minLength": 1,
+        "type": "string"
+      },
+      "interpretations": {
+        "items": {
+          "maxLength": 500,
+          "type": "string"
+        },
+        "maxItems": 6,
+        "type": "array"
+      },
+      "issue_class": {
+        "enum": [
+          "broken_cross_reference",
+          "broken_conditional",
+          "unreachable_or_circular_flow",
+          "option_gap_overlap",
+          "defined_term_issue",
+          "inconsistent_footnote_requirement",
+          "logic_contradiction",
+          "ambiguity",
+          "meaningful_typo",
+          "version_drift",
+          "drafting_note",
+          "placeholder",
+          "sensitive_data",
+          "investor_path_dead_end",
+          "investor_path_missing_item"
+        ],
+        "type": "string"
+      },
+      "location": {
+        "maxLength": 2500,
+        "type": "string"
+      },
+      "owner": {
+        "enum": [
+          "counsel",
+          "gp",
+          "fund_admin"
+        ],
+        "type": "string"
+      },
+      "quote_masked": {
+        "maxLength": 300,
+        "type": "string"
+      },
+      "severity": {
+        "enum": [
+          "critical",
+          "high",
+          "medium",
+          "low"
+        ],
+        "type": "string"
+      },
+      "status": {
+        "enum": [
+          "drafted",
+          "exported",
+          "answered"
+        ],
+        "type": "string"
+      }
+    },
+    "required": [
+      "id",
+      "finding_id",
+      "finding_key",
+      "fingerprint",
+      "issue_class",
+      "status",
+      "interpretations",
+      "created_at"
+    ],
+    "type": "object"
+  },
+  "counselShare.CounselSheetResponseSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+      "answers": {
+        "items": {
+          "properties": {
+            "answered_at": {
+              "maximum": 9007199254740991,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "answered_by_name": {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            "id": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            "intent": {
+              "maxLength": 500,
+              "type": "string"
+            },
+            "note": {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            "option": {
+              "enum": [
+                "A",
+                "B",
+                "C",
+                "unclear"
+              ],
+              "type": "string"
+            },
+            "question_id": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            "scope": {
+              "enum": [
+                "fund",
+                "firm_template"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "question_id",
+            "option",
+            "answered_by_name",
+            "answered_at"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "comments": {
+        "items": {
+          "properties": {
+            "author_name": {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            "author_role": {
+              "enum": [
+                "analyst",
+                "counsel"
+              ],
+              "type": "string"
+            },
+            "body": {
+              "maxLength": 1000,
+              "minLength": 1,
+              "type": "string"
+            },
+            "created_at": {
+              "maximum": 9007199254740991,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "id": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            "question_id": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "question_id",
+            "author_role",
+            "author_name",
+            "body",
+            "created_at"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "decisions": {
+        "items": {
+          "properties": {
+            "counsel_note": {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            "counsel_option": {
+              "enum": [
+                "A",
+                "B",
+                "C",
+                "unclear"
+              ],
+              "type": "string"
+            },
+            "decided_at": {
+              "maximum": 9007199254740991,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "decided_by_name": {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            "decision": {
+              "enum": [
+                "dismissed",
+                "accepted",
+                "answered"
+              ],
+              "type": "string"
+            },
+            "doc_version_label": {
+              "maxLength": 120,
+              "type": "string"
+            },
+            "fingerprint": {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            "fund_name": {
+              "maxLength": 200,
+              "type": "string"
+            },
+            "id": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            "intent": {
+              "maxLength": 500,
+              "type": "string"
+            },
+            "issue_class": {
+              "enum": [
+                "broken_cross_reference",
+                "broken_conditional",
+                "unreachable_or_circular_flow",
+                "option_gap_overlap",
+                "defined_term_issue",
+                "inconsistent_footnote_requirement",
+                "logic_contradiction",
+                "ambiguity",
+                "meaningful_typo",
+                "version_drift",
+                "drafting_note",
+                "placeholder",
+                "sensitive_data",
+                "investor_path_dead_end",
+                "investor_path_missing_item"
+              ],
+              "type": "string"
+            },
+            "note": {
+              "maxLength": 500,
+              "type": "string"
+            },
+            "pattern_key": {
+              "maxLength": 80,
+              "type": "string"
+            },
+            "quote_snippet": {
+              "maxLength": 300,
+              "type": "string"
+            },
+            "reason_code": {
+              "enum": [
+                "firm_standard_wording",
+                "no_form_impact",
+                "tool_false_alarm",
+                "other"
+              ],
+              "type": "string"
+            },
+            "scope": {
+              "enum": [
+                "fund",
+                "firm_template"
+              ],
+              "type": "string"
+            },
+            "section_path": {
+              "items": {
+                "maxLength": 300,
+                "type": "string"
+              },
+              "maxItems": 8,
+              "type": "array"
+            },
+            "status": {
+              "enum": [
+                "active",
+                "superseded",
+                "revoked"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "fingerprint",
+            "status",
+            "decision",
+            "fund_name",
+            "decided_by_name",
+            "decided_at"
+          ],
+          "type": "object"
+        },
+        "maxItems": 500,
+        "type": "array"
+      },
+      "doc_ref": {
+        "maxLength": 48,
+        "pattern": "^(package|sample):[a-z0-9-]{1,40}$",
+        "type": "string"
+      },
+      "questions": {
+        "items": {
+          "properties": {
+            "created_at": {
+              "maximum": 9007199254740991,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "draft_text": {
+              "maxLength": 2000,
+              "type": "string"
+            },
+            "edited_text": {
+              "maxLength": 2000,
+              "type": "string"
+            },
+            "finding_id": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            "finding_key": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            "fingerprint": {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            "id": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            "interpretations": {
+              "items": {
+                "maxLength": 500,
+                "type": "string"
+              },
+              "maxItems": 6,
+              "type": "array"
+            },
+            "issue_class": {
+              "enum": [
+                "broken_cross_reference",
+                "broken_conditional",
+                "unreachable_or_circular_flow",
+                "option_gap_overlap",
+                "defined_term_issue",
+                "inconsistent_footnote_requirement",
+                "logic_contradiction",
+                "ambiguity",
+                "meaningful_typo",
+                "version_drift",
+                "drafting_note",
+                "placeholder",
+                "sensitive_data",
+                "investor_path_dead_end",
+                "investor_path_missing_item"
+              ],
+              "type": "string"
+            },
+            "location": {
+              "maxLength": 2500,
+              "type": "string"
+            },
+            "owner": {
+              "enum": [
+                "counsel",
+                "gp",
+                "fund_admin"
+              ],
+              "type": "string"
+            },
+            "quote_masked": {
+              "maxLength": 300,
+              "type": "string"
+            },
+            "severity": {
+              "enum": [
+                "critical",
+                "high",
+                "medium",
+                "low"
+              ],
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "drafted",
+                "exported",
+                "answered"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "finding_id",
+            "finding_key",
+            "fingerprint",
+            "issue_class",
+            "status",
+            "interpretations",
+            "created_at"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "ready_at": {
+        "anyOf": [
+          {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "role": {
+        "enum": [
+          "analyst",
+          "counsel"
+        ],
+        "type": "string"
+      }
+    },
+    "required": [
+      "role",
+      "doc_ref",
+      "questions",
+      "answers",
+      "comments",
+      "decisions",
+      "ready_at"
+    ],
+    "type": "object"
+  },
+  "counselShare.DocRefSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "maxLength": 48,
+    "pattern": "^(package|sample):[a-z0-9-]{1,40}$",
+    "type": "string"
+  },
   "errors.ErrorBodySchema": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "properties": {
@@ -2012,7 +2878,8 @@
           "rule_rejected",
           "rule_revoked",
           "counsel_sheet_exported",
-          "regression_check_created"
+          "regression_check_created",
+          "ready_to_digitize"
         ],
         "type": "string"
       },
@@ -2099,7 +2966,8 @@
                 "rule_rejected",
                 "rule_revoked",
                 "counsel_sheet_exported",
-                "regression_check_created"
+                "regression_check_created",
+                "ready_to_digitize"
               ],
               "type": "string"
             },
@@ -2977,7 +3845,8 @@
                 "rule_rejected",
                 "rule_revoked",
                 "counsel_sheet_exported",
-                "regression_check_created"
+                "regression_check_created",
+                "ready_to_digitize"
               ],
               "type": "string"
             },

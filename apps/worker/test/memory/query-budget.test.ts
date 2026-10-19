@@ -1,5 +1,5 @@
 // AC40 (interim): per-invocation D1 query counts through the metering wrapper (local D1). Worst
-// memory endpoint <= 20; a session that also claims the hourly lazy-purge slot <= 30 (documented
+// memory endpoint <= 20; a session that also claims the hourly lazy-purge slot <= 31 (documented
 // exception, still well under the 50-per-invocation limit); the AI worst path on the D1 platform
 // (cache, claims, breaker read, cache write, ledger) plus its outbound fetches stays well under 50.
 // DV1: no per-IP request counter is re-added; the in-isolate pre-limit makes no query.
@@ -16,13 +16,15 @@ const CAPS: Record<string, number> = {
   revoke: 8,
   counsel_question: 10,
   counsel_answer: 13,
+  counsel_sheet: 6, // measured 19-10-26: liveness + questions, answers, comments, ready, decisions
   rules_list: 3,
   rule_approve: 8, // +1 bounded active-rule cap count (review M3)
   firm: 5,
   audit: 3,
   run_export: 8, // +1 global budget claim (N1), +1 budget pre-check (N8)
   export: 5,
-  session_with_purge: 30,
+  // +1 (0007): the purge batch deletes counsel_comment too; still well under the 50 limit
+  session_with_purge: 31,
 };
 
 describe('query-budget (AC40 interim)', () => {

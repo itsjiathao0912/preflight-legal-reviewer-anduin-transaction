@@ -3,6 +3,7 @@ import { IS_E2E } from '../e2e-flag';
 import { e2eRealMemory } from '../e2e-hook';
 import { hasTurnstileProvider, onUserIntent, turnstileToken } from '../features/ai/turnstile';
 import { appDb } from '../storage/db';
+import { isCounselMode } from '../state/share-role';
 import { apiEnabled, onApiBaseChange } from './base';
 import { RealMemoryApi } from './realMemoryApi';
 import { StubMemoryApi } from './stubMemoryApi';
@@ -27,6 +28,8 @@ onUserIntent(() => {
 });
 
 export function memoryApi(): MemoryApi | null {
+  // counsel share link: counsel holds only the counsel cookie; no memory client exists in that tab
+  if (isCounselMode()) return null;
   if (!unsubscribe) {
     unsubscribe = onApiBaseChange(() => {
       api = null;

@@ -10,6 +10,8 @@ import { useReviewView } from './use-review-view';
 import { FindingsPanelV2 } from './v2';
 import { BaselineControl } from '../variance/BaselineControl';
 import { headerMeta } from '../variance/select';
+import { useShare } from '../counsel/counsel-share';
+import { Icon } from '../../components/ui/icon';
 
 export function FindingsScreen() {
   const view = useReviewView();
@@ -17,6 +19,8 @@ export function FindingsScreen() {
   const doc = useReview((s) => s.doc);
   const result = useReview((s) => s.result);
   const scanPages = useScan((s) => s.pageCount);
+  const counselMode = useShare((s) => s.role === 'counsel');
+  const readyAt = useShare((s) => s.readyAt);
   // Phase 06e: scanned documents show the page image beside the OCR text
   const scan = isScanResult(result) || (phase === 'loading' && scanPages > 0);
 
@@ -40,7 +44,13 @@ export function FindingsScreen() {
           <CoverageLine placement="header" />
         </div>
         <div className="hacts">
-          <BaselineControl />
+          {readyAt ? (
+            <span className="tag t-ok" data-testid="counsel-ready-pill">
+              <Icon name="check" />
+              Ready to digitize
+            </span>
+          ) : null}
+          {counselMode ? null : <BaselineControl />}
           <StageStatus />
         </div>
       </header>
