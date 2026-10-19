@@ -30,6 +30,7 @@ import {
   redact,
   ROOT,
   stopReason,
+  isAllowedServedModel,
   writeCookieFile,
 } from '../../src/live/common';
 
@@ -304,6 +305,15 @@ describe('stop conditions', () => {
       stopReason({ status: 200, body: [{ t: 'hb' }, { ...free, model: 'vendor/model' }] }),
     ).toMatch(/not :free/);
     expect(stopReason({ status: 200, body: [{ t: 'result', kind: 'ocr' }] })).toMatch(/not :free/);
+  });
+  // OpenAI provider plan (4.6): gpt-4.1-mini (bare or dated) is allow-listed; other paid ids stop
+  it('passes a gpt-4.1-mini result and still stops on other paid models', () => {
+    for (const model of ['gpt-4.1-mini', 'gpt-4.1-mini-2025-04-14'])
+      expect(stopReason({ status: 200, body: [{ t: 'hb' }, { ...free, model }] })).toBeNull();
+    for (const model of ['gpt-4.1', 'gpt-4o-mini', 'openai/gpt-4.1-mini', 'gpt-4.1-mini-preview'])
+      expect(stopReason({ status: 200, body: [{ ...free, model }] })).toMatch(/not :free/);
+    expect(isAllowedServedModel('vendor/model:free')).toBe(true);
+    expect(isAllowedServedModel('gpt-4.1-mini-2025-4-14')).toBe(false);
   });
   it('stops on a closed global quota', () => {
     expect(stopReason({ status: 200, body: { ai: 1, ocr_pages: 1, global_ok: false } })).toMatch(

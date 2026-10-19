@@ -45,4 +45,26 @@ describe('secrets:scan', () => {
     const dv = ['.dev', 'vars'].join('.');
     expect(run({ '.gitignore': `${dv}\n`, [`apps/worker/${dv}`]: 'X=1' })).toEqual([]);
   });
+
+  // OpenAI provider plan (4.5, AC17): fixtures built at runtime, never key-shaped literals
+  it('flags OpenAI project and legacy keys as rule openai-key', () => {
+    const proj = ['sk', 'proj', 'Ab3_'.repeat(8)].join('-');
+    const legacy = ['sk', 'Zx9'.repeat(10)].join('-');
+    expect(run({ 'apps/worker/src/c.ts': `const a = "${proj}";\nconst b = '${legacy}';` })).toEqual(
+      ['apps/worker/src/c.ts:openai-key', 'apps/worker/src/c.ts:openai-key'],
+    );
+  });
+
+  it('keeps an OpenRouter key on rule openrouter-key-prefix only', () => {
+    expect(run({ 'apps/worker/src/d.ts': `const k = "${orKey}";` })).toEqual([
+      'apps/worker/src/d.ts:openrouter-key-prefix',
+    ]);
+  });
+
+  it('does not flag short sk- words or hyphenated identifiers', () => {
+    const word = ['risk', 'evidence', 'pack', 'validator', 'with', 'a', 'long', 'tail'].join('-');
+    const short = ['sk', 'abc'].join('-');
+    const desk = ['desk', 'proj', 'a'.repeat(30)].join('-');
+    expect(run({ 'scripts/src/e.ts': `// ${word} ${short} ${desk}\n` })).toEqual([]);
+  });
 });

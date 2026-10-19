@@ -25,8 +25,18 @@ const FRAMES: { reply: AiReply; banner: string }[] = [
     reply: { kind: 'stream', body: ndjson(hb, errorFrame('quota_exhausted', 'global_cap')) },
     banner: 'daily_cap',
   },
+  // OpenAI provider plan (4.4): a provider balance problem reads as "not available"; the lifetime
+  // spend cap has its own banner that never promises a midnight reset (AC13)
   {
     reply: { kind: 'stream', body: ndjson(hb, errorFrame('budget_cap', 'provider_balance')) },
+    banner: 'ai_unavailable',
+  },
+  {
+    reply: { kind: 'stream', body: ndjson(hb, errorFrame('budget_cap', 'spend_cap')) },
+    banner: 'spend_limit',
+  },
+  {
+    reply: { kind: 'stream', body: ndjson(hb, errorFrame('budget_cap')) },
     banner: 'budget',
   },
   {

@@ -14,7 +14,7 @@ test.describe('M1 slice through the Worker', () => {
     const consoleErrors: string[] = [];
     const failedPosts: string[] = [];
     page.on('request', (r: Request) => {
-      if (/openrouter\.ai/i.test(r.url())) outbound.push(r.url());
+      if (/openrouter\.ai|api\.openai\.com/i.test(r.url())) outbound.push(r.url());
     });
     // G16: with the site key compiled in and no Turnstile token, the client must not issue a
     // failing POST (e.g. /api/session); any 4xx/5xx POST is a defect, never filtered away.
@@ -87,7 +87,7 @@ test.describe('M1 slice through the Worker', () => {
     expect(body.ai).toBeTruthy();
     expect(body.ocr_pages).toBeTruthy();
 
-    expect(outbound, 'no browser request to openrouter.ai').toEqual([]);
+    expect(outbound, 'no browser request to an AI provider').toEqual([]);
     expect(failedPosts, 'no failing POST (G16)').toEqual([]);
     expect(consoleErrors, 'no console errors').toEqual([]);
   });

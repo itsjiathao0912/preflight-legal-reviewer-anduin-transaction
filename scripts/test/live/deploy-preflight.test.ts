@@ -61,6 +61,19 @@ describe('deploy:preflight web output', () => {
     expect(failed(cs)).toEqual(['Turnstile site key compiled in']);
     expect(JSON.stringify(cs)).not.toContain(SITE);
   });
+  // OpenAI provider plan (4.7a, AC17): key-shaped fixtures built at runtime
+  it('fails when a provider key pattern is in a built asset, without printing it', () => {
+    const oaKey = ['sk', 'proj', 'Q7w_'.repeat(8)].join('-');
+    const orKey = ['sk', 'or', 'v1', 'b'.repeat(40)].join('-');
+    for (const k of [oaKey, orKey]) {
+      const cs = checkWebOutput(out({ ...good, 'assets/leak.js': `const a="${k}";` }), SITE);
+      expect(failed(cs)).toEqual(['no provider key pattern in built assets']);
+      expect(JSON.stringify(cs)).not.toContain(k);
+      expect(JSON.stringify(cs)).toContain('assets/leak.js');
+    }
+    const word = ['task', 'list', 'container', 'scroll', 'area', 'wide'].join('-');
+    expect(failed(checkWebOutput(out({ ...good, 'assets/w.js': word }), SITE))).toEqual([]);
+  });
   it('fails on unsafe-inline scripts and a missing dir', () => {
     const bad = {
       ...good,

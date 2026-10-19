@@ -22,8 +22,10 @@ import type { OcrPageInput } from './types';
  */
 
 export const OCR_CONCURRENCY = 3;
-/** Default free vision model (Worker AI_VISION_MODELS); part of the cache key. */
-export const OCR_MODEL = 'nvidia/nemotron-3.5-super-vl:free';
+/** Live OCR model (Worker AI_PROVIDER=openai, gpt-4.1-mini); part of the browser cache key. */
+export const OCR_MODEL = 'gpt-4.1-mini';
+/** Model id of the committed precomputed OCR set (sample #9); its static index keys use it. */
+export const PRECOMPUTED_OCR_MODEL = 'nvidia/nemotron-3.5-super-vl:free';
 export const OCR_PROMPT_VER = 'ocr2';
 export const OCR_SCHEMA_VER = 's1';
 export const OCR_UNAVAILABLE_BUILD = 'OCR unavailable in this build';
@@ -31,6 +33,8 @@ export const OCR_UNAVAILABLE_LIMIT = 'OCR page limit reached for today';
 export const OCR_UNAVAILABLE_SERVICE = 'OCR is not available right now';
 /** Review F2: page images follow the AI consent switch; AI off -> no fresh /api/ocr call. */
 export const OCR_UNAVAILABLE_AI_OFF = 'Text reading is off while AI review is off';
+/** The Worker's lifetime spend limit is reached (budget_cap / spend_cap). */
+export const OCR_UNAVAILABLE_SPEND = 'Text reading is off: the spend limit has been reached';
 const PRECOMPUTED_INDEX = '/precomputed/ocr/index.json';
 const MAX_LINES = 400;
 const MAX_LINE_CHARS = 4000;
@@ -44,16 +48,22 @@ export async function sha256Hex(data: Uint8Array | string): Promise<string> {
   return HEX(await crypto.subtle.digest('SHA-256', bytes.slice()));
 }
 
-export function ocrKeyParts(sourceHash: string, pageIndex: number, params = RENDER_PARAMS) {
-  return ['ocr', sourceHash, String(pageIndex), params, OCR_MODEL, OCR_PROMPT_VER, OCR_SCHEMA_VER];
+export function ocrKeyParts(
+  sourceHash: string,
+  pageIndex: number,
+  params = RENDER_PARAMS,
+  model = OCR_MODEL,
+) {
+  return ['ocr', sourceHash, String(pageIndex), params, model, OCR_PROMPT_VER, OCR_SCHEMA_VER];
 }
 
 export async function ocrPageKey(
   sourceHash: string,
   pageIndex: number,
   params = RENDER_PARAMS,
+  model = OCR_MODEL,
 ): Promise<string> {
-  return sha256Hex(ocrKeyParts(sourceHash, pageIndex, params).join('|'));
+  return sha256Hex(ocrKeyParts(sourceHash, pageIndex, params, model).join('|'));
 }
 
 export type OcrLines = NonNullable<OcrPageInput['lines']>;
@@ -242,6 +252,7 @@ export interface OcrQueueOptions {
 
 function unavailableReason(t: Extract<StreamTerminal, { kind: 'error' }>): string | null {
   const c = t.error.code;
+  if (c === 'budget_cap' && t.error.reason === 'spend_cap') return OCR_UNAVAILABLE_SPEND;
   if (c === 'quota_exhausted' || c === 'budget_cap' || c === 'rate_limited')
     return t.error.reason === 'visitor_limit' || c === 'rate_limited'
       ? OCR_UNAVAILABLE_LIMIT
@@ -271,6 +282,9 @@ export async function runOcrQueue(opts: OcrQueueOptions): Promise<OcrPageInput[]
           )
         : null;
 
+  /** reason shown for pages skipped once fresh OCR stopped (default: today's page limit) */
+  let stopReason = OCR_UNAVAILABLE_LIMIT;
+
   const set = (p: OcrPageInput) => {
     pages.set(p.index, p);
     emit();
@@ -280,9 +294,12 @@ export async function runOcrQueue(opts: OcrQueueOptions): Promise<OcrPageInput[]
     if (pages.get(job.index)?.state === 'done') return;
     if (opts.signal?.aborted) return set({ index: job.index, state: 'queued' });
     set({ index: job.index, state: 'running' });
-    const key = await ocrPageKey(job.sourceHash ?? opts.sourceHash, job.index);
+    const source = job.sourceHash ?? opts.sourceHash;
+    // the static precomputed set keeps its own model id; the browser cache keys on the live model
+    const preKey = await ocrPageKey(source, job.index, RENDER_PARAMS, PRECOMPUTED_OCR_MODEL);
+    const key = await ocrPageKey(source, job.index);
 
-    const file = precomputed.get(key);
+    const file = precomputed.get(preKey);
     if (file) {
       try {
         const res = await fetchFn(`/precomputed/ocr/${file}`);
@@ -299,7 +316,7 @@ export async function runOcrQueue(opts: OcrQueueOptions): Promise<OcrPageInput[]
       return set({ index: job.index, state: 'unavailable', reason: OCR_UNAVAILABLE_AI_OFF });
     if (!url) return set({ index: job.index, state: 'unavailable', reason: OCR_UNAVAILABLE_BUILD });
     if (freeLeft !== null && freeLeft <= 0)
-      return set({ index: job.index, state: 'unavailable', reason: OCR_UNAVAILABLE_LIMIT });
+      return set({ index: job.index, state: 'unavailable', reason: stopReason });
     if (freeLeft !== null) freeLeft--;
 
     let body: Awaited<ReturnType<typeof buildOcrBody>>;
@@ -327,6 +344,7 @@ export async function runOcrQueue(opts: OcrQueueOptions): Promise<OcrPageInput[]
       const unavailable = unavailableReason(t);
       if (unavailable) {
         freeLeft = 0;
+        stopReason = unavailable; // later pages show the same reason (e.g. the spend limit)
         return set({ index: job.index, state: 'unavailable', reason: unavailable });
       }
       return set({ index: job.index, state: 'failed', reason: t.error.message.slice(0, 120) });

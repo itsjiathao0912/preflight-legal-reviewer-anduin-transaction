@@ -4,11 +4,12 @@ import { privacyLines } from '../src/features/open-document/privacy-copy';
 import {
   OCR_UNAVAILABLE_AI_OFF,
   ocrPageKey,
+  PRECOMPUTED_OCR_MODEL,
   runOcrQueue,
   type OcrJob,
 } from '../src/engine/ocr-queue';
 import { ocrBanner } from '../src/features/scan/scan-model';
-import type { RenderedPage } from '../src/engine/render-pages';
+import { RENDER_PARAMS, type RenderedPage } from '../src/engine/render-pages';
 
 // Review fix cycle F2 (OCR egress follows the AI consent switch) and F3 (queue abort).
 const HASH = 'b'.repeat(64);
@@ -85,7 +86,7 @@ describe('ocr-ai-consent (F2)', () => {
 
   it('AI off: precomputed static results (sample #9) still read the page', async () => {
     const r = recorder();
-    const key = await ocrPageKey(HASH, 0);
+    const key = await ocrPageKey(HASH, 0, RENDER_PARAMS, PRECOMPUTED_OCR_MODEL);
     const out = await runOcrQueue({
       sourceHash: HASH,
       jobs: jobs(1),

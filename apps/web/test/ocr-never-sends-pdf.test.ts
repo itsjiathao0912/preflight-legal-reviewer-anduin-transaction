@@ -205,15 +205,7 @@ describe('ocr-never-sends-pdf', () => {
 
   it('cache key = sha256 of the original-source key parts (WebCrypto equals node:crypto)', async () => {
     const parts = ocrKeyParts(HASH, 3);
-    expect(parts).toEqual([
-      'ocr',
-      HASH,
-      '3',
-      RENDER_PARAMS,
-      'nvidia/nemotron-3.5-super-vl:free',
-      'ocr2',
-      's1',
-    ]);
+    expect(parts).toEqual(['ocr', HASH, '3', RENDER_PARAMS, 'gpt-4.1-mini', 'ocr2', 's1']);
     expect(RENDER_PARAMS).toBe('w1600q80');
     const expected = createHash('sha256').update(parts.join('|')).digest('hex');
     expect(await ocrPageKey(HASH, 3)).toBe(expected);

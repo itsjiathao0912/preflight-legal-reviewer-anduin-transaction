@@ -8,6 +8,12 @@ import { afterAll, describe, expect, it } from 'vitest';
 const ROOT = resolve(import.meta.dirname, '..');
 const MARKER = '__aduinE2E';
 const dirs: string[] = [];
+/**
+ * OpenAI provider plan (AC17): provider key shapes (OpenAI `sk-...` / `sk-proj-...`, which also
+ * covers the OpenRouter `sk-or-` prefix) built at runtime so this file holds no key-shaped literal.
+ */
+const KEY_RE = new RegExp(['(?<![A-Za-z0-9_-])sk', '(proj-)?[A-Za-z0-9_-]{20,}'].join('-'));
+const OPENAI_ENV_NAME = ['OPENAI', 'API', 'KEY'].join('_');
 
 function allText(dir: string): string {
   let s = '';
@@ -46,6 +52,10 @@ describe('no-e2e-hook-in-dist', () => {
     expect(prod.includes('varianceDelayMs')).toBe(false);
     expect(prod.includes('varianceFail')).toBe(false);
     expect(prod.includes('e2eVariance')).toBe(false);
+    // OpenAI provider plan (AC17): no provider key pattern and no key env name in the bundle
+    expect(KEY_RE.exec(prod)?.[0].slice(0, 6) ?? null).toBeNull();
+    expect(prod.includes(OPENAI_ENV_NAME)).toBe(false);
+    expect(KEY_RE.test(['x sk', 'proj', 'a'.repeat(24)].join('-'))).toBe(true); // control
   }, 180_000);
 
   it('positive control: the e2e build does contain the hook marker', async () => {

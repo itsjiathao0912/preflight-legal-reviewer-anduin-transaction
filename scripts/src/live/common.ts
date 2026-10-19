@@ -438,12 +438,21 @@ function get(o: unknown, ...path: string[]): unknown {
   return cur;
 }
 
+/** OpenAI provider plan (4.6): the only paid model the live scripts accept (bare or dated). */
+export const OPENAI_SERVED_RE = /^gpt-4\.1-mini(-\d{4}-\d{2}-\d{2})?$/;
+
+/** Served-model allow-list: any `:free` OpenRouter model, or gpt-4.1-mini (OpenAI provider). */
+export function isAllowedServedModel(model: string): boolean {
+  return model.endsWith(':free') || OPENAI_SERVED_RE.test(model);
+}
+
 /**
  * Returns a stop reason or null. Stops on: any 429 (unless expected), a `budget_cap` code or a
  * breaker reason, a `rate_limited` code (unless a 429 is expected), a closed global quota, and a
- * result frame whose served `model` is not a `:free` model. Error details come in two shapes:
+ * result frame whose served `model` is not on the allow-list (`:free`, or gpt-4.1-mini). Error details come in two shapes:
  * HTTP bodies `{error:{code,reason}}` and streamed frames `{t:'error',code,reason}` (frames.ts).
- * Frames carry no cost field; the `:free` model check is the spend guard.
+ * Frames carry no cost field; the served-model allow-list is the spend guard (the Worker's
+ * lifetime OpenAI spend cap bounds gpt-4.1-mini).
  */
 export function stopReason(obs: Observation, opts: { expect429?: boolean } = {}): string | null {
   if (obs.status === 429 && !opts.expect429) return 'HTTP 429 received';
@@ -458,8 +467,8 @@ export function stopReason(obs: Observation, opts: { expect429?: boolean } = {})
     if (get(f, 'global_ok') === false) return 'global quota closed (breaker or global cap)';
     if (get(f, 't') === 'result') {
       const model = get(f, 'model');
-      if (typeof model !== 'string' || !model.endsWith(':free'))
-        return `served model ${typeof model === 'string' ? model : '(missing)'} is not :free`;
+      if (typeof model !== 'string' || !isAllowedServedModel(model))
+        return `served model ${typeof model === 'string' ? model : '(missing)'} is not :free or gpt-4.1-mini`;
     }
   }
   return null;

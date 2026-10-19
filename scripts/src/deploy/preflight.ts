@@ -44,6 +44,17 @@ function walk(dir: string): string[] {
   return out;
 }
 
+/** OpenAI (`sk-`, `sk-proj-`) key shape, left-bounded; built at runtime (no key-shaped literal). */
+const PROVIDER_KEY_RE = new RegExp(
+  ['(?<![A-Za-z0-9_-])sk', '(proj-)?[A-Za-z0-9_-]{20,}'].join('-'),
+);
+const OPENROUTER_PREFIX = ['sk', 'or', ''].join('-');
+
+/** True when the text carries an OpenAI or OpenRouter key shape. */
+export function hasProviderKey(text: string): boolean {
+  return PROVIDER_KEY_RE.test(text) || text.includes(OPENROUTER_PREFIX);
+}
+
 const TEXT_EXT = /\.(js|mjs|css|html|json|txt|map|svg)$|(^|\/)_headers$|(^|\/)_redirects$/;
 
 export function checkWebOutput(dir: string, siteKey: string | undefined): Check[] {
@@ -77,6 +88,17 @@ export function checkWebOutput(dir: string, siteKey: string | undefined): Check[
     name: 'no e2e hook marker (plain, non-e2e build)',
     ok: withMarker.length === 0,
     ...(withMarker.length ? { detail: `marker in ${withMarker.join(', ')}` } : {}),
+  });
+
+  // OpenAI provider plan (4.7a, AC17): no provider key shape in any built text asset. Only file
+  // names are reported, never the matched value.
+  const withKey = textFiles.filter((f) => hasProviderKey(readFileSync(f, 'utf8'))).map(rel);
+  checks.push({
+    name: 'no provider key pattern in built assets',
+    ok: withKey.length === 0,
+    ...(withKey.length
+      ? { detail: `key pattern in ${withKey.join(', ')} (value not printed)` }
+      : {}),
   });
 
   if (!siteKey) {

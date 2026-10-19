@@ -11,6 +11,7 @@ export type BannerKey =
   | 'ai_unavailable'
   | 'ai_disabled'
   | 'budget'
+  | 'spend_limit'
   | 'breaker'
   | 'rate'
   | 'verification'
@@ -69,6 +70,13 @@ export const BANNERS: Readonly<Record<BannerKey, BannerCopy>> = Object.freeze({
     resume: 'midnight',
     lane: 'skipped',
   },
+  /** OpenAI provider: the lifetime spend limit is reached; it never resets on its own. */
+  spend_limit: {
+    reason: 'the spend limit has been reached, so AI review is switched off',
+    short: 'spend limit reached',
+    resume: 'none',
+    lane: 'skipped',
+  },
   breaker: {
     reason: 'AI review is paused by a safety stop',
     short: 'safety stop',
@@ -124,7 +132,10 @@ export function bannerFor(e: Pick<ApiErrorDetail, 'code' | 'reason'>): BannerKey
       if (r === 'ai_disabled') return 'ai_disabled';
       return 'quota';
     case 'budget_cap':
-      return r === 'circuit_breaker' ? 'breaker' : 'budget';
+      if (r === 'circuit_breaker') return 'breaker';
+      if (r === 'spend_cap') return 'spend_limit';
+      if (r === 'provider_balance') return 'ai_unavailable';
+      return 'budget';
     case 'rate_limited':
       return 'rate';
     case 'invalid_session':

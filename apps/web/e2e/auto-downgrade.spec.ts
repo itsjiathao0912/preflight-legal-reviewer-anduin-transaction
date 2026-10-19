@@ -31,9 +31,17 @@ const CASES: { name: string; reply: AiReply; banner: string; text: RegExp }[] = 
     banner: 'ai_unavailable',
     text: /not available on the server/,
   },
+  // OpenAI provider plan (4.4): spend_cap is the lifetime cap, so it gets its own banner (no
+  // "for today"); a budget_cap without a known reason keeps the daily budget banner
+  {
+    name: 'spend limit',
+    reply: { kind: 'http', status: 503, code: 'budget_cap', reason: 'spend_cap' },
+    banner: 'spend_limit',
+    text: /spend limit has been reached/,
+  },
   {
     name: 'budget',
-    reply: { kind: 'http', status: 503, code: 'budget_cap', reason: 'spend_cap' },
+    reply: { kind: 'http', status: 503, code: 'budget_cap' },
     banner: 'budget',
     text: /AI budget for today is used up/,
   },

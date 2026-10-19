@@ -44,8 +44,14 @@ import {
 } from '../samples/scan-set';
 
 export const OCR_PRECOMPUTED_DIR = join(ROOT, 'apps', 'web', 'public', 'precomputed', 'ocr');
-/** Free vision model (Worker AI_VISION_MODELS default; part of the cache key). */
-export const OCR_MODEL = 'nvidia/nemotron-3.5-super-vl:free';
+/**
+ * Model id of the committed precomputed OCR set (sample #9; the free vision model it was made
+ * with). Part of the cache key; the web queue looks the static set up with this id while live OCR
+ * (OpenAI provider) keys its browser cache on gpt-4.1-mini. Regenerating #9 is deferred.
+ */
+export const PRECOMPUTED_OCR_MODEL = 'nvidia/nemotron-3.5-super-vl:free';
+/** Alias kept so existing imports (record-ocr, ocr-live-guard) compile; behaviour unchanged. */
+export const OCR_MODEL = PRECOMPUTED_OCR_MODEL;
 export const OCR_PROMPT_VER = 'ocr2';
 export const OCR_SCHEMA_VER = 's1';
 /** Same value as the Worker `MAX_TOKENS.ocr`. */
