@@ -1,30 +1,28 @@
 # Demo storyboard
 
-Shot table for the video in [script.md](script.md). Screenshots are captured later and saved to `docs/demo/img/`
-under the planned filenames below. Base URL: https://preflight-legal-reviewer.giathaowork.workers.dev
+Shot table for the video in [script.md](script.md) (about 3:30). Base URL: https://preflight-legal-reviewer.giathaowork.workers.dev
+Capture at 1440x900. Record in a real browser: sharing, memory and the counsel view need a Turnstile-verified session, which automated Chromium cannot obtain. Before shot 4, click **Start fresh** (sidebar footer) for an empty workspace, then switch the sidebar to **No AI**.
 
-Route note: Firm memory is reached through the sidebar nav. A direct `#memory` link lands on Findings on first load
-(the route is never persisted), so do not open it by URL.
+Route note: Firm memory and Questions are reached through the sidebar nav, not by URL.
 
-| Shot | URL / state | Action | Caption | Duration | Planned image |
+| Shot | URL / state | Action | Caption | Duration | Image |
 |---|---|---|---|---|---|
-| 1 | `/` title card (slide 1 of slides.html) | Hold | "Review a fund sub doc before it is digitized" | 0:20 | `img/01-title.png` |
-| 2 | `/` first load, Findings, no document | Show shell and doc switcher | "A calm analyst workspace" | 0:20 | `img/02-shell.png` |
-| 3 | `#findings`, sample 5 open | Scroll the document, click a highlight | "Document left, findings right" | 0:25 | `img/03-findings.png` |
-| 4 | `#findings`, one row expanded | Expand a broken cross-reference | "Every finding cites its evidence and rule" | 0:15 | `img/04-finding-expanded.png` |
-| 5 | Dismiss modal | Press Dismiss, pick a reason, save, show undo toast | "Dismissals need a reason and can be undone" | 0:20 | `img/05-dismiss.png` |
-| 6 | Stage status popover | Open the stage button | "Checks done, AI review state shown" | 0:15 | `img/06-stage.png` |
-| 7 | AI toggle | Switch AI off, then on | "Rules, memory and the gate work without AI" | 0:20 | `img/07-ai-toggle.png` |
-| 8 | `#compare`, 5 against 6 | Pick both versions | "Drift between versions, with a short narrative" | 0:35 | `img/08-compare.png` |
-| 9 | `#counsel` | Show the question list, press Export DOCX | "Confirmed issues become a counsel query sheet" | 0:20 | `img/09-counsel.png` |
-| 10 | Gate popover ("Blocked · N") | Answer one question, watch the count | "Digitization stays blocked until answered" | 0:20 | `img/10-gate.png` |
-| 11 | `#structure`, Investor types sub-view | Switch between tree, graph and paths | "Structure and investor-type paths" | 0:25 | `img/11-structure.png` |
-| 12 | Logic outline export | Click export | "Logic outline as JSON" | 0:10 | `img/12-outline.png` |
-| 13 | Sidebar then Firm memory | Click the memory nav item (not a URL) | "Firm memory proposes rules after three matches" | 0:25 | `img/13-memory.png` |
-| 14 | Memory audit list | Scroll the audit trail | "Every decision is in the audit trail" | 0:10 | `img/14-audit.png` |
-| 15 | `docs/` README known-misses section, or slide 11 | Hold | "What it does not do yet" | 0:20 | `img/15-known-misses.png` |
-| 16 | Closing slide | Hold | "Free models, free tier, browser-side parsing" | 0:15 | `img/16-close.png` |
+| 1 | Pitch deck, Context slide (slides.html) | Hold | "Review a fund sub doc before it is digitized" | 0:30 | `img/01-title.png` (slide 1; swap in Context slide if wanted) |
+| 2 | Problem and problem-statement slides | Hold | "What breaks a digital form" | 0:35 | fresh capture from slides.html |
+| 3 | Solution slide | Hold | "Review loop, gate, counsel link" | 0:35 | fresh capture from slides.html |
+| 4 | `/`, Open a document modal, **Or try a demo package** expanded | Pick **Northgate Capital III** | "Start from a demo package" | 0:10 | `img/demo-open-demo-packages.png` (matches live) |
+| 5 | Confirm the package table | 01 **To digitize**, 04 **Baseline (earlier version)**, tick **Confirmed**, `v1`, **Run checks** | "Preflight proposes roles; the analyst confirms" | 0:10 | `img/demo-package-confirm.png` (matches live; 01 and 04 still show To digitize in the proposal, set 04 to Baseline on camera) |
+| 6 | Findings, Annex F row selected | **Ask counsel**; then placeholder row, **Close issue**, reason, **Close issue** | "Ask the owner, or close with a reason" | 0:25 | `img/demo-findings-ask-counsel.png` (matches live, before the click) |
+| 7 | Gate popover, **Blocked · 10** | Click the gate pill | "Annex F plus nine changes block the build" | 0:05 | `img/demo-gate-blocked.png` |
+| 8 | Findings, **Share with counsel** | Click; toast "Link copied" | "One link, no account" | 0:10 | fresh capture (needs verified session) |
+| 9 | Second window, pasted link, **Open the shared review** | Enter a name, **Open review** | "Counsel joins by name" | 0:10 | fresh capture (needs verified session) |
+| 10 | Counsel window, Findings only, Annex F row | **Answer**, option B, **Save answer** (comment box: "Add a comment", **Post comment**) | "Counsel answers in the document" | 0:15 | fresh capture (needs verified session) |
+| 11 | Analyst window | Counsel name chip next to the share button (refreshes about 20 s), **Questions** shows the answer, gate 10 to 9 | "Who joined, answer in, gate moves" | 0:15 | fresh capture (needs verified session) |
+| 12 | Findings, segment **Changes** | Point at one row and its owner chip | "Nine changes vs Fund II, each with an owner" | 0:15 | `img/08-compare.png` shows an older Compare view; re-capture Findings with Changes segment |
+| 13 | **Questions**, group **For the GP** (7) | Scroll the list, hold on the gate pill | "One request for every missing document" | 0:15 | `img/demo-questions.png` (matches live, Annex F question asked) |
 
-Capture status (17-10-26, live version 23612b12, read-only run: AI, OCR and session requests aborted, 1440x900): 14 of 16 captured. Shots 3-12 come from the live site on sample 5 (PG NGI 2024) except shot 5 (sample 1, no firm). Shots 1, 15 and 16 are slides 1, 13 and 14 of slides.html. Live-state notes: AI review shows "skipped" and memory shows "unavailable" because the run had no Turnstile session; shot 7 shows AI off; shot 9 has one question marked from Findings; shot 10 shows the clear gate ("Ready to digitize") because sample 5 has no blocking item without memory; shot 12 shows the Cross-references lens with the Export logic outline button. Capture manually: shots 13 and 14 (`img/13-memory.png`, `img/14-audit.png`) - firm memory and its audit list need a Turnstile-verified session, which automated Chromium cannot obtain. A human can also re-take 8 with the AI narrative and 10 with a "Blocked · N" gate.
+Old shots dropped to fit 3:30: dismiss modal, stage popover, AI toggle, Structure sub-views, logic outline export, Firm memory and audit list, known-misses slide, closing slide. Their images in `img/` (03-12, 15, 16) remain valid for the README and deck. If a Structure beat is wanted (it now has three tabs: Sections, Logic, Terms & package), use one line and a fresh capture.
 
-Total about 4:35. Capture at 1440x900; also keep a 1024 px set only if a shot looks cramped.
+Captured 19-10-26 on the live site with headless Chromium (AI, OCR requests aborted, no Turnstile session): shots 4, 5, 6, 7 and 13 are real captures of the current UI; the banner "Memory unavailable" visible in them is an artifact of the missing session, so re-take them in a real browser for the final cut. Shots 8-11 and 12 need a human.
+
+Total about 3:30.
