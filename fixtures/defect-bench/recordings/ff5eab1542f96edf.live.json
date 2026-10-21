@@ -1,0 +1,115 @@
+{
+  "doc": "LAGO_Evergreen_Credit_2026_ck0002043759-ex4_1.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "ff5eab1542f96edfe28a582674570d4f44005e1675792972996fd95f5cd9e0b6",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "ff5eab1542f96edfe28a582674570d4f44005e1675792972996fd95f5cd9e0b6",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_c31d538e90a1abda\",\"label\":\"Section C\",\"pointer_addresses\":\"investors subscribing through a registered investment adviser (Financial Adviser)\",\"target_is_for\":\"investors subscribing through a registered investment adviser (Financial Adviser)\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"authorization of your financial adviser to receive information and take actions on your behalf with respect to your investment (see Section C of the Investor Questionnaire)\",\"explanation\":\"The pointer addresses investors subscribing through a registered investment adviser and sends them to Section C, which is headed 'FINANCIAL ADVISER AUTHORIZATION (Only applicable if working through a REGISTERED INVESTMENT ADVISER)' and instructs such investors to complete it. This is a match.\",\"interpretations\":[]},{\"candidate_id\":\"r_4b14035c76c1629f\",\"label\":\"Section I\",\"pointer_addresses\":\"investors receiving distribution instructions related to their investment\",\"target_is_for\":\"non-custodial investors completing cash distribution information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"distribution instructions related to your invest\",\"explanation\":\"The pointer sends investors to Section I for distribution instructions. Section I is headed 'cash Distribution information' and is for non-custodial investors to complete cash distribution details, fitting the pointer's purpose. This is a match.\",\"interpretations\":[]},{\"candidate_id\":\"r_0127493048269000\",\"label\":\"Section B\",\"pointer_addresses\":\"entities only (all other investors should proceed to Section B)\",\"target_is_for\":\"investors providing information to determine if they are accredited investors\",\"verdict\":\"mismatch\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.95,\"quote\":\"FOR ENTITIES ONLY (all other Investors should proceed to Section B)\",\"explanation\":\"The pointer addresses entities only, instructing them to proceed to Section B, but Section B is for all investors to provide information to determine if they are accredited investors, not specifically for entities only. This mismatch means the pointer sends entities to a section not exclusively for them.\",\"interpretations\":[]},{\"candidate_id\":\"r_fe31e95f7649310d\",\"label\":\"Section B\",\"pointer_addresses\":\"investors completing the accredited investor questionnaire inside Section B\",\"target_is_for\":\"investors providing information to determine if they are accredited investors\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"I further understand that, even if I complete the accredited investor questionnaire, contained in this Section B and\",\"explanation\":\"The pointer is inside Section B and refers to the accredited investor questionnaire contained in Section B, which matches the target section's purpose. This is a match.\",\"interpretations\":[]},{\"candidate_id\":\"r_c91aea3b42768cc2\",\"label\":\"Section G\",\"pointer_addresses\":\"Benefit Plan Investors only\",\"target_is_for\":\"Benefit Plan Investors only to determine percentage of investment allocable to benefit\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"Only Benefit Plan Investors need to complete the following Section G, all other Investors should proceed to Section H.\",\"explanation\":\"The pointer addresses Benefit Plan Investors only and sends them to Section G, which is specifically for Benefit Plan Investors to provide information about investment allocation. This is a match.\",\"interpretations\":[]},{\"candidate_id\":\"r_1e76a7388bb1efea\",\"label\":\"Section H\",\"pointer_addresses\":\"all other investors except Benefit Plan Investors\",\"target_is_for\":\"investors who are pension or other employee benefit plans or IRAs\",\"verdict\":\"mismatch\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.9,\"quote\":\"Only Benefit Plan Investors need to complete the following Section G, all other Investors should proceed to Section H.\",\"explanation\":\"The pointer sends all other investors except Benefit Plan Investors to Section H, but Section H is for investors who are pension or other employee benefit plans or IRAs, which is a subset of Benefit Plan Investors. This is a mismatch because the pointer excludes Benefit Plan Investors but Section H is for them.\",\"interpretations\":[]},{\"candidate_id\":\"r_c757a2c5af57d368\",\"label\":\"Section C\",\"pointer_addresses\":\"investors subscribing through a registered investment adviser (Financial Adviser)\",\"target_is_for\":\"investors subscribing through a registered investment adviser (Financial Adviser)\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"including the Financial Adviser delegation of authority in Section C\",\"explanation\":\"The pointer addresses investors subscribing through a registered investment adviser and sends them to Section C, which is for Financial Adviser Authorization. This is a match.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_c31d538e90a1abda",
+          "label": "Section C",
+          "pointer_addresses": "investors subscribing through a registered investment adviser (Financial Adviser)",
+          "target_is_for": "investors subscribing through a registered investment adviser (Financial Adviser)",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "authorization of your financial adviser to receive information and take actions on your behalf with respect to your investment (see Section C of the Investor Questionnaire)",
+          "explanation": "The pointer addresses investors subscribing through a registered investment adviser and sends them to Section C, which is headed 'FINANCIAL ADVISER AUTHORIZATION (Only applicable if working through a REGISTERED INVESTMENT ADVISER)' and instructs such investors to complete it. This is a match.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_4b14035c76c1629f",
+          "label": "Section I",
+          "pointer_addresses": "investors receiving distribution instructions related to their investment",
+          "target_is_for": "non-custodial investors completing cash distribution information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "distribution instructions related to your invest",
+          "explanation": "The pointer sends investors to Section I for distribution instructions. Section I is headed 'cash Distribution information' and is for non-custodial investors to complete cash distribution details, fitting the pointer's purpose. This is a match.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_0127493048269000",
+          "label": "Section B",
+          "pointer_addresses": "entities only (all other investors should proceed to Section B)",
+          "target_is_for": "investors providing information to determine if they are accredited investors",
+          "verdict": "mismatch",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.95,
+          "quote": "FOR ENTITIES ONLY (all other Investors should proceed to Section B)",
+          "explanation": "The pointer addresses entities only, instructing them to proceed to Section B, but Section B is for all investors to provide information to determine if they are accredited investors, not specifically for entities only. This mismatch means the pointer sends entities to a section not exclusively for them.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_fe31e95f7649310d",
+          "label": "Section B",
+          "pointer_addresses": "investors completing the accredited investor questionnaire inside Section B",
+          "target_is_for": "investors providing information to determine if they are accredited investors",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "I further understand that, even if I complete the accredited investor questionnaire, contained in this Section B and",
+          "explanation": "The pointer is inside Section B and refers to the accredited investor questionnaire contained in Section B, which matches the target section's purpose. This is a match.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_c91aea3b42768cc2",
+          "label": "Section G",
+          "pointer_addresses": "Benefit Plan Investors only",
+          "target_is_for": "Benefit Plan Investors only to determine percentage of investment allocable to benefit",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "Only Benefit Plan Investors need to complete the following Section G, all other Investors should proceed to Section H.",
+          "explanation": "The pointer addresses Benefit Plan Investors only and sends them to Section G, which is specifically for Benefit Plan Investors to provide information about investment allocation. This is a match.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_1e76a7388bb1efea",
+          "label": "Section H",
+          "pointer_addresses": "all other investors except Benefit Plan Investors",
+          "target_is_for": "investors who are pension or other employee benefit plans or IRAs",
+          "verdict": "mismatch",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.9,
+          "quote": "Only Benefit Plan Investors need to complete the following Section G, all other Investors should proceed to Section H.",
+          "explanation": "The pointer sends all other investors except Benefit Plan Investors to Section H, but Section H is for investors who are pension or other employee benefit plans or IRAs, which is a subset of Benefit Plan Investors. This is a mismatch because the pointer excludes Benefit Plan Investors but Section H is for them.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_c757a2c5af57d368",
+          "label": "Section C",
+          "pointer_addresses": "investors subscribing through a registered investment adviser (Financial Adviser)",
+          "target_is_for": "investors subscribing through a registered investment adviser (Financial Adviser)",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "including the Financial Adviser delegation of authority in Section C",
+          "explanation": "The pointer addresses investors subscribing through a registered investment adviser and sends them to Section C, which is for Financial Adviser Authorization. This is a match.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 2830,
+      "out": 1009
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

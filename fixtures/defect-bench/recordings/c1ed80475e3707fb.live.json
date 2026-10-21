@@ -1,0 +1,141 @@
+{
+  "doc": "Onex_Falcon_Direct_Lending_B_2021_d146040dex41.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "c1ed80475e3707fbd4a6e8beddc978bbc1e58da2b801b3b114999caaba557236",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "c1ed80475e3707fbd4a6e8beddc978bbc1e58da2b801b3b114999caaba557236",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_3e3b43e428bdf9e3\",\"label\":\"Section A\",\"pointer_addresses\":\"Each Investor\",\"target_is_for\":\"General Information | Print Full Name of Investor: Individual: First Middle Last Partnership, Corporation, Trust, Limited Liability Company, Custodial Account, Other: Name of Entity\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"(a) Each Investor should print the name of the Investor and provide other requested information in the space provided in Section A.\",\"explanation\":\"The pointer addresses each Investor generally and sends them to Section A, which is titled 'General Information' and requests the Investor's name and other information, fitting the pointer's instruction.\",\"interpretations\":[]},{\"candidate_id\":\"r_a5163674a54da6b0\",\"label\":\"Section C\",\"pointer_addresses\":\"Each Investor that is an entity\",\"target_is_for\":\"Non-U.S. Persons | If the Investor is a Non-U.S. Person, please check the box next to each of the representations below\",\"verdict\":\"mismatch\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.95,\"quote\":\"(c) Each Investor that is an entity should provide the information and respond to the questions in Section C.\",\"explanation\":\"The pointer addresses entity Investors generally but Section C is for Non-U.S. Persons only, which is a subset of entities. Therefore, the pointer sends all entities to a section meant only for Non-U.S. Persons, causing a mismatch.\",\"interpretations\":[]},{\"candidate_id\":\"r_66361267178002e6\",\"label\":\"Section D\",\"pointer_addresses\":\"Each Investor\",\"target_is_for\":\"Type of Individual or Entity | checkboxes for various types including Individual, Corporation, Limited Liability Company, etc.\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"(d) Each Investor should respond to the questions in Section D.\",\"explanation\":\"The pointer addresses each Investor and Section D is for identifying the type of individual or entity, which fits the pointer's instruction.\",\"interpretations\":[]},{\"candidate_id\":\"r_2efd085c490e97f1\",\"label\":\"Section E\",\"pointer_addresses\":\"Each Investor who is a natural person\",\"target_is_for\":\"Supplemental Data for Entities | If the Investor is not a natural person, furnish the following supplemental data (natural persons may skip this Section)\",\"verdict\":\"mismatch\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.95,\"quote\":\"(e) Each Investor who is a natural person should respond to Section E.\",\"explanation\":\"The pointer addresses natural persons but Section E is titled 'Supplemental Data for Entities' and states natural persons may skip this section, so the pointer sends natural persons to a section meant for entities only, causing a mismatch.\",\"interpretations\":[]},{\"candidate_id\":\"r_644b0438a3a078f0\",\"label\":\"Section F\",\"pointer_addresses\":\"Each Investor\",\"target_is_for\":\"Related Parties | questions about control relationships with other investors\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"(f) Each Investor should check the appropriate boxes, provide the requested information and respond to the questions in Section F.\",\"explanation\":\"The pointer addresses each Investor and Section F concerns related parties and control relationships, which is relevant to all investors, fitting the pointer.\",\"interpretations\":[]},{\"candidate_id\":\"r_5188d92ac8ba6e6d\",\"label\":\"Section G\",\"pointer_addresses\":\"Each Investor\",\"target_is_for\":\"Supplemental Data for Individuals | questions about retirement plan accounts and form of ownership\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"(g) Each Investor should respond to the questions in Section G.\",\"explanation\":\"The pointer addresses each Investor and Section G is supplemental data for individuals, which fits the pointer's instruction as it applies to individual investors.\",\"interpretations\":[]},{\"candidate_id\":\"r_743b681944e02d70\",\"label\":\"Section H\",\"pointer_addresses\":\"Each Investor\",\"target_is_for\":\"Allocation of New Issues | information about eligibility to participate in profits and losses from new issues\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"(h) Each Investor should check the appropriate boxes, provide the requested information and respond to the questions in Section H.\",\"explanation\":\"The pointer addresses each Investor and Section H concerns allocation of new issues, relevant to all investors, fitting the pointer.\",\"interpretations\":[]},{\"candidate_id\":\"r_851f22362d294e92\",\"label\":\"Section I\",\"pointer_addresses\":\"Each Investor\",\"target_is_for\":\"Bad Actor Disqualification | check boxes for disqualifying events\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"(i) Each Investor should check the appropriate boxes, provide the requested information and respond to the questions in Section I.\",\"explanation\":\"The pointer addresses each Investor and Section I concerns bad actor disqualification, relevant to all investors, fitting the pointer.\",\"interpretations\":[]},{\"candidate_id\":\"r_462d250a2b2e113b\",\"label\":\"Section J\",\"pointer_addresses\":\"Each Investor that is a resident of the United Kingdom\",\"target_is_for\":\"United Kingdom Financial Promotion (To Be Completed By U.K. Residents Only) | confirmation related to UK Financial Services Act\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"(j) Each Investor that is a resident of the United Kingdom should respond to the questions in Section J.\",\"explanation\":\"The pointer addresses UK resident Investors and Section J is specifically for UK residents, fitting the pointer.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_3e3b43e428bdf9e3",
+          "label": "Section A",
+          "pointer_addresses": "Each Investor",
+          "target_is_for": "General Information | Print Full Name of Investor: Individual: First Middle Last Partnership, Corporation, Trust, Limited Liability Company, Custodial Account, Other: Name of Entity",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "(a) Each Investor should print the name of the Investor and provide other requested information in the space provided in Section A.",
+          "explanation": "The pointer addresses each Investor generally and sends them to Section A, which is titled 'General Information' and requests the Investor's name and other information, fitting the pointer's instruction.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_a5163674a54da6b0",
+          "label": "Section C",
+          "pointer_addresses": "Each Investor that is an entity",
+          "target_is_for": "Non-U.S. Persons | If the Investor is a Non-U.S. Person, please check the box next to each of the representations below",
+          "verdict": "mismatch",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.95,
+          "quote": "(c) Each Investor that is an entity should provide the information and respond to the questions in Section C.",
+          "explanation": "The pointer addresses entity Investors generally but Section C is for Non-U.S. Persons only, which is a subset of entities. Therefore, the pointer sends all entities to a section meant only for Non-U.S. Persons, causing a mismatch.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_66361267178002e6",
+          "label": "Section D",
+          "pointer_addresses": "Each Investor",
+          "target_is_for": "Type of Individual or Entity | checkboxes for various types including Individual, Corporation, Limited Liability Company, etc.",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "(d) Each Investor should respond to the questions in Section D.",
+          "explanation": "The pointer addresses each Investor and Section D is for identifying the type of individual or entity, which fits the pointer's instruction.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_2efd085c490e97f1",
+          "label": "Section E",
+          "pointer_addresses": "Each Investor who is a natural person",
+          "target_is_for": "Supplemental Data for Entities | If the Investor is not a natural person, furnish the following supplemental data (natural persons may skip this Section)",
+          "verdict": "mismatch",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.95,
+          "quote": "(e) Each Investor who is a natural person should respond to Section E.",
+          "explanation": "The pointer addresses natural persons but Section E is titled 'Supplemental Data for Entities' and states natural persons may skip this section, so the pointer sends natural persons to a section meant for entities only, causing a mismatch.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_644b0438a3a078f0",
+          "label": "Section F",
+          "pointer_addresses": "Each Investor",
+          "target_is_for": "Related Parties | questions about control relationships with other investors",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "(f) Each Investor should check the appropriate boxes, provide the requested information and respond to the questions in Section F.",
+          "explanation": "The pointer addresses each Investor and Section F concerns related parties and control relationships, which is relevant to all investors, fitting the pointer.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_5188d92ac8ba6e6d",
+          "label": "Section G",
+          "pointer_addresses": "Each Investor",
+          "target_is_for": "Supplemental Data for Individuals | questions about retirement plan accounts and form of ownership",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "(g) Each Investor should respond to the questions in Section G.",
+          "explanation": "The pointer addresses each Investor and Section G is supplemental data for individuals, which fits the pointer's instruction as it applies to individual investors.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_743b681944e02d70",
+          "label": "Section H",
+          "pointer_addresses": "Each Investor",
+          "target_is_for": "Allocation of New Issues | information about eligibility to participate in profits and losses from new issues",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "(h) Each Investor should check the appropriate boxes, provide the requested information and respond to the questions in Section H.",
+          "explanation": "The pointer addresses each Investor and Section H concerns allocation of new issues, relevant to all investors, fitting the pointer.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_851f22362d294e92",
+          "label": "Section I",
+          "pointer_addresses": "Each Investor",
+          "target_is_for": "Bad Actor Disqualification | check boxes for disqualifying events",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "(i) Each Investor should check the appropriate boxes, provide the requested information and respond to the questions in Section I.",
+          "explanation": "The pointer addresses each Investor and Section I concerns bad actor disqualification, relevant to all investors, fitting the pointer.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_462d250a2b2e113b",
+          "label": "Section J",
+          "pointer_addresses": "Each Investor that is a resident of the United Kingdom",
+          "target_is_for": "United Kingdom Financial Promotion (To Be Completed By U.K. Residents Only) | confirmation related to UK Financial Services Act",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "(j) Each Investor that is a resident of the United Kingdom should respond to the questions in Section J.",
+          "explanation": "The pointer addresses UK resident Investors and Section J is specifically for UK residents, fitting the pointer.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 2888,
+      "out": 1230
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

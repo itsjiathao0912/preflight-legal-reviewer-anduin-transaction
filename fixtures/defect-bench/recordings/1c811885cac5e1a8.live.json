@@ -1,0 +1,167 @@
+{
+  "doc": "North_Haven_Private_Income_F_2023_tm2320913d2_ex10-7.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "1c811885cac5e1a866e6062c6c1aa10cd0c41edbbcb46547ea3445698180f4ad",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "1c811885cac5e1a866e6062c6c1aa10cd0c41edbbcb46547ea3445698180f4ad",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_089946cc848686b8\",\"label\":\"Section E\",\"pointer_addresses\":\"Subscriber Signature Page\",\"target_is_for\":\"Subscriber Signature Page (if applicable) S-27 Subscriber Signature Page To be signed by all subscribers: Execution of this signature page constitutes\",\"verdict\":\"match\",\"issue_class\": \"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"· Complete and sign the Subscriber Signature Page (Section E)\",\"explanation\":\"The pointer addresses the Subscriber Signature Page, and the target section is titled 'Subscriber Signature Page (if applicable)' and is to be signed by all subscribers, matching the pointer's intended audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_01ea6808a3c15299\",\"label\":\"Section B\",\"pointer_addresses\":\"Affirmative Indication of Independent Judgment\",\"target_is_for\":\"NOT FOUND\",\"verdict\":\"unclear\",\"issue_class\": \"broken_cross_reference\",\"severity\":\"medium\",\"confidence\":0.8,\"quote\":\"· Complete the Affirmative Indication of Independent Judgment (Section B)\",\"explanation\":\"The pointer directs to Section B for the Affirmative Indication of Independent Judgment, but Section B is not found in the document. The note lists only Sections A, E, and I as found, so the target section is missing or not detected, making the verdict unclear.\",\"interpretations\":[]},{\"candidate_id\":\"r_d119e6667a6613f1\",\"label\":\"Section A\",\"pointer_addresses\":\"Subscriber Questionnaire Section A: General Information (All Subscribers)\",\"target_is_for\":\"Subscriber Questionnaire Section B: Subscriber Qualification (All Subscribers) S-10 Subscriptions will be accepted only from persons who qualify as eligible investors within the meaning of applicable federal and state securities regulations.\",\"verdict\":\"mismatch\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.95,\"quote\":\"Subscriber Questionnaire Section A: General Information (All Subscribers) S-7 NOTE: If the answer to Question 4(d) is yes, complete Politically Exposed Persons (“PEP”) Questionnaire in Appendix 2.\",\"explanation\":\"The pointer addresses Section A for all subscribers, but the target shown is Section B, which is a different section focused on subscriber qualification. The target is not Section A as named in the pointer, indicating a broken cross-reference.\",\"interpretations\":[]},{\"candidate_id\":\"r_0840eafcfcd924b0\",\"label\":\"Section A\",\"pointer_addresses\":\"Subscriber Questionnaire Section A: General Information (All Subscribers)\",\"target_is_for\":\"Subscriber Questionnaire Section B: Subscriber Qualification (All Subscribers) S-10 Subscriptions will be accepted only from persons who qualify as eligible investors within the meaning of applicable federal and state securities regulations.\",\"verdict\":\"mismatch\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.95,\"quote\":\"Subscriber Questionnaire Section A: General Information (All Subscribers) S-8 similar capacity for any other person, nominee account or beneficial owner, whether a natural person or Entity (each such natural person or Entity, an “Underlying Beneficial Owner”) If the answer to Question 4(h) is “Yes,” please indicate the following: ☐ Yes ☐ No (i) The representations, warranties and agreements made in this Subscription Booklet, including the representations and warranties contained in the Subscript\",\"explanation\":\"The pointer addresses Section A for all subscribers, but the target shown is Section B, which is a different section focused on subscriber qualification. The target is not Section A as named in the pointer, indicating a broken cross-reference.\",\"interpretations\":[]},{\"candidate_id\":\"r_a09244b202871b6f\",\"label\":\"Section B\",\"pointer_addresses\":\"Section B of the Subscriber Questionnaire\",\"target_is_for\":\"NOT FOUND\",\"verdict\":\"unclear\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"medium\",\"confidence\":0.8,\"quote\":\"☐ Yes ☐ No (ii) Section B of the Subscriber Questionnaire is true, complete and accurate with respect to the assets held by the Underlying Beneficial Owner(s) and to the qualification of each Underlying Beneficial Owner as an “accredited investor” as defined in Regulation D under the 1933 Act.\",\"explanation\":\"The pointer directs to Section B of the Subscriber Questionnaire, but Section B is not found in the document. The note lists only Sections A, E, and I as found, so the target section is missing or not detected, making the verdict unclear.\",\"interpretations\":[]},{\"candidate_id\":\"r_3389222eeeb541b4\",\"label\":\"Section B\",\"pointer_addresses\":\"Section B(1) of this “Subscriber Questionnaire”\",\"target_is_for\":\"NOT FOUND\",\"verdict\":\"unclear\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"medium\",\"confidence\":0.8,\"quote\":\"Grantor/equity owner #1, if completing Section B(1) of this “Subscriber Questionnaire” truthfully and accurately, indicate the roman numeral option you would have selected Grantor/equity owner #2, if completing Section B(1) of this “Subscriber Questionnaire” truthfully and accurately, indicate the roman numeral option you would have selected Grantor/equity owner #3, if completing Section B(1) of this “Subscriber Questionnaire” truthfully and accurately, indicate the roman numeral option you woul\",\"explanation\":\"The pointer directs to Section B(1) of the Subscriber Questionnaire, but Section B is not found in the document. The note lists only Sections A, E, and I as found, so the target section is missing or not detected, making the verdict unclear.\",\"interpretations\":[]},{\"candidate_id\":\"r_1fc9ea9954acd211\",\"label\":\"Section B\",\"pointer_addresses\":\"Subscriber Questionnaire Section B: Subscriber Qualification (All Subscribers)\",\"target_is_for\":\"NOT FOUND\",\"verdict\":\"unclear\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"medium\",\"confidence\":0.8,\"quote\":\"Subscriber Questionnaire Section B: Subscriber Qualification (All Subscribers) S-15 Affirmative Indication of Independent Judgment (Pursuant to FINRA Rule 2111)13 In connection with the proposed investment in the Company, the undersigned, on behalf of the Subscriber, acknowledges and represents to Morgan Stanley \\u00026 Co. LLC, a registered broker-dealer, and any affiliated broker-dealers that may assist in the placement of Units (collectively, “Morgan Stanley”) that: ☐ Yes ☐ No 1) The Subscriber qua\",\"explanation\":\"The pointer directs to Section B for all subscribers, but Section B is not found in the document. The note lists only Sections A, E, and I as found, so the target section is missing or not detected, making the verdict unclear.\",\"interpretations\":[]},{\"candidate_id\":\"r_1f0ec557b33756c9\",\"label\":\"Section C\",\"pointer_addresses\":\"Section C of the Subscriber Questionnaire\",\"target_is_for\":\"NOT FOUND\",\"verdict\":\"unclear\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"medium\",\"confidence\":0.8,\"quote\":\"1. Primary Subscriber Information (joint subscriber, if any, to complete information separately in Section 2 below) Required Items Legal Name of Primary Subscriber: First Name Last Name Date of birth of Subscriber (mm/dd/yyyy): Citizenship: Government-Issued Identification: Provide \\u00096 Type of ID (e.g. EIN, social security number, taxpayer identification number, Company Registration Number, Passport Number, etc.) / ID Number / and Country of Issuance: / / (type of ID) (EIN, social security #, taxp\",\"explanation\":\"The pointer directs to Section C of the Subscriber Questionnaire, but Section C is not found in the document. The note lists only Sections A, E, and I as found, so the target section is missing or not detected, making the verdict unclear.\",\"interpretations\":[]},{\"candidate_id\":\"r_602e0ec104db4c9f\",\"label\":\"Section C\",\"pointer_addresses\":\"Section C of the Subscriber Questionnaire\",\"target_is_for\":\"NOT FOUND\",\"verdict\":\"unclear\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"medium\",\"confidence\":0.8,\"quote\":\"(4) If the Subscriber answered \\u00093Yes\\u00094 to 4(b)(3) above, the percentage of the assets of the Subscriber that are held on behalf of Benefit Plan Investors subject to Part 4 of Subtitle B of Title I of ERISA or Section 4975 of the Code during the period of investment in the Company do not, and will not, exceed: % If the answer to Question 4(b)(2) is \\u00093Yes\\u00094, the Subscriber MUST complete Section C of the Subscriber Questionnaire and the Additional Representation with Respect to Investment for an IRA on\",\"explanation\":\"The pointer directs to Section C of the Subscriber Questionnaire, but Section C is not found in the document. The note lists only Sections A, E, and I as found, so the target section is missing or not detected, making the verdict unclear.\",\"interpretations\":[]},{\"candidate_id\":\"r_579b0b091373dab7\",\"label\":\"Section B\",\"pointer_addresses\":\"Section B (Key Controller)\",\"target_is_for\":\"NOT FOUND\",\"verdict\":\"unclear\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"medium\",\"confidence\":0.8,\"quote\":\"Beneficial Owner(s) For Nonprofit and Pooled Investment Vehicles legal entity customers, please skip to Section B (Key Controller) below.\",\"explanation\":\"The pointer directs to Section B (Key Controller), but Section B is not found in the document. The note lists only Sections A, E, and I as found, so the target section is missing or not detected, making the verdict unclear.\",\"interpretations\":[]},{\"candidate_id\":\"r_dd8100785dad51c4\",\"label\":\"Section B\",\"pointer_addresses\":\"Section B (Key Controller)\",\"target_is_for\":\"NOT FOUND\",\"verdict\":\"unclear\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"medium\",\"confidence\":0.8,\"quote\":\"☐ Beneficial Owner Not Applicable (Check this box and skip to Section B (Key Controller) if there is no individual that meets the definition of a Beneficial Owner stated above.) Beneficial Owner 1 INDIVIDUAL NAME STREET ADDRESS DATE OF BIRTH CITY STATE ZIP COUNTRY SSN ONLY COMPLETE IF NO SSN AVAILABLE* GOVERNMENT-ISSUED IDENTIFICATION TYPE IDENTIFICATION NUMBER COUNTRY OF ISSUANCE ISSUANCE DATE EXPIRATION DATE\",\"explanation\":\"The pointer directs to Section B (Key Controller), but Section B is not found in the document. The note lists only Sections A, E, and I as found, so the target section is missing or not detected, making the verdict unclear.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_089946cc848686b8",
+          "label": "Section E",
+          "pointer_addresses": "Subscriber Signature Page",
+          "target_is_for": "Subscriber Signature Page (if applicable) S-27 Subscriber Signature Page To be signed by all subscribers: Execution of this signature page constitutes",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "· Complete and sign the Subscriber Signature Page (Section E)",
+          "explanation": "The pointer addresses the Subscriber Signature Page, and the target section is titled 'Subscriber Signature Page (if applicable)' and is to be signed by all subscribers, matching the pointer's intended audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_01ea6808a3c15299",
+          "label": "Section B",
+          "pointer_addresses": "Affirmative Indication of Independent Judgment",
+          "target_is_for": "NOT FOUND",
+          "verdict": "unclear",
+          "issue_class": "broken_cross_reference",
+          "severity": "medium",
+          "confidence": 0.8,
+          "quote": "· Complete the Affirmative Indication of Independent Judgment (Section B)",
+          "explanation": "The pointer directs to Section B for the Affirmative Indication of Independent Judgment, but Section B is not found in the document. The note lists only Sections A, E, and I as found, so the target section is missing or not detected, making the verdict unclear.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_d119e6667a6613f1",
+          "label": "Section A",
+          "pointer_addresses": "Subscriber Questionnaire Section A: General Information (All Subscribers)",
+          "target_is_for": "Subscriber Questionnaire Section B: Subscriber Qualification (All Subscribers) S-10 Subscriptions will be accepted only from persons who qualify as eligible investors within the meaning of applicable federal and state securities regulations.",
+          "verdict": "mismatch",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.95,
+          "quote": "Subscriber Questionnaire Section A: General Information (All Subscribers) S-7 NOTE: If the answer to Question 4(d) is yes, complete Politically Exposed Persons (“PEP”) Questionnaire in Appendix 2.",
+          "explanation": "The pointer addresses Section A for all subscribers, but the target shown is Section B, which is a different section focused on subscriber qualification. The target is not Section A as named in the pointer, indicating a broken cross-reference.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_0840eafcfcd924b0",
+          "label": "Section A",
+          "pointer_addresses": "Subscriber Questionnaire Section A: General Information (All Subscribers)",
+          "target_is_for": "Subscriber Questionnaire Section B: Subscriber Qualification (All Subscribers) S-10 Subscriptions will be accepted only from persons who qualify as eligible investors within the meaning of applicable federal and state securities regulations.",
+          "verdict": "mismatch",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.95,
+          "quote": "Subscriber Questionnaire Section A: General Information (All Subscribers) S-8 similar capacity for any other person, nominee account or beneficial owner, whether a natural person or Entity (each such natural person or Entity, an “Underlying Beneficial Owner”) If the answer to Question 4(h) is “Yes,” please indicate the following: ☐ Yes ☐ No (i) The representations, warranties and agreements made in this Subscription Booklet, including the representations and warranties contained in the Subscript",
+          "explanation": "The pointer addresses Section A for all subscribers, but the target shown is Section B, which is a different section focused on subscriber qualification. The target is not Section A as named in the pointer, indicating a broken cross-reference.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_a09244b202871b6f",
+          "label": "Section B",
+          "pointer_addresses": "Section B of the Subscriber Questionnaire",
+          "target_is_for": "NOT FOUND",
+          "verdict": "unclear",
+          "issue_class": "broken_cross_reference",
+          "severity": "medium",
+          "confidence": 0.8,
+          "quote": "☐ Yes ☐ No (ii) Section B of the Subscriber Questionnaire is true, complete and accurate with respect to the assets held by the Underlying Beneficial Owner(s) and to the qualification of each Underlying Beneficial Owner as an “accredited investor” as defined in Regulation D under the 1933 Act.",
+          "explanation": "The pointer directs to Section B of the Subscriber Questionnaire, but Section B is not found in the document. The note lists only Sections A, E, and I as found, so the target section is missing or not detected, making the verdict unclear.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_3389222eeeb541b4",
+          "label": "Section B",
+          "pointer_addresses": "Section B(1) of this “Subscriber Questionnaire”",
+          "target_is_for": "NOT FOUND",
+          "verdict": "unclear",
+          "issue_class": "broken_cross_reference",
+          "severity": "medium",
+          "confidence": 0.8,
+          "quote": "Grantor/equity owner #1, if completing Section B(1) of this “Subscriber Questionnaire” truthfully and accurately, indicate the roman numeral option you would have selected Grantor/equity owner #2, if completing Section B(1) of this “Subscriber Questionnaire” truthfully and accurately, indicate the roman numeral option you would have selected Grantor/equity owner #3, if completing Section B(1) of this “Subscriber Questionnaire” truthfully and accurately, indicate the roman numeral option you woul",
+          "explanation": "The pointer directs to Section B(1) of the Subscriber Questionnaire, but Section B is not found in the document. The note lists only Sections A, E, and I as found, so the target section is missing or not detected, making the verdict unclear.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_1fc9ea9954acd211",
+          "label": "Section B",
+          "pointer_addresses": "Subscriber Questionnaire Section B: Subscriber Qualification (All Subscribers)",
+          "target_is_for": "NOT FOUND",
+          "verdict": "unclear",
+          "issue_class": "broken_cross_reference",
+          "severity": "medium",
+          "confidence": 0.8,
+          "quote": "Subscriber Questionnaire Section B: Subscriber Qualification (All Subscribers) S-15 Affirmative Indication of Independent Judgment (Pursuant to FINRA Rule 2111)13 In connection with the proposed investment in the Company, the undersigned, on behalf of the Subscriber, acknowledges and represents to Morgan Stanley \u00026 Co. LLC, a registered broker-dealer, and any affiliated broker-dealers that may assist in the placement of Units (collectively, “Morgan Stanley”) that: ☐ Yes ☐ No 1) The Subscriber qua",
+          "explanation": "The pointer directs to Section B for all subscribers, but Section B is not found in the document. The note lists only Sections A, E, and I as found, so the target section is missing or not detected, making the verdict unclear.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_1f0ec557b33756c9",
+          "label": "Section C",
+          "pointer_addresses": "Section C of the Subscriber Questionnaire",
+          "target_is_for": "NOT FOUND",
+          "verdict": "unclear",
+          "issue_class": "broken_cross_reference",
+          "severity": "medium",
+          "confidence": 0.8,
+          "quote": "1. Primary Subscriber Information (joint subscriber, if any, to complete information separately in Section 2 below) Required Items Legal Name of Primary Subscriber: First Name Last Name Date of birth of Subscriber (mm/dd/yyyy): Citizenship: Government-Issued Identification: Provide \t6 Type of ID (e.g. EIN, social security number, taxpayer identification number, Company Registration Number, Passport Number, etc.) / ID Number / and Country of Issuance: / / (type of ID) (EIN, social security #, taxp",
+          "explanation": "The pointer directs to Section C of the Subscriber Questionnaire, but Section C is not found in the document. The note lists only Sections A, E, and I as found, so the target section is missing or not detected, making the verdict unclear.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_602e0ec104db4c9f",
+          "label": "Section C",
+          "pointer_addresses": "Section C of the Subscriber Questionnaire",
+          "target_is_for": "NOT FOUND",
+          "verdict": "unclear",
+          "issue_class": "broken_cross_reference",
+          "severity": "medium",
+          "confidence": 0.8,
+          "quote": "(4) If the Subscriber answered \t3Yes\t4 to 4(b)(3) above, the percentage of the assets of the Subscriber that are held on behalf of Benefit Plan Investors subject to Part 4 of Subtitle B of Title I of ERISA or Section 4975 of the Code during the period of investment in the Company do not, and will not, exceed: % If the answer to Question 4(b)(2) is \t3Yes\t4, the Subscriber MUST complete Section C of the Subscriber Questionnaire and the Additional Representation with Respect to Investment for an IRA on",
+          "explanation": "The pointer directs to Section C of the Subscriber Questionnaire, but Section C is not found in the document. The note lists only Sections A, E, and I as found, so the target section is missing or not detected, making the verdict unclear.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_579b0b091373dab7",
+          "label": "Section B",
+          "pointer_addresses": "Section B (Key Controller)",
+          "target_is_for": "NOT FOUND",
+          "verdict": "unclear",
+          "issue_class": "broken_cross_reference",
+          "severity": "medium",
+          "confidence": 0.8,
+          "quote": "Beneficial Owner(s) For Nonprofit and Pooled Investment Vehicles legal entity customers, please skip to Section B (Key Controller) below.",
+          "explanation": "The pointer directs to Section B (Key Controller), but Section B is not found in the document. The note lists only Sections A, E, and I as found, so the target section is missing or not detected, making the verdict unclear.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_dd8100785dad51c4",
+          "label": "Section B",
+          "pointer_addresses": "Section B (Key Controller)",
+          "target_is_for": "NOT FOUND",
+          "verdict": "unclear",
+          "issue_class": "broken_cross_reference",
+          "severity": "medium",
+          "confidence": 0.8,
+          "quote": "☐ Beneficial Owner Not Applicable (Check this box and skip to Section B (Key Controller) if there is no individual that meets the definition of a Beneficial Owner stated above.) Beneficial Owner 1 INDIVIDUAL NAME STREET ADDRESS DATE OF BIRTH CITY STATE ZIP COUNTRY SSN ONLY COMPLETE IF NO SSN AVAILABLE* GOVERNMENT-ISSUED IDENTIFICATION TYPE IDENTIFICATION NUMBER COUNTRY OF ISSUANCE ISSUANCE DATE EXPIRATION DATE",
+          "explanation": "The pointer directs to Section B (Key Controller), but Section B is not found in the document. The note lists only Sections A, E, and I as found, so the target section is missing or not detected, making the verdict unclear.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 3290,
+      "out": 2222
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

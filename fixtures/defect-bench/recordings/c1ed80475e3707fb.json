@@ -1,0 +1,31 @@
+{
+  "doc": "Onex_Falcon_Direct_Lending_B_2021_d146040dex41.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "c1ed80475e3707fbd4a6e8beddc978bbc1e58da2b801b3b114999caaba557236",
+  "model": "authored",
+  "messagesDigest": "c1ed80475e3707fbd4a6e8beddc978bbc1e58da2b801b3b114999caaba557236",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_2efd085c490e97f1\",\"label\":\"Section E\",\"verdict\":\"mismatch\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.8,\"quote\":\"natural person should respond to Section E\",\"explanation\":\"Authored bench answer for E1: Directions not re-lettered after sections were inserted: natural persons are sent to the entity-only Section E and entities to Section C (Non-U.S. Persons).\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_2efd085c490e97f1",
+          "label": "Section E",
+          "verdict": "mismatch",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.8,
+          "quote": "natural person should respond to Section E",
+          "explanation": "Authored bench answer for E1: Directions not re-lettered after sections were inserted: natural persons are sent to the entity-only Section E and entities to Section C (Non-U.S. Persons).",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "authored",
+    "served_model": "authored",
+    "recordedAt": "2026-10-22"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "doc": "10-crowdstreet-reit-i-2022.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "643dcb09cb2830acc2a082069bfd572a2d65d1431aac827853a37e1e43f6982b",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "643dcb09cb2830acc2a082069bfd572a2d65d1431aac827853a37e1e43f6982b",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_0461ab6fa9d5dbf8\",\"label\":\"Appendix A\",\"pointer_addresses\":\"Qualified Purchasers\",\"target_is_for\":\"Qualified Purchasers\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"Note: See Appendix A for additional information regarding the terms applicable to Qualified Purchasers.\",\"explanation\":\"The pointer addresses Qualified Purchasers and sends them to Appendix A, which is titled 'Definition and Methodology for Valuation of Investments for Qualified Purchasers', indicating it is for Qualified Purchasers. Therefore, the target fits the pointer's intended audience, resulting in a match.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_0461ab6fa9d5dbf8",
+          "label": "Appendix A",
+          "pointer_addresses": "Qualified Purchasers",
+          "target_is_for": "Qualified Purchasers",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "Note: See Appendix A for additional information regarding the terms applicable to Qualified Purchasers.",
+          "explanation": "The pointer addresses Qualified Purchasers and sends them to Appendix A, which is titled 'Definition and Methodology for Valuation of Investments for Qualified Purchasers', indicating it is for Qualified Purchasers. Therefore, the target fits the pointer's intended audience, resulting in a match.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 1795,
+      "out": 147
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

@@ -37,8 +37,11 @@ export function authorRecordings(corpusDir = CORPUS_DIR): { name: string; rec: B
       const anchor = x.anchors[0]!;
       const pair = a.pairs.find((p) => sentenceHasAnchor(p.quote.split('\n')[0]!, anchor));
       if (!pair) throw new Error(`no pair pointer contains the ${x.id} anchor in ${d.file}`);
+      const label = /^\[TARGET ([^:]+):/.exec(pair.quote.split('\n')[1] ?? '')?.[1] ?? '';
       return {
         candidate_id: pair.id,
+        label,
+        verdict: 'mismatch',
         issue_class: 'broken_cross_reference',
         severity: 'high',
         confidence: 0.8,

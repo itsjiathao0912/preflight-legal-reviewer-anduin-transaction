@@ -1,0 +1,63 @@
+{
+  "doc": "AGTB_Private_BDC_2022_d308844dex105.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "254c6d6e6f9e9561ed8952be917faf3058b3de68a484f85790c52a774733ebbb",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "254c6d6e6f9e9561ed8952be917faf3058b3de68a484f85790c52a774733ebbb",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_5349962169c92891\",\"label\":\"Appendix B\",\"pointer_addresses\":\"prospective investors reading the Master SIF\",\"target_is_for\":\"NOT FOUND\",\"verdict\":\"unclear\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":1,\"quote\":\"Please see Appendix B of the Master SIF.\",\"explanation\":\"The pointer addresses prospective investors to Appendix B of the Master SIF, but the target is NOT FOUND and only Appendix A is found in the document, so it is unclear if Appendix B exists or is missing.\",\"interpretations\":[]},{\"candidate_id\":\"r_9991761f14114b18\",\"label\":\"Appendix C\",\"pointer_addresses\":\"prospective investors under the European Union General Data Protection Regulation reading the Master SIF\",\"target_is_for\":\"NOT FOUND\",\"verdict\":\"unclear\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":1,\"quote\":\"prospective investors should review the disclosure set forth in Appendix C of the Master SIF.\",\"explanation\":\"The pointer addresses prospective investors under EU GDPR to Appendix C of the Master SIF, but the target is NOT FOUND and only Appendix A is found in the document, so it is unclear if Appendix C exists or is missing.\",\"interpretations\":[]},{\"candidate_id\":\"r_ff44de471164f121\",\"label\":\"Appendix D\",\"pointer_addresses\":\"California resident prospective investors reading the Master SIF\",\"target_is_for\":\"NOT FOUND\",\"verdict\":\"unclear\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":1,\"quote\":\"a California resident should review the California-Specific Privacy Policy set forth in Appendix D of the Master SIF.\",\"explanation\":\"The pointer addresses California resident prospective investors to Appendix D of the Master SIF, but the target is NOT FOUND and only Appendix A is found in the document, so it is unclear if Appendix D exists or is missing.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_5349962169c92891",
+          "label": "Appendix B",
+          "pointer_addresses": "prospective investors reading the Master SIF",
+          "target_is_for": "NOT FOUND",
+          "verdict": "unclear",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 1,
+          "quote": "Please see Appendix B of the Master SIF.",
+          "explanation": "The pointer addresses prospective investors to Appendix B of the Master SIF, but the target is NOT FOUND and only Appendix A is found in the document, so it is unclear if Appendix B exists or is missing.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_9991761f14114b18",
+          "label": "Appendix C",
+          "pointer_addresses": "prospective investors under the European Union General Data Protection Regulation reading the Master SIF",
+          "target_is_for": "NOT FOUND",
+          "verdict": "unclear",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 1,
+          "quote": "prospective investors should review the disclosure set forth in Appendix C of the Master SIF.",
+          "explanation": "The pointer addresses prospective investors under EU GDPR to Appendix C of the Master SIF, but the target is NOT FOUND and only Appendix A is found in the document, so it is unclear if Appendix C exists or is missing.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_ff44de471164f121",
+          "label": "Appendix D",
+          "pointer_addresses": "California resident prospective investors reading the Master SIF",
+          "target_is_for": "NOT FOUND",
+          "verdict": "unclear",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 1,
+          "quote": "a California resident should review the California-Specific Privacy Policy set forth in Appendix D of the Master SIF.",
+          "explanation": "The pointer addresses California resident prospective investors to Appendix D of the Master SIF, but the target is NOT FOUND and only Appendix A is found in the document, so it is unclear if Appendix D exists or is missing.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 1874,
+      "out": 400
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

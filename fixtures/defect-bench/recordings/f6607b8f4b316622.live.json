@@ -1,0 +1,37 @@
+{
+  "doc": "FORTRESS_CREDIT_REALTY_INCOM_2024_ny20035372x1_ex10-5.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "f6607b8f4b31662238c25fb94ff772a9a5e67f9e7a48b6651f524cebc9d53d8a",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "f6607b8f4b31662238c25fb94ff772a9a5e67f9e7a48b6651f524cebc9d53d8a",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_1d621e580f4f361b\",\"label\":\"Annex C\",\"pointer_addresses\":\"investor (Subscriber) completing the subscription document\",\"target_is_for\":\"Anti-Money Laundering and Beneficial Ownership Information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"medium\",\"confidence\":0.9,\"quote\":\"(b) Please complete Annex C describing the number of Beneficial Owners of the Subscriber, such Beneficial Owners’ relative interests in the Subscriber, and the relationships, if any, among the Subscriber’s Beneficial Owners.\",\"explanation\":\"The pointer instructs the Subscriber to complete Annex C describing Beneficial Owners. The target section is titled 'Anti-Money Laundering and Beneficial Ownership Information' and starts at C-1, which fits the pointer's purpose of describing Beneficial Owners. Therefore, the target fits the pointer.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_1d621e580f4f361b",
+          "label": "Annex C",
+          "pointer_addresses": "investor (Subscriber) completing the subscription document",
+          "target_is_for": "Anti-Money Laundering and Beneficial Ownership Information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "medium",
+          "confidence": 0.9,
+          "quote": "(b) Please complete Annex C describing the number of Beneficial Owners of the Subscriber, such Beneficial Owners’ relative interests in the Subscriber, and the relationships, if any, among the Subscriber’s Beneficial Owners.",
+          "explanation": "The pointer instructs the Subscriber to complete Annex C describing Beneficial Owners. The target section is titled 'Anti-Money Laundering and Beneficial Ownership Information' and starts at C-1, which fits the pointer's purpose of describing Beneficial Owners. Therefore, the target fits the pointer.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 1752,
+      "out": 192
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

@@ -406,9 +406,10 @@
      "kind": "wrong_target",
      "expect": "reference-target",
      "anchors": [
-      "natural person should respond to Section E"
+      "natural person should respond to Section E",
+      "entity should provide the information and respond to the questions in Section C"
      ],
-     "why": "Section E is the entity-only supplement; directions were not re-lettered after sections were inserted"
+     "why": "Directions not re-lettered after sections were inserted: natural persons are sent to the entity-only Section E and entities to Section C (Non-U.S. Persons)"
     }
    ],
    "verified": true

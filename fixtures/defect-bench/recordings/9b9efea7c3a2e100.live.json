@@ -1,0 +1,102 @@
+{
+  "doc": "06-partners-group-ngi-2026.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "9b9efea7c3a2e10049c2ff68a93160630adbbf64b633aeab947cc44290c25283",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "9b9efea7c3a2e10049c2ff68a93160630adbbf64b633aeab947cc44290c25283",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_3c05a8da8ed1150f\",\"label\":\"Part B\",\"pointer_addresses\":\"readers completing Part A – Distribution election\",\"target_is_for\":\"Joint owner’s information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"☐ Yes ☐ No (please complete Part B below)\",\"explanation\":\"The pointer in Part A – Distribution election sends readers to Part B for Joint owner’s information, which matches the target section heading and content about joint owner details. The note confirms multiple Part B sections exist but the one shown is the correct one in the pointer's own part.\",\"interpretations\":[]},{\"candidate_id\":\"r_6bb33c1167340b8d\",\"label\":\"Part A\",\"pointer_addresses\":\"All Subscribers completing Qualified Investor Determination\",\"target_is_for\":\"Owner’s information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"All Subscribers must complete both Parts A \\u0016 B below.\",\"explanation\":\"The pointer directs all subscribers to complete Part A for Owner’s information, which matches the target section heading and content about owner details. The note confirms multiple Part A sections exist but the one shown is the correct one in the pointer's own part.\",\"interpretations\":[]},{\"candidate_id\":\"r_d5a292f17ddaff02\",\"label\":\"Part B\",\"pointer_addresses\":\"All Subscribers completing Qualified Investor Determination\",\"target_is_for\":\"Joint owner’s information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"All Subscribers must complete both Parts A \\u0016 B below.\",\"explanation\":\"The pointer directs all subscribers to complete Part B for Joint owner’s information, which matches the target section heading and content about joint owner details. The note confirms multiple Part B sections exist but the one shown is the correct one in the pointer's own part.\",\"interpretations\":[]},{\"candidate_id\":\"r_b0163a7d9d8d51d8\",\"label\":\"Part C\",\"pointer_addresses\":\"Subscribers that are trusts, corporations or other entities\",\"target_is_for\":\"Entity, trustee and authorized person information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"Subscribers that are trusts, corporations or other entities must also complete Part C.\",\"explanation\":\"The pointer directs entity-type subscribers to complete Part C for Entity, trustee and authorized person information, which matches the target section heading and content about entities and trustees. The note confirms multiple Part C sections exist but the one shown is the correct one in the pointer's own part.\",\"interpretations\":[]},{\"candidate_id\":\"r_49d0c15e5695a6e9\",\"label\":\"Part D\",\"pointer_addresses\":\"natural persons determining net worth for Accredited investor status\",\"target_is_for\":\"Net worth determination for certain individual investors\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"☐ it is a natural person with an individual net worth, or joint net worth with its spouse at the time of its purchase of Shares, that exceeds $1,000,000 (see Part D for definition of net worth).\",\"explanation\":\"The pointer sends natural persons to Part D for net worth determination, which matches the target section heading and content about net worth calculation for individual investors. The note confirms the target is the correct Part D section referenced.\",\"interpretations\":[]},{\"candidate_id\":\"r_c2e5387b1ce725fc\",\"label\":\"Part D\",\"pointer_addresses\":\"natural persons determining net worth for Qualified client status\",\"target_is_for\":\"Net worth determination for certain individual investors\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"☐ it is a natural person with a net worth of at least $2,700,000 as of the date hereof, either alone or with assets held jointly with such person's spouse (see Part D for definition of net worth);\",\"explanation\":\"The pointer sends natural persons to Part D for net worth determination, which matches the target section heading and content about net worth calculation for individual investors. The note confirms the target is the correct Part D section referenced.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_3c05a8da8ed1150f",
+          "label": "Part B",
+          "pointer_addresses": "readers completing Part A – Distribution election",
+          "target_is_for": "Joint owner’s information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "☐ Yes ☐ No (please complete Part B below)",
+          "explanation": "The pointer in Part A – Distribution election sends readers to Part B for Joint owner’s information, which matches the target section heading and content about joint owner details. The note confirms multiple Part B sections exist but the one shown is the correct one in the pointer's own part.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_6bb33c1167340b8d",
+          "label": "Part A",
+          "pointer_addresses": "All Subscribers completing Qualified Investor Determination",
+          "target_is_for": "Owner’s information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "All Subscribers must complete both Parts A \u0016 B below.",
+          "explanation": "The pointer directs all subscribers to complete Part A for Owner’s information, which matches the target section heading and content about owner details. The note confirms multiple Part A sections exist but the one shown is the correct one in the pointer's own part.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_d5a292f17ddaff02",
+          "label": "Part B",
+          "pointer_addresses": "All Subscribers completing Qualified Investor Determination",
+          "target_is_for": "Joint owner’s information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "All Subscribers must complete both Parts A \u0016 B below.",
+          "explanation": "The pointer directs all subscribers to complete Part B for Joint owner’s information, which matches the target section heading and content about joint owner details. The note confirms multiple Part B sections exist but the one shown is the correct one in the pointer's own part.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_b0163a7d9d8d51d8",
+          "label": "Part C",
+          "pointer_addresses": "Subscribers that are trusts, corporations or other entities",
+          "target_is_for": "Entity, trustee and authorized person information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "Subscribers that are trusts, corporations or other entities must also complete Part C.",
+          "explanation": "The pointer directs entity-type subscribers to complete Part C for Entity, trustee and authorized person information, which matches the target section heading and content about entities and trustees. The note confirms multiple Part C sections exist but the one shown is the correct one in the pointer's own part.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_49d0c15e5695a6e9",
+          "label": "Part D",
+          "pointer_addresses": "natural persons determining net worth for Accredited investor status",
+          "target_is_for": "Net worth determination for certain individual investors",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "☐ it is a natural person with an individual net worth, or joint net worth with its spouse at the time of its purchase of Shares, that exceeds $1,000,000 (see Part D for definition of net worth).",
+          "explanation": "The pointer sends natural persons to Part D for net worth determination, which matches the target section heading and content about net worth calculation for individual investors. The note confirms the target is the correct Part D section referenced.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_c2e5387b1ce725fc",
+          "label": "Part D",
+          "pointer_addresses": "natural persons determining net worth for Qualified client status",
+          "target_is_for": "Net worth determination for certain individual investors",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "☐ it is a natural person with a net worth of at least $2,700,000 as of the date hereof, either alone or with assets held jointly with such person's spouse (see Part D for definition of net worth);",
+          "explanation": "The pointer sends natural persons to Part D for net worth determination, which matches the target section heading and content about net worth calculation for individual investors. The note confirms the target is the correct Part D section referenced.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 2650,
+      "out": 903
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

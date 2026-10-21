@@ -18,8 +18,10 @@ const g = analyzeHtml(HTML);
 const findings = runDeterministic(g);
 const { candidates, sites } = buildReferencePairs(g, findings);
 const pair = candidates.find((c) => c.quote.includes('Section E'))!;
-const finding = (quote: string) => ({
+const finding = (quote: string, verdict = 'mismatch') => ({
   candidate_id: pair.id,
+  label: 'Section E',
+  verdict,
   issue_class: 'broken_cross_reference',
   severity: 'high',
   confidence: 0.8,
@@ -28,8 +30,11 @@ const finding = (quote: string) => ({
     'The pointer sends natural persons to Section E, whose heading says it is for entities.',
   interpretations: [],
 });
-const run = (quote: string) => {
-  const v = TASKS['reference-target'].validate({ findings: [finding(quote)] }, { candidates });
+const run = (quote: string, verdict = 'mismatch') => {
+  const v = TASKS['reference-target'].validate(
+    { findings: [finding(quote, verdict)] },
+    { candidates },
+  );
   if (!v.ok) throw new Error('malformed');
   const out = verifyAiResult(g, v.result, {
     model: 'm',
@@ -65,5 +70,11 @@ describe('reference-target verify chain (AC5)', () => {
     );
     expect(out.findings).toEqual([]);
     expect(out.rejected).toEqual([{ candidate_id: pair.id, reason: 'quote_not_found' }]);
+  });
+
+  it('a match verdict produces no finding and no rejection', () => {
+    const out = run('natural person should respond to Section E', 'match');
+    expect(out.findings).toEqual([]);
+    expect(out.rejected).toEqual([]);
   });
 });

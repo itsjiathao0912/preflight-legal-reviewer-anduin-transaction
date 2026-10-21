@@ -1,0 +1,76 @@
+{
+  "doc": "Keystone_Private_Income_Fund_2020_fp0050233_ex99252p.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "05111d9c60e54f708952ebc9f947d051dd89e130554b07d2955da725417265e8",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "05111d9c60e54f708952ebc9f947d051dd89e130554b07d2955da725417265e8",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_fade0ff786f08889\",\"label\":\"Part A\",\"pointer_addresses\":\"Investor (individual or entity) reading Part C subscription booklet\",\"target_is_for\":\"Individual investors (heading: FOR INDIVIDUAL INVESTORS)\",\"verdict\":\"mismatch\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.9,\"quote\":\"(i) The address set forth in Part A of this subscription booklet is the Investor’s true and correct residence, if an individual, or principal place of business, if an entity.\",\"explanation\":\"The pointer addresses the Investor generally (individual or entity) in Part C, but the target Part A shown is specifically for individual investors only, as indicated by the heading 'FOR INDIVIDUAL INVESTORS'. The note states Part A appears 4 times, but the shown target is the first one for individuals, which does not fit the pointer's inclusion of entities. This is a broken cross-reference.\",\"interpretations\":[]},{\"candidate_id\":\"r_897749bf01124aa9\",\"label\":\"Part C\",\"pointer_addresses\":\"Subscriber (natural person or alter-ego) or entity reading Suitability Statement\",\"target_is_for\":\"Subscription Agreement (Part C) addressed to Keystone Private Income Fund\",\"verdict\":\"mismatch\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.95,\"quote\":\"(6) The information provided in Part C of the Suitability Statement, if the Subscriber is a natural person or alter-ego thereof, or Part D of the Suitability Statement, if the Subscriber is an entity, is true and accurate as of the date hereof;\",\"explanation\":\"The pointer refers to Part C of the Suitability Statement, but the target Part C shown is the Subscription Agreement, not the Suitability Statement. The note confirms the pointer sentence is inside Part C, but the target is the Subscription Agreement, which is a different document part. This is a broken cross-reference.\",\"interpretations\":[]},{\"candidate_id\":\"r_56b63faefee577e3\",\"label\":\"Part D\",\"pointer_addresses\":\"Subscriber (natural person or alter-ego) or entity reading Suitability Statement\",\"target_is_for\":\"Suitability Statements for Individual Investors\",\"verdict\":\"mismatch\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.95,\"quote\":\"(6) The information provided in Part C of the Suitability Statement, if the Subscriber is a natural person or alter-ego thereof, or Part D of the Suitability Statement, if the Subscriber is an entity, is true and accurate as of the date hereof;\",\"explanation\":\"The pointer refers to Part D of the Suitability Statement for entities, but the target Part D shown is 'Suitability Statements for Individual Investors', which is for individuals, not entities. The note states Part D appears 4 times, but the shown target is the first for individual investors, which does not fit the pointer's entity audience. This is a broken cross-reference.\",\"interpretations\":[]},{\"candidate_id\":\"r_fa931a6e6a6d2bc8\",\"label\":\"Part A\",\"pointer_addresses\":\"Investor receiving notices or communications in Part C subscription agreement\",\"target_is_for\":\"Individual investors (heading: FOR INDIVIDUAL INVESTORS)\",\"verdict\":\"mismatch\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.9,\"quote\":\"All notices or other communications given or made hereunder shall be in writing and shall be deemed effectively given upon personal delivery or upon deposit in any United States mail box, postage prepaid, deposit with an overnight courier, or transmission by facsimile or electronic mail to the Investor at the address set forth in Part A of this subscription booklet\",\"explanation\":\"The pointer addresses the Investor generally in Part C, but the target Part A shown is specifically for individual investors only, as indicated by the heading 'FOR INDIVIDUAL INVESTORS'. The note states Part A appears 4 times, but the shown target is the first one for individuals, which does not fit the pointer's inclusion of entities. This is a broken cross-reference.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_fade0ff786f08889",
+          "label": "Part A",
+          "pointer_addresses": "Investor (individual or entity) reading Part C subscription booklet",
+          "target_is_for": "Individual investors (heading: FOR INDIVIDUAL INVESTORS)",
+          "verdict": "mismatch",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.9,
+          "quote": "(i) The address set forth in Part A of this subscription booklet is the Investor’s true and correct residence, if an individual, or principal place of business, if an entity.",
+          "explanation": "The pointer addresses the Investor generally (individual or entity) in Part C, but the target Part A shown is specifically for individual investors only, as indicated by the heading 'FOR INDIVIDUAL INVESTORS'. The note states Part A appears 4 times, but the shown target is the first one for individuals, which does not fit the pointer's inclusion of entities. This is a broken cross-reference.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_897749bf01124aa9",
+          "label": "Part C",
+          "pointer_addresses": "Subscriber (natural person or alter-ego) or entity reading Suitability Statement",
+          "target_is_for": "Subscription Agreement (Part C) addressed to Keystone Private Income Fund",
+          "verdict": "mismatch",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.95,
+          "quote": "(6) The information provided in Part C of the Suitability Statement, if the Subscriber is a natural person or alter-ego thereof, or Part D of the Suitability Statement, if the Subscriber is an entity, is true and accurate as of the date hereof;",
+          "explanation": "The pointer refers to Part C of the Suitability Statement, but the target Part C shown is the Subscription Agreement, not the Suitability Statement. The note confirms the pointer sentence is inside Part C, but the target is the Subscription Agreement, which is a different document part. This is a broken cross-reference.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_56b63faefee577e3",
+          "label": "Part D",
+          "pointer_addresses": "Subscriber (natural person or alter-ego) or entity reading Suitability Statement",
+          "target_is_for": "Suitability Statements for Individual Investors",
+          "verdict": "mismatch",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.95,
+          "quote": "(6) The information provided in Part C of the Suitability Statement, if the Subscriber is a natural person or alter-ego thereof, or Part D of the Suitability Statement, if the Subscriber is an entity, is true and accurate as of the date hereof;",
+          "explanation": "The pointer refers to Part D of the Suitability Statement for entities, but the target Part D shown is 'Suitability Statements for Individual Investors', which is for individuals, not entities. The note states Part D appears 4 times, but the shown target is the first for individual investors, which does not fit the pointer's entity audience. This is a broken cross-reference.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_fa931a6e6a6d2bc8",
+          "label": "Part A",
+          "pointer_addresses": "Investor receiving notices or communications in Part C subscription agreement",
+          "target_is_for": "Individual investors (heading: FOR INDIVIDUAL INVESTORS)",
+          "verdict": "mismatch",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.9,
+          "quote": "All notices or other communications given or made hereunder shall be in writing and shall be deemed effectively given upon personal delivery or upon deposit in any United States mail box, postage prepaid, deposit with an overnight courier, or transmission by facsimile or electronic mail to the Investor at the address set forth in Part A of this subscription booklet",
+          "explanation": "The pointer addresses the Investor generally in Part C, but the target Part A shown is specifically for individual investors only, as indicated by the heading 'FOR INDIVIDUAL INVESTORS'. The note states Part A appears 4 times, but the shown target is the first one for individuals, which does not fit the pointer's inclusion of entities. This is a broken cross-reference.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 2554,
+      "out": 854
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "doc": "03-partners-group-pe-master-2019.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "7c7238c188a8c8de5ec681aa8e9040d4d56e969b80f215c7f79c60b0f2774355",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "7c7238c188a8c8de5ec681aa8e9040d4d56e969b80f215c7f79c60b0f2774355",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_79b67c38e07400ab\",\"label\":\"Part B\",\"pointer_addresses\":\"readers completing Part A – Distribution election\",\"target_is_for\":\"joint owner’s information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"☐ Yes ☐ No (please complete Part B below)\",\"explanation\":\"The pointer addresses readers who answered Yes in Part A – Distribution election and directs them to Part B for joint owner's information. The target section is titled 'Joint owner’s information' and matches the pointer's purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_94100b7ec0cd7f29\",\"label\":\"Part A\",\"pointer_addresses\":\"All Subscribers completing Qualified Investor Determination\",\"target_is_for\":\"owner’s information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"All Subscribers must complete both Parts A \\u0016 B below.\",\"explanation\":\"The pointer instructs all subscribers to complete Part A, which is titled 'Owner’s information' and matches the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_4de933b29de10482\",\"label\":\"Part B\",\"pointer_addresses\":\"All Subscribers completing Qualified Investor Determination\",\"target_is_for\":\"joint owner’s information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"All Subscribers must complete both Parts A \\u0016 B below.\",\"explanation\":\"The pointer instructs all subscribers to complete Part B, which is titled 'Joint owner’s information' and matches the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_24d585fe01ed9e18\",\"label\":\"Part C\",\"pointer_addresses\":\"Subscribers that are trusts, corporations or other entities\",\"target_is_for\":\"entity, trustee and authorized person information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"Subscribers that are trusts, corporations or other entities must also complete Part C.\",\"explanation\":\"The pointer addresses subscribers that are entities and directs them to Part C, which is titled 'Entity, trustee and authorized person information' and matches the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_8c53f9a1f23cefa1\",\"label\":\"Part D\",\"pointer_addresses\":\"individuals completing Part A – “Accredited investor” determination\",\"target_is_for\":\"net worth determination for certain individual investors\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"see Part D for definition of net worth\",\"explanation\":\"The pointer in Part A for individuals refers to Part D for the definition of net worth. The target section is titled 'Net worth determination for certain individual investors' and matches the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_2f1c1417299ba68a\",\"label\":\"Part D\",\"pointer_addresses\":\"individuals completing Part B – “Qualified client” determination\",\"target_is_for\":\"net worth determination for certain individual investors\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"see Part D for definition of net worth\",\"explanation\":\"The pointer in Part B for individuals refers to Part D for the definition of net worth. The target section is titled 'Net worth determination for certain individual investors' and matches the pointer's audience and purpose.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_79b67c38e07400ab",
+          "label": "Part B",
+          "pointer_addresses": "readers completing Part A – Distribution election",
+          "target_is_for": "joint owner’s information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "☐ Yes ☐ No (please complete Part B below)",
+          "explanation": "The pointer addresses readers who answered Yes in Part A – Distribution election and directs them to Part B for joint owner's information. The target section is titled 'Joint owner’s information' and matches the pointer's purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_94100b7ec0cd7f29",
+          "label": "Part A",
+          "pointer_addresses": "All Subscribers completing Qualified Investor Determination",
+          "target_is_for": "owner’s information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "All Subscribers must complete both Parts A \u0016 B below.",
+          "explanation": "The pointer instructs all subscribers to complete Part A, which is titled 'Owner’s information' and matches the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_4de933b29de10482",
+          "label": "Part B",
+          "pointer_addresses": "All Subscribers completing Qualified Investor Determination",
+          "target_is_for": "joint owner’s information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "All Subscribers must complete both Parts A \u0016 B below.",
+          "explanation": "The pointer instructs all subscribers to complete Part B, which is titled 'Joint owner’s information' and matches the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_24d585fe01ed9e18",
+          "label": "Part C",
+          "pointer_addresses": "Subscribers that are trusts, corporations or other entities",
+          "target_is_for": "entity, trustee and authorized person information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "Subscribers that are trusts, corporations or other entities must also complete Part C.",
+          "explanation": "The pointer addresses subscribers that are entities and directs them to Part C, which is titled 'Entity, trustee and authorized person information' and matches the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_8c53f9a1f23cefa1",
+          "label": "Part D",
+          "pointer_addresses": "individuals completing Part A – “Accredited investor” determination",
+          "target_is_for": "net worth determination for certain individual investors",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "see Part D for definition of net worth",
+          "explanation": "The pointer in Part A for individuals refers to Part D for the definition of net worth. The target section is titled 'Net worth determination for certain individual investors' and matches the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_2f1c1417299ba68a",
+          "label": "Part D",
+          "pointer_addresses": "individuals completing Part B – “Qualified client” determination",
+          "target_is_for": "net worth determination for certain individual investors",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "see Part D for definition of net worth",
+          "explanation": "The pointer in Part B for individuals refers to Part D for the definition of net worth. The target section is titled 'Net worth determination for certain individual investors' and matches the pointer's audience and purpose.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 2713,
+      "out": 749
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

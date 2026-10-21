@@ -1,6 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
   aiRows,
+  callsOf,
+  isRefTarget,
+  noRefTargetFindings,
   blockOpenRouter,
   enableLane,
   expectStage,
@@ -48,6 +51,8 @@ test.describe('variance-ai-never-gates', () => {
     await page.route('**/precomputed/**', (r) => r.fulfill({ status: 404, body: '' }));
     let changeText = '';
     const calls = await interceptAi(page, (call) => {
+      // reference-target pass (F7): answered clean so the one AI row is the contradicting finding
+      if (isRefTarget(call)) return noRefTargetFindings();
       const words = changeText
         .split(/\s+/)
         .filter((w) => w.length > 5)
@@ -102,7 +107,8 @@ test.describe('variance-ai-never-gates', () => {
     await page.getByTestId('ai-run-sample').click();
     await expectStage(page, /AI review done/);
     await expect(aiRows(page)).toHaveCount(1);
-    expect(calls).toHaveLength(1);
+    expect(callsOf(calls, 'clause-judgment')).toHaveLength(1);
+    expect(callsOf(calls, 'reference-target')).toHaveLength(1);
 
     // nothing deterministic moved: classes, owners, impact and the gate count
     expect(await snapshot(page)).toEqual(before);

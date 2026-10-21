@@ -1,0 +1,102 @@
+{
+  "doc": "Goldman_Sachs_Private_Credit_2023_d410243dex99107.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "8557e5e1b616079cf3a0b15891c93008496c5fdf4645662757e6b70229309f43",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "8557e5e1b616079cf3a0b15891c93008496c5fdf4645662757e6b70229309f43",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_2322e4fc2969df08\",\"label\":\"Annex A: PART A: FOR ALL SUBSCRIBERS\",\"pointer_addresses\":\"Financial Advisor\",\"target_is_for\":\"All subscribers\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"By signing this Subscription Agreement, the Financial Advisor represents that he, she or it understands and agrees to be bound by the representations set forth in Part A, Section 18(b) of Annex A to this Subscription Agreement.\",\"explanation\":\"The pointer addresses the Financial Advisor and sends them to Annex A Part A, which is for all subscribers, including Financial Advisors. The target section heading 'FOR ALL SUBSCRIBERS' fits the pointer's intended audience.\",\"interpretations\":[]},{\"candidate_id\":\"r_c38225a387bcfe9e\",\"label\":\"Annex A: PART A: FOR ALL SUBSCRIBERS\",\"pointer_addresses\":\"Readers who do NOT consent to electronic delivery provisions in Part A, Paragraph 14(e)\",\"target_is_for\":\"All subscribers\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"☐ Please check here only if you do NOT consent to the electronic delivery provisions in Part A, Paragraph 14(e) of the Subscription Agreement Terms and Condition set forth in Annex A.\",\"explanation\":\"The pointer sends readers who do not consent to electronic delivery to Part A of Annex A, which is for all subscribers. The target section heading 'FOR ALL SUBSCRIBERS' fits the pointer's intended audience.\",\"interpretations\":[]},{\"candidate_id\":\"r_f1782d48a34d50b7\",\"label\":\"Annex A: PART A: FOR ALL SUBSCRIBERS\",\"pointer_addresses\":\"Subscribers signing the Subscription Agreement\",\"target_is_for\":\"All subscribers\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"By signing below, and intending to be legally bound, you have duly executed this Subscription Agreement and understand and agree to be bound by all of its provisions including, without limitation, the terms and conditions set forth in Annex A and any appendices hereto, or other documentation that you are required to provide herewith, and confirm that all of the representations, warranties and covenants made and information that you or others have provided herein or in connection herewith are tru\",\"explanation\":\"The pointer addresses subscribers signing the agreement and sends them to Annex A Part A, which is for all subscribers. The target section heading 'FOR ALL SUBSCRIBERS' fits the pointer's intended audience.\",\"interpretations\":[]},{\"candidate_id\":\"r_5f1904d08b4792ce\",\"label\":\"Annex A: PART A: FOR ALL SUBSCRIBERS\",\"pointer_addresses\":\"Subscribers confirming receipt and understanding of the Memorandum and Subscription Agreement\",\"target_is_for\":\"All subscribers\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"You further agree and confirm that you have received, read and understand the Memorandum, this Subscription Agreement, including, the terms and conditions set forth in Annex A, and any annexes, appendices and exhibits thereto, for this investment.\",\"explanation\":\"The pointer addresses subscribers confirming receipt and understanding and sends them to Annex A Part A, which is for all subscribers. The target section heading 'FOR ALL SUBSCRIBERS' fits the pointer's intended audience.\",\"interpretations\":[]},{\"candidate_id\":\"r_9c12abfa8936078d\",\"label\":\"Annex A: PART A: FOR ALL SUBSCRIBERS\",\"pointer_addresses\":\"Subscribers receiving communications from the Fund, Manager, GS\",\"target_is_for\":\"All subscribers\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"You hereby agree that any physical or electronic communications by the Fund, the Manager, GS or otherwise to you in connection with your investment in the Fund may be delivered to the mailing or electronic address of record provided in Section 3 of the Subscription Agreement to which this Annex A is attached.\",\"explanation\":\"The pointer is inside Annex A and addresses subscribers receiving communications, sending them to Part A of Annex A which is for all subscribers. The target section heading 'FOR ALL SUBSCRIBERS' fits the pointer's intended audience.\",\"interpretations\":[]},{\"candidate_id\":\"r_10bca96e3d6e21ec\",\"label\":\"Annex A: PART A: FOR ALL SUBSCRIBERS\",\"pointer_addresses\":\"Representative Subscribers only\",\"target_is_for\":\"All subscribers\",\"verdict\":\"mismatch\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.95,\"quote\":\"7. The Representative Subscriber hereby acknowledges and agrees that, notwithstanding the name of the Subscriber indicated in the Subscription Agreement to which this Annex A is attached, if the Fund determines, in its sole discretion, that the Share is required to be registered on the books and records of the Fund in a different manner in order to satisfy the requirements of applicable law or otherwise, the Share will be registered in the manner determined by the Fund, including in the name of\",\"explanation\":\"The pointer addresses Representative Subscribers only but sends them to Annex A Part A, which is for all subscribers, not specifically for Representative Subscribers. The target section heading 'FOR ALL SUBSCRIBERS' does not fit the pointer's intended audience of Representative Subscribers only.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_2322e4fc2969df08",
+          "label": "Annex A: PART A: FOR ALL SUBSCRIBERS",
+          "pointer_addresses": "Financial Advisor",
+          "target_is_for": "All subscribers",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "By signing this Subscription Agreement, the Financial Advisor represents that he, she or it understands and agrees to be bound by the representations set forth in Part A, Section 18(b) of Annex A to this Subscription Agreement.",
+          "explanation": "The pointer addresses the Financial Advisor and sends them to Annex A Part A, which is for all subscribers, including Financial Advisors. The target section heading 'FOR ALL SUBSCRIBERS' fits the pointer's intended audience.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_c38225a387bcfe9e",
+          "label": "Annex A: PART A: FOR ALL SUBSCRIBERS",
+          "pointer_addresses": "Readers who do NOT consent to electronic delivery provisions in Part A, Paragraph 14(e)",
+          "target_is_for": "All subscribers",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "☐ Please check here only if you do NOT consent to the electronic delivery provisions in Part A, Paragraph 14(e) of the Subscription Agreement Terms and Condition set forth in Annex A.",
+          "explanation": "The pointer sends readers who do not consent to electronic delivery to Part A of Annex A, which is for all subscribers. The target section heading 'FOR ALL SUBSCRIBERS' fits the pointer's intended audience.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_f1782d48a34d50b7",
+          "label": "Annex A: PART A: FOR ALL SUBSCRIBERS",
+          "pointer_addresses": "Subscribers signing the Subscription Agreement",
+          "target_is_for": "All subscribers",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "By signing below, and intending to be legally bound, you have duly executed this Subscription Agreement and understand and agree to be bound by all of its provisions including, without limitation, the terms and conditions set forth in Annex A and any appendices hereto, or other documentation that you are required to provide herewith, and confirm that all of the representations, warranties and covenants made and information that you or others have provided herein or in connection herewith are tru",
+          "explanation": "The pointer addresses subscribers signing the agreement and sends them to Annex A Part A, which is for all subscribers. The target section heading 'FOR ALL SUBSCRIBERS' fits the pointer's intended audience.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_5f1904d08b4792ce",
+          "label": "Annex A: PART A: FOR ALL SUBSCRIBERS",
+          "pointer_addresses": "Subscribers confirming receipt and understanding of the Memorandum and Subscription Agreement",
+          "target_is_for": "All subscribers",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "You further agree and confirm that you have received, read and understand the Memorandum, this Subscription Agreement, including, the terms and conditions set forth in Annex A, and any annexes, appendices and exhibits thereto, for this investment.",
+          "explanation": "The pointer addresses subscribers confirming receipt and understanding and sends them to Annex A Part A, which is for all subscribers. The target section heading 'FOR ALL SUBSCRIBERS' fits the pointer's intended audience.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_9c12abfa8936078d",
+          "label": "Annex A: PART A: FOR ALL SUBSCRIBERS",
+          "pointer_addresses": "Subscribers receiving communications from the Fund, Manager, GS",
+          "target_is_for": "All subscribers",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "You hereby agree that any physical or electronic communications by the Fund, the Manager, GS or otherwise to you in connection with your investment in the Fund may be delivered to the mailing or electronic address of record provided in Section 3 of the Subscription Agreement to which this Annex A is attached.",
+          "explanation": "The pointer is inside Annex A and addresses subscribers receiving communications, sending them to Part A of Annex A which is for all subscribers. The target section heading 'FOR ALL SUBSCRIBERS' fits the pointer's intended audience.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_10bca96e3d6e21ec",
+          "label": "Annex A: PART A: FOR ALL SUBSCRIBERS",
+          "pointer_addresses": "Representative Subscribers only",
+          "target_is_for": "All subscribers",
+          "verdict": "mismatch",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.95,
+          "quote": "7. The Representative Subscriber hereby acknowledges and agrees that, notwithstanding the name of the Subscriber indicated in the Subscription Agreement to which this Annex A is attached, if the Fund determines, in its sole discretion, that the Share is required to be registered on the books and records of the Fund in a different manner in order to satisfy the requirements of applicable law or otherwise, the Share will be registered in the manner determined by the Fund, including in the name of",
+          "explanation": "The pointer addresses Representative Subscribers only but sends them to Annex A Part A, which is for all subscribers, not specifically for Representative Subscribers. The target section heading 'FOR ALL SUBSCRIBERS' does not fit the pointer's intended audience of Representative Subscribers only.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 2863,
+      "out": 1137
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

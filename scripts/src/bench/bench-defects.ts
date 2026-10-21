@@ -13,6 +13,9 @@
 //                        lower it), per-run budget --max-usd (default 1.00; passing it exits non-zero
 //                        asking the user), lifetime stop at $10. Pinned host api.openai.com, no retry.
 //                        Responses are saved as meta.source 'live' recordings.
+//   --subset verified|heldout|all  verified = the 16 hand-checked docs (default); heldout = the other
+//                        corpus docs (precision only: every finding there is non-matching; no recall
+//                        gate; a --max-calls above 20 is allowed, as for all).
 //   --check-ground-truth assert every anchor exists in its document (corpus present).
 //   --fetch              download missing corpus docs from sources.json (public SEC data, no LLM;
 //                        User-Agent from env BENCH_USER_AGENT, refused when unset).
@@ -300,7 +303,8 @@ export function worstCaseFor(messages: LlmMessage[]): number {
 
 export interface BenchOptions {
   mode: 'offline' | 'live';
-  subset: 'verified' | 'all';
+  /** heldout = corpus docs NOT in the verified subset (precision check; no recall gate) */
+  subset: 'verified' | 'heldout' | 'all';
   source: 'authored' | 'live';
   checkGroundTruth: boolean;
   maxCalls?: string;
@@ -318,6 +322,10 @@ export interface BenchDeps {
   print: (line: string) => void;
   gt: GroundTruth;
   clock?: () => Date;
+}
+
+export function inSubset(d: GtDoc, subset: BenchOptions['subset']): boolean {
+  return subset === 'all' || (subset === 'verified' ? d.verified : !d.verified);
 }
 
 export function defaultReadDoc(d: GtDoc, corpusDir: string): Uint8Array | null {
@@ -347,13 +355,13 @@ export async function runBench(opts: BenchOptions, deps: BenchDeps): Promise<Ben
   const ledger = live
     ? new BenchLedger(
         deps.ledgerStore(),
-        benchLimits(opts.maxCalls, opts.maxUsd, opts.subset === 'all'),
+        benchLimits(opts.maxCalls, opts.maxUsd, opts.subset !== 'verified'),
         deps.clock,
       )
     : null;
   const print = (l: string) => deps.print(redact(l, key ? [key] : []));
   const corpusDir = opts.corpus ?? CORPUS_DIR;
-  const docs = deps.gt.docs.filter((d) => opts.subset === 'all' || d.verified);
+  const docs = deps.gt.docs.filter((d) => inSubset(d, opts.subset));
   const missing = docs.filter((d) => deps.readDoc(d, corpusDir) === null).map((d) => d.file);
   if (missing.length > 0)
     return {
@@ -450,14 +458,16 @@ export async function runBench(opts: BenchOptions, deps: BenchDeps): Promise<Ben
     scores.flatMap((s) => s[k]);
   const fp = scores.reduce((n, s) => n + s.falsePositives, 0);
   const rtTotal = deps.gt.docs
-    .filter((d) => opts.subset === 'all' || d.verified)
+    .filter((d) => inSubset(d, opts.subset))
     .flatMap((d) => d.defects.filter((x) => x.expect === 'reference-target'));
   for (const s of scores)
     if (s.replay === 'stale') reasons.push(`stale recording for ${s.file} (re-run bench:author)`);
   if (all('engineMissed').length > 0)
     reasons.push(`engine missed: ${all('engineMissed').join(', ')}`);
-  if (live) {
-    if (all('caught').length < 2)
+  // AC10 thresholds apply to a live run AND to an offline replay of live recordings (model
+  // answers); the strict authored gate (3 of 3, 0 non-matching) applies to authored replays only
+  if (live || opts.source === 'live') {
+    if (opts.subset !== 'heldout' && all('caught').length < 2)
       reasons.push(`live recall ${all('caught').length} of ${rtTotal.length} < 2`);
     for (const s of scores)
       if (s.falsePositives > 2)
@@ -547,7 +557,8 @@ export function parseBenchArgs(argv: readonly string[]): BenchOptions & { fetch:
     else if (a === '--fetch') o.fetch = true;
     else if (a === '--subset') {
       const v = val();
-      if (v !== 'verified' && v !== 'all') throw new BenchRefusal('--subset is verified or all');
+      if (v !== 'verified' && v !== 'heldout' && v !== 'all')
+        throw new BenchRefusal('--subset is verified, heldout or all');
       o.subset = v;
     } else if (a === '--source') {
       const v = val();

@@ -1,0 +1,50 @@
+{
+  "doc": "12-fortress-net-lease-reit-2024.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "ecd54f44a4c0aa00cf1c1cf23ea8ae9af4b2c62554bd8c8efed9a3142a8f6e05",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "ecd54f44a4c0aa00cf1c1cf23ea8ae9af4b2c62554bd8c8efed9a3142a8f6e05",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_bbab53f0e1b70d2d\",\"label\":\"Annex D\",\"pointer_addresses\":\"equity owners who have checked only statement 4\",\"target_is_for\":\"Accredited Investor Verification Form\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"*If only this statement 4 has been checked, please have each equity owner shall complete the Accredited Investor Verification Form in Annex D.\",\"explanation\":\"The pointer addresses equity owners who have checked only statement 4 and directs them to Annex D, which is titled 'Accredited Investor Verification Form', matching the intended audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_67dbef20803c2e26\",\"label\":\"Annex C\",\"pointer_addresses\":\"Subscriber (entity) to complete Annex C describing Beneficial Owners\",\"target_is_for\":\"Anti-Money Laundering and Beneficial Ownership Information - Entity Investors\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"(b) Please complete Annex C describing the number of Beneficial Owners of the Subscriber, such Beneficial Owners’ relative interests in the Subscriber, and the relationships, if any, among the Subscriber’s Beneficial Owners.\",\"explanation\":\"The pointer addresses the Subscriber (entity) to complete Annex C, which is titled 'Anti-Money Laundering and Beneficial Ownership Information - Entity Investors', matching the intended audience and content.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_bbab53f0e1b70d2d",
+          "label": "Annex D",
+          "pointer_addresses": "equity owners who have checked only statement 4",
+          "target_is_for": "Accredited Investor Verification Form",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "*If only this statement 4 has been checked, please have each equity owner shall complete the Accredited Investor Verification Form in Annex D.",
+          "explanation": "The pointer addresses equity owners who have checked only statement 4 and directs them to Annex D, which is titled 'Accredited Investor Verification Form', matching the intended audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_67dbef20803c2e26",
+          "label": "Annex C",
+          "pointer_addresses": "Subscriber (entity) to complete Annex C describing Beneficial Owners",
+          "target_is_for": "Anti-Money Laundering and Beneficial Ownership Information - Entity Investors",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "(b) Please complete Annex C describing the number of Beneficial Owners of the Subscriber, such Beneficial Owners’ relative interests in the Subscriber, and the relationships, if any, among the Subscriber’s Beneficial Owners.",
+          "explanation": "The pointer addresses the Subscriber (entity) to complete Annex C, which is titled 'Anti-Money Laundering and Beneficial Ownership Information - Entity Investors', matching the intended audience and content.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 1831,
+      "out": 319
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

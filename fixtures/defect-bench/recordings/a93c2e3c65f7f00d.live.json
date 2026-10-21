@@ -1,0 +1,50 @@
+{
+  "doc": "North_Haven_Private_Assets_F_2025_d837242dex99p2.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "a93c2e3c65f7f00d4e1a10cab7b64ed4861f28b5f239094cfd5ecd5d9499ec95",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "a93c2e3c65f7f00d4e1a10cab7b64ed4861f28b5f239094cfd5ecd5d9499ec95",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_53f8260fba84b3db\",\"label\":\"Section B\",\"pointer_addresses\":\"Nonprofit and Pooled Investment Vehicles legal entity customers\",\"target_is_for\":\"All legal entities\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"For Nonprofit and Pooled Investment Vehicles legal entity customers, please skip to Section B (Key Controller) below.\",\"explanation\":\"The pointer addresses Nonprofit and Pooled Investment Vehicles legal entity customers and directs them to Section B (Key Controller), which is for all legal entities. The target section heading and first lines confirm it is for all legal entities, so the pointer fits the intended audience.\",\"interpretations\":[]},{\"candidate_id\":\"r_c7aee929fb7a835c\",\"label\":\"Section B\",\"pointer_addresses\":\"readers who check Beneficial Owner Not Applicable\",\"target_is_for\":\"All legal entities\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"☐ Beneficial Owner Not Applicable (Check this box and skip to Section B (Key Controller) if there is no individual that meets the definition of a Beneficial Owner stated above.)\",\"explanation\":\"The pointer addresses readers who check Beneficial Owner Not Applicable and instructs them to skip to Section B (Key Controller), which is for all legal entities. The target section heading and first lines confirm it is for all legal entities, so the pointer fits the intended audience.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_53f8260fba84b3db",
+          "label": "Section B",
+          "pointer_addresses": "Nonprofit and Pooled Investment Vehicles legal entity customers",
+          "target_is_for": "All legal entities",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "For Nonprofit and Pooled Investment Vehicles legal entity customers, please skip to Section B (Key Controller) below.",
+          "explanation": "The pointer addresses Nonprofit and Pooled Investment Vehicles legal entity customers and directs them to Section B (Key Controller), which is for all legal entities. The target section heading and first lines confirm it is for all legal entities, so the pointer fits the intended audience.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_c7aee929fb7a835c",
+          "label": "Section B",
+          "pointer_addresses": "readers who check Beneficial Owner Not Applicable",
+          "target_is_for": "All legal entities",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "☐ Beneficial Owner Not Applicable (Check this box and skip to Section B (Key Controller) if there is no individual that meets the definition of a Beneficial Owner stated above.)",
+          "explanation": "The pointer addresses readers who check Beneficial Owner Not Applicable and instructs them to skip to Section B (Key Controller), which is for all legal entities. The target section heading and first lines confirm it is for all legal entities, so the pointer fits the intended audience.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 1958,
+      "out": 320
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

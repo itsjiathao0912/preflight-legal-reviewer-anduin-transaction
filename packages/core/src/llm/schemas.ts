@@ -76,7 +76,7 @@ export const COUNSEL_DRAFT_MODEL_SCHEMA: ModelResultSchema = Object.freeze({
  * the two reference classes the task judges.
  */
 export const REFERENCE_TARGET_MODEL_SCHEMA: ModelResultSchema = Object.freeze({
-  name: 'reference_target_v1',
+  name: 'reference_target_v2',
   schema: Object.freeze({
     type: 'object',
     additionalProperties: false,
@@ -89,6 +89,10 @@ export const REFERENCE_TARGET_MODEL_SCHEMA: ModelResultSchema = Object.freeze({
           additionalProperties: false,
           required: [
             'candidate_id',
+            'label',
+            'pointer_addresses',
+            'target_is_for',
+            'verdict',
             'issue_class',
             'severity',
             'confidence',
@@ -98,6 +102,13 @@ export const REFERENCE_TARGET_MODEL_SCHEMA: ModelResultSchema = Object.freeze({
           ],
           properties: {
             candidate_id: str(64),
+            // model-side only (never on AiFinding): the label judged, who the pointer addresses,
+            // who the target is for (generated before the verdict, in this order) and the per-pair
+            // verdict; validate() keeps verdict 'mismatch' items and strips these four fields
+            label: str(40),
+            pointer_addresses: str(300),
+            target_is_for: str(300),
+            verdict: { type: 'string', enum: ['match', 'mismatch', 'unclear'] },
             issue_class: { type: 'string', enum: ['broken_cross_reference', 'broken_conditional'] },
             severity: { type: 'string', enum: ['high', 'medium', 'low'] },
             confidence: { type: 'number', minimum: 0, maximum: 1 },

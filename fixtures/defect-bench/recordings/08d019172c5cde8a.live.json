@@ -1,0 +1,102 @@
+{
+  "doc": "Blackstone___GSO_Secured_Len_2018_d595178dex41.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "08d019172c5cde8afac1c9cc0a62e0a280a586f7804adda9b68a30009b8e2b86",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "08d019172c5cde8afac1c9cc0a62e0a280a586f7804adda9b68a30009b8e2b86",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_42d7c4ce6ab623db\",\"label\":\"Section A\",\"pointer_addresses\":\"Each Investor\",\"target_is_for\":\"General Information | Print Full Name of Investor: Individual: First Middle Last Partnership, Corporation, Trust, Limited Liability Company, Custodial Account, Other: Name of Entity\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":1,\"quote\":\"(a) Each Investor should print the name of the Investor and provide other requested information in the space provided in Section A.\",\"explanation\":\"The pointer addresses each Investor generally and sends them to Section A, which is titled 'General Information' and requests the full name of the Investor, fitting the pointer's instruction for all investors.\",\"interpretations\":[]},{\"candidate_id\":\"r_bae6abb111b0c023\",\"label\":\"Section C\",\"pointer_addresses\":\"Each Investor that is an entity\",\"target_is_for\":\"Supplemental Data for Entities | 1. If the Investor is not a natural person, furnish the following supplemental data (natural persons may skip this Section of the Investor Questionnaire): Legal form of entity (trust, corporation, partnership, limited liability company, benefit plan, etc.): Jurisdiction of organization: 2. Are shareholders, partners or other holders of equity or beneficial interests in the In\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":1,\"quote\":\"(c) Each Investor that is an entity should provide the information and respond to the questions in Section C.\",\"explanation\":\"The pointer addresses entity Investors and sends them to Section C, which is specifically for supplemental data for entities, matching the pointer's intended audience and content.\",\"interpretations\":[]},{\"candidate_id\":\"r_7d8b63d93a01a4a4\",\"label\":\"Section D\",\"pointer_addresses\":\"Each Investor\",\"target_is_for\":\"Related Parties | 1. To the best of the Investor’s knowledge, does the Investor control, or is the Investor controlled by or under common control with, any other investor in the Fund? ☐ Yes ☐ No If question 1 was answered “Yes,” please identify such related investor(s) below. Name(s) of related investor(s): 2. Will any other person or entity have a beneficial interest in the Shares to be acquired hereunder (\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":1,\"quote\":\"(d) Each Investor should respond to the questions in Section D.\",\"explanation\":\"The pointer addresses each Investor and sends them to Section D, which concerns related parties, appropriate for all investors as indicated by the pointer.\",\"interpretations\":[]},{\"candidate_id\":\"r_59855c302ce51ff8\",\"label\":\"Section E\",\"pointer_addresses\":\"Each Investor who is a natural person\",\"target_is_for\":\"Supplemental Data for Individuals | 1. Is the Investor investing the assets of any retirement plan account, employee benefit plan or other similar arrangement? ☐ Yes ☐ No If the answer to the above question is “Yes,” please contact Simpson Thacher \\u0016 Bartlett LLP for additional information that will be required.\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":1,\"quote\":\"(e) Each Investor who is a natural person should respond to Section E.\",\"explanation\":\"The pointer addresses natural person Investors and sends them to Section E, which is supplemental data for individuals, matching the pointer's intended audience and content.\",\"interpretations\":[]},{\"candidate_id\":\"r_b526d4ba32e71023\",\"label\":\"Section F\",\"pointer_addresses\":\"Each Investor\",\"target_is_for\":\"Eligibility for New Issues | The Fund from time to time may consider direct or indirect investments in “new issues,” as defined in the rules of the Financial Industry Regulatory Authority (“FINRA”), as such rules may be amended or replaced from time to time. In order for the Fund to determine whether it is eligible to participate in profits and losses from such new issues, the Investor8 represents and warran\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":1,\"quote\":\"(f) Each Investor should check the appropriate boxes, provide the requested information and respond to the questions in Section F.\",\"explanation\":\"The pointer addresses each Investor and sends them to Section F, which concerns eligibility for new issues, appropriate for all investors as indicated by the pointer.\",\"interpretations\":[]},{\"candidate_id\":\"r_0f093e2933b8f64d\",\"label\":\"Section G\",\"pointer_addresses\":\"Each Investor\",\"target_is_for\":\"Bad Actor Disqualification | 1. DISQUALIFYING EVENTS Please check all appropriate boxes below that are next to the category or categories of “Disqualifying Events.” If none of boxes (i) through (viii) below is applicable, please check box (ix). You and/or any person who through your interest in the Fund (including anyone who has investment discretion on your behalf), beneficially owns 20% or more of the Shar\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":1,\"quote\":\"(g) Each Investor should respond to the questions in Section G.\",\"explanation\":\"The pointer addresses each Investor and sends them to Section G, which concerns bad actor disqualification, appropriate for all investors as indicated by the pointer.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_42d7c4ce6ab623db",
+          "label": "Section A",
+          "pointer_addresses": "Each Investor",
+          "target_is_for": "General Information | Print Full Name of Investor: Individual: First Middle Last Partnership, Corporation, Trust, Limited Liability Company, Custodial Account, Other: Name of Entity",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 1,
+          "quote": "(a) Each Investor should print the name of the Investor and provide other requested information in the space provided in Section A.",
+          "explanation": "The pointer addresses each Investor generally and sends them to Section A, which is titled 'General Information' and requests the full name of the Investor, fitting the pointer's instruction for all investors.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_bae6abb111b0c023",
+          "label": "Section C",
+          "pointer_addresses": "Each Investor that is an entity",
+          "target_is_for": "Supplemental Data for Entities | 1. If the Investor is not a natural person, furnish the following supplemental data (natural persons may skip this Section of the Investor Questionnaire): Legal form of entity (trust, corporation, partnership, limited liability company, benefit plan, etc.): Jurisdiction of organization: 2. Are shareholders, partners or other holders of equity or beneficial interests in the In",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 1,
+          "quote": "(c) Each Investor that is an entity should provide the information and respond to the questions in Section C.",
+          "explanation": "The pointer addresses entity Investors and sends them to Section C, which is specifically for supplemental data for entities, matching the pointer's intended audience and content.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_7d8b63d93a01a4a4",
+          "label": "Section D",
+          "pointer_addresses": "Each Investor",
+          "target_is_for": "Related Parties | 1. To the best of the Investor’s knowledge, does the Investor control, or is the Investor controlled by or under common control with, any other investor in the Fund? ☐ Yes ☐ No If question 1 was answered “Yes,” please identify such related investor(s) below. Name(s) of related investor(s): 2. Will any other person or entity have a beneficial interest in the Shares to be acquired hereunder (",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 1,
+          "quote": "(d) Each Investor should respond to the questions in Section D.",
+          "explanation": "The pointer addresses each Investor and sends them to Section D, which concerns related parties, appropriate for all investors as indicated by the pointer.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_59855c302ce51ff8",
+          "label": "Section E",
+          "pointer_addresses": "Each Investor who is a natural person",
+          "target_is_for": "Supplemental Data for Individuals | 1. Is the Investor investing the assets of any retirement plan account, employee benefit plan or other similar arrangement? ☐ Yes ☐ No If the answer to the above question is “Yes,” please contact Simpson Thacher \u0016 Bartlett LLP for additional information that will be required.",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 1,
+          "quote": "(e) Each Investor who is a natural person should respond to Section E.",
+          "explanation": "The pointer addresses natural person Investors and sends them to Section E, which is supplemental data for individuals, matching the pointer's intended audience and content.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_b526d4ba32e71023",
+          "label": "Section F",
+          "pointer_addresses": "Each Investor",
+          "target_is_for": "Eligibility for New Issues | The Fund from time to time may consider direct or indirect investments in “new issues,” as defined in the rules of the Financial Industry Regulatory Authority (“FINRA”), as such rules may be amended or replaced from time to time. In order for the Fund to determine whether it is eligible to participate in profits and losses from such new issues, the Investor8 represents and warran",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 1,
+          "quote": "(f) Each Investor should check the appropriate boxes, provide the requested information and respond to the questions in Section F.",
+          "explanation": "The pointer addresses each Investor and sends them to Section F, which concerns eligibility for new issues, appropriate for all investors as indicated by the pointer.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_0f093e2933b8f64d",
+          "label": "Section G",
+          "pointer_addresses": "Each Investor",
+          "target_is_for": "Bad Actor Disqualification | 1. DISQUALIFYING EVENTS Please check all appropriate boxes below that are next to the category or categories of “Disqualifying Events.” If none of boxes (i) through (viii) below is applicable, please check box (ix). You and/or any person who through your interest in the Fund (including anyone who has investment discretion on your behalf), beneficially owns 20% or more of the Shar",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 1,
+          "quote": "(g) Each Investor should respond to the questions in Section G.",
+          "explanation": "The pointer addresses each Investor and sends them to Section G, which concerns bad actor disqualification, appropriate for all investors as indicated by the pointer.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 2439,
+      "out": 1115
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   BENCH_BASE,
+  inSubset,
   lookupRecording,
   parseBenchArgs,
   runBench,
@@ -73,6 +74,8 @@ function harness(
           findings: [
             {
               candidate_id: id,
+              label: 'Section E',
+              verdict: 'mismatch',
               issue_class: 'broken_cross_reference',
               severity: 'high',
               confidence: 0.9,
@@ -217,6 +220,21 @@ describe('bench-defects matching and replay', () => {
     expect(lookupRecording([rec], 'b.htm', 'f'.repeat(64), 'authored').kind).toBe('not_recorded');
   });
 
+  it('offline replay of live recordings uses the AC10 thresholds; authored replay stays strict', async () => {
+    const h = harness();
+    expect((await runBench(live, h.deps)).ok).toBe(true);
+    // replay only two of the three live answers: 2 of 3 caught passes AC10, fails the authored gate
+    const two = h.written.slice(0, 2);
+    const h2 = harness({ recordings: { list: () => two, write: () => {} } });
+    const rLive = await runBench({ ...live, mode: 'offline', source: 'live' }, h2.deps);
+    expect(rLive.ok).toBe(true);
+    const asAuthored = two.map((r) => ({ ...r, meta: { ...r.meta, source: 'authored' as const } }));
+    const h3 = harness({ recordings: { list: () => asAuthored, write: () => {} } });
+    const rAuth = await runBench({ ...live, mode: 'offline' }, h3.deps);
+    expect(rAuth.ok).toBe(false);
+    expect(rAuth.reasons.join()).toMatch(/reference-target missed/);
+  });
+
   it('exits with a clear message when the corpus is missing', async () => {
     const h = harness({ readDoc: () => null });
     const r = await runBench({ ...live, mode: 'offline' }, h.deps);
@@ -233,5 +251,15 @@ describe('bench-defects matching and replay', () => {
     });
     expect(() => parseBenchArgs(['--offline', '--live'])).toThrow(BenchRefusal);
     expect(() => parseBenchArgs(['--bogus'])).toThrow(BenchRefusal);
+    expect(parseBenchArgs(['--subset', 'heldout']).subset).toBe('heldout');
+    expect(() => parseBenchArgs(['--subset', 'some'])).toThrow(BenchRefusal);
+  });
+
+  it('heldout = docs outside the verified subset; all = every doc', () => {
+    const v = { verified: true } as Parameters<typeof inSubset>[0];
+    const h = { verified: false } as Parameters<typeof inSubset>[0];
+    expect([inSubset(v, 'verified'), inSubset(h, 'verified')]).toEqual([true, false]);
+    expect([inSubset(v, 'heldout'), inSubset(h, 'heldout')]).toEqual([false, true]);
+    expect([inSubset(v, 'all'), inSubset(h, 'all')]).toEqual([true, true]);
   });
 });

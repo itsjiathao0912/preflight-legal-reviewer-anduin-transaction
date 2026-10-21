@@ -1,0 +1,128 @@
+{
+  "doc": "Partners_Group_Lending_Fund__2025_fp0095824-1_ex105.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "cb114e8026deee4b5b5f68971ee70e988e2f62095916241413c6726efcf9413a",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "cb114e8026deee4b5b5f68971ee70e988e2f62095916241413c6726efcf9413a",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_e02b22633a95c585\",\"label\":\"Appendix A\",\"pointer_addresses\":\"Investor instructed to complete Appendix A (Investor Questionnaire) attached to this Subscription Agreement\",\"target_is_for\":\"Investor Questionnaire for Partners Group Lending Fund, Inc. Immediate Funding Investors\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"Complete Appendix A (Investor Questionnaire) attached to this Subscription Agreement.\",\"explanation\":\"The pointer instructs the investor to complete Appendix A (Investor Questionnaire) attached to this Subscription Agreement. The target section is the Investor Questionnaire for Partners Group Lending Fund, Inc. Immediate Funding Investors, which fits the pointer's purpose and audience.\",\"interpretations\":[]},{\"candidate_id\":\"r_71d6bdfb436f73ac\",\"label\":\"Appendix B\",\"pointer_addresses\":\"Subscriber who is an entity instructed to complete and execute Appendix B (Certification of Beneficial Owner(s))\",\"target_is_for\":\"Certification of Beneficial Owner(s) form for beneficial owners of the Subscriber entity\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"If the Subscriber is an entity, complete and execute Appendix B (Certification of Beneficial Owner(s)).\",\"explanation\":\"The pointer directs entity Subscribers to complete Appendix B (Certification of Beneficial Owner(s)). The target section is the Certification of Beneficial Owner(s) form for beneficial owners of the Subscriber entity, matching the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_afd6dd51d2c0ad6d\",\"label\":\"Appendix H\",\"pointer_addresses\":\"Subscriber instructed about transfer restrictions set forth in Appendix H prior to any Liquidity Event\",\"target_is_for\":\"Appendix H containing Transfer Restrictions applicable to Subscribers\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"(i) Prior to any Liquidity Event (as such terms are defined in the Memorandum), the Subscriber may not Transfer any of its Units unless the Transfer is made in accordance with applicable securities laws and is otherwise in compliance with the transfer restrictions set forth in Appendix H.\",\"explanation\":\"The pointer sends the Subscriber to Appendix H for transfer restrictions prior to any Liquidity Event. The target is Appendix H containing Transfer Restrictions applicable to Subscribers, which matches the pointer's purpose and audience.\",\"interpretations\":[]},{\"candidate_id\":\"r_b873bd6e0c28678e\",\"label\":\"Section H\",\"pointer_addresses\":\"Investor instructed inside Appendix A to answer Section H(1)(c) if 'Yes' to a prior question\",\"target_is_for\":\"Section H: Background Documentation including Payment Information inside Appendix A\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"If “Yes,” please answer Section H(1)(c) below.\",\"explanation\":\"The pointer sentence is inside Section H and instructs the investor to answer Section H(1)(c) if 'Yes'. The target is Section H: Background Documentation inside Appendix A, matching the pointer's location and audience.\",\"interpretations\":[]},{\"candidate_id\":\"r_d38b37485361941f\",\"label\":\"Section H\",\"pointer_addresses\":\"Investor inside Appendix A instructed to skip Section H(2) if 'Yes' to a prior question\",\"target_is_for\":\"Section H: Background Documentation including Payment Information inside Appendix A\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"If “Yes,” you may skip Section H(2) below.\",\"explanation\":\"The pointer sentence is inside Section H and instructs the investor to skip Section H(2) if 'Yes'. The target is Section H: Background Documentation inside Appendix A, matching the pointer's location and audience.\",\"interpretations\":[]},{\"candidate_id\":\"r_620c31c40c1a1b75\",\"label\":\"Section L\",\"pointer_addresses\":\"Investor inside Appendix A instructed to skip to Section L if 'No' to a prior question\",\"target_is_for\":\"Section L: Additional Information inside Appendix A\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"If the Subscriber responded “No,” skip to Section L below.\",\"explanation\":\"The pointer instructs the investor inside Appendix A to skip to Section L if 'No'. The target is Section L: Additional Information inside Appendix A, matching the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_b675b4057463ce98\",\"label\":\"Exhibit B\",\"pointer_addresses\":\"Subscribers instructed to complete and return Exhibit B providing beneficial ownership information\",\"target_is_for\":\"Exhibit B: Beneficial Ownership Information for Subscribers responding 'No' to certain questions in the Subscriber Questionnaire\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"Please complete and return this Exhibit B and provide the name of every Person who is directly, or indirectly through intermediaries, the beneficial owner of 25% or more of any voting or non-voting class of equity interests of the Subscriber.\",\"explanation\":\"The pointer sentence is inside Exhibit B and instructs Subscribers to complete and return Exhibit B with beneficial ownership information. The target is Exhibit B for Subscribers responding 'No' to certain questions, matching the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_58c45b0591c834f6\",\"label\":\"Exhibit C\",\"pointer_addresses\":\"Subscribers instructed to complete and return Exhibit C providing trust ownership information\",\"target_is_for\":\"Exhibit C: Trust Ownership Information for Subscribers that are trusts responding 'No' to certain questions in the Subscriber Questionnaire\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"Please complete and return this Exhibit C and provide the name of (i) every current beneficiary that has, directly or indirectly, an interest of 25% or more in the trust, (ii) every person who contributed assets to the trust (settlors or grantors) and (iii) every trustee.\",\"explanation\":\"The pointer sentence is inside Exhibit C and instructs Subscribers that are trusts to complete and return Exhibit C with trust ownership information. The target is Exhibit C for trusts responding 'No' to certain questions, matching the pointer's audience and purpose.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_e02b22633a95c585",
+          "label": "Appendix A",
+          "pointer_addresses": "Investor instructed to complete Appendix A (Investor Questionnaire) attached to this Subscription Agreement",
+          "target_is_for": "Investor Questionnaire for Partners Group Lending Fund, Inc. Immediate Funding Investors",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "Complete Appendix A (Investor Questionnaire) attached to this Subscription Agreement.",
+          "explanation": "The pointer instructs the investor to complete Appendix A (Investor Questionnaire) attached to this Subscription Agreement. The target section is the Investor Questionnaire for Partners Group Lending Fund, Inc. Immediate Funding Investors, which fits the pointer's purpose and audience.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_71d6bdfb436f73ac",
+          "label": "Appendix B",
+          "pointer_addresses": "Subscriber who is an entity instructed to complete and execute Appendix B (Certification of Beneficial Owner(s))",
+          "target_is_for": "Certification of Beneficial Owner(s) form for beneficial owners of the Subscriber entity",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "If the Subscriber is an entity, complete and execute Appendix B (Certification of Beneficial Owner(s)).",
+          "explanation": "The pointer directs entity Subscribers to complete Appendix B (Certification of Beneficial Owner(s)). The target section is the Certification of Beneficial Owner(s) form for beneficial owners of the Subscriber entity, matching the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_afd6dd51d2c0ad6d",
+          "label": "Appendix H",
+          "pointer_addresses": "Subscriber instructed about transfer restrictions set forth in Appendix H prior to any Liquidity Event",
+          "target_is_for": "Appendix H containing Transfer Restrictions applicable to Subscribers",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "(i) Prior to any Liquidity Event (as such terms are defined in the Memorandum), the Subscriber may not Transfer any of its Units unless the Transfer is made in accordance with applicable securities laws and is otherwise in compliance with the transfer restrictions set forth in Appendix H.",
+          "explanation": "The pointer sends the Subscriber to Appendix H for transfer restrictions prior to any Liquidity Event. The target is Appendix H containing Transfer Restrictions applicable to Subscribers, which matches the pointer's purpose and audience.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_b873bd6e0c28678e",
+          "label": "Section H",
+          "pointer_addresses": "Investor instructed inside Appendix A to answer Section H(1)(c) if 'Yes' to a prior question",
+          "target_is_for": "Section H: Background Documentation including Payment Information inside Appendix A",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "If “Yes,” please answer Section H(1)(c) below.",
+          "explanation": "The pointer sentence is inside Section H and instructs the investor to answer Section H(1)(c) if 'Yes'. The target is Section H: Background Documentation inside Appendix A, matching the pointer's location and audience.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_d38b37485361941f",
+          "label": "Section H",
+          "pointer_addresses": "Investor inside Appendix A instructed to skip Section H(2) if 'Yes' to a prior question",
+          "target_is_for": "Section H: Background Documentation including Payment Information inside Appendix A",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "If “Yes,” you may skip Section H(2) below.",
+          "explanation": "The pointer sentence is inside Section H and instructs the investor to skip Section H(2) if 'Yes'. The target is Section H: Background Documentation inside Appendix A, matching the pointer's location and audience.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_620c31c40c1a1b75",
+          "label": "Section L",
+          "pointer_addresses": "Investor inside Appendix A instructed to skip to Section L if 'No' to a prior question",
+          "target_is_for": "Section L: Additional Information inside Appendix A",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "If the Subscriber responded “No,” skip to Section L below.",
+          "explanation": "The pointer instructs the investor inside Appendix A to skip to Section L if 'No'. The target is Section L: Additional Information inside Appendix A, matching the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_b675b4057463ce98",
+          "label": "Exhibit B",
+          "pointer_addresses": "Subscribers instructed to complete and return Exhibit B providing beneficial ownership information",
+          "target_is_for": "Exhibit B: Beneficial Ownership Information for Subscribers responding 'No' to certain questions in the Subscriber Questionnaire",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "Please complete and return this Exhibit B and provide the name of every Person who is directly, or indirectly through intermediaries, the beneficial owner of 25% or more of any voting or non-voting class of equity interests of the Subscriber.",
+          "explanation": "The pointer sentence is inside Exhibit B and instructs Subscribers to complete and return Exhibit B with beneficial ownership information. The target is Exhibit B for Subscribers responding 'No' to certain questions, matching the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_58c45b0591c834f6",
+          "label": "Exhibit C",
+          "pointer_addresses": "Subscribers instructed to complete and return Exhibit C providing trust ownership information",
+          "target_is_for": "Exhibit C: Trust Ownership Information for Subscribers that are trusts responding 'No' to certain questions in the Subscriber Questionnaire",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "Please complete and return this Exhibit C and provide the name of (i) every current beneficiary that has, directly or indirectly, an interest of 25% or more in the trust, (ii) every person who contributed assets to the trust (settlors or grantors) and (iii) every trustee.",
+          "explanation": "The pointer sentence is inside Exhibit C and instructs Subscribers that are trusts to complete and return Exhibit C with trust ownership information. The target is Exhibit C for trusts responding 'No' to certain questions, matching the pointer's audience and purpose.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 2938,
+      "out": 1332
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

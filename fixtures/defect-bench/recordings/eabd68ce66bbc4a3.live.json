@@ -1,0 +1,115 @@
+{
+  "doc": "04-partners-group-pe-tei-2016.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "eabd68ce66bbc4a3b810190ac660e03a48f7f569f78e1bcb924b24af036bfdf7",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "eabd68ce66bbc4a3b810190ac660e03a48f7f569f78e1bcb924b24af036bfdf7",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_b102c5f5ef5bf1ce\",\"label\":\"Appendix A\",\"pointer_addresses\":\"part of the Subscription Agreement named Appendix A\",\"target_is_for\":\"investors generally, describing investor information, subscription and signature\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"Furthermore, each of the statements, declarations, representations and warranties set forth in this Subscription Agreement shall be deemed to be statements, declarations, representations and warranties of each of the parties specified on Appendix A.\",\"explanation\":\"The pointer sends readers to Appendix A, which is titled 'INVESTOR INFORMATION, SUBSCRIPTION & SIGNATURE' and is generally for investors, matching the pointer's purpose to identify parties making statements in the Subscription Agreement.\",\"interpretations\":[]},{\"candidate_id\":\"r_edae28e908a6c9e9\",\"label\":\"Appendix A\",\"pointer_addresses\":\"part of the Subscription Agreement named Appendix A\",\"target_is_for\":\"investors generally, describing investor information, subscription and signature\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"(a) the taxpayer identification number and/or social security number of the Subscriber and/or of any trustee or custodian, as applicable and as indicated in Appendix A, is correct; and\",\"explanation\":\"The pointer sends readers to Appendix A, which is titled 'INVESTOR INFORMATION, SUBSCRIPTION & SIGNATURE' and is generally for investors, matching the pointer's purpose to verify taxpayer identification information indicated in Appendix A.\",\"interpretations\":[]},{\"candidate_id\":\"r_877a7dcea0076ab1\",\"label\":\"Part A\",\"pointer_addresses\":\"investors instructed to fill in Part A\",\"target_is_for\":\"investors providing Owner's information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"Please fill in Part A\",\"explanation\":\"The pointer instructs investors to fill in Part A, and the target section is titled 'Owner’s information' for investors to provide personal details, matching the pointer's instruction.\",\"interpretations\":[]},{\"candidate_id\":\"r_d53cef92061ded00\",\"label\":\"Part B\",\"pointer_addresses\":\"investors instructed to fill in Parts A and B\",\"target_is_for\":\"investors providing Joint Owner's information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"Please fill in Parts A and B\",\"explanation\":\"The pointer instructs investors to fill in Part B, and the target section is titled 'Joint Owner’s information (if applicable)' for investors with joint ownership, matching the pointer's instruction.\",\"interpretations\":[]},{\"candidate_id\":\"r_b53bf3e37d0822d6\",\"label\":\"Part C\",\"pointer_addresses\":\"investors instructed to fill in Part C\",\"target_is_for\":\"investors providing Entity and Trustee information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"Please fill in Part C\",\"explanation\":\"The pointer instructs investors to fill in Part C, and the target section is titled 'Entity and Trustee information (if applicable)' for investors who are entities or trustees, matching the pointer's instruction.\",\"interpretations\":[]},{\"candidate_id\":\"r_f5be9c04c7ea0869\",\"label\":\"Appendix C\",\"pointer_addresses\":\"investors filling in Appendix A Section 6 for U.S. tax status codes\",\"target_is_for\":\"investors seeking U.S. withholding tax exemptions\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"☐ Tax-Exempt Exempt payee code (if any – see Appendix C) Exemption from FATCA reporting code (if any – see Appendix C) _____________ _____________\",\"explanation\":\"The pointer sends investors to Appendix C for U.S. withholding tax exemption codes, matching the target section's purpose to provide instructions on such exemptions.\",\"interpretations\":[]},{\"candidate_id\":\"r_1a5af1b289b59fd0\",\"label\":\"Part I\",\"pointer_addresses\":\"all Subscribers completing Appendix B\",\"target_is_for\":\"investors making an accredited investor determination\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"All Subscribers must complete both Parts I & II below.\",\"explanation\":\"The pointer sends all Subscribers to Part I of Appendix B for accredited investor determination, matching the target section's purpose to declare accredited investor status.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_b102c5f5ef5bf1ce",
+          "label": "Appendix A",
+          "pointer_addresses": "part of the Subscription Agreement named Appendix A",
+          "target_is_for": "investors generally, describing investor information, subscription and signature",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "Furthermore, each of the statements, declarations, representations and warranties set forth in this Subscription Agreement shall be deemed to be statements, declarations, representations and warranties of each of the parties specified on Appendix A.",
+          "explanation": "The pointer sends readers to Appendix A, which is titled 'INVESTOR INFORMATION, SUBSCRIPTION & SIGNATURE' and is generally for investors, matching the pointer's purpose to identify parties making statements in the Subscription Agreement.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_edae28e908a6c9e9",
+          "label": "Appendix A",
+          "pointer_addresses": "part of the Subscription Agreement named Appendix A",
+          "target_is_for": "investors generally, describing investor information, subscription and signature",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "(a) the taxpayer identification number and/or social security number of the Subscriber and/or of any trustee or custodian, as applicable and as indicated in Appendix A, is correct; and",
+          "explanation": "The pointer sends readers to Appendix A, which is titled 'INVESTOR INFORMATION, SUBSCRIPTION & SIGNATURE' and is generally for investors, matching the pointer's purpose to verify taxpayer identification information indicated in Appendix A.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_877a7dcea0076ab1",
+          "label": "Part A",
+          "pointer_addresses": "investors instructed to fill in Part A",
+          "target_is_for": "investors providing Owner's information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "Please fill in Part A",
+          "explanation": "The pointer instructs investors to fill in Part A, and the target section is titled 'Owner’s information' for investors to provide personal details, matching the pointer's instruction.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_d53cef92061ded00",
+          "label": "Part B",
+          "pointer_addresses": "investors instructed to fill in Parts A and B",
+          "target_is_for": "investors providing Joint Owner's information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "Please fill in Parts A and B",
+          "explanation": "The pointer instructs investors to fill in Part B, and the target section is titled 'Joint Owner’s information (if applicable)' for investors with joint ownership, matching the pointer's instruction.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_b53bf3e37d0822d6",
+          "label": "Part C",
+          "pointer_addresses": "investors instructed to fill in Part C",
+          "target_is_for": "investors providing Entity and Trustee information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "Please fill in Part C",
+          "explanation": "The pointer instructs investors to fill in Part C, and the target section is titled 'Entity and Trustee information (if applicable)' for investors who are entities or trustees, matching the pointer's instruction.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_f5be9c04c7ea0869",
+          "label": "Appendix C",
+          "pointer_addresses": "investors filling in Appendix A Section 6 for U.S. tax status codes",
+          "target_is_for": "investors seeking U.S. withholding tax exemptions",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "☐ Tax-Exempt Exempt payee code (if any – see Appendix C) Exemption from FATCA reporting code (if any – see Appendix C) _____________ _____________",
+          "explanation": "The pointer sends investors to Appendix C for U.S. withholding tax exemption codes, matching the target section's purpose to provide instructions on such exemptions.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_1a5af1b289b59fd0",
+          "label": "Part I",
+          "pointer_addresses": "all Subscribers completing Appendix B",
+          "target_is_for": "investors making an accredited investor determination",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "All Subscribers must complete both Parts I & II below.",
+          "explanation": "The pointer sends all Subscribers to Part I of Appendix B for accredited investor determination, matching the target section's purpose to declare accredited investor status.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 2684,
+      "out": 962
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

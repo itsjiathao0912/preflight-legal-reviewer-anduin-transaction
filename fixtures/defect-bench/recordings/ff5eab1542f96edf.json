@@ -1,0 +1,31 @@
+{
+  "doc": "LAGO_Evergreen_Credit_2026_ck0002043759-ex4_1.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "ff5eab1542f96edfe28a582674570d4f44005e1675792972996fd95f5cd9e0b6",
+  "model": "authored",
+  "messagesDigest": "ff5eab1542f96edfe28a582674570d4f44005e1675792972996fd95f5cd9e0b6",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_c91aea3b42768cc2\",\"label\":\"Section G\",\"verdict\":\"mismatch\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.8,\"quote\":\"all other Investors should proceed to Section H\",\"explanation\":\"Authored bench answer for E2: Section H is plan-only; the correct target is Section I.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_c91aea3b42768cc2",
+          "label": "Section G",
+          "verdict": "mismatch",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.8,
+          "quote": "all other Investors should proceed to Section H",
+          "explanation": "Authored bench answer for E2: Section H is plan-only; the correct target is Section I.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "authored",
+    "served_model": "authored",
+    "recordedAt": "2026-10-22"
+  }
+}

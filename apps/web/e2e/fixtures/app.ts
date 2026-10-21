@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { expect, type Page } from '@playwright/test';
 
 /** Shared Playwright helpers for the Phase 03 preview specs (stub memory API, e2e build). */
@@ -93,4 +95,40 @@ export async function chooseReasonAndSave(page: Page, code = 'tool_false_alarm')
 
 export async function sidebarWidth(page: Page): Promise<number> {
   return (await page.getByTestId('sidebar').boundingBox())!.width;
+}
+
+const RAW_SAMPLES = resolve(
+  import.meta.dirname,
+  '..',
+  '..',
+  '..',
+  '..',
+  'samples',
+  'sub-docs',
+  'raw',
+);
+
+/**
+ * Upload a bundled HTML sample (same bytes as the demo copy, so the same doc hash and precomputed
+ * file) through the Open a document dialog. Replaces `openSample` for specs that need a single
+ * document: the single-sample picker was replaced by demo packages (0c3a6a2).
+ */
+export async function uploadSample(page: Page, id: string) {
+  const name = readdirSync(RAW_SAMPLES).find((n) => n.startsWith(`${id}-`) && n.endsWith('.htm'));
+  if (!name) throw new Error(`no raw sample ${id}`);
+  await openDialog(page);
+  await page.getByTestId('upload-input').setInputFiles({
+    name,
+    mimeType: 'text/html',
+    buffer: readFileSync(resolve(RAW_SAMPLES, name)),
+  });
+  await page.getByTestId('firm-combobox').fill('Other / no firm');
+  await page.getByTestId('fund-input').fill('Bundled sample');
+  await page.getByTestId('privacy-ack').check();
+  await page.getByTestId('open-submit').click();
+  await expect(page.getByTestId('stage-status-button')).toContainText(/Checks done|failed/, {
+    timeout: 30_000,
+  });
+  await expect(page.getByTestId('loading-state')).toHaveCount(0);
+  await memorySettled(page);
 }

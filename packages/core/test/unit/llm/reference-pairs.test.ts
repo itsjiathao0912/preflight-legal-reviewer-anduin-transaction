@@ -3,7 +3,8 @@ import { limits } from '../../../src/config/limits';
 import { AiRequestSchema } from '../../../src/contracts/ai';
 import { analyzeHtml, runDeterministic } from '../../../src/engine';
 import {
-  MAX_TARGETS_PER_PAIR,
+  MAX_LABELS_PER_POINTER,
+  NOTE_MAX_CHARS,
   POINTER_MAX_CHARS,
   buildReferencePairs,
   letteredHeadings,
@@ -86,18 +87,24 @@ describe('reference-pairs (AC1 to AC4, AC6)', () => {
     );
   });
 
-  it('AC2: LAGO pair shows the plan-only Section H heading and the Section G heading', () => {
-    const { candidates } = pairsOf(LAGO);
-    const c = find(candidates, 'proceed to Section H')!;
-    expect(c).toBeDefined();
-    const targets = c.quote.split('\n').slice(1);
-    expect(targets).toHaveLength(2);
-    expect(targets[0]).toMatch(
+  it('AC2: LAGO pointer naming G and H yields one pair per label, each with its own TARGET', () => {
+    const { candidates, sites } = pairsOf(LAGO);
+    const both = candidates.filter((c) => c.quote.includes('proceed to Section H'));
+    expect(both).toHaveLength(2);
+    const [g, h] = both as [(typeof both)[0], (typeof both)[0]];
+    expect(g.quote.split('\n')[1]).toMatch(
       /^\[TARGET Section G: THE FOLLOWING INFORMATION IS TO BE PROVIDED SO THAT/,
     );
-    expect(targets[1]).toMatch(
+    expect(h.quote.split('\n')[1]).toMatch(
       /^\[TARGET Section H: THE FOLLOWING INFORMATION IS TO BE PROVIDED BY INVESTORS WHO ARE PENSION/,
     );
+    expect(g.quote).toContain('[NOTE: the pointer also names Section H; judge only Section G here');
+    expect(h.quote).toContain('[NOTE: the pointer also names Section G; judge only Section H here');
+    for (const c of both) expect(c.quote.match(/\[TARGET /g)).toHaveLength(1);
+    expect(g.id).not.toBe(h.id);
+    const sg = sites.find((s) => s.id === g.id)!;
+    const sh = sites.find((s) => s.id === h.id)!;
+    expect([sg.blockIndex, sg.start, sg.end]).toEqual([sh.blockIndex, sh.start, sh.end]);
   });
 
   it('resolver accepts a bare label block with the title in the next block', () => {
@@ -106,15 +113,21 @@ describe('reference-pairs (AC1 to AC4, AC6)', () => {
     expect(e.family).toBe('section');
   });
 
-  it('AC3: Keystone Part C TARGET is the subscription agreement heading, never a Part D heading', () => {
+  it('AC3: Keystone Part C and Part D are judged in separate pairs; NOTE states self-target and duplicate choice', () => {
     const { candidates } = pairsOf(KEYSTONE);
-    const c = find(candidates, 'Part C of the Suitability Statement')!;
-    expect(c).toBeDefined();
-    const [, tc, td] = c.quote.split('\n');
-    expect(tc).toMatch(/^\[TARGET Part C: SUBSCRIPTION AGREEMENT/);
-    expect(tc).not.toContain('SUITABILITY STATEMENTS');
+    const ps = candidates.filter((c) => c.quote.includes('Part C of the Suitability Statement'));
+    expect(ps).toHaveLength(2);
+    const [c, d] = ps as [(typeof ps)[0], (typeof ps)[0]];
+    expect(c.quote.split('\n')[1]).toMatch(/^\[TARGET Part C: SUBSCRIPTION AGREEMENT/);
+    expect(c.quote).not.toContain('SUITABILITY STATEMENTS');
+    expect(c.quote).toContain('the pointer sentence itself is inside Part C');
     // four duplicate PART D headings: no same-scope entry, so the first one is picked
-    expect(td).toMatch(/^\[TARGET Part D: SUITABILITY STATEMENTS FOR INDIVIDUAL INVESTORS/);
+    expect(d.quote.split('\n')[1]).toMatch(
+      /^\[TARGET Part D: SUITABILITY STATEMENTS FOR INDIVIDUAL INVESTORS/,
+    );
+    expect(d.quote).toContain(
+      "Part D appears 4 times; shown: the first (none in the pointer's own part)",
+    );
     expect(letteredHeadings(analyzeHtml(KEYSTONE)).filter((x) => x.label === 'D')).toHaveLength(4);
   });
 
@@ -129,16 +142,62 @@ describe('reference-pairs (AC1 to AC4, AC6)', () => {
     const { candidates } = pairsOf(html);
     const c = find(candidates, 'complete Section I')!;
     expect(c.quote).toContain('[TARGET Section I: Third Party Referrals');
+    expect(c.quote).toContain(
+      "Section I appears 2 times; shown: the one in the pointer's own part",
+    );
     expect(letteredHeadings(analyzeHtml(html)).filter((x) => x.label === 'I')).toHaveLength(2);
+  });
+
+  it('AC4: a lettered field label is used only when no top-level entry has the label', () => {
+    const html = doc(`
+<ol><li>(d) Each Investor should respond to Section D.</li>
+<li>(e) Each Investor should respond to the questions in Section E.</li></ol>
+<h2>SIGNATURE PAGE</h2>
+<p>D. Supplemental Data for Entities</p><p>Entities answer below.</p>
+<p>D. Restricted Persons:</p>
+<p>E. Related Parties/Other Beneficial Parties:</p><p>Name: ____</p>
+`);
+    const { g, candidates } = pairsOf(html);
+    const nested = letteredHeadings(g).filter((x) => x.nested);
+    expect(nested.map((x) => x.label)).toEqual(expect.arrayContaining(['E']));
+    expect(find(candidates, 'Section D.')!.quote).toContain(
+      '[TARGET Section D: Supplemental Data for Entities',
+    );
+    expect(find(candidates, 'Section E.')!.quote).toContain(
+      '[TARGET Section E: Related Parties/Other Beneficial Parties:',
+    );
+  });
+
+  it('AC4: resolver accepts a short prefixed heading; such a heading line is not a pointer', () => {
+    const html = doc(`
+<ol><li>Each Subscriber should complete the Subscriber Questionnaire (Section B).</li></ol>
+<p>Subscriber Questionnaire Section A: General Information (All Subscribers)</p><p>Name: ____</p>
+<p>Subscriber Questionnaire Section B: Subscriber Qualification (All Subscribers)</p><p>Check one box.</p>
+<p>For more detail on the questionnaire see Section B: it explains each box.</p>
+`);
+    const g = analyzeHtml(html);
+    const hs = letteredHeadings(g);
+    expect(hs.map((h) => [h.label, h.title])).toEqual([
+      ['A', 'General Information (All Subscribers)'],
+      ['B', 'Subscriber Qualification (All Subscribers)'],
+    ]);
+    const { candidates } = pairsOf(html);
+    expect(candidates.map((c) => c.quote.split('\n')[0]!)).not.toContain(
+      'Subscriber Questionnaire Section A: General Information (All Subscribers)',
+    );
+    expect(find(candidates, '(Section B).')!.quote).toContain(
+      '[TARGET Section B: Subscriber Qualification (All Subscribers)',
+    );
   });
 
   it('AC4: NOT FOUND when no heading has the label', () => {
     const { candidates } = pairsOf(ONEX.replace('Section E.', 'Section F.'));
     const c = find(candidates, 'should respond to Section F')!;
     expect(c.quote).toContain('[TARGET Section F: NOT FOUND]');
+    expect(c.quote).toContain('[NOTE: Section labels found in this document: C, D, E, G]');
   });
 
-  it('AC4: packing: at most 1000 chars with the pointer as exact prefix, 3 targets max, stable ids, cap', () => {
+  it('AC4: packing: at most 1000 chars with the pointer as exact prefix, one TARGET per pair, stable ids, cap', () => {
     const long = 'x'.repeat(60);
     const heads = ['A', 'B', 'C', 'D', 'E']
       .map(
@@ -157,7 +216,9 @@ describe('reference-pairs (AC1 to AC4, AC6)', () => {
     for (const c of r.candidates) {
       expect(c.quote.length).toBeLessThanOrEqual(limits.quoteMaxChars);
       const lines = c.quote.split('\n');
-      expect(lines.length - 1).toBeLessThanOrEqual(MAX_TARGETS_PER_PAIR);
+      expect(c.quote.match(/\[TARGET /g)).toHaveLength(1);
+      expect(lines.length).toBeLessThanOrEqual(3);
+      if (lines[2]) expect(lines[2].length).toBeLessThanOrEqual(NOTE_MAX_CHARS);
       expect(lines[0]!.length).toBeLessThanOrEqual(POINTER_MAX_CHARS);
       const site = r.sites.find((s) => s.id === c.id)!;
       expect(siteText(r.g, site).startsWith(lines[0]!)).toBe(true);
@@ -184,9 +245,11 @@ describe('reference-pairs (AC1 to AC4, AC6)', () => {
       .join('');
     const pointer = `Each Investor ${'very '.repeat(150)}long should complete Sections A, B and C.`;
     const { candidates } = pairsOf(doc(`<ol><li>${pointer}</li></ol>${heads}`));
-    expect(candidates).toHaveLength(1);
-    expect(candidates[0]!.quote.length).toBeLessThan(limits.quoteMaxChars);
-    expect(candidates[0]!.quote.split('\n')).toHaveLength(4);
+    expect(candidates).toHaveLength(MAX_LABELS_PER_POINTER);
+    for (const c of candidates) {
+      expect(c.quote.length).toBeLessThan(limits.quoteMaxChars);
+      expect(c.quote.split('\n')).toHaveLength(3);
+    }
   });
 
   it('AC6: no pairs for statute or CFR citations, W-8 Part V and defined-by-reference terms', () => {
@@ -200,6 +263,31 @@ describe('reference-pairs (AC1 to AC4, AC6)', () => {
 `);
     const { candidates } = pairsOf(html);
     expect(candidates).toEqual([]);
+  });
+
+  it('AC6: no pair for a qualified sub-reference; a same-family list still pairs', () => {
+    const html = doc(`
+<p>A. General Information</p><p>Investor details.</p>
+<p>B. Other Matters</p><p>Other details.</p>
+<p>C. Further Matters</p><p>Further details.</p>
+<p>If the Investor checks a category in Part A of Section I, it may skip the rest.</p>
+<p>Each Investor should check one category on Exhibit D, Section B (Categories).</p>
+<p>An institution investing in instruments specified in Section C of Annex I to the Directive.</p>
+<p>Each Investor should complete Section A, Section B and then proceed to Section C.</p>
+<p>The Investor agrees to the provisions set forth in Part B, Paragraph 9(c) of the terms.</p>
+`);
+    const { candidates } = pairsOf(html);
+    const pointers = candidates.map((c) => c.quote.split('\n')[0]!);
+    expect(pointers.filter((p) => p.includes('Part A of Section I'))).toEqual([]);
+    expect(pointers.filter((p) => p.includes('Exhibit D, Section B'))).toEqual([]);
+    expect(pointers.filter((p) => p.includes('Annex I to the Directive'))).toEqual([]);
+    expect(pointers.filter((p) => p.includes('Part B, Paragraph 9(c)'))).toEqual([]);
+    const list = candidates.filter((c) => c.quote.startsWith('Each Investor should complete'));
+    expect(list.map((c) => /\[TARGET (Section [A-Z])/.exec(c.quote)![1])).toEqual([
+      'Section A',
+      'Section B',
+      'Section C',
+    ]);
   });
 
   it('AC6: identical two-form re-definitions add no pair and no finding', () => {

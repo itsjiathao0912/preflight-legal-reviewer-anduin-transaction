@@ -11,6 +11,9 @@ import {
 import { expect, test, type Page } from '@playwright/test';
 import {
   aiRows,
+  callsOf,
+  isRefTarget,
+  noRefTargetFindings,
   blockOpenRouter,
   enableLane,
   expectStage,
@@ -21,7 +24,7 @@ import {
   recording,
   resultFrame,
 } from './fixtures/ai';
-import { gotoApp, openSample } from './fixtures/app';
+import { gotoApp, uploadSample } from './fixtures/app';
 
 // AC12 (ai-review-stream-dedup): the app never shows an AI row that repeats a deterministic
 // finding, and the AI lane count equals the AI rows shown. Case (i) replays the authored
@@ -83,18 +86,25 @@ test.describe('ai-no-duplicates', () => {
     await interceptQuota(page);
     const outbound = await blockOpenRouter(page);
     await page.route('**/precomputed/**', (r) => r.fulfill({ status: 404, body: '' }));
-    const calls = await interceptAi(page, () => ({
-      kind: 'stream',
-      body: ndjson(hb, resultFrame(findings, 'miss', rec.meta.served_model)),
-    }));
+    // the reference-target pass (if sample #1 has pairs) answers clean, so the only AI rows come
+    // from the replayed clause-judgment recording
+    const calls = await interceptAi(page, (call) =>
+      isRefTarget(call)
+        ? noRefTargetFindings()
+        : {
+            kind: 'stream',
+            body: ndjson(hb, resultFrame(findings, 'miss', rec.meta.served_model)),
+          },
+    );
     await enableLane(page);
-    await openSample(page, '01');
-    await page.getByTestId('ai-run-sample').click();
+    await uploadSample(page, '01');
+    // an uploaded document auto-runs AI (no "Run AI on this sample" step)
     await expectStage(page, /^Checks done · AI review done/);
     await expect(aiRows(page)).toHaveCount(1);
     await expect(aiRows(page).filter({ hasText: 'Section 11' })).toHaveCount(0);
     expect(await laneCount(page)).toBe(await aiRows(page).count());
-    expect(calls).toHaveLength(1);
+    expect(callsOf(calls, 'clause-judgment')).toHaveLength(1);
+    expect(callsOf(calls, 'reference-target').length).toBeLessThanOrEqual(1);
     expect(outbound).toEqual([]);
   });
 
@@ -118,7 +128,7 @@ test.describe('ai-no-duplicates', () => {
     await interceptQuota(page);
     const outbound = await blockOpenRouter(page);
     await enableLane(page);
-    await openSample(page, '01');
+    await uploadSample(page, '01');
     await expectStage(page, /^Checks done · AI review from cache/);
     const ids = await aiRows(page).evaluateAll((els) =>
       els.map((e) => e.getAttribute('data-finding-id') ?? ''),

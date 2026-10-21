@@ -1,0 +1,193 @@
+{
+  "doc": "SL_Investment_Fund_II_LLC_2024_tm2423686d2_ex10-6.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "1f2f3901537ad6c8824f4f2c5df34a909c7587e249223a5ba9ffbfdcaa196f77",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "1f2f3901537ad6c8824f4f2c5df34a909c7587e249223a5ba9ffbfdcaa196f77",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_aef5c3241e02e290\",\"label\":\"Section E\",\"pointer_addresses\":\"General Instructions, instruction to complete and sign the Subscriber Signature Page (Section E)\",\"target_is_for\":\"Subscribers who must sign the Subscriber Signature Page\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"· Complete and sign the Subscriber Signature Page (Section E)\",\"explanation\":\"The pointer instructs all subscribers to complete and sign Section E, which is titled 'Subscriber Signature Page (if applicable)' and is to be signed by all subscribers, matching the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_14010704e35cc700\",\"label\":\"Section B\",\"pointer_addresses\":\"General Instructions, instruction to complete the Affirmative Indication of Independent Judgment (Section B)\",\"target_is_for\":\"All Subscribers completing Subscriber Qualification\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"· Complete the Affirmative Indication of Independent Judgment (Section B)\",\"explanation\":\"The pointer directs all subscribers to Section B for Affirmative Indication of Independent Judgment, and the target Section B is titled 'Subscriber Qualification (All Subscribers)', fitting the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_c49c9b05173cc750\",\"label\":\"Section D\",\"pointer_addresses\":\"Subscribers who are or will be Benefit Plan Investors or similar entities subject to fiduciary laws\",\"target_is_for\":\"NOT FOUND\",\"verdict\":\"unclear\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"medium\",\"confidence\":0.7,\"quote\":\"If the Subscriber is or will be (or is acting on behalf of any person or entity that is or will be) a Benefit Plan Investor (as such term is defined in Section D of the Subscriber Questionnaire) or an employee benefit plan or entity that is not subject to Title I of ERISA or Section 4975 of the Code but is subject to any other federal, state, local, non-U.S. or other laws or regulations (“Similar Law\\\") that are similar to the fiduciary responsibility or prohibited transaction provisions containe\",\"explanation\":\"The pointer addresses Benefit Plan Investors and refers to Section D of the Subscriber Questionnaire, but Section D is not found in the document, making it unclear where these investors should be directed.\",\"interpretations\":[]},{\"candidate_id\":\"r_793755e1ca390aac\",\"label\":\"Section A\",\"pointer_addresses\":\"Subscribers completing Subscriber Questionnaire Section A: General Information (All Subscribers)\",\"target_is_for\":\"Nonprofit and Pooled Investment Vehicles legal entity customers providing Beneficial Owner information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"Subscriber Questionnaire Section A: General Information (All Subscribers) S-7 NOTE: If the answer to Question 4(d) is yes, complete Politically Exposed Persons (“PEP”) Questionnaire in Appendix 2.\",\"explanation\":\"The pointer is for all subscribers completing Section A, and the target Section A is for Nonprofit and Pooled Investment Vehicles legal entity customers providing Beneficial Owner information, which fits the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_83a2d6871eac4196\",\"label\":\"Section A\",\"pointer_addresses\":\"Subscribers completing Subscriber Questionnaire Section A: General Information (All Subscribers)\",\"target_is_for\":\"Nonprofit and Pooled Investment Vehicles legal entity customers providing Beneficial Owner information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"Subscriber Questionnaire Section A: General Information (All Subscribers) S-8 similar capacity for any other person, nominee account or beneficial owner, whether a natural person or Entity (each such natural person or Entity, an “Underlying Beneficial Owner\\\") If the answer to Question 4(h) is “Yes,” please indicate the following: ☐ Yes ☐ No (i) The representations, warranties and agreements made in this Subscription Booklet, including the representations and warranties contained in the Subscript\",\"explanation\":\"The pointer is for all subscribers completing Section A, and the target Section A is for Nonprofit and Pooled Investment Vehicles legal entity customers providing Beneficial Owner information, fitting the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_1fd63bdd692fe166\",\"label\":\"Section B\",\"pointer_addresses\":\"Subscribers confirming accuracy of Section B of the Subscriber Questionnaire regarding Underlying Beneficial Owners\",\"target_is_for\":\"All Subscribers completing Subscriber Qualification\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"☐ Yes ☐ No (ii) Section B of the Subscriber Questionnaire is true, complete and accurate with respect to the assets held by the Underlying Beneficial Owner(s) and to the qualification of each Underlying Beneficial Owner as an “accredited investor” as defined in Regulation D under the 1933 Act.\",\"explanation\":\"The pointer addresses all subscribers confirming Section B accuracy, and the target Section B is for Subscriber Qualification (All Subscribers), matching the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_b4cd5ec4554887bc\",\"label\":\"Section A\",\"pointer_addresses\":\"Subscribers answering about consent of Underlying Beneficial Owners to be qualified purchasers in Section A\",\"target_is_for\":\"Nonprofit and Pooled Investment Vehicles legal entity customers providing Beneficial Owner information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"Subscriber Questionnaire Section A: General Information (All Subscribers) S-9 ☐ Yes ☐ No (ii) Has the Subscriber obtained consent of its indirect and direct Underlying Beneficial Owners to be treated as a “qualified purchaser” as provided in Section 2(a)(51)(C) of the Investment Company Act and the rules and regulations thereunder?\",\"explanation\":\"The pointer is for all subscribers answering about Underlying Beneficial Owners in Section A, and the target Section A is for Nonprofit and Pooled Investment Vehicles legal entity customers providing Beneficial Owner information, fitting the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_09490bd2d59256a3\",\"label\":\"Section B\",\"pointer_addresses\":\"Grantor/equity owners completing Section B(1) of the Subscriber Questionnaire\",\"target_is_for\":\"All Subscribers completing Subscriber Qualification\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"Grantor/equity owner #1, if completing Section B(1) of this “Subscriber Questionnaire” truthfully and accurately, indicate the roman numeral option you would have selected Grantor/equity owner #2, if completing Section B(1) of this “Subscriber Questionnaire” truthfully and accurately, indicate the roman numeral option you would have selected Grantor/equity owner #3, if completing Section B(1) of this “Subscriber Questionnaire” truthfully and accurately, indicate the roman numeral option you woul\",\"explanation\":\"The pointer addresses grantor/equity owners completing Section B(1), and the target Section B is for Subscriber Qualification (All Subscribers), matching the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_12b8617028ec55d0\",\"label\":\"Section C\",\"pointer_addresses\":\"Subscribers providing Primary Subscriber Information and instructed to complete Section C\",\"target_is_for\":\"NOT FOUND\",\"verdict\":\"unclear\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"medium\",\"confidence\":0.7,\"quote\":\"1. Primary Subscriber Information (joint subscriber, if any, to complete information separately in Section 2 below) Required Items Legal Name of Primary Subscriber: First Name Last Name Date of birth of Subscriber (mm/dd/yyyy): Citizenship: Government-Issued Identification: Provide – Type of ID (e.g. EIN, social security number, taxpayer identification number, Company Registration Number, Passport Number, etc.) / ID Number / and Country of Issuance: / / (type of ID) (EIN, social security #, taxp\",\"explanation\":\"The pointer instructs subscribers to complete Section C for Primary Subscriber Information, but Section C is not found in the document, making it unclear where these subscribers should be directed.\",\"interpretations\":[]},{\"candidate_id\":\"r_4f8fbd9de1bd80b0\",\"label\":\"Section C\",\"pointer_addresses\":\"Subscribers answering questions about Benefit Plan Investors and instructed to complete Section C\",\"target_is_for\":\"NOT FOUND\",\"verdict\":\"unclear\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"medium\",\"confidence\":0.7,\"quote\":\"(4) If the Subscriber answered “Yes” to 4(b)(3) above, the percentage of the assets of the Subscriber that are held on behalf of Benefit Plan Investors subject to Part 4 of Subtitle B of Title I of ERISA or Section 4975 of the Code during the period of investment in the Company do not, and will not, exceed: % If the answer to Question 4(b)(2) is “Yes”, the Subscriber MUST complete Section C of the Subscriber Questionnaire and the Additional Representation with Respect to Investment for an IRA on\",\"explanation\":\"The pointer addresses subscribers with Benefit Plan Investors and instructs them to complete Section C, but Section C is not found in the document, making it unclear where these subscribers should be directed.\",\"interpretations\":[]},{\"candidate_id\":\"r_904084f212fd544a\",\"label\":\"Section C\",\"pointer_addresses\":\"Subscribers answering Question 4(c) and instructed to complete Section C\",\"target_is_for\":\"NOT FOUND\",\"verdict\":\"unclear\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"medium\",\"confidence\":0.7,\"quote\":\"If the answer to Question 4(c) is “Yes”, the Subscriber MUST complete Section C of the Subscriber Questionnaire and the Additional Representation with Respect to Investment for an IRA on the Subscriber Signature Page.\",\"explanation\":\"The pointer instructs subscribers who answer Yes to Question 4(c) to complete Section C, but Section C is not found in the document, making it unclear where these subscribers should be directed.\",\"interpretations\":[]},{\"candidate_id\":\"r_0d5e0a9da5112e30\",\"label\":\"Section B\",\"pointer_addresses\":\"Nonprofit and Pooled Investment Vehicles legal entity customers instructed to skip to Section B (Key Controller)\",\"target_is_for\":\"All legal entities providing Key Controller information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"For Nonprofit and Pooled Investment Vehicles legal entity customers, please skip to Section B (Key Controller) below.\",\"explanation\":\"The pointer instructs Nonprofit and Pooled Investment Vehicles legal entity customers to skip to Section B (Key Controller), and the target Section B is for all legal entities to provide Key Controller information, matching the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_83210309290f67c0\",\"label\":\"Section B\",\"pointer_addresses\":\"Legal entities instructed to check Beneficial Owner Not Applicable and skip to Section B (Key Controller)\",\"target_is_for\":\"All legal entities providing Key Controller information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"☐ Beneficial Owner Not Applicable (Check this box and skip to Section B (Key Controller) if there is no individual that meets the definition of a Beneficial Owner stated above.)\",\"explanation\":\"The pointer instructs legal entities with no Beneficial Owner to skip to Section B (Key Controller), and the target Section B is for all legal entities to provide Key Controller information, matching the pointer's audience and purpose.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_aef5c3241e02e290",
+          "label": "Section E",
+          "pointer_addresses": "General Instructions, instruction to complete and sign the Subscriber Signature Page (Section E)",
+          "target_is_for": "Subscribers who must sign the Subscriber Signature Page",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "· Complete and sign the Subscriber Signature Page (Section E)",
+          "explanation": "The pointer instructs all subscribers to complete and sign Section E, which is titled 'Subscriber Signature Page (if applicable)' and is to be signed by all subscribers, matching the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_14010704e35cc700",
+          "label": "Section B",
+          "pointer_addresses": "General Instructions, instruction to complete the Affirmative Indication of Independent Judgment (Section B)",
+          "target_is_for": "All Subscribers completing Subscriber Qualification",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "· Complete the Affirmative Indication of Independent Judgment (Section B)",
+          "explanation": "The pointer directs all subscribers to Section B for Affirmative Indication of Independent Judgment, and the target Section B is titled 'Subscriber Qualification (All Subscribers)', fitting the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_c49c9b05173cc750",
+          "label": "Section D",
+          "pointer_addresses": "Subscribers who are or will be Benefit Plan Investors or similar entities subject to fiduciary laws",
+          "target_is_for": "NOT FOUND",
+          "verdict": "unclear",
+          "issue_class": "broken_cross_reference",
+          "severity": "medium",
+          "confidence": 0.7,
+          "quote": "If the Subscriber is or will be (or is acting on behalf of any person or entity that is or will be) a Benefit Plan Investor (as such term is defined in Section D of the Subscriber Questionnaire) or an employee benefit plan or entity that is not subject to Title I of ERISA or Section 4975 of the Code but is subject to any other federal, state, local, non-U.S. or other laws or regulations (“Similar Law\") that are similar to the fiduciary responsibility or prohibited transaction provisions containe",
+          "explanation": "The pointer addresses Benefit Plan Investors and refers to Section D of the Subscriber Questionnaire, but Section D is not found in the document, making it unclear where these investors should be directed.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_793755e1ca390aac",
+          "label": "Section A",
+          "pointer_addresses": "Subscribers completing Subscriber Questionnaire Section A: General Information (All Subscribers)",
+          "target_is_for": "Nonprofit and Pooled Investment Vehicles legal entity customers providing Beneficial Owner information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "Subscriber Questionnaire Section A: General Information (All Subscribers) S-7 NOTE: If the answer to Question 4(d) is yes, complete Politically Exposed Persons (“PEP”) Questionnaire in Appendix 2.",
+          "explanation": "The pointer is for all subscribers completing Section A, and the target Section A is for Nonprofit and Pooled Investment Vehicles legal entity customers providing Beneficial Owner information, which fits the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_83a2d6871eac4196",
+          "label": "Section A",
+          "pointer_addresses": "Subscribers completing Subscriber Questionnaire Section A: General Information (All Subscribers)",
+          "target_is_for": "Nonprofit and Pooled Investment Vehicles legal entity customers providing Beneficial Owner information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "Subscriber Questionnaire Section A: General Information (All Subscribers) S-8 similar capacity for any other person, nominee account or beneficial owner, whether a natural person or Entity (each such natural person or Entity, an “Underlying Beneficial Owner\") If the answer to Question 4(h) is “Yes,” please indicate the following: ☐ Yes ☐ No (i) The representations, warranties and agreements made in this Subscription Booklet, including the representations and warranties contained in the Subscript",
+          "explanation": "The pointer is for all subscribers completing Section A, and the target Section A is for Nonprofit and Pooled Investment Vehicles legal entity customers providing Beneficial Owner information, fitting the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_1fd63bdd692fe166",
+          "label": "Section B",
+          "pointer_addresses": "Subscribers confirming accuracy of Section B of the Subscriber Questionnaire regarding Underlying Beneficial Owners",
+          "target_is_for": "All Subscribers completing Subscriber Qualification",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "☐ Yes ☐ No (ii) Section B of the Subscriber Questionnaire is true, complete and accurate with respect to the assets held by the Underlying Beneficial Owner(s) and to the qualification of each Underlying Beneficial Owner as an “accredited investor” as defined in Regulation D under the 1933 Act.",
+          "explanation": "The pointer addresses all subscribers confirming Section B accuracy, and the target Section B is for Subscriber Qualification (All Subscribers), matching the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_b4cd5ec4554887bc",
+          "label": "Section A",
+          "pointer_addresses": "Subscribers answering about consent of Underlying Beneficial Owners to be qualified purchasers in Section A",
+          "target_is_for": "Nonprofit and Pooled Investment Vehicles legal entity customers providing Beneficial Owner information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "Subscriber Questionnaire Section A: General Information (All Subscribers) S-9 ☐ Yes ☐ No (ii) Has the Subscriber obtained consent of its indirect and direct Underlying Beneficial Owners to be treated as a “qualified purchaser” as provided in Section 2(a)(51)(C) of the Investment Company Act and the rules and regulations thereunder?",
+          "explanation": "The pointer is for all subscribers answering about Underlying Beneficial Owners in Section A, and the target Section A is for Nonprofit and Pooled Investment Vehicles legal entity customers providing Beneficial Owner information, fitting the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_09490bd2d59256a3",
+          "label": "Section B",
+          "pointer_addresses": "Grantor/equity owners completing Section B(1) of the Subscriber Questionnaire",
+          "target_is_for": "All Subscribers completing Subscriber Qualification",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "Grantor/equity owner #1, if completing Section B(1) of this “Subscriber Questionnaire” truthfully and accurately, indicate the roman numeral option you would have selected Grantor/equity owner #2, if completing Section B(1) of this “Subscriber Questionnaire” truthfully and accurately, indicate the roman numeral option you would have selected Grantor/equity owner #3, if completing Section B(1) of this “Subscriber Questionnaire” truthfully and accurately, indicate the roman numeral option you woul",
+          "explanation": "The pointer addresses grantor/equity owners completing Section B(1), and the target Section B is for Subscriber Qualification (All Subscribers), matching the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_12b8617028ec55d0",
+          "label": "Section C",
+          "pointer_addresses": "Subscribers providing Primary Subscriber Information and instructed to complete Section C",
+          "target_is_for": "NOT FOUND",
+          "verdict": "unclear",
+          "issue_class": "broken_cross_reference",
+          "severity": "medium",
+          "confidence": 0.7,
+          "quote": "1. Primary Subscriber Information (joint subscriber, if any, to complete information separately in Section 2 below) Required Items Legal Name of Primary Subscriber: First Name Last Name Date of birth of Subscriber (mm/dd/yyyy): Citizenship: Government-Issued Identification: Provide – Type of ID (e.g. EIN, social security number, taxpayer identification number, Company Registration Number, Passport Number, etc.) / ID Number / and Country of Issuance: / / (type of ID) (EIN, social security #, taxp",
+          "explanation": "The pointer instructs subscribers to complete Section C for Primary Subscriber Information, but Section C is not found in the document, making it unclear where these subscribers should be directed.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_4f8fbd9de1bd80b0",
+          "label": "Section C",
+          "pointer_addresses": "Subscribers answering questions about Benefit Plan Investors and instructed to complete Section C",
+          "target_is_for": "NOT FOUND",
+          "verdict": "unclear",
+          "issue_class": "broken_cross_reference",
+          "severity": "medium",
+          "confidence": 0.7,
+          "quote": "(4) If the Subscriber answered “Yes” to 4(b)(3) above, the percentage of the assets of the Subscriber that are held on behalf of Benefit Plan Investors subject to Part 4 of Subtitle B of Title I of ERISA or Section 4975 of the Code during the period of investment in the Company do not, and will not, exceed: % If the answer to Question 4(b)(2) is “Yes”, the Subscriber MUST complete Section C of the Subscriber Questionnaire and the Additional Representation with Respect to Investment for an IRA on",
+          "explanation": "The pointer addresses subscribers with Benefit Plan Investors and instructs them to complete Section C, but Section C is not found in the document, making it unclear where these subscribers should be directed.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_904084f212fd544a",
+          "label": "Section C",
+          "pointer_addresses": "Subscribers answering Question 4(c) and instructed to complete Section C",
+          "target_is_for": "NOT FOUND",
+          "verdict": "unclear",
+          "issue_class": "broken_cross_reference",
+          "severity": "medium",
+          "confidence": 0.7,
+          "quote": "If the answer to Question 4(c) is “Yes”, the Subscriber MUST complete Section C of the Subscriber Questionnaire and the Additional Representation with Respect to Investment for an IRA on the Subscriber Signature Page.",
+          "explanation": "The pointer instructs subscribers who answer Yes to Question 4(c) to complete Section C, but Section C is not found in the document, making it unclear where these subscribers should be directed.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_0d5e0a9da5112e30",
+          "label": "Section B",
+          "pointer_addresses": "Nonprofit and Pooled Investment Vehicles legal entity customers instructed to skip to Section B (Key Controller)",
+          "target_is_for": "All legal entities providing Key Controller information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "For Nonprofit and Pooled Investment Vehicles legal entity customers, please skip to Section B (Key Controller) below.",
+          "explanation": "The pointer instructs Nonprofit and Pooled Investment Vehicles legal entity customers to skip to Section B (Key Controller), and the target Section B is for all legal entities to provide Key Controller information, matching the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_83210309290f67c0",
+          "label": "Section B",
+          "pointer_addresses": "Legal entities instructed to check Beneficial Owner Not Applicable and skip to Section B (Key Controller)",
+          "target_is_for": "All legal entities providing Key Controller information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "☐ Beneficial Owner Not Applicable (Check this box and skip to Section B (Key Controller) if there is no individual that meets the definition of a Beneficial Owner stated above.)",
+          "explanation": "The pointer instructs legal entities with no Beneficial Owner to skip to Section B (Key Controller), and the target Section B is for all legal entities to provide Key Controller information, matching the pointer's audience and purpose.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 3819,
+      "out": 2442
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

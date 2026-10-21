@@ -1,0 +1,206 @@
+{
+  "doc": "Oaktree_Strategic_Income_II__2018_d592161dex41.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "4b5b9522689fd15612c8a71d78a3743b8cab657c2414bf4ea45501ab1638269e",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "4b5b9522689fd15612c8a71d78a3743b8cab657c2414bf4ea45501ab1638269e",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_f2a31f646b00833a\",\"label\":\"Appendix F\",\"pointer_addresses\":\"Investor executing the Agreement, referencing Distribution Fee and/or Up-Front Placement Fee information in Appendix F\",\"target_is_for\":\"NOT FOUND\",\"verdict\":\"unclear\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.9,\"quote\":\"By executing this Agreement, the Investor acknowledges such Distribution Fee and/or Up-Front Placement Fee, and, in particular, the information set forth in Appendix F (if applicable).\",\"explanation\":\"The pointer addresses the Investor executing the Agreement and refers to Appendix F for fee information. The target is NOT FOUND, meaning no Appendix F exists in the document. The note lists Appendices A, B, C, D, G only, so Appendix F is missing. This is a missing target issue but since the label is not found, the verdict is unclear.\",\"interpretations\":[]},{\"candidate_id\":\"r_d22bae4e2b74f957\",\"label\":\"Appendix G\",\"pointer_addresses\":\"Investor restricted from transferring Capital Commitment or Shares, directed to Appendix G for transfer restrictions\",\"target_is_for\":\"Investors subject to transfer restrictions, detailing conditions under which Transfers of Capital Commitment or Shares may be made\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"(i) The Investor may not Transfer its Capital Commitment or, prior to a Qualified Listing, any of its Shares unless (A) the Company provides its prior written consent, (B) the Transfer is made in accordance with applicable securities laws and (C) the Transfer is otherwise in compliance with the transfer restrictions set forth in Appendix G.\",\"explanation\":\"The pointer addresses Investors restricted in transferring Capital Commitment or Shares and directs them to Appendix G for transfer restrictions. The target section is titled 'TRANSFER RESTRICTIONS' and describes transfer conditions for Investors. This is a correct match.\",\"interpretations\":[]},{\"candidate_id\":\"r_7a35a6a8d1e2e4a0\",\"label\":\"Section B\",\"pointer_addresses\":\"Investors who initialed any of items 1-5, instructed to skip Section B and sign below\",\"target_is_for\":\"Potentially Restricted Persons, including executive officers or directors of a Public Company\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"If you initialed any of items 1-5 above, please skip Section B and sign below.\",\"explanation\":\"The pointer addresses Investors who initialed certain items and instructs them to skip Section B. Section B is titled 'Potentially Restricted Persons' and is for such persons. The pointer correctly references Section B in context of skipping it, so the target fits the pointer.\",\"interpretations\":[]},{\"candidate_id\":\"r_e6d2177af3abd06e\",\"label\":\"Section B\",\"pointer_addresses\":\"Investors who initialed item 6, instructed to proceed to Section B\",\"target_is_for\":\"Potentially Restricted Persons, including executive officers or directors of a Public Company\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"If you initialed item 6, please proceed to Section B.\",\"explanation\":\"The pointer addresses Investors who initialed item 6 and directs them to Section B. Section B is for Potentially Restricted Persons, fitting the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_83d09e2c17046ffb\",\"label\":\"Section B\",\"pointer_addresses\":\"Investors who initialed any of items 1-10 above (other than item 4), instructed to skip Sections B, C and D and sign below\",\"target_is_for\":\"Potentially Restricted Persons, including executive officers or directors of a Public Company\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"If you initialed any of items 1-10 above (other than item 4), please skip Sections B, C and D and sign below.\",\"explanation\":\"The pointer addresses Investors who initialed certain items and instructs them to skip Section B among others. Section B is for Potentially Restricted Persons, matching the pointer's context and audience.\",\"interpretations\":[]},{\"candidate_id\":\"r_22712265cf6a1ff9\",\"label\":\"Section C\",\"pointer_addresses\":\"Investors who initialed any of items 1-10 above (other than item 4), instructed to skip Sections B, C and D and sign below\",\"target_is_for\":\"Potentially Restricted Person, related to Form BD and broker-dealer registration information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"If you initialed any of items 1-10 above (other than item 4), please skip Sections B, C and D and sign below.\",\"explanation\":\"The pointer addresses Investors who initialed certain items and instructs them to skip Section C among others. Section C is for Potentially Restricted Person with broker-dealer registration info, fitting the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_bb3758ad09be2d50\",\"label\":\"Section D\",\"pointer_addresses\":\"Investors who initialed any of items 1-10 above (other than item 4), instructed to skip Sections B, C and D and sign below\",\"target_is_for\":\"Certain Entity Investors, including definitions of Public Company and Covered Non-Public Company\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"If you initialed any of items 1-10 above (other than item 4), please skip Sections B, C and D and sign below.\",\"explanation\":\"The pointer addresses Investors who initialed certain items and instructs them to skip Section D among others. Section D is for Certain Entity Investors, matching the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_347cc5bfeba2f4f3\",\"label\":\"Section B\",\"pointer_addresses\":\"Investors who initialed item 4, instructed to skip Section B and proceed to Section C\",\"target_is_for\":\"Potentially Restricted Persons, including executive officers or directors of a Public Company\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"If you initialed item 4, please skip Section B and proceed to Section C.\",\"explanation\":\"The pointer addresses Investors who initialed item 4 and instructs them to skip Section B. Section B is for Potentially Restricted Persons, fitting the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_e5743e82c6ac8e67\",\"label\":\"Section C\",\"pointer_addresses\":\"Investors who initialed item 4, instructed to skip Section B and proceed to Section C\",\"target_is_for\":\"Potentially Restricted Person, related to Form BD and broker-dealer registration information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"If you initialed item 4, please skip Section B and proceed to Section C.\",\"explanation\":\"The pointer addresses Investors who initialed item 4 and directs them to Section C. Section C is for Potentially Restricted Person with broker-dealer registration info, fitting the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_445efa3236458c58\",\"label\":\"Section B\",\"pointer_addresses\":\"Investors who initialed item 11, instructed to proceed to Section B\",\"target_is_for\":\"Potentially Restricted Persons, including executive officers or directors of a Public Company\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"If you initialed item 11, please proceed to Section B.\",\"explanation\":\"The pointer addresses Investors who initialed item 11 and directs them to Section B. Section B is for Potentially Restricted Persons, fitting the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_12c061726390a159\",\"label\":\"Section C\",\"pointer_addresses\":\"Investors who initialed item 6, instructed to proceed to Section C\",\"target_is_for\":\"Potentially Restricted Person, related to Form BD and broker-dealer registration information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"If you initialed item 6, please proceed to Section C.\",\"explanation\":\"The pointer addresses Investors who initialed item 6 and directs them to Section C. Section C is for Potentially Restricted Person with broker-dealer registration info, fitting the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_0734beaa3eae417a\",\"label\":\"Section C\",\"pointer_addresses\":\"Investors who initialed any of items 1-5, instructed to skip Sections C and D and sign below\",\"target_is_for\":\"Potentially Restricted Person, related to Form BD and broker-dealer registration information\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"If you initialed any of items 1-5, please skip Sections C and D and sign below.\",\"explanation\":\"The pointer addresses Investors who initialed certain items and instructs them to skip Section C among others. Section C is for Potentially Restricted Person with broker-dealer registration info, fitting the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_730f7a88b93abbf9\",\"label\":\"Section D\",\"pointer_addresses\":\"Investors who initialed any of items 1-5, instructed to skip Sections C and D and sign below\",\"target_is_for\":\"Certain Entity Investors, including definitions of Public Company and Covered Non-Public Company\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"If you initialed any of items 1-5, please skip Sections C and D and sign below.\",\"explanation\":\"The pointer addresses Investors who initialed certain items and instructs them to skip Section D among others. Section D is for Certain Entity Investors, matching the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_26230097462ce871\",\"label\":\"Section D\",\"pointer_addresses\":\"Investors who initialed item 1, instructed to proceed to Section D\",\"target_is_for\":\"Certain Entity Investors, including definitions of Public Company and Covered Non-Public Company\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"If you initialed item 1 above, please proceed to Section D.\",\"explanation\":\"The pointer addresses Investors who initialed item 1 and directs them to Section D. Section D is for Certain Entity Investors, fitting the pointer's audience and purpose.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_f2a31f646b00833a",
+          "label": "Appendix F",
+          "pointer_addresses": "Investor executing the Agreement, referencing Distribution Fee and/or Up-Front Placement Fee information in Appendix F",
+          "target_is_for": "NOT FOUND",
+          "verdict": "unclear",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.9,
+          "quote": "By executing this Agreement, the Investor acknowledges such Distribution Fee and/or Up-Front Placement Fee, and, in particular, the information set forth in Appendix F (if applicable).",
+          "explanation": "The pointer addresses the Investor executing the Agreement and refers to Appendix F for fee information. The target is NOT FOUND, meaning no Appendix F exists in the document. The note lists Appendices A, B, C, D, G only, so Appendix F is missing. This is a missing target issue but since the label is not found, the verdict is unclear.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_d22bae4e2b74f957",
+          "label": "Appendix G",
+          "pointer_addresses": "Investor restricted from transferring Capital Commitment or Shares, directed to Appendix G for transfer restrictions",
+          "target_is_for": "Investors subject to transfer restrictions, detailing conditions under which Transfers of Capital Commitment or Shares may be made",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "(i) The Investor may not Transfer its Capital Commitment or, prior to a Qualified Listing, any of its Shares unless (A) the Company provides its prior written consent, (B) the Transfer is made in accordance with applicable securities laws and (C) the Transfer is otherwise in compliance with the transfer restrictions set forth in Appendix G.",
+          "explanation": "The pointer addresses Investors restricted in transferring Capital Commitment or Shares and directs them to Appendix G for transfer restrictions. The target section is titled 'TRANSFER RESTRICTIONS' and describes transfer conditions for Investors. This is a correct match.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_7a35a6a8d1e2e4a0",
+          "label": "Section B",
+          "pointer_addresses": "Investors who initialed any of items 1-5, instructed to skip Section B and sign below",
+          "target_is_for": "Potentially Restricted Persons, including executive officers or directors of a Public Company",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "If you initialed any of items 1-5 above, please skip Section B and sign below.",
+          "explanation": "The pointer addresses Investors who initialed certain items and instructs them to skip Section B. Section B is titled 'Potentially Restricted Persons' and is for such persons. The pointer correctly references Section B in context of skipping it, so the target fits the pointer.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_e6d2177af3abd06e",
+          "label": "Section B",
+          "pointer_addresses": "Investors who initialed item 6, instructed to proceed to Section B",
+          "target_is_for": "Potentially Restricted Persons, including executive officers or directors of a Public Company",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "If you initialed item 6, please proceed to Section B.",
+          "explanation": "The pointer addresses Investors who initialed item 6 and directs them to Section B. Section B is for Potentially Restricted Persons, fitting the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_83d09e2c17046ffb",
+          "label": "Section B",
+          "pointer_addresses": "Investors who initialed any of items 1-10 above (other than item 4), instructed to skip Sections B, C and D and sign below",
+          "target_is_for": "Potentially Restricted Persons, including executive officers or directors of a Public Company",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "If you initialed any of items 1-10 above (other than item 4), please skip Sections B, C and D and sign below.",
+          "explanation": "The pointer addresses Investors who initialed certain items and instructs them to skip Section B among others. Section B is for Potentially Restricted Persons, matching the pointer's context and audience.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_22712265cf6a1ff9",
+          "label": "Section C",
+          "pointer_addresses": "Investors who initialed any of items 1-10 above (other than item 4), instructed to skip Sections B, C and D and sign below",
+          "target_is_for": "Potentially Restricted Person, related to Form BD and broker-dealer registration information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "If you initialed any of items 1-10 above (other than item 4), please skip Sections B, C and D and sign below.",
+          "explanation": "The pointer addresses Investors who initialed certain items and instructs them to skip Section C among others. Section C is for Potentially Restricted Person with broker-dealer registration info, fitting the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_bb3758ad09be2d50",
+          "label": "Section D",
+          "pointer_addresses": "Investors who initialed any of items 1-10 above (other than item 4), instructed to skip Sections B, C and D and sign below",
+          "target_is_for": "Certain Entity Investors, including definitions of Public Company and Covered Non-Public Company",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "If you initialed any of items 1-10 above (other than item 4), please skip Sections B, C and D and sign below.",
+          "explanation": "The pointer addresses Investors who initialed certain items and instructs them to skip Section D among others. Section D is for Certain Entity Investors, matching the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_347cc5bfeba2f4f3",
+          "label": "Section B",
+          "pointer_addresses": "Investors who initialed item 4, instructed to skip Section B and proceed to Section C",
+          "target_is_for": "Potentially Restricted Persons, including executive officers or directors of a Public Company",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "If you initialed item 4, please skip Section B and proceed to Section C.",
+          "explanation": "The pointer addresses Investors who initialed item 4 and instructs them to skip Section B. Section B is for Potentially Restricted Persons, fitting the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_e5743e82c6ac8e67",
+          "label": "Section C",
+          "pointer_addresses": "Investors who initialed item 4, instructed to skip Section B and proceed to Section C",
+          "target_is_for": "Potentially Restricted Person, related to Form BD and broker-dealer registration information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "If you initialed item 4, please skip Section B and proceed to Section C.",
+          "explanation": "The pointer addresses Investors who initialed item 4 and directs them to Section C. Section C is for Potentially Restricted Person with broker-dealer registration info, fitting the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_445efa3236458c58",
+          "label": "Section B",
+          "pointer_addresses": "Investors who initialed item 11, instructed to proceed to Section B",
+          "target_is_for": "Potentially Restricted Persons, including executive officers or directors of a Public Company",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "If you initialed item 11, please proceed to Section B.",
+          "explanation": "The pointer addresses Investors who initialed item 11 and directs them to Section B. Section B is for Potentially Restricted Persons, fitting the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_12c061726390a159",
+          "label": "Section C",
+          "pointer_addresses": "Investors who initialed item 6, instructed to proceed to Section C",
+          "target_is_for": "Potentially Restricted Person, related to Form BD and broker-dealer registration information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "If you initialed item 6, please proceed to Section C.",
+          "explanation": "The pointer addresses Investors who initialed item 6 and directs them to Section C. Section C is for Potentially Restricted Person with broker-dealer registration info, fitting the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_0734beaa3eae417a",
+          "label": "Section C",
+          "pointer_addresses": "Investors who initialed any of items 1-5, instructed to skip Sections C and D and sign below",
+          "target_is_for": "Potentially Restricted Person, related to Form BD and broker-dealer registration information",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "If you initialed any of items 1-5, please skip Sections C and D and sign below.",
+          "explanation": "The pointer addresses Investors who initialed certain items and instructs them to skip Section C among others. Section C is for Potentially Restricted Person with broker-dealer registration info, fitting the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_730f7a88b93abbf9",
+          "label": "Section D",
+          "pointer_addresses": "Investors who initialed any of items 1-5, instructed to skip Sections C and D and sign below",
+          "target_is_for": "Certain Entity Investors, including definitions of Public Company and Covered Non-Public Company",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "If you initialed any of items 1-5, please skip Sections C and D and sign below.",
+          "explanation": "The pointer addresses Investors who initialed certain items and instructs them to skip Section D among others. Section D is for Certain Entity Investors, matching the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_26230097462ce871",
+          "label": "Section D",
+          "pointer_addresses": "Investors who initialed item 1, instructed to proceed to Section D",
+          "target_is_for": "Certain Entity Investors, including definitions of Public Company and Covered Non-Public Company",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "If you initialed item 1 above, please proceed to Section D.",
+          "explanation": "The pointer addresses Investors who initialed item 1 and directs them to Section D. Section D is for Certain Entity Investors, fitting the pointer's audience and purpose.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 3700,
+      "out": 2283
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

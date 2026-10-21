@@ -1,0 +1,89 @@
+{
+  "doc": "NF_Investment_Corp__2013_d571166dex41.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "bde9c4c36d6e0abc72737a0d89f8fe47be369f934b28a919f48b6d97f70be926",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "bde9c4c36d6e0abc72737a0d89f8fe47be369f934b28a919f48b6d97f70be926",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_5d9b634e6131c05a\",\"label\":\"Section A\",\"pointer_addresses\":\"each Investor\",\"target_is_for\":\"each Investor\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"(a) In Section A, each Investor should fill in its name, type of entity, address, tax identification or social security number, contact person(s), telephone and facsimile numbers, email address, and the other requested information.\",\"explanation\":\"The pointer addresses each Investor and the target section heading and first lines indicate it is for all investors to provide general information, matching the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_f45663ed134915d4\",\"label\":\"Section C\",\"pointer_addresses\":\"Each Investor that is an individual\",\"target_is_for\":\"Individuals, Individual IRAs, Joint in Tenancy\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"(c) Each Investor that is an individual should respond to the question in Section C.\",\"explanation\":\"The pointer addresses individual investors and the target section heading and first lines specify it is for individuals and similar investor types, matching the pointer's audience.\",\"interpretations\":[]},{\"candidate_id\":\"r_d0c1490a3a267e84\",\"label\":\"Section D\",\"pointer_addresses\":\"Each Investor that is an entity\",\"target_is_for\":\"Entities (non-natural persons)\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"(d) Each Investor that is an entity should provide the information and respond to the questions in Section D.\",\"explanation\":\"The pointer addresses entity investors and the target section heading and first lines specify it is for entities (non-natural persons), matching the pointer's audience.\",\"interpretations\":[]},{\"candidate_id\":\"r_a0ba3c081ea9910d\",\"label\":\"Section E\",\"pointer_addresses\":\"Each Investor\",\"target_is_for\":\"each Investor\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"(e) Each Investor should respond to the questions in Section E.\",\"explanation\":\"The pointer addresses each Investor and the target section heading and first lines indicate it is for all investors regarding related parties, matching the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_056dafb6d271ca1a\",\"label\":\"Appendix E\",\"pointer_addresses\":\"The Investor\",\"target_is_for\":\"Investors regarding transfer restrictions\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"(e) (i) The Investor may not Transfer its Capital Commitment or any of its Shares unless (a) the Company provides its prior written consent, (b) the Transfer is made in accordance with applicable securities laws and (c) the Transfer is otherwise in compliance with the transfer restrictions set forth in Appendix E.\",\"explanation\":\"The pointer addresses Investors and the target section heading and first lines specify transfer restrictions applicable to Investors, matching the pointer's audience and purpose.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_5d9b634e6131c05a",
+          "label": "Section A",
+          "pointer_addresses": "each Investor",
+          "target_is_for": "each Investor",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "(a) In Section A, each Investor should fill in its name, type of entity, address, tax identification or social security number, contact person(s), telephone and facsimile numbers, email address, and the other requested information.",
+          "explanation": "The pointer addresses each Investor and the target section heading and first lines indicate it is for all investors to provide general information, matching the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_f45663ed134915d4",
+          "label": "Section C",
+          "pointer_addresses": "Each Investor that is an individual",
+          "target_is_for": "Individuals, Individual IRAs, Joint in Tenancy",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "(c) Each Investor that is an individual should respond to the question in Section C.",
+          "explanation": "The pointer addresses individual investors and the target section heading and first lines specify it is for individuals and similar investor types, matching the pointer's audience.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_d0c1490a3a267e84",
+          "label": "Section D",
+          "pointer_addresses": "Each Investor that is an entity",
+          "target_is_for": "Entities (non-natural persons)",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "(d) Each Investor that is an entity should provide the information and respond to the questions in Section D.",
+          "explanation": "The pointer addresses entity investors and the target section heading and first lines specify it is for entities (non-natural persons), matching the pointer's audience.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_a0ba3c081ea9910d",
+          "label": "Section E",
+          "pointer_addresses": "Each Investor",
+          "target_is_for": "each Investor",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "(e) Each Investor should respond to the questions in Section E.",
+          "explanation": "The pointer addresses each Investor and the target section heading and first lines indicate it is for all investors regarding related parties, matching the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_056dafb6d271ca1a",
+          "label": "Appendix E",
+          "pointer_addresses": "The Investor",
+          "target_is_for": "Investors regarding transfer restrictions",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "(e) (i) The Investor may not Transfer its Capital Commitment or any of its Shares unless (a) the Company provides its prior written consent, (b) the Transfer is made in accordance with applicable securities laws and (c) the Transfer is otherwise in compliance with the transfer restrictions set forth in Appendix E.",
+          "explanation": "The pointer addresses Investors and the target section heading and first lines specify transfer restrictions applicable to Investors, matching the pointer's audience and purpose.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 2414,
+      "out": 665
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

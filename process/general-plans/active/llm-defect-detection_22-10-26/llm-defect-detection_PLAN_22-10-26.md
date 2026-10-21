@@ -8,7 +8,7 @@ feature: none
 # LLM defect detection upgrade (grounded in verified EDGAR defects)
 
 Date: 22-10-26
-Status: PLANNED (PVL cycle 3 re-validated against the real code; in-place corrections applied; ready for EXECUTE on gate PASS)
+Status: CODE DONE (22-10-26 EXECUTE: steps 1-8 done, 25 offline gates green); AC10 live RED (recall 1 of 3) -> CONDITIONAL, backlog F1
 Complexity: COMPLEX (single plan, 8 steps; not a phase program)
 
 ## Overview
@@ -310,3 +310,23 @@ Execute start: pnpm --filter @aduin/core typecheck | pnpm --filter @aduin/core t
 
 ## Next Step
 Gate PASS. ENTER EXECUTE MODE with this plan path (one opus vc-execute-agent, then an EVL confirmation by a spawned sonnet vc-tester re-running the gate list in the Validate Contract).
+
+## Deviations (EXECUTE 22-10-26)
+- F7 (pre-deploy supplement): Playwright touched after all, at the user's commit+deploy approval. Test-only fix in `apps/web/e2e/` (`fixtures/ai.ts`, `fixtures/app.ts`, `ai-resume`, `ai-no-duplicates`, `variance-ai-never-gates`): per-task call counts, reference-target answered clean, new `uploadSample` helper because the single-sample picker is gone (harness drift F7b in the backlog note). No product change; `ai-lane.ts` behavior was already correct.
+- Resolver: lettered `field` blocks (e.g. NF `E. Related Parties/Other Beneficial Parties:`) are kept as nested fallback entries, used only when no top-level entry has the label (the plan said nested items never shadow; they still never do). Found by the first live run (NF pair showed a false `NOT FOUND`). Unit test added.
+- Ground truth: Onex E1 carries a second anchor, the entity pointer to Section C, taken from the source verified defect D1 (the plan table quoted only the natural-person sentence).
+- Ground-truth ids: E4 is split into E4a to E4d (4 Partners Group refs); Energea 2, iCross and Third Point 2026 are E6b/E7b/E7c; Hatteras 2011 is E13 and Coatue BSA E14 (expect none) so the verified subset is exactly the 16 docs the plan names.
+- Added `bench:author` package script (the plan named the author script but no command) and `--source authored|live` on the bench so live recordings replay offline without replacing authored ones (`{hash16}.live.json`).
+- Lane partial result: the lane has no `done` status; a failed call 2 ends in `fresh`/`cache` with `note` = "Second AI pass did not complete; showing the first pass".
+- Contracts snapshot regenerated with `pnpm --filter @aduin/core test contracts -u` (no update command is documented in tests context); only the task enum gained `reference-target`.
+- AC10 live: run twice ($0.0112 + $0.0146 = $0.0258 lifetime); recall 1 of 3 both times; 11 then 21 non-matching findings. Not tuned further (prompt changes against 3 positives would overfit). Backlog F1 updated.
+
+### EVL fix cycle 1 (22-10-26, gate 24 / AC10)
+- `reference-target@2` / `reference-target.s2` (plan pinned `@1`): model-side schema `reference_target_v2` adds required `label`, `pointer_addresses`, `target_is_for` and `verdict` (match / mismatch / unclear), generated before the finding text; `validate()` keeps only `mismatch` items with confidence at least 0.5 and strips the four fields, so `AiFinding`, `AiCandidate` and frozen contracts v1 are unchanged (contracts snapshot unchanged). Items with no verdict are counted as dropped.
+- Pair design changed (plan: one pair per pointer with up to 3 TARGET blocks): now one pair per (pointer, label), each with exactly one TARGET block plus an optional `[NOTE: ...]` line (other labels of the pointer; duplicate-label count, which one is shown by the resolver rule and the other titles; pointer inside its own target; for NOT FOUND, the labels found for that family). Same pointer site for all pairs of a pointer; ids include the label. `MAX_TARGETS_PER_PAIR` replaced by `MAX_LABELS_PER_POINTER` (3) and `NOTE_MAX_CHARS` (200).
+- Resolver additions (generic, found on held-out docs): short prefixed headings (`<title words> Section A: <title>`, block at most 200 chars, no routing verb) are heading entries; qualified sub-references are not pointers (`Part A of Section I`, `Section C of Annex I to ...`, `Exhibit C, Section I`, `Part A, Paragraph 14(e)`); a same-family list (`Section A, Section B`) still pairs.
+- Prompt: one item per excerpt with a verdict; no finding when the target fits; explanation names who the pointer addresses and who the target is for; exclusions; a target for every investor fits any group; duplicate labels: mismatch only if none fits; deep provisions are not judged on the first lines; NOT FOUND is unclear unless the found labels show the label is missing. No ground-truth wording in prompt or playbook (playbook unchanged).
+- Bench: `--subset heldout` (corpus docs outside the verified subset; precision only, `--max-calls` above 20 allowed); an offline replay of live recordings (`--source live`) now applies the AC10 thresholds instead of the strict authored gate (3 of 3, 0 non-matching). Authored recordings carry `label` and `verdict` and were regenerated by `bench:author`; 83 stale `.live.json` recordings (input hash no longer produced) removed, 28 current kept (9 verified + 19 held-out).
+- Worker byte-parity `reference-target` digest re-pinned on purpose (comment updated).
+- Live results (gpt-4.1-mini). Verified: run 1 (verdict schema + split pairs) 2 of 3, 1 non-matching; run 2 3 of 3, 3; run 3 3 of 3, 2; run 4 3 of 3, 3; final 3 of 3, 3 (AC10 PASS: at least 2 of 3, at most 2 per doc, at most 16 total). Held-out (30 docs, 19 with pairs): first 44 non-matching, after resolver + NOT FOUND fix 11, final 14 (North Haven 2022 7, West Bay 3, others at most 1); not an AC, recorded in backlog F1. Spend this cycle $0.3121; lifetime bench spend $0.3379 (cap for this work $1.00).
+

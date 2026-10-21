@@ -1,0 +1,5 @@
+cycle	domain	gate	gaps	loop_status	note
+0	tests	EVL	1	BASELINE	25/26 green; AC10 live 1/3, 21 FP
+1	tests	FAIL	1	CONTINUE	fix: verdict field + per-label judgment + held-out precision
+2	tests	FIXED	0	CONTINUE	AC10 3/3 live verified, 3 FP; heldout 14 FP (backlog F1); spend $0.34
+3	tests	PASS	0	HALTED_SUCCESS	EVL #2: 26/26 gates green; known gaps: heldout FP (North Haven 7, West Bay 3), 4 eslint errors in bench-defects.ts

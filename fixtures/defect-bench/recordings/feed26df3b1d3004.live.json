@@ -1,0 +1,141 @@
+{
+  "doc": "Third_Point_Private_Capital__2025_tm2512133d1_ex10-7.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "feed26df3b1d3004c4038fbf569161195fef651eceb0d951de5efc79991f42fb",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "feed26df3b1d3004c4038fbf569161195fef651eceb0d951de5efc79991f42fb",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_0c25c5626d0ef6dd\",\"label\":\"Exhibit A\",\"pointer_addresses\":\"Each Investor\",\"target_is_for\":\"ALL INVESTORS MUST COMPLETE THIS EXHIBIT PLEASE CHECK EACH BOX BELOW THAT CORRECTLY DESCRIBES THE INVESTOR\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"3. Each Investor must complete each of Exhibits A \\u00096 L, as applicable.\",\"explanation\":\"The pointer addresses each Investor and sends them to Exhibit A, which is titled for all investors to complete and describes investor categories. The target fits the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_f3254cf8d972635e\",\"label\":\"Exhibit C\",\"pointer_addresses\":\"Investor\",\"target_is_for\":\"ALL INVESTORS MUST COMPLETE THIS EXHIBIT PLEASE CHECK ONE BOX IN SECTION I BELOW THAT BEST DESCRIBES THE INVESTOR, AND ONE OF THE TWO BOXES IN SECTION\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"\\u00096 Check one category on Exhibit C, Section I (\\\"Categories of Beneficial Ownership for Investment Advisers Act Reporting Purposes\\\") that best describes the Investor, and check one answer to the question in Section II.\",\"explanation\":\"The pointer addresses the Investor and sends them to Exhibit C, which is for all investors to complete and describes beneficial ownership categories. The target fits the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_bea61503ea546fe6\",\"label\":\"Exhibit K\",\"pointer_addresses\":\"Investor\",\"target_is_for\":\"ANTI-MONEY LAUNDERING SUPPLEMENT\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"\\u00096 Answer each question on Exhibit K (\\\"Anti-Money Laundering Supplement\\\") by checking each box that describes the Investor.\",\"explanation\":\"The pointer addresses the Investor and sends them to Exhibit K, which is the Anti-Money Laundering Supplement. The target fits the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_51bd639b15254507\",\"label\":\"Exhibit A\",\"pointer_addresses\":\"Investor\",\"target_is_for\":\"ALL INVESTORS MUST COMPLETE THIS EXHIBIT PLEASE CHECK EACH BOX BELOW THAT CORRECTLY DESCRIBES THE INVESTOR\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"The Investor's responses regarding certain U.S. securities law qualifications provided in Exhibits A \\u00096 B hereto are true and accurate.\",\"explanation\":\"The pointer addresses the Investor and sends them to Exhibit A, which is for all investors to complete and describes investor categories. The target fits the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_5385f268880d0f28\",\"label\":\"Exhibit H\",\"pointer_addresses\":\"Investor\",\"target_is_for\":\"FINANCIAL INDUSTRY REGULATORY AUTHORITY | RULE 5130 AND 5131 QUESTIONNAIRE\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"The Investor understands that failure to fully and accurately complete Exhibit H or failure to respond to a request for an update to such information may result in some or all of the Investor's Shares being treated as held by a Non-Exempt Restricted Person (as defined in Exhibit H) for purposes of Rule 5130 or by a Non-Exempt Covered Person (as defined in Exhibit H) for purposes of Rule 5131.\",\"explanation\":\"The pointer addresses the Investor and sends them to Exhibit H, which is the FINRA Rule 5130 and 5131 Questionnaire. The target fits the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_d19559692527571e\",\"label\":\"Exhibit B\",\"pointer_addresses\":\"Person who indicated in Exhibit B that it is described by categories 10-13\",\"target_is_for\":\"ALL INVESTORS MUST COMPLETE THIS EXHIBIT PLEASE CHECK EACH BOX BELOW THAT CORRECTLY DESCRIBES THE INVESTOR | U.S. PERSON STATUS\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"Person\\\" and has indicated in Exhibit B that it is accurately described by one of categories 10 - 13 thereof.\",\"explanation\":\"The pointer addresses a Person who indicated in Exhibit B a certain category, and Exhibit B is for all investors to complete describing U.S. Person status. The target fits the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_af0f33de98f3cf03\",\"label\":\"Section I\",\"pointer_addresses\":\"Investor who desires to be treated as a \\\"restricted person\\\" for Rule 5130 or \\\"covered person\\\" for Rule 5131\",\"target_is_for\":\"The Investor should check each box in Part A of this Section I that is applicable to the Investor.\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"If the Investor desires to be treated as a \\\"restricted person\\\" for purposes of Rule 5130 or a \\\"covered person\\\" for purposes of Rule 5131 without further investigation, the Investor should (i) check the relevant box immediately below this General Instruction No. 1; and, if both boxes are checked, (ii) skip Sections I-IV.\",\"explanation\":\"The pointer addresses the Investor who desires restricted or covered person status and sends them to Section I, which is for the Investor to determine exempt status. The target fits the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_61c936c2efed9c78\",\"label\":\"Section I\",\"pointer_addresses\":\"Investor who did not check either box in General Instruction 1\",\"target_is_for\":\"The Investor should check each box in Part A of this Section I that is applicable to the Investor.\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"If the Investor did not check either box in General Instruction 1 above, the Investor should follow the Instructions for Sections I-IV to complete this Questionnaire.\",\"explanation\":\"The pointer addresses the Investor who did not check boxes in General Instruction 1 and sends them to Section I, which is for the Investor to determine exempt status. The target fits the pointer's audience and purpose.\",\"interpretations\":[]},{\"candidate_id\":\"r_1483b97a5902971c\",\"label\":\"Section I\",\"pointer_addresses\":\"Investor\",\"target_is_for\":\"The Investor should check each box in Part A of this Section I that is applicable to the Investor.\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"The Investor should follow the Instructions for Sections I-II to complete this Questionnaire.\",\"explanation\":\"The pointer addresses the Investor and sends them to Section I, which is for the Investor to determine exempt status. The target fits the pointer's audience and purpose.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_0c25c5626d0ef6dd",
+          "label": "Exhibit A",
+          "pointer_addresses": "Each Investor",
+          "target_is_for": "ALL INVESTORS MUST COMPLETE THIS EXHIBIT PLEASE CHECK EACH BOX BELOW THAT CORRECTLY DESCRIBES THE INVESTOR",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "3. Each Investor must complete each of Exhibits A \t6 L, as applicable.",
+          "explanation": "The pointer addresses each Investor and sends them to Exhibit A, which is titled for all investors to complete and describes investor categories. The target fits the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_f3254cf8d972635e",
+          "label": "Exhibit C",
+          "pointer_addresses": "Investor",
+          "target_is_for": "ALL INVESTORS MUST COMPLETE THIS EXHIBIT PLEASE CHECK ONE BOX IN SECTION I BELOW THAT BEST DESCRIBES THE INVESTOR, AND ONE OF THE TWO BOXES IN SECTION",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "\t6 Check one category on Exhibit C, Section I (\"Categories of Beneficial Ownership for Investment Advisers Act Reporting Purposes\") that best describes the Investor, and check one answer to the question in Section II.",
+          "explanation": "The pointer addresses the Investor and sends them to Exhibit C, which is for all investors to complete and describes beneficial ownership categories. The target fits the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_bea61503ea546fe6",
+          "label": "Exhibit K",
+          "pointer_addresses": "Investor",
+          "target_is_for": "ANTI-MONEY LAUNDERING SUPPLEMENT",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "\t6 Answer each question on Exhibit K (\"Anti-Money Laundering Supplement\") by checking each box that describes the Investor.",
+          "explanation": "The pointer addresses the Investor and sends them to Exhibit K, which is the Anti-Money Laundering Supplement. The target fits the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_51bd639b15254507",
+          "label": "Exhibit A",
+          "pointer_addresses": "Investor",
+          "target_is_for": "ALL INVESTORS MUST COMPLETE THIS EXHIBIT PLEASE CHECK EACH BOX BELOW THAT CORRECTLY DESCRIBES THE INVESTOR",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "The Investor's responses regarding certain U.S. securities law qualifications provided in Exhibits A \t6 B hereto are true and accurate.",
+          "explanation": "The pointer addresses the Investor and sends them to Exhibit A, which is for all investors to complete and describes investor categories. The target fits the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_5385f268880d0f28",
+          "label": "Exhibit H",
+          "pointer_addresses": "Investor",
+          "target_is_for": "FINANCIAL INDUSTRY REGULATORY AUTHORITY | RULE 5130 AND 5131 QUESTIONNAIRE",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "The Investor understands that failure to fully and accurately complete Exhibit H or failure to respond to a request for an update to such information may result in some or all of the Investor's Shares being treated as held by a Non-Exempt Restricted Person (as defined in Exhibit H) for purposes of Rule 5130 or by a Non-Exempt Covered Person (as defined in Exhibit H) for purposes of Rule 5131.",
+          "explanation": "The pointer addresses the Investor and sends them to Exhibit H, which is the FINRA Rule 5130 and 5131 Questionnaire. The target fits the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_d19559692527571e",
+          "label": "Exhibit B",
+          "pointer_addresses": "Person who indicated in Exhibit B that it is described by categories 10-13",
+          "target_is_for": "ALL INVESTORS MUST COMPLETE THIS EXHIBIT PLEASE CHECK EACH BOX BELOW THAT CORRECTLY DESCRIBES THE INVESTOR | U.S. PERSON STATUS",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "Person\" and has indicated in Exhibit B that it is accurately described by one of categories 10 - 13 thereof.",
+          "explanation": "The pointer addresses a Person who indicated in Exhibit B a certain category, and Exhibit B is for all investors to complete describing U.S. Person status. The target fits the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_af0f33de98f3cf03",
+          "label": "Section I",
+          "pointer_addresses": "Investor who desires to be treated as a \"restricted person\" for Rule 5130 or \"covered person\" for Rule 5131",
+          "target_is_for": "The Investor should check each box in Part A of this Section I that is applicable to the Investor.",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "If the Investor desires to be treated as a \"restricted person\" for purposes of Rule 5130 or a \"covered person\" for purposes of Rule 5131 without further investigation, the Investor should (i) check the relevant box immediately below this General Instruction No. 1; and, if both boxes are checked, (ii) skip Sections I-IV.",
+          "explanation": "The pointer addresses the Investor who desires restricted or covered person status and sends them to Section I, which is for the Investor to determine exempt status. The target fits the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_61c936c2efed9c78",
+          "label": "Section I",
+          "pointer_addresses": "Investor who did not check either box in General Instruction 1",
+          "target_is_for": "The Investor should check each box in Part A of this Section I that is applicable to the Investor.",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "If the Investor did not check either box in General Instruction 1 above, the Investor should follow the Instructions for Sections I-IV to complete this Questionnaire.",
+          "explanation": "The pointer addresses the Investor who did not check boxes in General Instruction 1 and sends them to Section I, which is for the Investor to determine exempt status. The target fits the pointer's audience and purpose.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_1483b97a5902971c",
+          "label": "Section I",
+          "pointer_addresses": "Investor",
+          "target_is_for": "The Investor should check each box in Part A of this Section I that is applicable to the Investor.",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "The Investor should follow the Instructions for Sections I-II to complete this Questionnaire.",
+          "explanation": "The pointer addresses the Investor and sends them to Section I, which is for the Investor to determine exempt status. The target fits the pointer's audience and purpose.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 3128,
+      "out": 1492
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

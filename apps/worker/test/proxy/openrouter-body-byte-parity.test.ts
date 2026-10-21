@@ -7,12 +7,13 @@ import { aiBody, bodyText, makeHarness, ocrBody, send } from '../fakes/harness';
 import { digestHex } from '../../src/upstream/openrouter';
 
 // llm-defect-detection (22-10-26): the clause-judgment digest changed ON PURPOSE (prompt bumped to
-// clause-judgment@2, review playbook added); reference-target@1 is a new task. Other digests unchanged.
+// clause-judgment@2, review playbook added); reference-target is a new task, re-pinned ON PURPOSE at
+// reference-target@2 (per-pair verdict schema, EVL cycle 1). Other digests unchanged.
 const GOLDEN: Record<string, string> = {
   'clause-judgment': '7899bfde5d0ea11d4bd9fd77da2f3fb3b82465ec711be86cc3cbc770a06db25a',
   'counsel-draft': 'b47c6cd8806113735b2d8a8e039ec16f1310e3f14efed5fa481d52b9f5d04ff0',
   'drift-narrative': '18aecd14a901e5ff28ac2661778c8672fc21523b9b2918580a2345975af554d7',
-  'reference-target': '8c6ad8e2961ad4814fa79c3946a790a81256178fe2da00722a1cb4fca569febf',
+  'reference-target': '394cf063c275d24f82aaac7f75a7874995ab7e368480b071c76efc72846d5400',
   ocr: '71d49977c940a15012c3184c191e7b9bc1cf86aceaa8d1f21729e5a66e5639d0',
 };
 

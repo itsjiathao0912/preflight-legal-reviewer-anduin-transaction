@@ -97,6 +97,19 @@ export async function interceptAi(
   return calls;
 }
 
+/**
+ * Two-pass AI lane (reference-target@2): an upload with reference pairs sends a second /api/ai
+ * call (`task: 'reference-target'`) after clause-judgment. Specs that count calls count per task.
+ */
+export const isRefTarget = (call: AiCall) => call.body.task === 'reference-target';
+export const callsOf = (calls: readonly AiCall[], task: 'clause-judgment' | 'reference-target') =>
+  calls.filter((c) => (task === 'reference-target') === isRefTarget(c));
+/** A clean reference-target answer: no mismatch found. */
+export const noRefTargetFindings = (): AiReply => ({
+  kind: 'stream',
+  body: ndjson(hb, resultFrame([])),
+});
+
 /** Fail-closed /api/ai: any call is recorded (the test asserts zero) and refused. */
 export async function forbidAi(page: Page): Promise<AiCall[]> {
   return interceptAi(page, () => ({ kind: 'http', status: 500, code: 'upstream_failed' }));

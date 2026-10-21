@@ -28,8 +28,8 @@ describe('llm task registry and wire (Phase 05 Stage 0)', () => {
     expect(TASKS['counsel-draft'].schemaVersion).toBe('counsel-draft.s1');
     expect(TASKS['drift-narrative'].promptVersion).toBe('drift-narrative@1');
     expect(TASKS['drift-narrative'].schemaVersion).toBe('drift-narrative.s1');
-    expect(TASKS['reference-target'].promptVersion).toBe('reference-target@1');
-    expect(TASKS['reference-target'].schemaVersion).toBe('reference-target.s1');
+    expect(TASKS['reference-target'].promptVersion).toBe('reference-target@2');
+    expect(TASKS['reference-target'].schemaVersion).toBe('reference-target.s2');
     expect(AI_TASK_IDS).toContain('reference-target');
     expect(taskById('reference-target')).toBe(TASKS['reference-target']);
     expect(taskById('nope')).toBeUndefined();
@@ -48,7 +48,7 @@ describe('llm task registry and wire (Phase 05 Stage 0)', () => {
     );
     expect(
       inputHash(TASKS['reference-target'].buildMessages(input, selectInjectedRules(['Rule A.']))),
-    ).toMatchInlineSnapshot(`"26ec21ff056889965ff15d061f9a7d4d3df95413dc4af268bde24002a1defa60"`);
+    ).toMatchInlineSnapshot(`"88205f083728d623212e921f5dd8667cd9c4abe8cc2e5b65e8cbbf5731e5a37d"`);
   });
 
   it('reference-target: system prompt carries the untrusted notice, playbook and pointer-only quote rule', () => {
@@ -64,6 +64,60 @@ describe('llm task registry and wire (Phase 05 Stage 0)', () => {
       }
     ).properties.findings.items.properties.issue_class.enum;
     expect(items).toEqual(['broken_cross_reference', 'broken_conditional']);
+  });
+
+  it('reference-target validate: keeps only mismatch verdicts (confidence >= 0.5) and strips label/verdict', () => {
+    const t = TASKS['reference-target'];
+    const item = (id: string, verdict: string | undefined, confidence = 0.9) => ({
+      candidate_id: id,
+      label: 'Section B',
+      pointer_addresses: 'entities',
+      target_is_for: 'individuals',
+      ...(verdict === undefined ? {} : { verdict }),
+      issue_class: 'broken_cross_reference',
+      severity: 'low',
+      confidence,
+      quote: 'q',
+      explanation: 'e',
+      interpretations: [],
+    });
+    const ids = ['c1', 'c2', 'c3', 'c4', 'c5'];
+    const v = t.validate(
+      {
+        findings: [
+          item('c1', 'mismatch'),
+          item('c2', 'match'),
+          item('c3', 'unclear'),
+          item('c4', 'mismatch', 0.3),
+          item('c5', undefined),
+        ],
+      },
+      { candidates: ids.map((id) => ({ ...input.candidates[0]!, id })) },
+    );
+    expect(v.ok).toBe(true);
+    if (!v.ok) return;
+    expect(v.result.findings.map((f) => f.candidate_id)).toEqual(['c1']);
+    expect(v.result.findings[0]).not.toHaveProperty('verdict');
+    expect(v.result.findings[0]).not.toHaveProperty('label');
+    expect(v.result.findings[0]).not.toHaveProperty('pointer_addresses');
+    expect(v.result.findings[0]).not.toHaveProperty('target_is_for');
+    expect(v.dropped).toBe(1); // only the item with no verdict
+    const req = (
+      t.modelResultSchema.schema as {
+        properties: {
+          findings: {
+            items: { required: string[]; properties: Record<string, { enum?: string[] }> };
+          };
+        };
+      }
+    ).properties.findings.items;
+    expect(req.required).toEqual(
+      expect.arrayContaining(['label', 'pointer_addresses', 'target_is_for', 'verdict']),
+    );
+    // reasoning fields come before the verdict (strict JSON schema output order)
+    const keys = Object.keys(req.properties);
+    expect(keys.indexOf('target_is_for')).toBeLessThan(keys.indexOf('verdict'));
+    expect(req.properties['verdict']!.enum).toEqual(['match', 'mismatch', 'unclear']);
   });
 
   it('AiRequestSchema defaults task to clause-judgment and rejects unknown tasks', () => {

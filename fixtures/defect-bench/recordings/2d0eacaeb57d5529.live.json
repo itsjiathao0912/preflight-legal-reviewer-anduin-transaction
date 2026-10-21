@@ -1,0 +1,141 @@
+{
+  "doc": "SL_Investment_Corp__2020_tm2032109d2_ex10-5.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@2",
+  "inputHash": "2d0eacaeb57d5529ccb05d6bc38aab1ec8821dee2ca0928dc8435af8353fb300",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "2d0eacaeb57d5529ccb05d6bc38aab1ec8821dee2ca0928dc8435af8353fb300",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_5f47f7ee1a357236\",\"label\":\"Section E\",\"pointer_addresses\":\"all subscribers completing the Subscriber Signature Page\",\"target_is_for\":\"subscribers completing the Subscriber Signature Page\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"· Complete and sign the Subscriber Signature Page (Section E)\",\"explanation\":\"The pointer addresses all subscribers who must complete the Subscriber Signature Page, and the target is a Section E headed 'Subscriber Signature Page' for subscribers, so the target fits the pointer.\",\"interpretations\":[]},{\"candidate_id\":\"r_431a33a8e6c96348\",\"label\":\"Section B\",\"pointer_addresses\":\"all subscribers to complete the Affirmative Indication of Independent Judgment\",\"target_is_for\":\"all subscribers (Subscriber Qualification)\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.9,\"quote\":\"· Complete the Affirmative Indication of Independent Judgment (Section B)\",\"explanation\":\"The pointer addresses all subscribers for the Affirmative Indication of Independent Judgment, and the target Section B is for all subscribers' qualification, so the target fits the pointer.\",\"interpretations\":[]},{\"candidate_id\":\"r_a46404f2b08782a7\",\"label\":\"Section B\",\"pointer_addresses\":\"subscribers providing information about Underlying Beneficial Owners' accredited investor status\",\"target_is_for\":\"all subscribers (Subscriber Qualification)\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"(ii) Section B of the Subscriber Questionnaire is true, complete and accurate with respect to the assets held by the Underlying Beneficial Owner(s) and to the qualification of each Underlying Beneficial Owner as an “accredited investor” as defined in Regulation D under the 1933 Act.\",\"explanation\":\"The pointer addresses subscribers confirming information in Section B about Underlying Beneficial Owners, and the target Section B is for all subscribers' qualification, so the target fits the pointer.\",\"interpretations\":[]},{\"candidate_id\":\"r_4c508c53e4a2b21d\",\"label\":\"Section B\",\"pointer_addresses\":\"Grantor/equity owner #1 completing Section B(1) of the Subscriber Questionnaire\",\"target_is_for\":\"all subscribers (Subscriber Qualification)\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"Grantor/equity owner #1, if completing Section B(1) of this “Subscriber Questionnaire” truthfully and accurately, indicate the roman numeral option you would have selected\",\"explanation\":\"The pointer addresses Grantor/equity owner #1 completing Section B(1), and the target Section B is for all subscribers' qualification, so the target fits the pointer.\",\"interpretations\":[]},{\"candidate_id\":\"r_b8c4714cc7e22089\",\"label\":\"Section B\",\"pointer_addresses\":\"Grantor/equity owner #2 completing Section B(1) of the Subscriber Questionnaire\",\"target_is_for\":\"all subscribers (Subscriber Qualification)\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"Grantor/equity owner #2, if completing Section B(1) of this “Subscriber Questionnaire” truthfully and accurately, indicate the roman numeral option you would have selected\",\"explanation\":\"The pointer addresses Grantor/equity owner #2 completing Section B(1), and the target Section B is for all subscribers' qualification, so the target fits the pointer.\",\"interpretations\":[]},{\"candidate_id\":\"r_7b55c6451df87d9f\",\"label\":\"Section B\",\"pointer_addresses\":\"Grantor/equity owner #3 completing Section B(1) of the Subscriber Questionnaire\",\"target_is_for\":\"all subscribers (Subscriber Qualification)\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"Grantor/equity owner #3, if completing Section B(1) of this “Subscriber Questionnaire” truthfully and accurately, indicate the roman numeral option you would have selected\",\"explanation\":\"The pointer addresses Grantor/equity owner #3 completing Section B(1), and the target Section B is for all subscribers' qualification, so the target fits the pointer.\",\"interpretations\":[]},{\"candidate_id\":\"r_d228ed92b1870920\",\"label\":\"Section C\",\"pointer_addresses\":\"subscribers answering Question 4(b)(2) 'Yes' and needing to complete Section C and Additional Representation for IRA\",\"target_is_for\":\"individuals (natural persons only)\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"If the answer to Question 4(b)(2) is “Yes”, the Subscriber MUST complete Section C of the Subscriber Questionnaire and the Additional Representation with Respect to Investment for an IRA on the Subscriber Signature Page.\",\"explanation\":\"The pointer addresses subscribers who must complete Section C if they answer 'Yes' to a question, and the target Section C is for individuals (natural persons only), fitting the pointer's audience.\",\"interpretations\":[]},{\"candidate_id\":\"r_fd201696b1006819\",\"label\":\"Section B\",\"pointer_addresses\":\"Nonprofit and Pooled Investment Vehicles legal entity customers skipping to Section B (Key Controller)\",\"target_is_for\":\"legal entities (Key Controller)\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"For Nonprofit and Pooled Investment Vehicles legal entity customers, please skip to Section B (Key Controller) below.\",\"explanation\":\"The pointer addresses legal entity customers skipping to Section B (Key Controller), and the target Section B is for legal entities' Key Controller information, so the target fits the pointer.\",\"interpretations\":[]},{\"candidate_id\":\"r_c6e825c72bd31dcb\",\"label\":\"Section B\",\"pointer_addresses\":\"legal entities checking Beneficial Owner Not Applicable and skipping to Section B (Key Controller)\",\"target_is_for\":\"legal entities (Key Controller)\",\"verdict\":\"match\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"low\",\"confidence\":0.95,\"quote\":\"☐ Beneficial Owner Not Applicable (Check this box and skip to Section B (Key Controller) if there is no individual that meets the definition of a Beneficial Owner stated above.)\",\"explanation\":\"The pointer addresses legal entities skipping to Section B (Key Controller) if no Beneficial Owner applies, and the target Section B is for legal entities' Key Controller, so the target fits the pointer.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_5f47f7ee1a357236",
+          "label": "Section E",
+          "pointer_addresses": "all subscribers completing the Subscriber Signature Page",
+          "target_is_for": "subscribers completing the Subscriber Signature Page",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "· Complete and sign the Subscriber Signature Page (Section E)",
+          "explanation": "The pointer addresses all subscribers who must complete the Subscriber Signature Page, and the target is a Section E headed 'Subscriber Signature Page' for subscribers, so the target fits the pointer.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_431a33a8e6c96348",
+          "label": "Section B",
+          "pointer_addresses": "all subscribers to complete the Affirmative Indication of Independent Judgment",
+          "target_is_for": "all subscribers (Subscriber Qualification)",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.9,
+          "quote": "· Complete the Affirmative Indication of Independent Judgment (Section B)",
+          "explanation": "The pointer addresses all subscribers for the Affirmative Indication of Independent Judgment, and the target Section B is for all subscribers' qualification, so the target fits the pointer.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_a46404f2b08782a7",
+          "label": "Section B",
+          "pointer_addresses": "subscribers providing information about Underlying Beneficial Owners' accredited investor status",
+          "target_is_for": "all subscribers (Subscriber Qualification)",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "(ii) Section B of the Subscriber Questionnaire is true, complete and accurate with respect to the assets held by the Underlying Beneficial Owner(s) and to the qualification of each Underlying Beneficial Owner as an “accredited investor” as defined in Regulation D under the 1933 Act.",
+          "explanation": "The pointer addresses subscribers confirming information in Section B about Underlying Beneficial Owners, and the target Section B is for all subscribers' qualification, so the target fits the pointer.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_4c508c53e4a2b21d",
+          "label": "Section B",
+          "pointer_addresses": "Grantor/equity owner #1 completing Section B(1) of the Subscriber Questionnaire",
+          "target_is_for": "all subscribers (Subscriber Qualification)",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "Grantor/equity owner #1, if completing Section B(1) of this “Subscriber Questionnaire” truthfully and accurately, indicate the roman numeral option you would have selected",
+          "explanation": "The pointer addresses Grantor/equity owner #1 completing Section B(1), and the target Section B is for all subscribers' qualification, so the target fits the pointer.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_b8c4714cc7e22089",
+          "label": "Section B",
+          "pointer_addresses": "Grantor/equity owner #2 completing Section B(1) of the Subscriber Questionnaire",
+          "target_is_for": "all subscribers (Subscriber Qualification)",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "Grantor/equity owner #2, if completing Section B(1) of this “Subscriber Questionnaire” truthfully and accurately, indicate the roman numeral option you would have selected",
+          "explanation": "The pointer addresses Grantor/equity owner #2 completing Section B(1), and the target Section B is for all subscribers' qualification, so the target fits the pointer.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_7b55c6451df87d9f",
+          "label": "Section B",
+          "pointer_addresses": "Grantor/equity owner #3 completing Section B(1) of the Subscriber Questionnaire",
+          "target_is_for": "all subscribers (Subscriber Qualification)",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "Grantor/equity owner #3, if completing Section B(1) of this “Subscriber Questionnaire” truthfully and accurately, indicate the roman numeral option you would have selected",
+          "explanation": "The pointer addresses Grantor/equity owner #3 completing Section B(1), and the target Section B is for all subscribers' qualification, so the target fits the pointer.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_d228ed92b1870920",
+          "label": "Section C",
+          "pointer_addresses": "subscribers answering Question 4(b)(2) 'Yes' and needing to complete Section C and Additional Representation for IRA",
+          "target_is_for": "individuals (natural persons only)",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "If the answer to Question 4(b)(2) is “Yes”, the Subscriber MUST complete Section C of the Subscriber Questionnaire and the Additional Representation with Respect to Investment for an IRA on the Subscriber Signature Page.",
+          "explanation": "The pointer addresses subscribers who must complete Section C if they answer 'Yes' to a question, and the target Section C is for individuals (natural persons only), fitting the pointer's audience.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_fd201696b1006819",
+          "label": "Section B",
+          "pointer_addresses": "Nonprofit and Pooled Investment Vehicles legal entity customers skipping to Section B (Key Controller)",
+          "target_is_for": "legal entities (Key Controller)",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "For Nonprofit and Pooled Investment Vehicles legal entity customers, please skip to Section B (Key Controller) below.",
+          "explanation": "The pointer addresses legal entity customers skipping to Section B (Key Controller), and the target Section B is for legal entities' Key Controller information, so the target fits the pointer.",
+          "interpretations": []
+        },
+        {
+          "candidate_id": "r_c6e825c72bd31dcb",
+          "label": "Section B",
+          "pointer_addresses": "legal entities checking Beneficial Owner Not Applicable and skipping to Section B (Key Controller)",
+          "target_is_for": "legal entities (Key Controller)",
+          "verdict": "match",
+          "issue_class": "broken_cross_reference",
+          "severity": "low",
+          "confidence": 0.95,
+          "quote": "☐ Beneficial Owner Not Applicable (Check this box and skip to Section B (Key Controller) if there is no individual that meets the definition of a Beneficial Owner stated above.)",
+          "explanation": "The pointer addresses legal entities skipping to Section B (Key Controller) if no Beneficial Owner applies, and the target Section B is for legal entities' Key Controller, so the target fits the pointer.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 2915,
+      "out": 1379
+    },
+    "recordedAt": "2026-10-21"
+  }
+}
