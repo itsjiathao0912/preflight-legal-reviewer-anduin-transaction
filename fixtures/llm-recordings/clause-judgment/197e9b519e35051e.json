@@ -1,10 +1,10 @@
 {
   "case": "hostile-extra-keys",
   "taskId": "clause-judgment",
-  "promptVersion": "clause-judgment@1",
-  "inputHash": "71d8dabe64fc9f40cfaa3abd791015ffca8c3ff35e00b33eaad850c158fa4a76",
+  "promptVersion": "clause-judgment@2",
+  "inputHash": "197e9b519e35051e1346b01a7422af34202ded86ba519e0aeee348b655adefe7",
   "model": "nvidia/nemotron-3-super-120b-a12b:free",
-  "messagesDigest": "71d8dabe64fc9f40cfaa3abd791015ffca8c3ff35e00b33eaad850c158fa4a76",
+  "messagesDigest": "197e9b519e35051e1346b01a7422af34202ded86ba519e0aeee348b655adefe7",
   "request": {
     "task": "clause-judgment",
     "sample": "01",

@@ -1,0 +1,46 @@
+{
+  "doc": "Keystone_Private_Income_Fund_2020_fp0050233_ex99252p.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@1",
+  "inputHash": "c6ef4b55623ff6fe8e3d69ba3c229afef0299363f981fb1fe3d4c3c7c73f7cf6",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "c6ef4b55623ff6fe8e3d69ba3c229afef0299363f981fb1fe3d4c3c7c73f7cf6",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_4a09bbf6f40a0da2\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.9,\"quote\":\"The address set forth in Part A of this subscription booklet is the Investor’s true and correct residence, if an individual, or principal place of business, if an entity.\",\"explanation\":\"The pointer sends the reader to 'Part A: General Information & SUBSTITUTE W-9 FORM | FOR INDIVIDUAL INVESTORS', which is clearly intended for individual investors only. However, the pointer text indicates it applies to both individuals and entities, creating a mismatch between the pointer and the target section's investor type.\",\"interpretations\":[\"The pointer incorrectly directs to an individual-only section when it should cover entities as well.\"]},{\"candidate_id\":\"r_5593f64afe6ab6fb\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.9,\"quote\":\"All notices or other communications given or made hereunder shall be in writing and shall be deemed effectively given upon personal delivery or upon deposit in any United States mail box, postage prepaid, deposit with an overnight courier, or transmission by facsimile or electronic mail to the Investor at the address set forth in Part A of this subscription booklet and to the Fund at c/o UMB Fund Services, 235 W.\",\"explanation\":\"The pointer sends the reader to 'Part A: General Information & SUBSTITUTE W-9 FORM | FOR INDIVIDUAL INVESTORS', which is intended for individual investors only. The pointer text refers to the Investor's address for both individuals and entities, so directing to an individual-only section is incorrect.\",\"interpretations\":[\"The pointer incorrectly directs to an individual-only section when it should cover entities as well.\"]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_4a09bbf6f40a0da2",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.9,
+          "quote": "The address set forth in Part A of this subscription booklet is the Investor’s true and correct residence, if an individual, or principal place of business, if an entity.",
+          "explanation": "The pointer sends the reader to 'Part A: General Information & SUBSTITUTE W-9 FORM | FOR INDIVIDUAL INVESTORS', which is clearly intended for individual investors only. However, the pointer text indicates it applies to both individuals and entities, creating a mismatch between the pointer and the target section's investor type.",
+          "interpretations": [
+            "The pointer incorrectly directs to an individual-only section when it should cover entities as well."
+          ]
+        },
+        {
+          "candidate_id": "r_5593f64afe6ab6fb",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.9,
+          "quote": "All notices or other communications given or made hereunder shall be in writing and shall be deemed effectively given upon personal delivery or upon deposit in any United States mail box, postage prepaid, deposit with an overnight courier, or transmission by facsimile or electronic mail to the Investor at the address set forth in Part A of this subscription booklet and to the Fund at c/o UMB Fund Services, 235 W.",
+          "explanation": "The pointer sends the reader to 'Part A: General Information & SUBSTITUTE W-9 FORM | FOR INDIVIDUAL INVESTORS', which is intended for individual investors only. The pointer text refers to the Investor's address for both individuals and entities, so directing to an individual-only section is incorrect.",
+          "interpretations": [
+            "The pointer incorrectly directs to an individual-only section when it should cover entities as well."
+          ]
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 1770,
+      "out": 367
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

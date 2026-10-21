@@ -1,0 +1,35 @@
+{
+  "doc": "Third_Point_Private_Capital__2026_tm2626107d1_ex10-6.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@1",
+  "inputHash": "2b1319be2b95f6bbfcd30cbdc8716b981f65068d56f8ee05918e88e59cd4f362",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "2b1319be2b95f6bbfcd30cbdc8716b981f65068d56f8ee05918e88e59cd4f362",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_73901f8b235517b7\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.9,\"quote\":\"☐ Answer each question on Exhibit K (“Anti-Money Laundering Supplement”) by checking each box that describes the Investor.\",\"explanation\":\"The pointer sends the reader to Exhibit K, which is titled 'Proprietary, Trade Secret and Confidential | ANTI-MONEY LAUNDERING SUPPLEMENT' and contains content about wiring bank details, which is unrelated to answering questions about the Anti-Money Laundering Supplement as described in the pointer. This indicates the pointer leads to unrelated content.\",\"interpretations\":[\"The pointer names Exhibit K as the destination for answering AML questions, but the target content is about wiring bank details, suggesting a mismatch in content.\"]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_73901f8b235517b7",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.9,
+          "quote": "☐ Answer each question on Exhibit K (“Anti-Money Laundering Supplement”) by checking each box that describes the Investor.",
+          "explanation": "The pointer sends the reader to Exhibit K, which is titled 'Proprietary, Trade Secret and Confidential | ANTI-MONEY LAUNDERING SUPPLEMENT' and contains content about wiring bank details, which is unrelated to answering questions about the Anti-Money Laundering Supplement as described in the pointer. This indicates the pointer leads to unrelated content.",
+          "interpretations": [
+            "The pointer names Exhibit K as the destination for answering AML questions, but the target content is about wiring bank details, suggesting a mismatch in content."
+          ]
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 3108,
+      "out": 173
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "doc": "Keystone_Private_Income_Fund_2020_fp0050233_ex99252p.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@1",
+  "inputHash": "c6ef4b55623ff6fe8e3d69ba3c229afef0299363f981fb1fe3d4c3c7c73f7cf6",
+  "model": "authored",
+  "messagesDigest": "c6ef4b55623ff6fe8e3d69ba3c229afef0299363f981fb1fe3d4c3c7c73f7cf6",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_7b12a627cbcd39fd\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.8,\"quote\":\"provided in Part C of the Suitability Statement\",\"explanation\":\"Authored bench answer for E3: No Part C of the Suitability Statement; statements are in Part D, Part C is the agreement.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_7b12a627cbcd39fd",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.8,
+          "quote": "provided in Part C of the Suitability Statement",
+          "explanation": "Authored bench answer for E3: No Part C of the Suitability Statement; statements are in Part D, Part C is the agreement.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "authored",
+    "served_model": "authored",
+    "recordedAt": "2026-10-22"
+  }
+}

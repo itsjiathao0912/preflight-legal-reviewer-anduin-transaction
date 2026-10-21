@@ -1,10 +1,10 @@
 {
   "case": "hostile-prose-around-json",
   "taskId": "clause-judgment",
-  "promptVersion": "clause-judgment@1",
-  "inputHash": "ea32e6ea25cb04ccfbe95e6f2c4539cc073884c3e3d2ef02c0e0c005d7b27d3a",
+  "promptVersion": "clause-judgment@2",
+  "inputHash": "85b289944d01bda7acde77f100f0c11a2c9577b9dbd1c4251cf6d67ca8f18f4e",
   "model": "nvidia/nemotron-3-super-120b-a12b:free",
-  "messagesDigest": "ea32e6ea25cb04ccfbe95e6f2c4539cc073884c3e3d2ef02c0e0c005d7b27d3a",
+  "messagesDigest": "85b289944d01bda7acde77f100f0c11a2c9577b9dbd1c4251cf6d67ca8f18f4e",
   "request": {
     "task": "clause-judgment",
     "sample": "01",

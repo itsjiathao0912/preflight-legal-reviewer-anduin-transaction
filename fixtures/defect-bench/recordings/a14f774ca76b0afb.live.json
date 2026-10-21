@@ -1,0 +1,36 @@
+{
+  "doc": "03-partners-group-pe-master-2019.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@1",
+  "inputHash": "a14f774ca76b0afb8bc58a649de2ebe35aad88b97327021bf888aa343c9434f2",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "a14f774ca76b0afb8bc58a649de2ebe35aad88b97327021bf888aa343c9434f2",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_693ee525216ba30a\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"medium\",\"confidence\":0.9,\"quote\":\"☐ Yes ☐ No (please complete Part B below)\",\"explanation\":\"The pointer asks to complete Part B below, but the target Part B is 'Joint owner’s information', which may not be appropriate if the investor is not a joint owner, indicating a possible wrong-target pointer.\",\"interpretations\":[\"The pointer may incorrectly direct to joint owner information even when not applicable.\",\"Part B might be intended for a different investor type or context.\"]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_693ee525216ba30a",
+          "issue_class": "broken_cross_reference",
+          "severity": "medium",
+          "confidence": 0.9,
+          "quote": "☐ Yes ☐ No (please complete Part B below)",
+          "explanation": "The pointer asks to complete Part B below, but the target Part B is 'Joint owner’s information', which may not be appropriate if the investor is not a joint owner, indicating a possible wrong-target pointer.",
+          "interpretations": [
+            "The pointer may incorrectly direct to joint owner information even when not applicable.",
+            "Part B might be intended for a different investor type or context."
+          ]
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 1966,
+      "out": 129
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

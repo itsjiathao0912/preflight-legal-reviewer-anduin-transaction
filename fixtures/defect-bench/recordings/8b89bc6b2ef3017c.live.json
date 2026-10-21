@@ -1,0 +1,36 @@
+{
+  "doc": "Third_Point_Private_Capital__2025_tm2512133d1_ex10-7.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@1",
+  "inputHash": "8b89bc6b2ef3017cab21ba2f92143b40720f3404be084e078a2f64418f70183c",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "8b89bc6b2ef3017cab21ba2f92143b40720f3404be084e078a2f64418f70183c",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_7dffb569ac11e853\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"medium\",\"confidence\":0.9,\"quote\":\"3. Each Investor must complete each of Exhibits A \\u00096 L, as applicable.\",\"explanation\":\"The pointer instructs all investors to complete Exhibits A to L as applicable, but the target Exhibit A is specifically for \\\"ALL INVESTORS MUST COMPLETE THIS EXHIBIT PLEASE CHECK EACH BOX BELOW THAT CORRECTLY DESCRIBES THE INVESTOR | ACCREDITED INVESTOR STATUS\\\" which may not be applicable to all investor types, indicating a potential mismatch in applicability.\",\"interpretations\":[\"The pointer may be overbroad in instructing all investors to complete all exhibits without distinguishing applicability.\",\"Exhibit A focuses on Accredited Investor Status, which may not apply to every investor.\"]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_7dffb569ac11e853",
+          "issue_class": "broken_cross_reference",
+          "severity": "medium",
+          "confidence": 0.9,
+          "quote": "3. Each Investor must complete each of Exhibits A \t6 L, as applicable.",
+          "explanation": "The pointer instructs all investors to complete Exhibits A to L as applicable, but the target Exhibit A is specifically for \"ALL INVESTORS MUST COMPLETE THIS EXHIBIT PLEASE CHECK EACH BOX BELOW THAT CORRECTLY DESCRIBES THE INVESTOR | ACCREDITED INVESTOR STATUS\" which may not be applicable to all investor types, indicating a potential mismatch in applicability.",
+          "interpretations": [
+            "The pointer may be overbroad in instructing all investors to complete all exhibits without distinguishing applicability.",
+            "Exhibit A focuses on Accredited Investor Status, which may not apply to every investor."
+          ]
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 3112,
+      "out": 180
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

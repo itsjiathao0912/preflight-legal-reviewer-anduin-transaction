@@ -1,0 +1,29 @@
+{
+  "doc": "Onex_Falcon_Direct_Lending_B_2021_d146040dex41.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@1",
+  "inputHash": "1abf459aa6c13c7484cba6b40eb9eb399f5a7b88066c53da604cdfd8eac5d6ff",
+  "model": "authored",
+  "messagesDigest": "1abf459aa6c13c7484cba6b40eb9eb399f5a7b88066c53da604cdfd8eac5d6ff",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_7c698661bb91f9a4\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.8,\"quote\":\"natural person should respond to Section E\",\"explanation\":\"Authored bench answer for E1: Section E is the entity-only supplement; directions were not re-lettered after sections were inserted.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_7c698661bb91f9a4",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.8,
+          "quote": "natural person should respond to Section E",
+          "explanation": "Authored bench answer for E1: Section E is the entity-only supplement; directions were not re-lettered after sections were inserted.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "authored",
+    "served_model": "authored",
+    "recordedAt": "2026-10-22"
+  }
+}

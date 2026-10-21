@@ -1,10 +1,10 @@
 {
   "case": "firm-rules-in-context-03",
   "taskId": "clause-judgment",
-  "promptVersion": "clause-judgment@1",
-  "inputHash": "0edd5268e2aa508a0f8c1ad87ee060c73ace3596b83eea70f37ebb95aff136a5",
+  "promptVersion": "clause-judgment@2",
+  "inputHash": "e3dc61569285a70bd42f746252a6fc1a9948b7b73494fb45674557f2a69331af",
   "model": "nvidia/nemotron-3-super-120b-a12b:free",
-  "messagesDigest": "0edd5268e2aa508a0f8c1ad87ee060c73ace3596b83eea70f37ebb95aff136a5",
+  "messagesDigest": "e3dc61569285a70bd42f746252a6fc1a9948b7b73494fb45674557f2a69331af",
   "request": {
     "task": "clause-judgment",
     "sample": "03",

@@ -1,0 +1,33 @@
+{
+  "doc": "10-crowdstreet-reit-i-2022.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@1",
+  "inputHash": "8cc8a352473d1ba3a3e980ee0d8f98b1c313f66a9a748dac30acbc81046053cd",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "messagesDigest": "8cc8a352473d1ba3a3e980ee0d8f98b1c313f66a9a748dac30acbc81046053cd",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_fde07dc9f127e718\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"medium\",\"confidence\":0.9,\"quote\":\"Note: See Appendix A for additional information regarding the terms applicable to Qualified Purchasers.\",\"explanation\":\"The pointer directs the reader to Appendix A for terms applicable to Qualified Purchasers, but Appendix A is titled 'Definition and Methodology for Valuation of Investments for Qualified Purchasers' which suggests it contains valuation methodology rather than general terms applicable to Qualified Purchasers. This mismatch indicates the pointer may lead to unrelated content or content not fully aligned with the pointer's intent.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_fde07dc9f127e718",
+          "issue_class": "broken_cross_reference",
+          "severity": "medium",
+          "confidence": 0.9,
+          "quote": "Note: See Appendix A for additional information regarding the terms applicable to Qualified Purchasers.",
+          "explanation": "The pointer directs the reader to Appendix A for terms applicable to Qualified Purchasers, but Appendix A is titled 'Definition and Methodology for Valuation of Investments for Qualified Purchasers' which suggests it contains valuation methodology rather than general terms applicable to Qualified Purchasers. This mismatch indicates the pointer may lead to unrelated content or content not fully aligned with the pointer's intent.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "live",
+    "served_model": "gpt-4.1-mini-2025-04-14",
+    "tokens": {
+      "in": 1298,
+      "out": 136
+    },
+    "recordedAt": "2026-10-21"
+  }
+}

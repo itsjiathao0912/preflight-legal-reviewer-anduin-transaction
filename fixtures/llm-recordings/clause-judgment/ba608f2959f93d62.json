@@ -1,10 +1,10 @@
 {
   "case": "hostile-oversized-quote",
   "taskId": "clause-judgment",
-  "promptVersion": "clause-judgment@1",
-  "inputHash": "e03165c146a430c9dd82d61122e84ed63b384170e58ef88ff68b62827f0d0583",
+  "promptVersion": "clause-judgment@2",
+  "inputHash": "ba608f2959f93d62820d1426022ce65bcf2fd7c0896c37d1584c31f0835cb89f",
   "model": "nvidia/nemotron-3-super-120b-a12b:free",
-  "messagesDigest": "e03165c146a430c9dd82d61122e84ed63b384170e58ef88ff68b62827f0d0583",
+  "messagesDigest": "ba608f2959f93d62820d1426022ce65bcf2fd7c0896c37d1584c31f0835cb89f",
   "request": {
     "task": "clause-judgment",
     "sample": "01",

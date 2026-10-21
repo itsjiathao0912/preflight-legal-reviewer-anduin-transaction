@@ -1,0 +1,29 @@
+{
+  "doc": "LAGO_Evergreen_Credit_2026_ck0002043759-ex4_1.htm",
+  "taskId": "reference-target",
+  "promptVersion": "reference-target@1",
+  "inputHash": "ff0762476a5394f39e6d5c2ef5d8c48e8eb8d9c4f086691421871133001b2486",
+  "model": "authored",
+  "messagesDigest": "ff0762476a5394f39e6d5c2ef5d8c48e8eb8d9c4f086691421871133001b2486",
+  "response": {
+    "raw": "{\"findings\":[{\"candidate_id\":\"r_958290ddc4d242d4\",\"issue_class\":\"broken_cross_reference\",\"severity\":\"high\",\"confidence\":0.8,\"quote\":\"all other Investors should proceed to Section H\",\"explanation\":\"Authored bench answer for E2: Section H is plan-only; the correct target is Section I.\",\"interpretations\":[]}]}",
+    "parsed": {
+      "findings": [
+        {
+          "candidate_id": "r_958290ddc4d242d4",
+          "issue_class": "broken_cross_reference",
+          "severity": "high",
+          "confidence": 0.8,
+          "quote": "all other Investors should proceed to Section H",
+          "explanation": "Authored bench answer for E2: Section H is plan-only; the correct target is Section I.",
+          "interpretations": []
+        }
+      ]
+    }
+  },
+  "meta": {
+    "source": "authored",
+    "served_model": "authored",
+    "recordedAt": "2026-10-22"
+  }
+}
