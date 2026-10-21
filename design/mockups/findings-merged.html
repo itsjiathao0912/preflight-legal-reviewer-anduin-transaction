@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Findings merged</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+:root{--ground:#e9ece9;--panel:#f4f6f3;--card:#fbfcfa;--paper:#fdfefd;--ink:#15181b;--ink-2:#434a50;--ink-3:#5c646b;--accent:#1d5c57;--accent-tint:#d9e8e5;--step:#dde2dd;--block-fg:#8a1c1c;--block-bg:#f7e2df;--fix-fg:#734400;--fix-bg:#f5e8c8;--note-fg:#38454f;--note-bg:#dfe6ea;--ok-fg:#1b5632;--ok-bg:#daeedf;--mark:#f3d676;--r:4px;--sans:'Geist',system-ui,sans-serif;--serif:'Newsreader',Georgia,serif}
+*{box-sizing:border-box;margin:0}
+body{background:var(--ground);color:var(--ink);font:13.5px/1.45 var(--sans)}
+.note{max-width:1400px;margin:12px auto 0;padding:8px 14px;border-radius:var(--r);background:var(--fix-bg);color:var(--fix-fg);font-size:13px}
+.app{max-width:1400px;margin:10px auto 30px;display:grid;grid-template-columns:200px 1fr;background:var(--panel);border-radius:8px;overflow:hidden;min-height:760px}
+nav{background:var(--ground);padding:16px 10px;font-size:13.5px}
+nav .brand{font:500 20px var(--serif);margin:0 6px 14px}
+nav .grp{color:var(--ink-3);font-size:12px;font-weight:600;margin:14px 6px 4px}
+nav a{display:flex;justify-content:space-between;padding:7px 8px;border-radius:var(--r);color:var(--ink-2);text-decoration:none}
+nav a.on{background:var(--card);color:var(--ink);box-shadow:inset 3px 0 0 var(--accent)}
+nav a s{color:#9aa19c}
+nav .gate{margin-top:30px;padding:9px 10px;border-radius:var(--r);background:var(--block-bg);color:var(--block-fg);font-weight:600}
+main{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.head{display:flex;align-items:baseline;gap:12px}
+.head h1{font:500 26px var(--serif)}
+.head span{color:var(--ink-3)}
+.work{display:grid;grid-template-columns:minmax(0,1fr) 520px;gap:14px;flex:1}
+.doc{background:var(--paper);border-radius:6px;padding:22px 26px;font:15px/1.6 var(--serif);color:var(--ink-2)}
+.doc h3{font:500 15px var(--serif);color:var(--ink);margin:14px 0 4px}
+.doc mark{background:var(--mark);padding:0 2px}
+.side{background:var(--card);border-radius:6px;padding:12px 14px;display:flex;flex-direction:column}
+.views{display:flex;gap:2px;background:var(--step);padding:3px;border-radius:6px;align-self:flex-start}
+.views button{all:unset;cursor:pointer;padding:5px 12px;border-radius:var(--r);font-weight:500;color:var(--ink-2)}
+.views button.on{background:var(--card);color:var(--ink)}
+.views b{color:var(--ink-3);font-weight:500;margin-left:4px}
+.hint{color:var(--ink-3);font-size:12.5px;margin:8px 0 10px}
+.row{display:grid;grid-template-columns:18px 1fr auto;gap:8px;align-items:start;padding:8px 4px;border-top:1px solid var(--step);cursor:pointer}
+.row:hover{background:var(--panel)}
+.sev{width:10px;height:10px;border-radius:50%;margin-top:5px}
+.b .sev{background:var(--block-fg)}.f .sev{background:#b98422}.n .sev{background:#8a979f}
+.row small{color:var(--ink-3)}
+.chip{font-size:11.5px;font-weight:600;padding:2px 7px;border-radius:3px;background:var(--step);color:var(--ink-2);white-space:nowrap}
+.chip.c{background:var(--accent-tint);color:var(--accent)}
+.grouph{font-size:12px;font-weight:600;color:var(--ink-3);margin:10px 0 2px}
+.open{background:var(--panel);border-radius:6px;padding:10px 12px;margin:4px 0 8px}
+.open q{font-family:var(--serif);quotes:none;display:block;border-left:2px solid var(--step);padding-left:10px;margin:6px 0;color:var(--ink)}
+.acts{display:flex;gap:8px;margin-top:8px}
+.btn{font:500 13px var(--sans);border:0;border-radius:var(--r);padding:7px 12px;cursor:pointer;background:var(--step);color:var(--ink)}
+.btn.pri{background:var(--ink);color:#fbfcfa}
+.types{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.types button{all:unset;cursor:pointer;font-size:12.5px;padding:4px 9px;border-radius:var(--r);background:var(--panel);border:1px solid var(--step)}
+.types button.on{border-color:var(--accent);color:var(--accent);font-weight:600}
+.types button.stuck{color:var(--block-fg)}
+.step{display:grid;grid-template-columns:26px 1fr;gap:10px;position:relative;padding-bottom:10px}
+.step::before{content:"";position:absolute;left:12px;top:22px;bottom:0;width:2px;background:var(--step)}
+.step:last-child::before{display:none}
+.dot{width:26px;height:26px;border-radius:50%;background:var(--accent-tint);color:var(--accent);display:grid;place-items:center;font-weight:600;font-size:11.5px}
+.step.bad .dot{background:var(--block-bg);color:var(--block-fg)}
+.step.warn .dot{background:var(--fix-bg);color:var(--fix-fg)}
+.q{margin-top:4px;font-size:12.5px;color:var(--ink-2)}
+.issue{margin-top:5px;font-size:12.5px;padding:6px 9px;border-radius:5px;background:var(--block-bg);color:var(--block-fg);cursor:pointer}
+.issue.w{background:var(--fix-bg);color:var(--fix-fg)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+td,th{text-align:left;padding:7px 6px;border-top:1px solid var(--step)}
+th{color:var(--ink-3);font-weight:500;border-top:0}
+.tag{font-size:11.5px;font-weight:600;padding:2px 7px;border-radius:3px}
+.miss{background:var(--block-bg);color:var(--block-fg)}.ok{background:var(--ok-bg);color:var(--ok-fg)}
+.lnk{color:var(--accent);font-weight:500;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.bar{margin-top:auto;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:12px}
+.bar .btn{padding:10px}
+[hidden]{display:none!important}
+</style></head><body>
+<div class="note"><b>Mockup · Findings with Document map folded in.</b> Same page, same document on the left. The right panel has three views of the same findings: <b>Issues</b> (today’s list), <b>Form flow</b> (the form per investor type) and <b>Sources</b> (terms and other documents). Click the tabs.</div>
+<div class="app">
+<nav>
+<div class="brand">Preflight</div>
+<div class="grp">Review</div>
+<a class="on">Findings <span>16</span></a>
+<a>Questions <span>9</span></a>
+<div class="grp">Check</div>
+<a><s>Document map</s> <span style="color:var(--ink-3)">gone</span></a>
+<a>Compare versions</a>
+<div class="grp">Firm</div>
+<a>Firm memory</a><a>Documents</a>
+<div class="gate">Blocked · 9</div>
+</nav>
+<main>
+<div class="head"><h1>Findings</h1><span>01-NG3 Subscription Agreement · vs Fund II</span></div>
+<div class="work">
+<div class="doc">
+<h3>9. ERISA and Benefit Plan Investors</h3>
+<p>9.1 Benefit Plan Status. <mark>If the Investor is a Benefit Plan Investor, please complete Annex F.</mark> The additional representations that a Benefit Plan Investor must make are set out in Annex F (ERISA Representations).</p>
+<h3>10. Representations, Warranties and Covenants</h3>
+<p>The Investor represents that the information provided in this Agreement is true and complete…</p>
+</div>
+
+<div class="side">
+<div class="views" role="tablist">
+<button class="on" data-v="list">Issues<b>16</b></button>
+<button data-v="flow">Form flow<b>3 breaks</b></button>
+<button data-v="src">Sources<b>9 missing</b></button>
+</div>
+
+<section data-p="list">
+<p class="hint">Every problem and change, most serious first.</p>
+<div class="grouph">To review · 5</div>
+<div class="row b"><span class="sev"></span><div>Annex F does not exist <br><small>Section 9 · broken branch</small></div><span class="chip">Blocks</span></div>
+<div class="open"><q>If the Investor is a Benefit Plan Investor, please complete Annex F.</q><small style="color:var(--ink-3)">Benefit Plan Investors cannot finish the form. <span class="lnk" data-go="flow">See in form flow</span></small>
+<div class="acts"><button class="btn pri">Ask counsel</button><button class="btn">Close issue</button></div></div>
+<div class="row f"><span class="sev"></span><div>“Units” is never defined <br><small>Section 2 · defined in the LPA</small></div><span class="chip">Fix</span></div>
+<div class="row n"><span class="sev"></span><div>Placeholder [insert Final Closing Date] <br><small>Section 2</small></div><span class="chip">Note</span></div>
+<div class="grouph">Changes vs Fund II · 9</div>
+<div class="row f"><span class="sev"></span><div>Section 4 adds “formed or organized outside the United States” <br><small>US entities lose a question</small></div><span class="chip c">GP + Counsel</span></div>
+<div class="row f"><span class="sev"></span><div>New Section 7A Source of Funds Verification <br><small>New question above $1,000,000</small></div><span class="chip c">Fund admin</span></div>
+</section>
+
+<section data-p="flow" hidden>
+<p class="hint">The form this agreement turns into. Pick an investor type to walk its path.</p>
+<div class="types"><button>Natural person ✓</button><button>Corporation ✓</button><button>LLC ✓</button><button>Trust ✓</button><button class="on stuck">Benefit Plan ✕</button><button>Other ✓</button></div>
+<div class="step warn"><div class="dot">1</div><div><b>Subscription for Interests</b><div class="issue w">“Part B of Section 6” points to the wrong part · Fix</div></div></div>
+<div class="step"><div class="dot">4</div><div><b>Investor Information</b><div class="q">Question: Jurisdiction · one answer · 9 options</div></div></div>
+<div class="step"><div class="dot">6</div><div><b>Investor Classification</b><div class="q">Question: Investor type · one answer → <b>Benefit Plan Investor</b></div><div class="q">Question: Tax status · one answer</div></div></div>
+<div class="step bad"><div class="dot">9</div><div><b>ERISA and Benefit Plan Investors</b><div class="issue">Branch to Annex F goes nowhere · Blocks · <span class="lnk" style="color:inherit">Open finding</span></div></div></div>
+<div class="step bad"><div class="dot">✕</div><div><b style="color:var(--ink-3)">Signature not reached</b></div></div>
+</section>
+
+<section data-p="src" hidden>
+<p class="hint">Terms and other documents the agreement relies on.</p>
+<table><tr><th>Item</th><th>Kind</th><th>Status</th><th></th></tr>
+<tr><td>Annex F</td><td>Annex</td><td><span class="tag miss">Missing</span></td><td><span class="lnk">Open finding</span></td></tr>
+<tr><td>Units</td><td>Term</td><td><span class="tag miss">Not defined</span></td><td><span class="lnk">Open finding</span></td></tr>
+<tr><td>Side letter</td><td>Document</td><td><span class="tag miss">Missing</span></td><td><span class="lnk">GP request</span></td></tr>
+<tr><td>Forms W-9, W-8 (5)</td><td>Tax forms</td><td><span class="tag miss">Missing</span></td><td><span class="lnk">GP request</span></td></tr>
+<tr><td>PPM</td><td>Document</td><td><span class="tag ok">Found</span></td><td><span class="lnk">Open in PPM</span></td></tr>
+<tr><td>Capital Commitment</td><td>Term · LPA</td><td><span class="tag ok">Defined</span></td><td><span class="lnk">Open in LPA</span></td></tr>
+</table>
+</section>
+
+<div class="bar"><button class="btn pri">Ask counsel</button><button class="btn">Close issue</button></div>
+</div>
+</div>
+</main></div>
+<script>
+const tabs=[...document.querySelectorAll('.views button')],ps=[...document.querySelectorAll('[data-p]')];
+function go(v){tabs.forEach(t=>t.classList.toggle('on',t.dataset.v===v));ps.forEach(p=>p.hidden=p.dataset.p!==v);}
+tabs.forEach(t=>t.onclick=()=>go(t.dataset.v));
+document.querySelectorAll('[data-go]').forEach(a=>a.onclick=e=>{e.stopPropagation();go(a.dataset.go)});
+</script>
+</body></html>

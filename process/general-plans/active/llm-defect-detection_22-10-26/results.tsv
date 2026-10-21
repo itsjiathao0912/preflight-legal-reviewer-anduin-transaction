@@ -1,0 +1,6 @@
+cycle	domain	gate	gaps	loop_status	note
+0	plan	CONDITIONAL	7	BASELINE	fast-mode inline validate; 4 structure failures + 3 warnings; ground truth not read
+1	plan	SUPPLEMENTED	1	CONTINUE	7 gaps closed; validator clean; AC10 live recall open
+2	plan	CONDITIONAL	9	CONTINUE	full V1-V7 re-validate; gaps: lettered-heading resolver, archive path/orphan recordings, web blast radius, bench recordings, playbook leakage, missing gates, live-run wording, e2e two-call residual, counts
+3	plan	SUPPLEMENTED	0	CONTINUE	9 gaps closed; validator clean; dedupe.ts file identity to confirm
+4	plan	PASS	0	HALTED_SUCCESS	cycle 3 re-validate PASS; validator fixed GAP-10..14 in place (dedupe path, aiRunFresh guard, BenchLedger USD cap, real heading shapes, AC12 guard test)

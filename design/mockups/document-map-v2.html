@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Document map v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+:root{--ground:#e9ece9;--panel:#f4f6f3;--card:#fbfcfa;--ink:#15181b;--ink-2:#434a50;--ink-3:#5c646b;--accent:#1d5c57;--accent-tint:#d9e8e5;--step:#dde2dd;--block-fg:#8a1c1c;--block-bg:#f7e2df;--fix-fg:#734400;--fix-bg:#f5e8c8;--ok-fg:#1b5632;--ok-bg:#daeedf;--mark:#f3d676;--r:4px;--sans:'Geist',system-ui,sans-serif;--serif:'Newsreader',Georgia,serif}
+*{box-sizing:border-box;margin:0}
+body{background:var(--ground);color:var(--ink);font:14px/1.45 var(--sans)}
+.note{max-width:1320px;margin:14px auto 0;padding:8px 14px;border-radius:var(--r);background:var(--fix-bg);color:var(--fix-fg);font-size:13px}
+.page{max-width:1320px;margin:12px auto 40px;background:var(--panel);border-radius:8px;padding:22px 24px}
+.head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+h1{font:500 28px/1.1 var(--serif)}
+.sub{color:var(--ink-3)}
+.sp{flex:1}
+.btn{font:500 13px var(--sans);border:0;border-radius:var(--r);padding:7px 12px;background:var(--step);color:var(--ink);cursor:pointer}
+.sum{display:flex;gap:10px;margin:16px 0 18px;flex-wrap:wrap}
+.sum div{background:var(--card);border-radius:6px;padding:10px 14px;min-width:150px}
+.sum b{display:block;font:500 22px var(--serif)}
+.sum span{color:var(--ink-3);font-size:12.5px}
+.sum .bad b{color:var(--block-fg)}
+.layout{display:grid;grid-template-columns:220px minmax(0,1fr) 300px;gap:16px}
+.col h2{font:500 16px var(--serif);margin:0 0 8px}
+.types button{all:unset;display:block;width:100%;box-sizing:border-box;padding:9px 12px;border-radius:var(--r);cursor:pointer;margin-bottom:2px}
+.types button small{display:block;color:var(--ink-3);font-size:12px}
+.types button.on{background:var(--card);box-shadow:inset 3px 0 0 var(--accent)}
+.types .stuck small{color:var(--block-fg);font-weight:500}
+.flow{background:var(--card);border-radius:8px;padding:16px 18px}
+.flow .title{font:500 18px var(--serif)}
+.flow .meta{color:var(--ink-3);font-size:12.5px;margin-bottom:12px}
+.step{display:grid;grid-template-columns:28px 1fr;gap:10px;position:relative;padding-bottom:12px}
+.step::before{content:"";position:absolute;left:13px;top:24px;bottom:0;width:2px;background:var(--step)}
+.step:last-child::before{display:none}
+.dot{width:28px;height:28px;border-radius:50%;background:var(--accent-tint);color:var(--accent);display:grid;place-items:center;font-weight:600;font-size:12px}
+.step.bad .dot{background:var(--block-bg);color:var(--block-fg)}
+.step.end .dot{background:var(--ok-bg);color:var(--ok-fg)}
+.sec{font-weight:600}
+.q{margin-top:6px;border:1px solid var(--step);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.q .qt{font-size:13px;font-weight:500}
+.q .kind{font-size:12px;color:var(--ink-3)}
+.opts{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.opts span{font-size:12px;background:var(--card);border:1px solid var(--step);border-radius:3px;padding:2px 7px}
+.opts span.pick{border-color:var(--accent);color:var(--accent);font-weight:500}
+.branch{margin-top:6px;font-size:13px;padding:7px 10px;border-radius:6px;background:var(--block-bg);color:var(--block-fg)}
+.branch b{font-weight:600}
+.jump{margin-top:6px;font-size:13px;padding:7px 10px;border-radius:6px;background:var(--fix-bg);color:var(--fix-fg)}
+.lnk{color:var(--accent);font-weight:500;font-size:12.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.issues .it{background:var(--card);border-radius:6px;padding:10px 12px;margin-bottom:8px;border-left:3px solid var(--block-fg)}
+.issues .it.fix{border-left-color:var(--fix-fg)}
+.issues .it b{display:block;font-size:13.5px}
+.issues .it p{font-size:12.5px;color:var(--ink-2);margin:3px 0 6px}
+.issues .muted{color:var(--ink-3);font-size:12.5px;margin-top:12px}
+.refs{margin-top:16px;background:var(--card);border-radius:8px;padding:14px 16px}
+.refs table{width:100%;border-collapse:collapse;font-size:13px}
+.refs td,.refs th{text-align:left;padding:7px 8px;border-top:1px solid var(--step)}
+.refs th{color:var(--ink-3);font-weight:500;font-size:12px;border-top:0}
+.tag{font-size:12px;font-weight:600;padding:2px 7px;border-radius:3px}
+.miss{background:var(--block-bg);color:var(--block-fg)}.ok{background:var(--ok-bg);color:var(--ok-fg)}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}}
+</style></head><body>
+<div class="note"><b>Wireframe · Document map v2 ("form blueprint").</b> Demo package 01. The page shows the form the analyst will build, one investor type at a time, with real defects inline. Counts are from package 01; layout is a proposal.</div>
+<div class="page">
+<div class="head"><h1>Document map</h1><span class="sub">The form this agreement turns into, for each investor type.</span><span class="sp"></span><button class="btn">Export logic outline</button></div>
+
+<div class="sum">
+<div><b>15</b><span>sections</span></div>
+<div><b>7</b><span>questions to build</span></div>
+<div><b>9</b><span>investor types</span></div>
+<div class="bad"><b>3</b><span>places the form breaks</span></div>
+<div><b>8 of 9</b><span>types reach the signature</span></div>
+</div>
+
+<div class="layout">
+<div class="col types"><h2>Investor type</h2>
+<button>Natural person<small>15 sections · reaches signature</small></button>
+<button>Joint tenants<small>15 sections · reaches signature</small></button>
+<button>Corporation<small>15 sections · reaches signature</small></button>
+<button>Limited liability company<small>15 sections · reaches signature</small></button>
+<button>Revocable trust<small>15 sections · reaches signature</small></button>
+<button class="on stuck">Benefit Plan Investor<small>Stuck at Section 9</small></button>
+<button>Governmental plan<small>15 sections · reaches signature</small></button>
+<button>Other entity<small>15 sections · reaches signature</small></button>
+</div>
+
+<div class="flow">
+<div class="title">Benefit Plan Investor: the form, step by step</div>
+<div class="meta">Only the steps this investor sees. Questions become form fields; “if … go to” becomes a branch.</div>
+
+<div class="step"><div class="dot">1</div><div><div class="sec">Subscription for Interests</div>
+<div class="jump">“Part B of Section 6” points to Investor Classification, but the text fits Section 4. <span class="lnk">Show in document</span></div></div></div>
+
+<div class="step"><div class="dot">4</div><div><div class="sec">Investor and Custodian Information</div>
+<div class="q"><div class="qt">Jurisdiction · additional information</div><div class="kind">Form field · one answer</div>
+<div class="opts"><span>United States</span><span>Canada</span><span>United Kingdom</span><span>EEA</span><span>Switzerland</span><span>Japan</span><span>Australia</span><span>Singapore</span><span>Other</span></div></div></div></div>
+
+<div class="step"><div class="dot">6</div><div><div class="sec">Investor Classification</div>
+<div class="q"><div class="qt">Investor type</div><div class="kind">Form field · one answer</div>
+<div class="opts"><span>Natural person</span><span>Corporation</span><span>LLC</span><span>Partnership</span><span>Trust</span><span>Governmental plan</span><span class="pick">Benefit Plan Investor</span><span>Other</span></div></div>
+<div class="q"><div class="qt">Tax status</div><div class="kind">Form field · one answer</div>
+<div class="opts"><span>US taxable</span><span>Tax-exempt 501(c)</span><span>Governmental</span><span>Non-US person</span><span>Flow-through</span></div></div></div></div>
+
+<div class="step bad"><div class="dot">9</div><div><div class="sec">ERISA and Benefit Plan Investors</div>
+<div class="branch"><b>Branch goes nowhere.</b> “If the Investor is a Benefit Plan Investor, please complete Annex F”. Annex F is not in the package, so this investor cannot finish the form. <span class="lnk">Show in document</span> · <span class="lnk">See in Findings</span></div></div></div>
+
+<div class="step end"><div class="dot">✓</div><div><div class="sec" style="color:var(--ink-3)">Signature · not reached</div></div></div>
+</div>
+
+<div class="col issues"><h2>Where the form breaks</h2>
+<div class="it"><b>Annex F does not exist</b><p>Benefit Plan Investors are sent to it in Section 9.</p><span class="lnk">See in Findings</span></div>
+<div class="it fix"><b>“Part B of Section 6”</b><p>In Section 1; the label fits Section 4.</p><span class="lnk">See in Findings</span></div>
+<div class="it fix"><b>“this Section 11”</b><p>Written inside Section 12.</p><span class="lnk">See in Findings</span></div>
+<p class="muted">7 questions were recognised from wording like “check one”. They are not problems, so they are not counted here.</p>
+</div>
+</div>
+
+<div class="refs"><h2 style="font:500 16px var(--serif);margin-bottom:6px">Terms and other documents</h2>
+<table><tr><th>Item</th><th>Kind</th><th>Status</th><th>Where to check</th></tr>
+<tr><td>Annex F</td><td>Annex</td><td><span class="tag miss">Missing</span></td><td><span class="lnk">In the GP request</span></td></tr>
+<tr><td>Units</td><td>Term</td><td><span class="tag miss">Not defined</span></td><td><span class="lnk">See in Findings</span></td></tr>
+<tr><td>Side letter, W-9, W-8 forms</td><td>Documents</td><td><span class="tag miss">Missing (6)</span></td><td><span class="lnk">In the GP request</span></td></tr>
+<tr><td>PPM, Partnership Agreement</td><td>Documents</td><td><span class="tag ok">Found</span></td><td><span class="lnk">Open in LPA</span></td></tr>
+</table></div>
+</div>
+</body></html>

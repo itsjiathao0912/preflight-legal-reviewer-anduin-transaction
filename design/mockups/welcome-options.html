@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Welcome modal options</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+:root{--ground:#e9ece9;--panel:#f4f6f3;--card:#fbfcfa;--ink:#15181b;--ink-2:#434a50;--ink-3:#5c646b;--accent:#1d5c57;--accent-tint:#d9e8e5;--step:#dde2dd;--mark:#f3d676;--ok-fg:#1b5632;--block-fg:#8a1c1c;--block-bg:#f7e2df;--r:4px;--sans:'Geist',system-ui,sans-serif;--serif:'Newsreader',Georgia,serif}
+*{box-sizing:border-box;margin:0}
+body{background:var(--ground);color:var(--ink);font:14px/1.45 var(--sans);padding:32px 24px 60px}
+h1{font:500 26px/1.2 var(--serif);margin:0 auto 6px;max-width:1240px}
+.lead{color:var(--ink-3);max-width:1240px;margin:0 auto 24px}
+.grid{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(560px,1fr));gap:24px}
+.opt h2{font:500 18px/1.3 var(--serif);margin:0 0 4px}
+.opt p.why{color:var(--ink-3);font-size:13px;margin:0 0 10px}
+/* faux app behind */
+.stage{position:relative;height:420px;border-radius:8px;overflow:hidden;background:var(--ground)}
+.app{position:absolute;inset:0;display:grid;grid-template-columns:120px 1fr 1fr;gap:12px;padding:14px;filter:blur(3px)}
+.app i{display:block;background:var(--panel);border-radius:6px}
+.app i:nth-child(2){background:var(--card)}
+.scrim{position:absolute;inset:0;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 55%,transparent),color-mix(in srgb,var(--accent) 30%,transparent) 55%,color-mix(in srgb,var(--ink) 35%,transparent));display:grid;place-items:center;padding:16px}
+.x{position:absolute;top:12px;right:12px;width:30px;height:30px;border:0;border-radius:var(--r);background:transparent;cursor:pointer;display:grid;place-items:center}
+.x svg{width:16px;height:16px}
+.logo{width:44px;height:44px;flex-shrink:0}
+.chip{font-size:12.5px;font-weight:500;padding:3px 9px;border-radius:var(--r)}
+.btn{font:500 14px var(--sans);border:0;border-radius:var(--r);padding:10px 18px;cursor:pointer}
+.btn.sm{font-size:13px;padding:6px 12px}
+.btn:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+
+/* A: deep teal card */
+.a{position:relative;width:min(500px,100%);background:var(--accent);color:#eef5f3;border-radius:12px;padding:30px 32px 26px;text-align:center;box-shadow:0 24px 60px -20px rgba(10,30,28,.55);border:1px solid color-mix(in srgb,#fff 14%,transparent)}
+.a .lab{font-size:12.5px;color:#b9d6d1}
+.a .name{display:flex;gap:12px;align-items:center;justify-content:center;font:500 52px/1 var(--serif);margin:10px 0 10px;color:#fbfcfa}
+.a .tag{font-size:15px;color:#d6e7e3;text-wrap:balance}
+.a .chips{display:flex;gap:6px;justify-content:center;margin:14px 0 18px}
+.a .chip{background:color-mix(in srgb,#fff 12%,transparent);color:#e6f2ef}
+.a .cta{background:var(--card);color:var(--ink)}
+.a .sec{display:flex;gap:8px;justify-content:center;margin-top:12px}
+.a .ghost{background:transparent;color:#d6e7e3;border:1px solid color-mix(in srgb,#fff 30%,transparent)}
+.a .x svg{stroke:#d6e7e3}
+
+/* B: split */
+.b{position:relative;width:min(540px,100%);display:grid;grid-template-columns:200px 1fr;border-radius:12px;overflow:hidden;box-shadow:0 24px 60px -20px rgba(10,30,28,.5);border:1px solid var(--step)}
+.b .side{background:var(--accent);color:#fbfcfa;padding:26px 20px;display:flex;flex-direction:column;justify-content:space-between}
+.b .side .name{font:500 40px/1 var(--serif);margin-top:16px}
+.b .side .lab{font-size:12px;color:#b9d6d1;line-height:1.4}
+.b .main{background:var(--panel);padding:30px 26px 24px}
+.b .tag{font:400 19px/1.35 var(--serif);color:var(--ink);text-wrap:balance}
+.b .chips{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 20px}
+.b .chip{background:var(--accent-tint);color:var(--accent)}
+.b .cta{background:var(--ink);color:#fbfcfa;width:100%}
+.b .sec{display:flex;gap:8px;margin-top:10px}
+.b .sec .btn{flex:1;background:var(--step);color:var(--ink-2)}
+.b .x svg{stroke:var(--ink-3)}
+
+/* C: boarding pass */
+.c{position:relative;width:min(560px,100%);display:grid;grid-template-columns:1fr 150px;background:var(--card);border-radius:12px;box-shadow:0 24px 60px -20px rgba(10,30,28,.5);border:1px solid var(--step)}
+.c .main{padding:26px 26px 22px}
+.c .top{display:flex;align-items:center;gap:10px}
+.c .top .name{font:500 38px/1 var(--serif)}
+.c .lab{font-size:12.5px;color:var(--ink-3);margin-bottom:12px}
+.c .route{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:10px;margin:18px 0 6px}
+.c .route b{display:block;font:500 22px/1.1 var(--serif)}
+.c .route small{color:var(--ink-3);font-size:12px}
+.c .route .plane{color:var(--accent);padding-bottom:6px}
+.c .tag{font-size:13.5px;color:var(--ink-2);margin:8px 0 14px;text-wrap:balance}
+.c .chips{display:flex;gap:6px}
+.c .chip{background:var(--accent-tint);color:var(--accent)}
+.c .stub{border-left:2px dashed var(--step);background:var(--panel);border-radius:0 12px 12px 0;padding:44px 14px 18px;display:flex;flex-direction:column;justify-content:space-between;position:relative}
+.c .stub::before,.c .stub::after{content:"";position:absolute;left:-11px;width:20px;height:20px;border-radius:50%;background:color-mix(in srgb,var(--accent) 40%,#9fb5b1)}
+.c .stub::before{top:-10px}.c .stub::after{bottom:-10px}
+.c .stub .gate{font-size:12px;color:var(--ink-3)}
+.c .stub .gate b{display:block;font:500 15px var(--sans);color:var(--accent)}
+.c .cta{background:var(--accent);color:#fbfcfa;width:100%}
+.c .sec{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.c .sec .btn{background:transparent;color:var(--ink-2);padding:4px 0;text-align:left;text-decoration:underline;text-underline-offset:3px}
+.c .x svg{stroke:var(--ink-3)}
+
+/* D: mint tinted */
+.d{position:relative;width:min(500px,100%);background:var(--accent-tint);border-radius:14px;padding:32px 32px 26px;text-align:center;box-shadow:0 24px 60px -20px rgba(10,30,28,.45);border:1px solid color-mix(in srgb,var(--accent) 22%,transparent)}
+.d .lab{font-size:12.5px;color:var(--accent)}
+.d .name{display:flex;gap:12px;align-items:center;justify-content:center;font:500 52px/1 var(--serif);margin:10px 0;color:var(--ink)}
+.d .tag{font-size:15px;color:var(--ink-2);text-wrap:balance}
+.d .chips{display:flex;gap:6px;justify-content:center;margin:14px 0 18px}
+.d .chip{background:var(--card);color:var(--accent)}
+.d .cta{background:var(--accent);color:#fbfcfa}
+.d .sec{display:flex;gap:16px;justify-content:center;margin-top:12px}
+.d .sec .btn{background:transparent;color:var(--accent);padding:2px 0;text-decoration:underline;text-underline-offset:3px}
+.d .x svg{stroke:var(--accent)}
+@media (max-width:620px){.grid{grid-template-columns:1fr}.b{grid-template-columns:1fr}.c{grid-template-columns:1fr}.c .stub{border-left:0;border-top:2px dashed var(--step);border-radius:0 0 12px 12px}.c .stub::before,.c .stub::after{display:none}.stage{height:auto;min-height:460px}}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="mark" viewBox="0 0 44 44"><rect x="1.5" y="1.5" width="41" height="41" rx="9" fill="#15181b" stroke="#2f6e68" stroke-width="3"/><path d="M33 11 L13 20 L21 23 L24 31 Z" fill="none" stroke="#9fd3c7" stroke-width="2.6" stroke-linejoin="round"/><path d="M21 23 L33 11" stroke="#9fd3c7" stroke-width="2.6"/><path d="M10 27h6M10 31h8" stroke="#e8f1ef" stroke-width="2.6" stroke-linecap="round"/></symbol>
+<symbol id="x" viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13" fill="none" stroke-width="1.6" stroke-linecap="round"/></symbol>
+</defs></svg>
+
+<h1>Welcome modal options</h1>
+<p class="lead">Four directions for the welcome card over the app. All use the app’s own tokens (deep teal accent, stone greys, Newsreader and Geist) and the approved copy. Pick one, or mix parts.</p>
+
+<div class="grid">
+
+<section class="opt">
+<h2>A · Deep teal card</h2>
+<p class="why">The card takes the app’s accent colour, so it reads as the brand moment instead of a blank white box. The CTA is the only light element.</p>
+<div class="stage"><div class="app"><i></i><i></i><i></i></div><div class="scrim">
+<div class="a" role="dialog" aria-label="Preflight welcome">
+<button class="x" aria-label="Close"><svg><use href="#x"/></svg></button>
+<p class="lab">Anduin Transactions · Legal Reviewer challenge</p>
+<div class="name"><svg class="logo"><use href="#mark"/></svg>Preflight</div>
+<p class="tag">Sub-doc QA before digitization, for Anduin’s Digitization Service Analyst.</p>
+<div class="chips"><span class="chip">Faster review</span><span class="chip">Safer forms</span><span class="chip">Fewer rebuilds</span></div>
+<button class="btn cta">Start review →</button>
+<div class="sec"><button class="btn sm ghost">Website</button><button class="btn sm ghost">Slide deck</button></div>
+</div></div></div>
+</section>
+
+<section class="opt">
+<h2>B · Split: brand left, action right</h2>
+<p class="why">A teal panel carries the name; the light side does the work. Wider and calmer, and the tagline is set in the serif so it reads like a statement.</p>
+<div class="stage"><div class="app"><i></i><i></i><i></i></div><div class="scrim">
+<div class="b" role="dialog" aria-label="Preflight welcome">
+<div class="side"><svg class="logo"><use href="#mark"/></svg><div><div class="name">Preflight</div></div><p class="lab">Anduin Transactions · Legal Reviewer challenge</p></div>
+<div class="main">
+<button class="x" aria-label="Close"><svg><use href="#x"/></svg></button>
+<p class="tag">Sub-doc QA before digitization, for Anduin’s Digitization Service Analyst.</p>
+<div class="chips"><span class="chip">Faster review</span><span class="chip">Safer forms</span><span class="chip">Fewer rebuilds</span></div>
+<button class="btn cta">Start review →</button>
+<div class="sec"><button class="btn sm">Website</button><button class="btn sm">Slide deck</button></div>
+</div></div></div></div>
+</section>
+
+<section class="opt">
+<h2>C · Boarding pass</h2>
+<p class="why">Plays on the name: a ticket from “Sub doc” to “Ready to digitize”, with the gate on the stub. The most memorable, and it explains the product in one glance.</p>
+<div class="stage"><div class="app"><i></i><i></i><i></i></div><div class="scrim">
+<div class="c" role="dialog" aria-label="Preflight welcome">
+<div class="main">
+<p class="lab">Anduin Transactions · Legal Reviewer challenge</p>
+<div class="top"><svg class="logo"><use href="#mark"/></svg><span class="name">Preflight</span></div>
+<div class="route"><div><small>From</small><b>Sub doc</b></div><div class="plane">✈</div><div style="text-align:right"><small>To</small><b>Ready to digitize</b></div></div>
+<p class="tag">Sub-doc QA before digitization, for Anduin’s Digitization Service Analyst.</p>
+<div class="chips"><span class="chip">Faster review</span><span class="chip">Safer forms</span><span class="chip">Fewer rebuilds</span></div>
+</div>
+<div class="stub">
+<button class="x" aria-label="Close"><svg><use href="#x"/></svg></button>
+<p class="gate">Gate<b>Opens when counsel answers</b></p>
+<div><button class="btn cta">Start review →</button>
+<div class="sec"><button class="btn sm">Website</button><button class="btn sm">Slide deck</button></div></div>
+</div></div></div></div>
+</section>
+
+<section class="opt">
+<h2>D · Mint tint</h2>
+<p class="why">Closest to today, but the card is the light teal tint instead of white, the CTA is teal, and the two links are quiet text links. Safe and soft.</p>
+<div class="stage"><div class="app"><i></i><i></i><i></i></div><div class="scrim">
+<div class="d" role="dialog" aria-label="Preflight welcome">
+<button class="x" aria-label="Close"><svg><use href="#x"/></svg></button>
+<p class="lab">Anduin Transactions · Legal Reviewer challenge</p>
+<div class="name"><svg class="logo"><use href="#mark"/></svg>Preflight</div>
+<p class="tag">Sub-doc QA before digitization, for Anduin’s Digitization Service Analyst.</p>
+<div class="chips"><span class="chip">Faster review</span><span class="chip">Safer forms</span><span class="chip">Fewer rebuilds</span></div>
+<button class="btn cta">Start review →</button>
+<div class="sec"><button class="btn sm">Website</button><button class="btn sm">Slide deck</button></div>
+</div></div></div>
+</section>
+
+</div>
+</body></html>

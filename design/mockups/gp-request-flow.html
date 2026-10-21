@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GP request flow</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+:root{--ground:#e9ece9;--panel:#f4f6f3;--card:#fbfcfa;--paper:#fdfefd;--ink:#15181b;--ink-2:#434a50;--ink-3:#5c646b;--accent:#1d5c57;--accent-tint:#d9e8e5;--step:#dde2dd;--block-fg:#8a1c1c;--block-bg:#f7e2df;--fix-fg:#734400;--fix-bg:#f5e8c8;--ok-fg:#1b5632;--ok-bg:#daeedf;--mark:#f3d676;--r:4px;--sans:'Geist',system-ui,sans-serif;--serif:'Newsreader',Georgia,serif}
+*{box-sizing:border-box;margin:0}
+body{background:var(--ground);color:var(--ink);font:13.5px/1.45 var(--sans)}
+.note{max-width:1400px;margin:12px auto 0;padding:8px 14px;border-radius:var(--r);background:var(--fix-bg);color:var(--fix-fg);font-size:13px}
+.steps{max-width:1400px;margin:10px auto 0;display:flex;gap:6px}
+.steps button{all:unset;cursor:pointer;padding:6px 12px;border-radius:var(--r);background:var(--panel);font-weight:500;color:var(--ink-2)}
+.steps button.on{background:var(--ink);color:var(--card)}
+.app{max-width:1400px;margin:10px auto 30px;display:grid;grid-template-columns:minmax(0,1fr) 540px;gap:14px;background:var(--panel);border-radius:8px;padding:14px;min-height:700px;position:relative;overflow:hidden}
+.doc{background:var(--paper);border-radius:6px;padding:22px 26px;font:15px/1.6 var(--serif);color:var(--ink-2)}
+.doc h3{font:500 15px var(--serif);color:var(--ink);margin:14px 0 4px}
+.doc mark{background:var(--mark)}
+.side{background:var(--card);border-radius:6px;padding:12px 14px;display:flex;flex-direction:column}
+.views{display:flex;gap:2px;background:var(--step);padding:3px;border-radius:6px;align-self:flex-start}
+.views span{padding:5px 12px;border-radius:var(--r);font-weight:500;color:var(--ink-2)}
+.views span.on{background:var(--card);color:var(--ink)}
+.hint{color:var(--ink-3);font-size:12.5px;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{text-align:left;padding:8px 6px;border-top:1px solid var(--step);vertical-align:middle}
+th{color:var(--ink-3);font-weight:500;border-top:0;font-size:12px}
+.tag{font-size:11.5px;font-weight:600;padding:2px 7px;border-radius:3px;white-space:nowrap}
+.miss{background:var(--block-bg);color:var(--block-fg)}.ok{background:var(--ok-bg);color:var(--ok-fg)}.req{background:var(--fix-bg);color:var(--fix-fg)}
+.lnk{color:var(--accent);font-weight:500;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.tray{margin-top:auto;border:1px solid var(--step);border-radius:6px;padding:10px 12px;display:flex;align-items:center;gap:10px;background:var(--panel)}
+.tray b{font-weight:600}
+.btn{font:500 13px var(--sans);border:0;border-radius:var(--r);padding:8px 13px;cursor:pointer;background:var(--step);color:var(--ink)}
+.btn.pri{background:var(--accent);color:var(--card)}
+.btn.dark{background:var(--ink);color:var(--card)}
+.sp{flex:1}
+/* drawer */
+.drawer{position:absolute;top:14px;right:14px;bottom:14px;width:560px;background:var(--card);border-radius:8px;box-shadow:-20px 0 50px -25px rgba(10,30,28,.45);border:1px solid var(--step);display:flex;flex-direction:column}
+.dh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--step)}
+.dh h2{font:500 19px var(--serif)}
+.x{all:unset;cursor:pointer;width:28px;height:28px;display:grid;place-items:center;border-radius:var(--r);color:var(--ink-3)}
+.db{padding:14px 16px;overflow:auto;flex:1}
+.meta{display:grid;grid-template-columns:70px 1fr;gap:4px 10px;font-size:13px;margin-bottom:12px}
+.meta span{color:var(--ink-3)}
+.meta input{font:inherit;border:1px solid var(--step);border-radius:var(--r);padding:4px 8px;background:var(--paper)}
+.letter{background:var(--paper);border:1px solid var(--step);border-radius:6px;padding:14px 16px;font-size:13.5px;color:var(--ink-2)}
+.letter p{margin:0 0 8px}
+.grp{font-weight:600;color:var(--ink);margin:10px 0 4px}
+.item{display:grid;grid-template-columns:18px 1fr;gap:8px;padding:6px 0;border-top:1px solid var(--step)}
+.item q{display:block;quotes:none;font-family:var(--serif);color:var(--ink);font-size:13.5px}
+.item small{color:var(--ink-3)}
+.df{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--step);align-items:center}
+.status{display:flex;gap:10px;align-items:center;font-size:13px}
+.bar{height:6px;background:var(--step);border-radius:3px;flex:1;overflow:hidden}
+.bar i{display:block;height:100%;width:28%;background:var(--accent)}
+[hidden]{display:none!important}
+</style></head><body>
+<div class="note"><b>Mockup · GP request without leaving Findings.</b> Click the three steps to see the flow. All colours and type are the app’s own tokens.</div>
+<div class="steps"><button class="on" data-s="1">1 · Sources shows what is missing</button><button data-s="2">2 · Preview the request</button><button data-s="3">3 · Sent, then track it</button></div>
+<div class="app">
+<div class="doc">
+<h3>14. Governing Law and Miscellaneous</h3>
+<p>The Subscription Documents, the Partnership Agreement and any <mark>Side Letter</mark> entered into with the Investor constitute the entire agreement between the Investor and the Fund…</p>
+<h3>8. Tax Matters</h3>
+<p>The Investor shall deliver to the Administrator a properly completed and signed Internal Revenue Service <mark>Form W-9</mark> if the Investor is a United States person…</p>
+</div>
+<div class="side">
+<div class="views"><span>Issues 16</span><span>Form flow 3</span><span class="on">Sources 9</span></div>
+<p class="hint">Terms and other documents the agreement relies on.</p>
+<table>
+<tr><th>Item</th><th>Kind</th><th>Status</th><th></th></tr>
+<tr><td>Annex F</td><td>Annex</td><td class="st"><span class="tag miss">Missing</span></td><td><span class="lnk">Open finding</span></td></tr>
+<tr><td>Kestrel Side Letter</td><td>Side letter</td><td class="st"><span class="tag miss">Missing</span></td><td><span class="lnk">Show in document</span></td></tr>
+<tr><td>Form W-9</td><td>Tax form</td><td class="st"><span class="tag miss">Missing</span></td><td><span class="lnk">Show in document</span></td></tr>
+<tr><td>Forms W-8BEN, W-8BEN-E, W-8EXP, W-8IMY</td><td>Tax forms</td><td class="st"><span class="tag miss">Missing</span></td><td><span class="lnk">Show in document</span></td></tr>
+<tr><td>Units</td><td>Term</td><td><span class="tag miss">Not defined</span></td><td><span class="lnk">Open finding</span></td></tr>
+<tr><td>PPM</td><td>Document</td><td><span class="tag ok">Found</span></td><td><span class="lnk">Open in PPM</span></td></tr>
+</table>
+<div class="tray" id="tray"><span><b>7 documents</b> to ask the GP for</span><span class="sp"></span><button class="btn pri" id="preview">Preview request</button></div>
+<div class="tray" id="tray3" hidden><span class="status"><span class="tag req">Requested 22 Oct</span> 2 of 7 received</span><span class="bar"><i></i></span><button class="btn">View request</button></div>
+</div>
+
+<aside class="drawer" id="drawer" hidden>
+<div class="dh"><h2>Request to the GP</h2><span class="sp"></span><button class="x" id="close" aria-label="Close">✕</button></div>
+<div class="db">
+<div class="meta"><span>To</span><input value="Northgate Infrastructure Partners III GP, LLC"><span>About</span><div>Northgate Infrastructure Fund III · Subscription Agreement v1</div><span>Needed by</span><input value="29 Oct 2026"></div>
+<div class="letter">
+<p>Please send the documents below. The subscription agreement refers to them, but they are not in the package we received.</p>
+<div class="grp">Annex (1)</div>
+<div class="item"><span>1</span><div><b>Annex F (ERISA Representations)</b><q>“If the Investor is a Benefit Plan Investor, please complete Annex F.”</q><small>Section 9.1 · Benefit Plan Investors cannot finish the form without it</small></div></div>
+<div class="grp">Side letter (1)</div>
+<div class="item"><span>2</span><div><b>Kestrel Side Letter</b><q>“An Investor that is entitled to the benefit of the Kestrel Side Letter shall identify the relevant provisions in Annex A.”</q><small>Sections 6.4, 14.3</small></div></div>
+<div class="grp">Tax forms (5)</div>
+<div class="item"><span>3</span><div><b>Form W-9</b><q>“…a properly completed and signed Internal Revenue Service Form W-9 if the Investor is a United States person…”</q><small>Section 8</small></div></div>
+<div class="item"><span>4</span><div><b>Forms W-8BEN, W-8BEN-E, W-8EXP, W-8IMY</b><small>Annex B · one line each in the exported file</small></div></div>
+</div>
+</div>
+<div class="df"><button class="btn">Copy text</button><button class="btn">Export DOCX</button><span class="sp"></span><button class="btn dark" id="sent">Mark as sent</button></div>
+</aside>
+</div>
+<script>
+const s=n=>{document.querySelectorAll('.steps button').forEach(b=>b.classList.toggle('on',b.dataset.s==n));
+document.getElementById('drawer').hidden=n!=2;
+document.getElementById('tray').hidden=n==3;document.getElementById('tray3').hidden=n!=3;
+document.querySelectorAll('.st .tag.miss').forEach((t,i)=>{if(i>0){t.className='tag '+(n==3?'req':'miss');t.textContent=n==3?'Requested':'Missing';}});};
+document.querySelectorAll('.steps button').forEach(b=>b.onclick=()=>s(b.dataset.s));
+document.getElementById('preview').onclick=()=>s(2);document.getElementById('close').onclick=()=>s(1);document.getElementById('sent').onclick=()=>s(3);
+</script>
+</body></html>
