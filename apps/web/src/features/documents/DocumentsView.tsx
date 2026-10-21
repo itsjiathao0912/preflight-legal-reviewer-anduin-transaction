@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
+import { PageIntro } from '../../components/ui/PageIntro';
 import { reopenRecent } from '../open-document/open-actions';
+import { PackageSummary } from '../package/PackageLens';
+import { usePackageView } from '../package/package-view';
 import { useReview, type DocMeta } from '../../state/review';
 import { useShell } from '../../state/shell';
 import { appDb, RETENTION_MS } from '../../storage/db';
@@ -68,6 +71,7 @@ export function DocumentsView() {
   const doc = useReview((s) => s.doc);
   const recent = useReview((s) => s.recent);
   const setOpenDoc = useShell((s) => s.setOpenDoc);
+  const pkg = usePackageView();
   const [stored, setStored] = useState<Row[]>([]);
   useEffect(() => {
     let live = true;
@@ -107,7 +111,12 @@ export function DocumentsView() {
           <p className="docnote">Uploads stay in this browser for 24 hours.</p>
         </div>
       </header>
+      <PageIntro testId="page-intro-documents">
+        The files you opened and, for a package, each file’s type and role. Files stay in this
+        browser for 24 hours.
+      </PageIntro>
       <div className="pgbody">
+        {pkg ? <PackageSummary view={pkg} /> : null}
         {rows.length === 0 ? (
           <div className="empty2" data-testid="documents-empty">
             <p className="ph-t">No documents yet. Upload a document or open a sample.</p>

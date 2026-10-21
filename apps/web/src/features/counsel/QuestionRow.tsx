@@ -2,7 +2,9 @@ import { maskQuote, templateInterpretations, type AssertionCandidate } from '@ad
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from '../../components/ui/icon';
 import { useReview } from '../../state/review';
+import { useFilters } from '../../state/filters';
 import { useSession } from '../../state/session';
+import { useShell } from '../../state/shell';
 import { AI_SUGGESTION } from '../ai/Provenance';
 import { memoryLabelText } from '../review/memory-labels';
 import type { Row } from '../review/model';
@@ -11,6 +13,7 @@ import { OWNER_LABEL, type QuestionItem } from '../variance/owner-groups';
 import { AnswerForm, fmtDay, RecordedAnswerView } from './AnswerForm';
 import { CommentList } from './CommentList';
 import { useCounsel } from './counsel-store';
+import { shortTitle } from './questions-table';
 import { baseWording, itemState, wordingFor, type QuestionState } from './sheet-model';
 
 export type RowMode = 'view' | 'edit' | 'answer';
@@ -18,8 +21,9 @@ export type RowMode = 'view' | 'edit' | 'answer';
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 /**
- * State tag. `shared`: the question is on the counsel share link, so an unanswered one reads
+ * Status cell. `shared`: the question is on the counsel share link, so an unanswered one reads
  * "Awaiting counsel"; `by`: who answered (counsel's joined name for a share-link answer).
+ * New and Accepted questions both read "Waiting" (the row keeps `data-state`).
  */
 function Tag({
   state,
@@ -39,9 +43,14 @@ function Tag({
   switch (state) {
     case 'answered':
       return (
-        <span className="tag t-ok" data-testid="counsel-row-answered">
+        <span
+          className="tag t-ok"
+          data-testid="counsel-row-answered"
+          title={by ? `Answered by ${by}` : undefined}
+        >
           <Icon name="check" />
-          {by ? `Answered by ${by}` : 'Answered'}
+          Answered
+          {by ? <span className="sr"> by {by}</span> : null}
         </span>
       );
     case 'unclear':
@@ -52,14 +61,8 @@ function Tag({
         </span>
       );
     case 'accepted':
-      return (
-        <span className="tag t-st">
-          <Icon name="check" />
-          Accepted
-        </span>
-      );
     case 'new':
-      return <span className="tag t-new">New</span>;
+      return <span className="tag t-st qt-wait">Waiting</span>;
   }
 }
 
@@ -189,6 +192,7 @@ export function QuestionRow({
   defaultBy,
   candidate,
   questionId,
+  baseline,
   onToggle,
   onMode,
 }: {
@@ -201,6 +205,8 @@ export function QuestionRow({
   candidate?: AssertionCandidate | undefined;
   /** Counsel share link: server question id (shared questions show their comment thread). */
   questionId?: string | undefined;
+  /** Variance baseline name for the "Changed since …" short title. */
+  baseline?: string | null | undefined;
   onToggle: () => void;
   onMode: (m: RowMode) => void;
 }) {
@@ -230,6 +236,23 @@ export function QuestionRow({
         intent: undefined,
         scope: undefined,
       };
+  const select = useReview((s) => s.select);
+  const setRoute = useShell((s) => s.setRoute);
+  const resetFilters = useFilters((s) => s.reset);
+  const title = shortTitle(q, baseline);
+  // same jump as the gate popover: open Findings with this finding selected (its passage in view)
+  const showInDocument = () => {
+    setRoute('findings');
+    resetFilters();
+    select(r.f.id);
+    requestAnimationFrame(() =>
+      document
+        .querySelector<HTMLElement>(
+          `[data-testid="finding-row"][data-finding-id="${CSS.escape(r.f.id)}"]`,
+        )
+        ?.focus({ preventScroll: true }),
+    );
+  };
   const reconfirm = r.label === 'dismissed_reconfirm' && state !== 'answered';
   const reading = (o: string | null | undefined) => {
     const i = o ? LETTERS.indexOf(o) : -1;
@@ -246,38 +269,65 @@ export function QuestionRow({
       data-state={state}
     >
       <button
-        className="rowb"
+        className="rowb qt-grid"
         type="button"
         data-testid="counsel-row-toggle"
         aria-expanded={selected}
         onClick={onToggle}
       >
-        <span className={`si sv-${r.sev}`}>
-          <Icon name={SEV[r.sev].icon} />
-          <span className="sr">{SEV[r.sev].label}: </span>
+        <span className="qt-chev" aria-hidden="true">
+          <Icon name="chev" />
         </span>
-        <span className="t">
-          <span className="qn">Q{n}</span>
-          <span data-testid="counsel-question-text">{wordingFor(r, drafts, k).text}</span>
-        </span>
-        <span className="rm">
+        <span className="qn">{n}</span>
+        <span className="t" data-testid="counsel-row-title">
           {reconfirm ? (
             <span className="re" title={memoryLabelText(r.label, r.prior?.fund_name)}>
               <Icon name="memory" />
               <span className="sr">{memoryLabelText(r.label, r.prior?.fund_name)}. </span>
             </span>
           ) : null}
+          {title}
+        </span>
+        <span className="qt-who">
+          <span className="sr">Who: </span>
           {q.change ? (
             <span className="ochip" data-testid="question-owner">
               {OWNER_LABEL[q.owner]}
             </span>
-          ) : null}
+          ) : (
+            <span className="ochip">{OWNER_LABEL[q.owner]}</span>
+          )}
+        </span>
+        <span className={`qt-sev sv-${r.sev}`}>
+          <Icon name={SEV[r.sev].icon} />
+          <span className="sr">Severity: </span>
+          <span>{SEV[r.sev].short}</span>
+        </span>
+        <span className="qt-st">
           <Tag state={state} shared={!!questionId} by={rec.by} />
-          <span>{r.f.ref}</span>
         </span>
       </button>
       {selected ? (
         <div className="rbody">
+          <p className="qt-loc">
+            <Icon name="pin" />
+            <span data-testid="counsel-row-location">
+              {r.f.loc}
+              {r.f.ref ? ` · ${r.f.ref}` : ''}
+            </span>
+            <button
+              type="button"
+              className="btn sm lnk"
+              data-testid="counsel-show-in-doc"
+              onClick={showInDocument}
+            >
+              <Icon name="eye" />
+              Show in document
+            </button>
+          </p>
+          <p className="qt-q" data-testid="counsel-question-text">
+            {wordingFor(r, drafts, k).text}
+          </p>
           {mode === 'edit' ? <WordingEditor r={r} k={k} onDone={() => onMode('view')} /> : null}
           <blockquote className="ev" data-testid="counsel-quote">
             {maskQuote(r.f.quote)}

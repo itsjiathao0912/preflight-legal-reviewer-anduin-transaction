@@ -82,6 +82,18 @@ export function askedUnanswered(state: GateState): boolean {
 }
 
 /**
+ * Asked-unanswered for one finding. An accepted error finding with no asked owner and no answer is
+ * "closed as a real issue", not a question (it never reaches the counsel sheet: the web question
+ * rule only counts accepted rows when critical), so it must not gate as an unanswered question.
+ * Critical ones still gate through the legacy rule; accepted change rows stay questions.
+ */
+function askedQuestion(f: GateFinding, state: GateState): boolean {
+  if (!askedUnanswered(state)) return false;
+  if (f.gates || state.status !== 'accepted' || askedOwners(state).length) return true;
+  return (state.counselAnswer ?? null) !== null;
+}
+
+/**
  * Variance gate (policy on). Per finding, AI never gates. Eligible when: a variance finding
  * (`gates: true`) and its policy flag allows it (critical = regression, else untriaged change), a
  * legacy gating finding (critical, not AI), or an asked question without a clear answer. With
@@ -103,7 +115,7 @@ function computeVarianceGate(
         ? policy.regression_blocks
         : policy.untriaged_change_blocks
       : isGating(f);
-    if (!eligible && !(policy.asked_unanswered_blocks && askedUnanswered(state))) continue;
+    if (!eligible && !(policy.asked_unanswered_blocks && askedQuestion(f, state))) continue;
     const owners = askedOwners(state);
     if (owners.length) {
       for (const o of owners) {

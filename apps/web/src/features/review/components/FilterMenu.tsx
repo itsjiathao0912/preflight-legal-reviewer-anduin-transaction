@@ -8,6 +8,9 @@ import {
   type StatusFilter,
 } from '../../../state/filters';
 import { classOptions, detectorOptions, type Row } from '../model';
+import { KindSegment } from '../v2/KindSegment';
+import { SeverityChips } from '../v2/SeverityChips';
+import type { ReviewView } from '../v2/types';
 
 const STATUS: [StatusFilter, string][] = [
   ['active', 'Active'],
@@ -23,14 +26,25 @@ const SORT: [SortKey, string][] = [
   ['cls', 'Class'],
 ];
 
-export function FilterMenu({ rows }: { rows: Row[] }) {
+export function FilterMenu({
+  rows,
+  chips,
+  counts,
+}: {
+  rows: Row[];
+  chips?: ReviewView['chips'];
+  /** Type group (All / Errors / Changes); shown only when the document has a firm baseline. */
+  counts?: ReviewView['counts'];
+}) {
   const [open, setOpen] = useState(false);
   const f = useFilters();
   const n =
     Number(f.cls !== DEFAULT_FILTERS.cls) +
     Number(f.status !== DEFAULT_FILTERS.status) +
     Number(f.sort !== DEFAULT_FILTERS.sort) +
-    Number(f.det !== DEFAULT_FILTERS.det);
+    Number(f.det !== DEFAULT_FILTERS.det) +
+    Number(!!chips && f.sev !== DEFAULT_FILTERS.sev) +
+    Number(!!counts && f.kind !== DEFAULT_FILTERS.kind);
   const classes = classOptions(rows);
   const dets = detectorOptions(rows);
   if (f.cls !== 'all' && !classes.some((c) => c.value === f.cls))
@@ -48,15 +62,27 @@ export function FilterMenu({ rows }: { rows: Row[] }) {
           <Icon name="filter" />
           Filter
           {n ? (
-            <span className="fc" data-testid="filter-count">
-              <span className="sr">{n} active: </span>
-              {n}
+            <span data-testid="filter-count">
+              <span className="sr">, {n} active</span>
+              <span aria-hidden="true"> · {n}</span>
             </span>
           ) : null}
           <Icon name="chevd" />
         </button>
       }
     >
+      {counts ? (
+        <div className="fv2-filt-sev">
+          <span>Type</span>
+          <KindSegment counts={counts} />
+        </div>
+      ) : null}
+      {chips ? (
+        <div className="fv2-filt-sev">
+          <span>Severity</span>
+          <SeverityChips chips={chips} />
+        </div>
+      ) : null}
       <label>
         Class
         <select

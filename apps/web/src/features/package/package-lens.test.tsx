@@ -5,7 +5,7 @@ import { usePackage } from '../../state/package';
 import { render } from '../../test-utils';
 import { tabsFor } from '../structure/model';
 import type { PackageDocView, PackageView } from './contract';
-import { PackageLens } from './PackageLens';
+import { PackageLens, PackageSummary } from './PackageLens';
 
 // Intake Phase 3a: Package lens sections, inline refusal, icon plus word, masked quotes (E13).
 const SSN = '123-45-6789';
@@ -126,9 +126,16 @@ const q = (el: HTMLElement, id: string) => [...el.querySelectorAll(`[data-testid
 
 beforeEach(() => usePackage.setState({ current: null }));
 
+const both = (v: PackageView = VIEW) => (
+  <>
+    <PackageSummary view={v} />
+    <PackageLens view={v} onShow={() => undefined} />
+  </>
+);
+
 describe('package-lens', () => {
   it('renders all sections, groups and the coverage line', () => {
-    const el = render(<PackageLens view={VIEW} onShow={() => undefined} />);
+    const el = render(both());
     for (const id of [
       'package-lens-documents',
       'package-lens-references',
@@ -138,7 +145,7 @@ describe('package-lens', () => {
       expect(q(el, id)).toHaveLength(1);
     expect(q(el, 'package-lens-doc')).toHaveLength(4);
     expect(q(el, 'package-lens-doc-type')).toHaveLength(3);
-    expect(q(el, 'package-lens-doc')[0]!.textContent).toContain('Document to digitize');
+    expect(q(el, 'package-lens-doc')[0]!.textContent).toContain('To digitize');
     expect(q(el, 'package-reference')).toHaveLength(3);
     expect(q(el, 'package-coverage-group').map((g) => g.getAttribute('data-status'))).toEqual([
       'full',
@@ -152,7 +159,7 @@ describe('package-lens', () => {
   });
 
   it('never relies on colour alone: every status has an icon and a word', () => {
-    const el = render(<PackageLens view={VIEW} onShow={() => undefined} />);
+    const el = render(both());
     for (const s of el.querySelectorAll('.pkg-lens-st')) {
       expect(s.querySelector('svg')).not.toBeNull();
       expect(s.textContent!.trim().length).toBeGreaterThan(0);
@@ -176,7 +183,7 @@ describe('package-lens', () => {
   });
 
   it('shows a refused action inline as plain text', () => {
-    const el = render(<PackageLens view={VIEW} onShow={() => undefined} />);
+    const el = render(both());
     expect(q(el, 'package-lens-action-error')).toHaveLength(0);
     const sel = q(el, 'package-lens-doc-type')[0] as HTMLSelectElement;
     act(() => {
@@ -195,10 +202,32 @@ describe('package-lens', () => {
     expect(el.textContent).not.toContain(SSN);
   });
 
-  it('names the third tab for the package only when a package view exists', () => {
-    expect(tabsFor(false).map((t) => t.label)).toEqual(['Sections', 'Logic', 'Defined terms']);
-    expect(tabsFor(true).at(-1)).toEqual({ id: 'terms', label: 'Terms & package' });
-    expect(tabsFor(true)).toHaveLength(3);
+  it('shows the package header and plain labels in the Documents file list', () => {
+    const el = render(<PackageSummary view={VIEW} />);
+    expect(q(el, 'package-lens')).toHaveLength(0);
+    expect(q(el, 'package-summary-line')[0]!.textContent).toBe(VIEW.coverageLine);
+    const heads = [...el.querySelectorAll('th')].map((t) => t.textContent);
+    expect(heads).toEqual(['File', 'Type', 'Role', 'Status', 'Detail description']);
+    const status = q(el, 'package-lens-doc').map(
+      (r) => r.querySelector('.pkg-lens-st')!.textContent,
+    );
+    for (const t of status) expect(['Sure', 'Checked by you', 'Please check']).toContain(t);
+    const role = q(el, 'package-lens-doc-role')[0] as HTMLSelectElement;
+    expect([...role.options].map((o) => o.textContent)).toEqual([
+      'Reference',
+      'Baseline (earlier version)',
+    ]);
+  });
+
+  it('keeps the file list out of the Structure lens', () => {
+    const el = render(<PackageLens view={VIEW} onShow={() => undefined} />);
+    expect(q(el, 'package-lens-documents')).toHaveLength(0);
+  });
+
+  it('names the last tab for the package only when a package view exists', () => {
+    expect(tabsFor(false).map((t) => t.label)).toEqual(['Logic', 'Defined terms']);
+    expect(tabsFor(true).at(-1)).toEqual({ id: 'terms', label: 'Terms & references' });
+    expect(tabsFor(true)).toHaveLength(2);
   });
 
   it('offers "Open in LPA" for a reference resolved to a whole file', () => {

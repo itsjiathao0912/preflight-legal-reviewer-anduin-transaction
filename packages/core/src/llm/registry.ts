@@ -3,6 +3,7 @@ import type { LlmTask } from './task';
 import { clauseJudgmentV1 } from './tasks/clause-judgment.v1';
 import { counselDraftV1 } from './tasks/counsel-draft.v1';
 import { driftNarrativeV1 } from './tasks/drift-narrative.v1';
+import { referenceTargetV1 } from './tasks/reference-target.v1';
 
 /**
  * Shared versioned task registry: the Worker builds messages from it, the client never sends prompts.
@@ -13,6 +14,7 @@ export const TASKS: Readonly<Record<AiTaskId, LlmTask>> = Object.freeze({
   'clause-judgment': clauseJudgmentV1,
   'counsel-draft': counselDraftV1,
   'drift-narrative': driftNarrativeV1,
+  'reference-target': referenceTargetV1,
 });
 
 export const DEFAULT_TASK_ID: AiTaskId = 'clause-judgment';

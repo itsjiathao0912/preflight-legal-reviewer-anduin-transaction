@@ -6,7 +6,8 @@ import { usePackage } from '../../state/package';
 import { useReview } from '../../state/review';
 import { useSession } from '../../state/session';
 import { useShell } from '../../state/shell';
-import { loadDemoPackages, type DemoPackage } from './demo-packages';
+import { IS_E2E } from '../../e2e-flag';
+import { loadDemoPackages, visibleDemoPackages, type DemoPackage } from './demo-packages';
 import { openUpload } from './open-actions';
 import { openDemoPackage, prepareUploadDraft, runPackageDraft } from './package-actions';
 import { PackageConfirmTable } from './PackageConfirmTable';
@@ -60,7 +61,7 @@ export function OpenDocumentDialog() {
       return;
     }
     void loadFirms().then(setFirms);
-    void loadDemoPackages().then(setDemos);
+    void loadDemoPackages().then((l) => setDemos(visibleDemoPackages(l, IS_E2E)));
     setError('');
     setAck(privacyAck);
   }, [open, privacyAck]);

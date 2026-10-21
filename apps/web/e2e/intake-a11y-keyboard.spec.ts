@@ -100,10 +100,11 @@ test.describe('intake-a11y-keyboard', () => {
         expect(await sel.inputValue(), `${name} ${tid}`).toBe(value);
       }
       const box = r.getByTestId('package-row-confirm');
-      if (!(await box.isChecked())) {
+      if (await box.count()) {
         await box.focus();
         await page.keyboard.press('Space');
-        await expect(box).toBeChecked();
+        await expect(box).toHaveCount(0);
+        await expect(r).toHaveAttribute('data-confirmed', 'true');
       }
     }
     const version = page.getByTestId('package-version-input');
@@ -130,7 +131,7 @@ test.describe('intake-a11y-keyboard', () => {
       await r.getByTestId('package-row-type').selectOption(f.type);
       await r.getByTestId('package-row-role').selectOption(f.finalRole);
       const box = r.getByTestId('package-row-confirm');
-      if (!(await box.isChecked())) await box.check();
+      if (await box.count()) await box.click();
     }
     if (!(await version.inputValue())) await version.fill('v1');
     await page.getByTestId('package-run').focus();
@@ -160,6 +161,9 @@ test.describe('intake-a11y-keyboard', () => {
     await page.getByTestId('nav-counsel').click();
     await expect(page.getByTestId('gp-group')).toBeVisible();
     await audit(page, 'counsel gp group');
+    await page.getByTestId('gp-request-toggle').focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('gp-request-toggle')).toHaveAttribute('aria-expanded', 'true');
     await page.getByTestId('gp-request-export').focus();
     await expect(page.getByTestId('gp-request-export')).toBeFocused();
   });

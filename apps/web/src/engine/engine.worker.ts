@@ -9,6 +9,7 @@ import * as Comlink from 'comlink';
 import {
   applyPackageDefinitions,
   buildAiCandidatesWithSites,
+  buildReferencePairs,
   buildPackageFacts,
   packageViewBlocks,
   extractPrimaryFacts,
@@ -157,6 +158,8 @@ interface Retained {
   idx: Map<string, number>;
   /** candidate sites of the sent candidates (review M1: verify scopes quotes to them) */
   aiSites?: AiCandidateSite[];
+  /** pointer-sentence sites of the sent reference-target pairs */
+  pairSites?: AiCandidateSite[];
   ruleFindings?: Finding[];
   /** Phase 06: DOCX numbering label for numbering-dependent findings (AI findings too). */
   numberingNote?: (issueClass: string) => string | undefined;
@@ -730,6 +733,15 @@ export const api: EngineApi = {
       } catch (e) {
         console.warn('[engine] ai_candidates_failed', e instanceof Error ? e.name : 'unknown');
       }
+      // llm-defect-detection: reference-target pairs (pointer sentence + target section evidence)
+      try {
+        const pairs = buildReferencePairs(g, findings);
+        result.pairs = pairs.candidates;
+        const kept = touch(lines.docHash);
+        if (kept) kept.pairSites = pairs.sites;
+      } catch (e) {
+        console.warn('[engine] reference_pairs_failed', e instanceof Error ? e.name : 'unknown');
+      }
     } catch {
       return fail('checks', 'no rule findings for this document');
     }
@@ -770,11 +782,15 @@ export const api: EngineApi = {
     const model = typeof ctx?.model === 'string' && ctx.model ? ctx.model.slice(0, 120) : 'unknown';
     let out: ReturnType<typeof verifyAiResult>;
     try {
-      // sites absent (candidate build failed) -> core recomputes them deterministically
+      // sites absent (candidate build failed) -> core recomputes them deterministically;
+      // reference-target results verify against the pair (pointer sentence) sites only
+      const refTarget = ctx?.task === 'reference-target';
+      const sites = refTarget ? (r.pairSites ?? []) : r.aiSites;
       out = verifyAiResult(r.g, aiResult, {
         model,
         provenance,
-        ...(r.aiSites ? { sites: r.aiSites } : {}),
+        ...(refTarget ? { task: 'reference-target' as const } : {}),
+        ...(sites ? { sites } : {}),
         ...(r.ruleFindings ? { ruleFindings: r.ruleFindings } : {}),
       });
     } catch {

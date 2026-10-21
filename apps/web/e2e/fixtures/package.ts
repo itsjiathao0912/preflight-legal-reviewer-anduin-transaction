@@ -87,12 +87,19 @@ export async function openDemoPackage(page: Page, id: string) {
 export async function confirmAllRows(page: Page) {
   await expect(page.getByTestId('package-confirm-table')).toBeVisible();
   await expect(page.getByTestId('package-row').first()).toBeVisible();
-  const boxes = page.getByTestId('package-row-confirm');
-  const n = await boxes.count();
-  for (let i = 0; i < n; i++) {
-    const b = boxes.nth(i);
-    if (!(await b.isChecked())) await b.check();
+  // "Looks right" is a button shown only on low-confidence rows not yet confirmed; it disappears
+  // once pressed, so press the first one until none is left.
+  const buttons = page.getByTestId('package-row-confirm');
+  for (let n = await buttons.count(); n > 0; n--) {
+    await buttons.first().click();
+    await expect(buttons).toHaveCount(n - 1);
   }
+}
+
+/** Open the Documents screen, where the open package's file list lives. */
+export async function openPackageFiles(page: Page) {
+  await page.getByTestId('nav-documents').click();
+  await expect(page.getByTestId('package-summary')).toBeVisible();
 }
 
 /** Click Run checks and wait for findings. */

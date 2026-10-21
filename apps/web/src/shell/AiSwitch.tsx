@@ -1,5 +1,4 @@
 import { Icon } from '../components/ui/icon';
-import { Allowance } from '../features/ai/Allowance';
 import { useSession } from '../state/session';
 
 export function AiSwitch() {
@@ -22,7 +21,6 @@ export function AiSwitch() {
             No AI
           </button>
         </div>
-        <Allowance />
       </div>
       <button
         className="ibtn aimini"

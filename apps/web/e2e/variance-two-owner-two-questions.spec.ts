@@ -6,6 +6,7 @@ import {
   changeRow,
   gotoQuestions,
   openFundIIIvsII,
+  openQuestionFilters,
   ownerRows,
   recordAnswer,
 } from './fixtures/variance-owners';
@@ -29,6 +30,7 @@ test.describe('variance-two-owner-two-questions', () => {
     );
 
     await gotoQuestions(page);
+    await openQuestionFilters(page);
     await expect(page.getByTestId('questions-tab-gp')).toHaveAttribute('data-count', '1');
     await expect(page.getByTestId('questions-tab-counsel')).toHaveAttribute('data-count', '1');
     const gp = page.locator(`[data-testid="counsel-row"][data-key="${id}@gp"]`);

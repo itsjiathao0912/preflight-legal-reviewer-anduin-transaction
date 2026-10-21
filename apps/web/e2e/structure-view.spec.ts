@@ -14,11 +14,11 @@ function engineView(sampleId: string): StructureView {
   const g = analyzeHtml(readFileSync(resolve(RAW, file)));
   return buildStructureView(g, runDeterministic(g));
 }
-const TABS = ['sections', 'logic', 'terms'] as const;
+const TABS = ['logic', 'terms'] as const;
 const LOGIC = ['crossrefs', 'conditions', 'options', 'investors'] as const;
 
 test.describe('structure-view', () => {
-  test('should render the Structure view with Issues only by default and 3 tabs', async ({
+  test('should render the Structure view with Issues only by default and 2 tabs (Logic first)', async ({
     page,
   }) => {
     const v = engineView('03');
@@ -27,10 +27,9 @@ test.describe('structure-view', () => {
     await page.getByTestId('nav-structure').click();
     await expect(page.getByTestId('structure-view')).toBeVisible();
     await expect(page.getByTestId('structure-hint')).toContainText('click a row to see why');
-    await expect(page.getByRole('tab')).toHaveText([/^Sections/, /^Logic/, /^Defined terms/]);
+    await expect(page.getByRole('tab')).toHaveText([/^Logic/, /^Defined terms/]);
     // tab badges are the summed issue counts of the lists they hold
     const sum = {
-      sections: v.counts.sections,
       logic: LOGIC.reduce((n, l) => n + v.counts[l], 0),
       terms: v.counts.terms,
     };
@@ -44,23 +43,21 @@ test.describe('structure-view', () => {
       new RegExp(`To check: ${v.badge}$`),
     );
     await expect(page.getByTestId('structure-meta')).toContainText(`${v.badge} to check`);
-    // Issues only is the default: Sections shows only the flagged top-level sections, two columns
+    // Issues only is the default and Logic is the opening tab (the Sections tab was removed)
     await expect(page.getByTestId('structure-toggle-everything')).toHaveAttribute(
       'aria-pressed',
       'false',
     );
-    await expect(page.getByTestId('structure-lens-sections')).toHaveAttribute(
+    await expect(page.getByTestId('structure-lens-sections')).toHaveCount(0);
+    await expect(page.getByTestId('structure-lens-logic')).toHaveAttribute(
       'aria-selected',
       'true',
     );
-    const flagged = v.sections.filter((s) => s.depth === 0 && s.flags > 0).length;
     await expect(page.getByTestId('structure-line')).toHaveText(
-      `Issues only: ${flagged} of ${v.totals.sections}. Turn on Show everything for the full list.`,
+      new RegExp(
+        `^Issues only: \\d+ of ${v.totals.crossrefs + v.totals.conditions + v.totals.options}\\. Turn on Show everything for the full list\\.$`,
+      ),
     );
-    await expect(page.getByTestId('structure-row')).toHaveCount(flagged);
-    if (flagged)
-      await expect(page.locator('#st-panel thead th')).toHaveText(['Section', 'To check']);
-    else await expect(page.getByTestId('structure-empty-lens')).toBeVisible();
     // Logic groups cross-references, conditions, option groups and investor types with their counts
     await page.getByTestId('structure-lens-logic').click();
     for (const l of LOGIC) {
@@ -116,18 +113,6 @@ test.describe('structure-view', () => {
       `Showing everything: ${v.totals.terms} rows.`,
     );
     await expect(page.getByTestId('structure-row')).toHaveCount(v.totals.terms);
-    // sections show numbering and references columns, with the restart badge (Parts A to C of Section 2)
-    await page.getByTestId('structure-lens-sections').click();
-    await expect(page.getByTestId('structure-row')).toHaveCount(v.totals.sections);
-    await expect(page.locator('#st-panel thead th')).toHaveText([
-      'Section',
-      'Numbering',
-      'References',
-      'To check',
-    ]);
-    await expect(
-      page.getByTestId('structure-row').filter({ hasText: 'Restarts' }).first(),
-    ).toBeVisible();
   });
 
   test('a row opens the right-hand drawer; Escape and Close return focus', async ({ page }) => {

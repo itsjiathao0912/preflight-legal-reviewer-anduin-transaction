@@ -28,3 +28,43 @@ export function SeverityChips({ chips }: { chips: ReviewView['chips'] }) {
     </div>
   );
 }
+
+const KIND_LABEL = { errors: 'Errors', changes: 'Changes' } as const;
+
+/** True when a filter chip row has something to show (severity, or type when shown). */
+export function hasActiveChips(f: { sev: string; kind: string }, kind: boolean): boolean {
+  return f.sev !== 'all' || (kind && f.kind !== 'all');
+}
+
+/** Active Type and Severity filters as removable chips; each chip clears its own filter. */
+export function ActiveFilterChips({ kind }: { kind: boolean }) {
+  const k = useFilters((s) => s.kind);
+  const sev = useFilters((s) => s.sev);
+  const set = useFilters((s) => s.set);
+  return (
+    <>
+      {kind && k !== 'all' ? (
+        <button
+          className="chip fv2-active-chip"
+          type="button"
+          data-testid="active-kind-chip"
+          aria-label={`Remove filter: ${KIND_LABEL[k]}`}
+          onClick={() => set({ kind: 'all' })}
+        >
+          {KIND_LABEL[k]} <Icon name="x" />
+        </button>
+      ) : null}
+      {sev !== 'all' ? (
+        <button
+          className="chip fv2-active-chip"
+          type="button"
+          data-testid="active-severity-chip"
+          aria-label={`Remove filter: ${SEV[sev].short}`}
+          onClick={() => set({ sev: 'all' })}
+        >
+          {SEV[sev].short} <Icon name="x" />
+        </button>
+      ) : null}
+    </>
+  );
+}

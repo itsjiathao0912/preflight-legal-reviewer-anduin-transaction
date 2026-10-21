@@ -1,5 +1,6 @@
 import { useAiLaneEffects } from '../features/ai/ai-lane';
 import { CounselJoinDialog } from '../features/counsel/CounselJoinDialog';
+import { RequestDrawer } from '../features/requests/RequestDrawer';
 import { useCounselEffects, useShare } from '../features/counsel/counsel-share';
 import { featureFor } from '../features/registry';
 import { OpenDocumentDialog } from '../features/open-document/OpenDocumentDialog';
@@ -43,6 +44,7 @@ export function AppShell() {
         <>
           <OpenDocumentDialog />
           <PrivacyPrompt />
+          <RequestDrawer />
         </>
       )}
       <CounselJoinDialog />

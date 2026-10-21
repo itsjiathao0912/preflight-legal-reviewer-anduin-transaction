@@ -35,6 +35,8 @@ async function checkGroupAndExport(page: Page, labels: string[]) {
   await gotoCounsel(page);
   const group = page.getByTestId('gp-group');
   await expect(group).toBeVisible();
+  // Questions table: the GP request is one row; its documents show when it is expanded
+  await group.getByTestId('gp-request-toggle').click();
   const items = group.getByTestId('gp-request-item');
   await expect(items).toHaveCount(labels.length);
   const quotes: string[] = [];
@@ -56,7 +58,8 @@ async function checkGroupAndExport(page: Page, labels: string[]) {
     const headings = value.split('\n').filter((l) => /^\d+\. /.test(l) && l.endsWith(label));
     expect(headings, label).toHaveLength(1);
   }
-  for (const q of quotes) expect(value).toContain(q);
+  // the on-screen snippet may start with "…" (a cut-off leading word trimmed, UI only)
+  for (const q of quotes) expect(value).toContain(q.replace(/^…/, ''));
   expect(value).toContain(`${labels.length} document${labels.length === 1 ? '' : 's'} needed`);
 }
 

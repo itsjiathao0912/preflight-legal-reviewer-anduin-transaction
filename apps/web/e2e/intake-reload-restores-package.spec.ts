@@ -42,6 +42,7 @@ test.describe('intake-reload-restores-package', () => {
     await page.getByTestId('nav-structure').click();
     await page.getByTestId('structure-lens-terms').click();
     await expect(page.getByTestId('package-lens')).toBeVisible();
+    await page.getByTestId('nav-documents').click();
     await expect(page.getByTestId('package-lens-doc')).toHaveCount(3);
   });
 

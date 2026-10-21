@@ -2,11 +2,12 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { gotoApp } from './fixtures/app';
-import { confirmAllRows, openDemoPackage, runPackage } from './fixtures/package';
+import { confirmAllRows, openDemoPackage, openPackageFiles, runPackage } from './fixtures/package';
 import { uploadOne } from './fixtures/variance';
 
 // Intake Phase 3 track 3a (AC-I17 lens half, AC-I9 lens): the Package lens in Structure lists
-// documents, references, terms and the five coverage groups; a baseline is markable from the lens.
+// references, terms and the five coverage groups; the package file list (with the baseline
+// control) lives on the Documents screen.
 const ROOT = resolve(import.meta.dirname, '..', '..', '..');
 const expected = JSON.parse(readFileSync(resolve(ROOT, 'fixtures/package/expected.json'), 'utf8'));
 const listed = (
@@ -54,7 +55,6 @@ test.describe('intake-package-lens', () => {
     await openAndRun(page, 'hartwell', hw.files);
     await openLens(page);
     const lens = page.getByTestId('package-lens');
-    await expect(lens.getByTestId('package-lens-doc')).toHaveCount(Object.keys(hw.files).length);
     // references: LPA resolved, the other three families not in the package
     await expect(
       lens.locator('[data-testid="package-reference"][data-target-key="lpa"]').first(),
@@ -72,8 +72,14 @@ test.describe('intake-package-lens', () => {
       GROUPS,
     );
     await expect(page.getByTestId('package-lens-line')).toHaveText(hw.coverageLine);
-    // AC-I9 lens: Fund II (same firm, sub agreement) can be marked baseline from the lens
-    const fund2 = lens
+    // the file list moved to Documents
+    await expect(lens.getByTestId('package-lens-doc')).toHaveCount(0);
+    await openPackageFiles(page);
+    const files = page.getByTestId('package-summary');
+    await expect(files.getByTestId('package-lens-doc')).toHaveCount(Object.keys(hw.files).length);
+    await expect(page.getByTestId('package-summary-line')).toHaveText(hw.coverageLine);
+    // AC-I9: Fund II (same firm, sub agreement) can be marked baseline from the file list
+    const fund2 = files
       .getByTestId('package-lens-doc')
       .filter({ hasText: 'fund-ii-subscription-agreement-prior' });
     const role = fund2.getByTestId('package-lens-doc-role');
@@ -85,7 +91,7 @@ test.describe('intake-package-lens', () => {
     await expect(role).toHaveValue('baseline');
     await expect(page.getByTestId('package-lens-action-error')).toHaveCount(0);
     // the LPA is not a sub agreement: Baseline is disabled for it
-    const lpaRole = lens
+    const lpaRole = files
       .getByTestId('package-lens-doc')
       .filter({ hasText: 'northgate-lpa-definitions' })
       .getByTestId('package-lens-doc-role');
@@ -121,12 +127,6 @@ test.describe('intake-package-lens', () => {
     const baseline = Object.entries(ng.files as FileSpec).find(
       ([, f]) => f.finalRole === 'baseline',
     )![0];
-    await expect(
-      lens
-        .getByTestId('package-lens-doc')
-        .filter({ hasText: baseline })
-        .getByTestId('package-lens-doc-role'),
-    ).toHaveValue('baseline');
     for (const fam of ng.resolved as string[])
       await expect(
         lens.locator(`[data-testid="package-reference"][data-target-key="${fam}"]`).first(),
@@ -136,5 +136,13 @@ test.describe('intake-package-lens', () => {
         lens.locator(`[data-testid="package-reference"][data-target-key="${key}"]`).first(),
       ).toHaveAttribute('data-resolution', 'not_in_package');
     await expect(lens.getByTestId('package-coverage-group')).toHaveCount(5);
+    await openPackageFiles(page);
+    await expect(
+      page
+        .getByTestId('package-summary')
+        .getByTestId('package-lens-doc')
+        .filter({ hasText: baseline })
+        .getByTestId('package-lens-doc-role'),
+    ).toHaveValue('baseline');
   });
 });

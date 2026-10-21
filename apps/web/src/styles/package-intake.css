@@ -49,6 +49,36 @@
   padding: 0 6px;
   font-size: 12px;
 }
+.pkg-low-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.pkg-ok {
+  padding: 2px 8px;
+  font-size: 12px;
+}
+.pkg-rm-cell {
+  width: 32px;
+  text-align: right;
+}
+.pkg-rm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--r);
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.pkg-rm:hover {
+  background: var(--accent-tint);
+  color: var(--ink);
+}
 .pkg-notice {
   color: var(--ink-2);
 }

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AppShell } from './shell/AppShell';
 import { appDb, purgeExpired } from './storage/db';
 import { useSession } from './state/session';
@@ -10,6 +10,8 @@ import { loadManifest, scanPagesOf } from './features/open-document/samples';
 import { openSharedDocument } from './features/counsel/counsel-boot';
 import { useShare } from './features/counsel/counsel-share';
 import { isCounselMode } from './state/share-role';
+import { WelcomeScreen } from './features/welcome/WelcomeScreen';
+import { shouldShowWelcome } from './features/welcome/welcome-gate';
 
 let restoreStarted = false;
 
@@ -75,5 +77,11 @@ export function App() {
     void restoreOnStart().catch(() => undefined);
     void refreshAllowance();
   }, [refreshAllowance]);
-  return <AppShell />;
+  const [welcome, setWelcome] = useState(() => shouldShowWelcome());
+  return (
+    <>
+      <AppShell />
+      {welcome && <WelcomeScreen onEnter={() => setWelcome(false)} />}
+    </>
+  );
 }

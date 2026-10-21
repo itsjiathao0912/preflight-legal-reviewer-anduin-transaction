@@ -79,6 +79,8 @@ interface Ctx {
   doc: LaneDoc;
   bytes: Uint8Array;
   candidates: AiCandidate[];
+  /** reference-target pairs (pointer sentence + TARGET blocks), sent as a second /api/ai call */
+  pairs: AiCandidate[];
   failed: boolean;
   ruleTexts: string[] | null;
   /** a fresh run was requested for this document (upload auto-run, Run / Retry): resume target */
@@ -212,7 +214,7 @@ async function evaluate(my: number): Promise<{ findings: FindingView[]; fresh: b
     set({ ...base, status: 'skipped', note: 'an earlier stage failed' });
     return none;
   }
-  if (c.candidates.length === 0) {
+  if (c.candidates.length === 0 && c.pairs.length === 0) {
     set({ ...base, status: 'skipped', note: 'nothing for the AI to review' });
     return none;
   }
@@ -271,6 +273,7 @@ export async function aiOnOpen(
     doc,
     bytes,
     candidates: result.aiCandidates ?? [],
+    pairs: result.pairs ?? [],
     failed: result.failedStage !== null,
     ruleTexts: null,
     wanted: false,
@@ -303,11 +306,72 @@ export function aiReopen(
   return { findings: c.shown, fresh: false };
 }
 
-/** Fresh AI review through /api/ai: upload auto-run, "Run AI on this sample", Retry, resume. */
+/** Notice shown when the second (reference-target) pass did not complete. */
+export const PARTIAL_NOTICE = 'Second AI pass did not complete; showing the first pass';
+
+type PassOutcome =
+  | { kind: 'ok'; v: Extract<VerifyAiResponse, { ok: true }>; cacheHit: boolean }
+  | { kind: 'stale' }
+  | { kind: 'aborted' }
+  | { kind: 'fail'; banner: BannerKey; retryAfterS?: number; rulesChanged?: boolean };
+
+/** One /api/ai call plus the L5 echo check and the verify chain. */
+async function runPass(
+  c: Ctx,
+  my: number,
+  task: 'clause-judgment' | 'reference-target',
+  candidates: AiCandidate[],
+  rules: string[],
+  before: string | null,
+): Promise<PassOutcome> {
+  const ac = new AbortController();
+  controller = ac;
+  const t = await requestAi({
+    docHash: c.doc.docHash,
+    // demo / read-only path (no active rules for this request): law_firm_id null, rules hash 'none';
+    // a firm is sent only when its active rules are injected (matches the lookup hash above)
+    lawFirmId: rules.length > 0 ? c.doc.firmId : null,
+    ...(task === 'reference-target' ? { task } : {}),
+    candidates,
+    signal: ac.signal,
+  });
+  if (my !== seq) return { kind: 'stale' };
+  controller = null;
+  if (t.kind === 'aborted') return { kind: 'aborted' };
+  if (t.kind === 'error')
+    return {
+      kind: 'fail',
+      banner: bannerFor(t.error),
+      ...(t.error.retryAfterS !== undefined ? { retryAfterS: t.error.retryAfterS } : {}),
+    };
+  if (t.resultKind !== 'ai') return { kind: 'fail', banner: 'result_unusable' };
+  // L5: the Worker echoes the rules it injected; on a mismatch drop the cached rule texts so the
+  // next Retry re-reads the firm's rules, and never show findings computed for other rules
+  // (read-only sessions never get rules injected server-side, so they skip the check)
+  if (rulesEchoMismatch(t.meta, useSession.getState().readOnly ? null : before))
+    return { kind: 'fail', banner: 'rules_changed', rulesChanged: true };
+  const provenance = t.cache === 'hit' ? 'cache' : 'fresh';
+  const v = await verify(c, t.data, rules, {
+    model: t.model,
+    provenance,
+    ...(task === 'reference-target' ? { task } : {}),
+  });
+  if (my !== seq) return { kind: 'stale' };
+  if (!v.ok) return { kind: 'fail', banner: 'result_unusable' };
+  return { kind: 'ok', v, cacheHit: t.cache === 'hit' };
+}
+
+/**
+ * Fresh AI review through /api/ai: upload auto-run, "Run AI on this sample", Retry, resume.
+ * Call 1 = clause-judgment (when there are candidates); call 2 = reference-target (when there are
+ * pairs). A failed call 1 downgrades as before and call 2 is not sent. A failed, downgraded or
+ * refused call 2 never downgrades call-1 results: they stay shown with a partial-result notice and
+ * no automatic retry. Findings of both calls are merged (AI findings never drop each other).
+ */
 export async function aiRunFresh(): Promise<void> {
   const c = ctx;
   if (!c || !useSession.getState().aiOn || !apiEnabled()) return;
-  if (c.failed || c.candidates.length === 0) return;
+  if (c.failed || (c.candidates.length === 0 && c.pairs.length === 0)) return;
   abortCall();
   clearTimer();
   const my = ++seq;
@@ -322,45 +386,80 @@ export async function aiRunFresh(): Promise<void> {
   if (rulesHashMissing(before, useSession.getState().readOnly, c.doc.firmId)) {
     return downgrade('rules_unavailable');
   }
-  const ac = new AbortController();
-  controller = ac;
-  const t = await requestAi({
-    docHash: c.doc.docHash,
-    // demo / read-only path (no active rules for this request): law_firm_id null, rules hash 'none';
-    // a firm is sent only when its active rules are injected (matches the lookup hash above)
-    lawFirmId: rules.length > 0 ? c.doc.firmId : null,
-    candidates: c.candidates,
-    signal: ac.signal,
-  });
-  if (my !== seq) return;
-  controller = null;
-  if (t.kind === 'aborted') return;
-  if (t.kind === 'error') return downgrade(bannerFor(t.error), t.error.retryAfterS);
-  if (t.resultKind !== 'ai') return downgrade('result_unusable');
-  // L5: the Worker echoes the rules it injected; on a mismatch drop the cached rule texts so the
-  // next Retry re-reads the firm's rules, and never show findings computed for other rules
-  // (read-only sessions never get rules injected server-side, so they skip the check)
-  if (rulesEchoMismatch(t.meta, useSession.getState().readOnly ? null : before)) {
-    c.ruleTexts = null;
-    emit(c, []);
-    return downgrade('rules_changed');
+  const fail = (o: Extract<PassOutcome, { kind: 'fail' }>) => {
+    if (o.rulesChanged) {
+      c.ruleTexts = null;
+      emit(c, []);
+    }
+    downgrade(o.banner, o.retryAfterS);
+  };
+  /** never show findings computed for rules that changed while the call was running */
+  const rulesStill = async (): Promise<boolean | null> => {
+    const now = await ruleTextsFor(c, true);
+    const after = now === null ? null : await hash8Of(now);
+    if (my !== seq) return null;
+    return after === before;
+  };
+
+  let first: Extract<PassOutcome, { kind: 'ok' }> | null = null;
+  if (c.candidates.length > 0) {
+    const o = await runPass(c, my, 'clause-judgment', c.candidates, rules, before);
+    if (o.kind === 'stale' || o.kind === 'aborted') return;
+    if (o.kind === 'fail') return fail(o);
+    const same = await rulesStill();
+    if (same === null) return;
+    if (!same) {
+      c.ruleTexts = null;
+      emit(c, []);
+      return downgrade('rules_changed');
+    }
+    first = o;
   }
-  const provenance = t.cache === 'hit' ? 'cache' : 'fresh';
-  const v = await verify(c, t.data, rules, { model: t.model, provenance });
-  if (my !== seq) return;
-  if (!v.ok) return downgrade('result_unusable');
-  // never show findings computed for rules that changed while the call was running
-  const now = await ruleTextsFor(c, true);
-  const after = now === null ? null : await hash8Of(now);
-  if (my !== seq) return;
-  if (after !== before) {
-    c.ruleTexts = null;
-    emit(c, []);
-    return downgrade('rules_changed');
+  if (c.pairs.length === 0) {
+    // first is non-null here: the guard above requires candidates or pairs
+    if (!first) return;
+    applyVerified(first.v, first.cacheHit ? 'cache' : 'fresh');
+    emit(c, first.v.findings);
+    if (!first.cacheHit) void useSession.getState().refreshQuota();
+    return;
   }
-  applyVerified(v, provenance);
-  emit(c, v.findings);
-  if (t.cache === 'miss') void useSession.getState().refreshQuota();
+  const second = await runPass(c, my, 'reference-target', c.pairs, rules, before);
+  if (second.kind === 'stale') return;
+  let secondOk: Extract<PassOutcome, { kind: 'ok' }> | null = null;
+  if (second.kind === 'ok') {
+    const same = await rulesStill();
+    if (same === null) return;
+    if (same) secondOk = second;
+    else if (!first) {
+      c.ruleTexts = null;
+      emit(c, []);
+      return downgrade('rules_changed');
+    } else c.ruleTexts = null;
+  } else if (!first) {
+    if (second.kind === 'aborted') return;
+    return fail(second);
+  }
+  if (!first && secondOk) {
+    applyVerified(secondOk.v, secondOk.cacheHit ? 'cache' : 'fresh');
+    emit(c, secondOk.v.findings);
+    if (!secondOk.cacheHit) void useSession.getState().refreshQuota();
+    return;
+  }
+  if (!first) return;
+  const v1 = first.v;
+  const v2 = secondOk?.v;
+  applyVerified(
+    {
+      ...v1,
+      findings: [...v1.findings, ...(v2?.findings ?? [])],
+      rejected: [...v1.rejected, ...(v2?.rejected ?? [])],
+    },
+    first.cacheHit && (secondOk?.cacheHit ?? true) ? 'cache' : 'fresh',
+  );
+  if (!secondOk) set({ note: PARTIAL_NOTICE });
+  emit(c, [...v1.findings, ...(v2?.findings ?? [])]);
+  if (!first.cacheHit || (secondOk && !secondOk.cacheHit))
+    void useSession.getState().refreshQuota();
 }
 
 /**

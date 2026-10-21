@@ -178,9 +178,44 @@ describe('findings-v2-panel-ui', () => {
     expect(g.textContent).toContain('To review');
     expect(q('[data-testid="group-sent"]')).toBeNull();
     expect(q('[data-testid="panel-resizer"]')).not.toBeNull();
-    expect(q('[data-testid="severity-chip-block"]')!.getAttribute('aria-pressed')).toBe('false');
-    expect(q('[data-testid="filter-button"]')).not.toBeNull();
+    expect(q('[data-testid="severity-chip-block"]')).toBeNull();
+    expect(mounted!.container.querySelector('.fv2-fhead-l')).toBeNull();
+    const fb = q('[data-testid="filter-button"]') as HTMLButtonElement;
+    expect(fb).not.toBeNull();
+    act(() => fb.click());
+    const chip = document.querySelector('[data-testid="severity-chip-block"]') as HTMLButtonElement;
+    expect(chip.getAttribute('aria-pressed')).toBe('false');
+    act(() => chip.click());
+    expect(chip.getAttribute('aria-pressed')).toBe('true');
+    expect(fb.textContent).toContain('· 1');
+    const active = q('[data-testid="active-severity-chip"]') as HTMLButtonElement;
+    expect(active.textContent).toContain('Blocks');
+    act(() => active.click());
+    expect(q('[data-testid="active-severity-chip"]')).toBeNull();
     expect(mounted!.container.textContent).not.toContain('Show in document');
+  });
+
+  it('puts Filter on the progress row and the Type group inside the Filter popover', () => {
+    mount({ errors: [E1, E2, E3] });
+    act(() => useReview.setState({ doc: { ...DOC, firmId: 'f1' } }));
+    expect(q('[data-testid="progress-header"] [data-testid="filter-button"]')).not.toBeNull();
+    expect(q('[data-testid="kind-segment"]')).toBeNull();
+    expect(mounted!.container.querySelector('.fv2-fhead')).toBeNull();
+    const fb = q('[data-testid="filter-button"]') as HTMLButtonElement;
+    act(() => fb.click());
+    const seg = document.querySelector('[data-testid="filter-menu"] [data-testid="kind-segment"]');
+    expect(seg).not.toBeNull();
+    act(() =>
+      (document.querySelector('[data-testid="kind-changes"]') as HTMLButtonElement).click(),
+    );
+    expect(useFilters.getState().kind).toBe('changes');
+    expect(fb.textContent).toContain('· 1');
+    const chip = q('[data-testid="active-kind-chip"]') as HTMLButtonElement;
+    expect(chip.textContent).toContain('Changes');
+    act(() => chip.click());
+    expect(useFilters.getState().kind).toBe('all');
+    expect(q('[data-testid="active-kind-chip"]')).toBeNull();
+    expect(mounted!.container.querySelector('.fv2-fhead')).toBeNull();
   });
 
   it('should show loading, no-document and no-findings states with the kept ids', () => {

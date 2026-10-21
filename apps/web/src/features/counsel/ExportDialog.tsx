@@ -1,4 +1,4 @@
-import { parseQuestionKey, type CounselSheet } from '@aduin/core';
+import { parseQuestionKey, type CounselSheet, type Owner } from '@aduin/core';
 import * as RxDialog from '@radix-ui/react-dialog';
 import { useEffect, useState } from 'react';
 import { Icon } from '../../components/ui/icon';
@@ -21,6 +21,7 @@ export function ExportDialog({
   gateCount,
   noFirm,
   onDownload,
+  ownerChoice,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -31,6 +32,15 @@ export function ExportDialog({
   gateCount: number;
   noFirm: boolean;
   onDownload: () => Promise<void>;
+  /**
+   * Questions table (20-10-26): who the sheet is for (All or one owner, the per-owner export). Shown
+   * only when the document has owner questions; `disabled` when that owner has nothing unanswered.
+   */
+  ownerChoice?: {
+    value: Owner | null;
+    options: readonly { value: Owner | null; label: string; disabled?: boolean }[];
+    onChange: (o: Owner | null) => void;
+  };
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +91,22 @@ export function ExportDialog({
                   </button>
                 </RxDialog.Close>
               </div>
+              {ownerChoice ? (
+                <div className="seg exp-owner" role="group" aria-label="Export questions for">
+                  {ownerChoice.options.map((o) => (
+                    <button
+                      key={o.value ?? 'all'}
+                      type="button"
+                      data-testid={`export-owner-${o.value ?? 'all'}`}
+                      aria-pressed={ownerChoice.value === o.value}
+                      disabled={busy || o.disabled}
+                      onClick={() => ownerChoice.onChange(o.value)}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
               {gateCount ? (
                 <div className="callout" data-testid="export-gate-warning">
                   <Icon name="warn" />

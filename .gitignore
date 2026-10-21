@@ -24,3 +24,6 @@ apps/web/public/firms.json
 docs/demo/script.md
 docs/demo/slides.html
 docs/demo/storyboard.md
+
+# defect bench raw EDGAR corpus (local only, never committed)
+fixtures/defect-bench/corpus/

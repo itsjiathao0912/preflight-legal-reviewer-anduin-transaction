@@ -30,7 +30,7 @@ function stepsOf(t: InvestorTypeRow): Step[] {
   return out;
 }
 
-const sectionOf = (where: string) => /^Section (\d{1,2}[A-Z]?)/.exec(where)?.[1] ?? null;
+export const sectionOf = (where: string) => /^Section (\d{1,2}[A-Z]?)/.exec(where)?.[1] ?? null;
 
 export function InvestorTypesLens({
   view,

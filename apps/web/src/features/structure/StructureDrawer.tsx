@@ -43,60 +43,6 @@ function Prov({ rule }: { rule: string }) {
 }
 
 function detailOf(v: StructureView, key: string): Detail | null {
-  if (key.startsWith('ps:')) {
-    const n = key.slice(3);
-    const s = v.sections.find((x) => x.depth === 0 && x.number === n);
-    if (!s) return null;
-    key = s.id;
-  }
-  const sec = v.sections.find((x) => x.id === key);
-  if (sec) {
-    return {
-      k: sec.depth ? 'Part' : 'Section',
-      title: `${sec.number}. ${sec.title}`,
-      quoteTitle: false,
-      blockId: sec.blockId,
-      findingId: null,
-      body: (
-        <>
-          <div className="brow">
-            {sec.restart ? (
-              <span className="badge b-note">
-                <Icon name="undo" />
-                Numbering restarts here
-              </span>
-            ) : null}
-            {sec.flags ? (
-              <span className="badge b-fix">
-                <Icon name="warn" />
-                {sec.flags} reference{sec.flags > 1 ? 's' : ''} to check
-              </span>
-            ) : (
-              <span className="badge b-ok">
-                <Icon name="check" />
-                No flags
-              </span>
-            )}
-          </div>
-          <Facts
-            rows={[
-              ['Numbering', sec.numbering],
-              ['Refers to others', `${sec.refsOut}`],
-              ['Referred to by', `${sec.refsIn}`],
-            ]}
-          />
-          {sec.restart ? (
-            <p className="why">
-              Numbering inside this section starts again, so a bare “Part B” or “paragraph 1” can
-              mean different things in different sections. References must say which section they
-              mean.
-            </p>
-          ) : null}
-          <Prov rule="STRUCT-01" />
-        </>
-      ),
-    };
-  }
   const r = v.crossrefs.find((x) => x.id === key);
   if (r) {
     const st = REF_STATUS[r.status];

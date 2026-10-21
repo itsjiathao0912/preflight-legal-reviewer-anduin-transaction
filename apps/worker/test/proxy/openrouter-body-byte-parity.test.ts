@@ -6,10 +6,13 @@ import { okAi, okOcr } from '../fakes/openrouter-stub';
 import { aiBody, bodyText, makeHarness, ocrBody, send } from '../fakes/harness';
 import { digestHex } from '../../src/upstream/openrouter';
 
+// llm-defect-detection (22-10-26): the clause-judgment digest changed ON PURPOSE (prompt bumped to
+// clause-judgment@2, review playbook added); reference-target@1 is a new task. Other digests unchanged.
 const GOLDEN: Record<string, string> = {
-  'clause-judgment': '5cce545ba1c541cf965adb61c7c01d41fc307d698240b7da00bb604a444020df',
+  'clause-judgment': '7899bfde5d0ea11d4bd9fd77da2f3fb3b82465ec711be86cc3cbc770a06db25a',
   'counsel-draft': 'b47c6cd8806113735b2d8a8e039ec16f1310e3f14efed5fa481d52b9f5d04ff0',
   'drift-narrative': '18aecd14a901e5ff28ac2661778c8672fc21523b9b2918580a2345975af554d7',
+  'reference-target': '8c6ad8e2961ad4814fa79c3946a790a81256178fe2da00722a1cb4fca569febf',
   ocr: '71d49977c940a15012c3184c191e7b9bc1cf86aceaa8d1f21729e5a66e5639d0',
 };
 

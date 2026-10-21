@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '../../../components/ui/icon';
 import { useFilters } from '../../../state/filters';
 import { useReview } from '../../../state/review';
@@ -15,13 +15,19 @@ import { barState, planControl } from './action-plan';
 import { ActionBar } from './ActionBar';
 import { CloseIssueModal } from './CloseIssueModal';
 import { GroupedList } from './GroupedList';
-import { flatOrder, groupRows, progressOf } from './groups';
-import { KindSegment } from './KindSegment';
+import { flatOrder, groupRows, progressOf, type Grouped } from './groups';
 import { PanelResizer } from './PanelResizer';
 import { ProgressHeader } from './ProgressHeader';
 import { toCloseCall } from './reasons-map';
-import { SeverityChips } from './SeverityChips';
-import type { CloseReasonKey, Control, ReviewView } from './types';
+import { ActiveFilterChips, hasActiveChips } from './SeverityChips';
+import type { CloseReasonKey, Control, GroupKey, ReviewView } from './types';
+import type { Row } from '../model';
+import { usePackageView } from '../../package/package-view';
+import { flowBreaks } from '../views/flow-model';
+import { FormFlowView } from '../views/FormFlowView';
+import { sourceRows, sourcesMissing } from '../views/sources-model';
+import { SourcesView } from '../views/SourcesView';
+import { ViewSwitch } from '../views/ViewSwitch';
 import { useAskOwners } from './use-ask-owners';
 import { useFindingActions } from './use-finding-actions';
 import { usePanelWidth } from './use-panel-width';
@@ -53,11 +59,53 @@ export function FindingsPanelV2({ view }: { view: ReviewView }) {
   const setOpenDoc = useShell((s) => s.setOpenDoc);
   // counsel share link: counsel sees the same canvas but answers and comments only
   const counselMode = useShare((s) => s.role === 'counsel');
+  // Document map folded in: Issues (this list), Form flow and Sources; counsel sees Issues only
+  const panelView = useShell((s) => (counselMode ? 'issues' : s.findingsView));
+  const setPanelView = useShell((s) => s.setFindingsView);
+  const structure = useReview((s) => s.result?.structure);
+  const findings = useReview((s) => s.result?.findings);
+  const blocks = useReview((s) => s.result?.blocks);
+  const pkg = usePackageView();
+  const breaks = useMemo(() => (structure ? flowBreaks(structure).length : 0), [structure]);
+  const sources = useMemo(
+    () => sourceRows(structure, pkg, findings, blocks),
+    [structure, pkg, findings, blocks],
+  );
   const viewRef = useRef(view);
   viewRef.current = view;
 
-  const groups = useMemo(() => groupRows(view.visible), [view.visible]);
-  const flat = useMemo(() => flatOrder(groups), [groups]);
+  const allGroups = useMemo(() => groupRows(view.visible), [view.visible]);
+  // counsel share link: questions sent to counsel come first; the rest hides behind a toggle
+  const [showAll, setShowAll] = useState(false);
+  const groups: Grouped = useMemo(
+    () =>
+      counselMode && !showAll && allGroups.sent.length
+        ? { review: [], sent: allGroups.sent, closed: [] }
+        : allGroups,
+    [counselMode, showAll, allGroups],
+  );
+  const order: readonly GroupKey[] | undefined = counselMode
+    ? ['sent', 'review', 'closed']
+    : undefined;
+  const flat = useMemo(
+    () => (counselMode ? [...groups.sent, ...groups.review, ...groups.closed] : flatOrder(groups)),
+    [counselMode, groups],
+  );
+  const sentRows = allGroups.sent;
+  const answeredCount = sentRows.filter(isAnswered).length;
+  const otherCount = allGroups.review.length + allGroups.closed.length;
+  // counsel share link: open the first unanswered sent question once per document (never a
+  // finding that was not sent); select() bumps selectSeq so the document scrolls to its quote
+  const autoOpened = useRef<string | null>(null);
+  const docId = doc?.id ?? null;
+  useEffect(() => {
+    if (!counselMode || phase !== 'ready' || !docId || autoOpened.current === docId) return;
+    if (!sentRows.length) return;
+    autoOpened.current = docId;
+    const first = sentRows.find((r) => !isAnswered(r));
+    if (first) select(first.f.id);
+    else if (!sentRows.some((r) => r.f.id === useReview.getState().selectedId)) select(null);
+  }, [counselMode, phase, docId, sentRows, select]);
   const progress = useMemo(() => progressOf(view.main), [view.main]);
   // R1: the bar and C/X act only on a row the list shows (a filtered-out or Previously handled
   // selection leaves the bar in its "nothing open" state)
@@ -137,6 +185,7 @@ export function FindingsPanelV2({ view }: { view: ReviewView }) {
   };
 
   const showKind = ready && !!doc?.firmId;
+  const activeChips = useFilters((s) => hasActiveChips(s, showKind));
   const lines = vDoc === doc?.id ? varianceLines({ line: vLine, ignored: vIgnored }) : [];
   const empty = view.visible.length
     ? null
@@ -156,73 +205,123 @@ export function FindingsPanelV2({ view }: { view: ReviewView }) {
       ref={width.ref}
     >
       <PanelResizer pct={width.pct} min={width.min} max={width.max} onChange={width.setPct} />
-      <ProgressHeader progress={progress} />
-      {showKind ? (
-        <div className="fkind">
-          <KindSegment counts={view.counts} />
-          <NoBaselineLine lines={lines} />
+      {counselMode ? null : (
+        <ViewSwitch
+          value={panelView}
+          onChange={setPanelView}
+          counts={{ issues: view.main.length, breaks, missing: sourcesMissing(sources) }}
+        />
+      )}
+      {panelView !== 'issues' ? (
+        <div
+          className="scroll flist fv-alt"
+          tabIndex={0}
+          role="tabpanel"
+          id="fv-view-panel"
+          aria-labelledby={`fv-tab-${panelView}`}
+          data-testid={`findings-panel-${panelView}`}
+        >
+          {panelView === 'flow' ? (
+            <FormFlowView view={structure} />
+          ) : (
+            <SourcesView rows={sources} pkg={pkg} />
+          )}
         </div>
-      ) : null}
-      <div className="fhead fv2-fhead">
-        {groups.review.length && !empty ? (
-          <span className="fv2-fhead-l" aria-hidden="true">
-            To review <span className="n">{groups.review.length}</span>
-          </span>
-        ) : null}
-        <SeverityChips chips={view.chips} />
-        <FilterMenu rows={view.main} />
-      </div>
-      <div className="scroll flist" tabIndex={0} role="region" aria-label="Findings list">
-        {phase === 'empty' || phase === 'error' ? (
-          <div className="empty" data-testid="empty-state">
-            <p className="em-p">
-              {phase === 'error' ? 'The document could not be processed.' : 'No document is open.'}
-            </p>
-            <button className="btn" type="button" onClick={() => setOpenDoc(true)}>
-              <Icon name="doc" />
-              Open a document
-            </button>
-          </div>
-        ) : phase === 'loading' ? (
-          <div className="empty" data-testid="loading-state">
-            Reading the document…
-          </div>
-        ) : (
-          <>
-            {progress.done ? (
-              <div className="fv2-done" data-testid="findings-done">
-                <h2>
-                  <Icon name="check" />
-                  All findings reviewed
-                </h2>
-                <p>
-                  {progress.sent} sent to counsel · {progress.closed} closed
+      ) : (
+        <>
+          <ProgressHeader
+            progress={progress}
+            right={
+              <FilterMenu
+                rows={view.main}
+                chips={view.chips}
+                counts={showKind ? view.counts : undefined}
+              />
+            }
+          />
+          {showKind && lines.length ? (
+            <div className="fkind">
+              <NoBaselineLine lines={lines} />
+            </div>
+          ) : null}
+          {(counselMode && sentRows.length) || activeChips ? (
+            <div className="fhead fv2-fhead">
+              {counselMode && sentRows.length ? (
+                <span className="fv2-fhead-l" data-testid="counsel-summary">
+                  {sentRows.length} {sentRows.length === 1 ? 'question' : 'questions'} for you ·{' '}
+                  {answeredCount} answered
+                </span>
+              ) : null}
+              <ActiveFilterChips kind={showKind} />
+            </div>
+          ) : null}
+          <div className="scroll flist" tabIndex={0} role="region" aria-label="Findings list">
+            {phase === 'empty' || phase === 'error' ? (
+              <div className="empty" data-testid="empty-state">
+                <p className="em-p">
+                  {phase === 'error'
+                    ? 'The document could not be processed.'
+                    : 'No document is open.'}
                 </p>
+                <button className="btn" type="button" onClick={() => setOpenDoc(true)}>
+                  <Icon name="doc" />
+                  Open a document
+                </button>
+              </div>
+            ) : phase === 'loading' ? (
+              <div className="empty" data-testid="loading-state">
+                Reading the document…
+              </div>
+            ) : (
+              <>
+                {progress.done ? (
+                  <div className="fv2-done" data-testid="findings-done">
+                    <h2>
+                      <Icon name="check" />
+                      All findings reviewed
+                    </h2>
+                    <p>
+                      {progress.sent} sent to counsel · {progress.closed} closed
+                    </p>
+                  </div>
+                ) : null}
+                <GroupedList
+                  groups={groups}
+                  selectedId={selectedId}
+                  onSelect={(id) => select(id)}
+                  view={view}
+                  empty={empty}
+                  order={order}
+                />
+                {counselMode && sentRows.length > 0 && otherCount > 0 ? (
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    data-testid="counsel-show-all"
+                    aria-expanded={showAll}
+                    onClick={() => setShowAll((v) => !v)}
+                  >
+                    {showAll ? 'Show only questions for you' : `Show all findings (${otherCount})`}
+                  </button>
+                ) : null}
+              </>
+            )}
+            {ready && view.variance && kindFilter !== 'errors' ? (
+              <CosmeticGroups
+                groups={view.variance.cosmeticGroups}
+                count={view.variance.summary.cosmetic}
+              />
+            ) : null}
+            {/* last group inside the scrolling list (never a band over the bar); hidden while empty,
+            the count stays in the DOM for the memory flows that read it */}
+            {ready ? (
+              <div className="fv2-prev" hidden={view.previous.length === 0}>
+                <PreviouslyHandledRow items={view.previous} />
               </div>
             ) : null}
-            <GroupedList
-              groups={groups}
-              selectedId={selectedId}
-              onSelect={(id) => select(id)}
-              view={view}
-              empty={empty}
-            />
-          </>
-        )}
-        {ready && view.variance && kindFilter !== 'errors' ? (
-          <CosmeticGroups
-            groups={view.variance.cosmeticGroups}
-            count={view.variance.summary.cosmetic}
-          />
-        ) : null}
-        {/* last group inside the scrolling list (never a band over the bar); hidden while empty,
-            the count stays in the DOM for the memory flows that read it */}
-        {ready ? (
-          <div className="fv2-prev" hidden={view.previous.length === 0}>
-            <PreviouslyHandledRow items={view.previous} />
           </div>
-        ) : null}
-      </div>
+        </>
+      )}
       {counselMode ? null : (
         <>
           <ActionBar
@@ -243,4 +342,12 @@ export function FindingsPanelV2({ view }: { view: ReviewView }) {
       )}
     </aside>
   );
+}
+
+/** Counsel share link: a sent question counts as answered once any answer is recorded. */
+function isAnswered(r: Row): boolean {
+  const t = r.triage;
+  if (!t) return false;
+  if (t.counselAnswer) return true;
+  return Object.values(t.ownerAnswers ?? {}).some((v) => v != null);
 }

@@ -1,4 +1,4 @@
-import { parseQuestionKey, type Owner } from '@aduin/core';
+import { PageIntro } from '../../components/ui/PageIntro';
 import { useEffect, useMemo, useState } from 'react';
 import { Icon } from '../../components/ui/icon';
 import { useReview } from '../../state/review';
@@ -6,61 +6,47 @@ import { useSession } from '../../state/session';
 import { useShell } from '../../state/shell';
 import { useGatePopover } from '../gate/gate-store';
 import { MetricsPanel } from '../metrics/MetricsPanel';
-import { useReviewView } from '../review/use-review-view';
-import {
-  itemNeedsAnswer,
-  OWNER_LABEL,
-  OWNER_ORDER,
-  questionItems,
-  type QuestionItem,
-} from '../variance/owner-groups';
-import { useVariance } from '../variance/variance-store';
+import { OWNER_LABEL } from '../variance/owner-groups';
+import { fmtDay } from '../requests/request-model';
+import { useRequests } from '../requests/request-store';
+import { RequestStatusTag } from '../requests/RequestStatusTag';
+import { useOwnerRequests } from '../requests/use-requests';
 import { fetchAiDrafts } from './ai-draft';
 import { useCounsel } from './counsel-store';
-import { questionIdsByKey, useCounselPoll, useShare } from './counsel-share';
+import { useCounselPoll, useShare } from './counsel-share';
 import { markReadyToDigitize } from './share-flow';
-import { ShareButton, ShareLine, useShareRules } from './ShareControls';
-import { ExportDialog } from './ExportDialog';
-import { GpRequestGroup } from './GpRequestGroup';
-import { exportCounselSheet } from './export-flow';
+import { ShareLine, useShareRules } from './ShareControls';
+import '../../styles/questions-table.css';
+import '../../styles/request-drawer.css';
 import { PriorCard } from './PriorCard';
-import { QuestionRow, type RowMode } from './QuestionRow';
-import {
-  aiDraftRows,
-  buildSheet,
-  needsAnswer,
-  priorItems,
-  questionRows,
-  wordingFor,
-} from './sheet-model';
+import { aiDraftRows, priorItems, questionRows } from './sheet-model';
 
-type OwnerTab = 'all' | Owner;
+/** Header line: always three requests; waiting = open questions of every owner + GP documents. */
+export function requestsMeta(waiting: number): string {
+  return `3 requests · ${waiting} item${waiting === 1 ? '' : 's'} waiting`;
+}
 
 /**
- * Questions (app.html `#counsel`, Phase 08; renamed and owner-grouped in Variance P04): compact gate
- * line, one row per question (expand for quote, A/B/C readings, provenance, inline wording edit and
- * Record answer), the collapsed "Already answered (n) · Awaiting counsel (n)" section, and Export
- * DOCX with a preview of the unanswered New/Accepted questions only (D-1). With change questions the
- * owner tabs `All · Counsel n · GP n · Fund admin n` (unanswered counts from the shared selector)
- * and one export per owner appear; Intake's GP request group stays on every tab.
+ * Requests (app.html `#counsel`; route id kept, label "Requests" 22-10-26): three rows, one per
+ * owner (Counsel, GP, Fund admin) with its status, "N of M answered", documents (GP) and Needed
+ * by. A row opens the shared Request drawer on that owner's tab. The gate tag, AI draft and Mark
+ * ready stay in the header; the collapsed "Already answered · Awaiting counsel" section stays below.
  */
 export function CounselScreen() {
   // counsel share link v2: counsel mode never routes here (the shell shows Findings only)
-  return <AnalystQuestionsScreen />;
+  return <RequestsScreen />;
 }
 
-function AnalystQuestionsScreen() {
-  const view = useReviewView();
+function RequestsScreen() {
+  const { view, doc, items, requests } = useOwnerRequests();
   const rows = view.rows;
-  const doc = useReview((s) => s.doc);
   const phase = useReview((s) => s.phase);
-  const result = useReview((s) => s.result);
-  const memory = useReview((s) => s.memory);
   const showToast = useReview((s) => s.showToast);
   const aiOn = useSession((s) => s.aiOn);
   const readOnly = useSession((s) => s.readOnly);
   const setOpenDoc = useShell((s) => s.setOpenDoc);
   const openGate = useGatePopover((s) => s.setOpen);
+  const openDrawer = useRequests((s) => s.openDrawer);
   const load = useCounsel((s) => s.load);
   const drafts = useCounsel((s) => s.drafts);
   const aiState = useCounsel((s) => s.aiState);
@@ -68,65 +54,28 @@ function AnalystQuestionsScreen() {
   const setAiDrafts = useCounsel((s) => s.setAiDrafts);
   const setUseAi = useCounsel((s) => s.setUseAi);
   const focus = useCounsel((s) => s.focus);
-
-  const [filter, setFilter] = useState<'all' | 'open'>('all');
-  const [tab, setTab] = useState<OwnerTab>('all');
-  /** Owner of the export dialog (null = the full sheet). */
-  const [exportOwner, setExportOwner] = useState<Owner | null>(null);
-  const vMeta = useVariance((s) => (s.docId === doc?.id ? s.result?.meta : undefined));
-  const regMeta = view.regressionMeta;
-  const [sel, setSel] = useState<string | null>(null);
-  const [mode, setMode] = useState<RowMode>('view');
   const [priorOpen, setPriorOpen] = useState(false);
   const [answeringPrior, setAnsweringPrior] = useState<string | null>(null);
-  const [exportOpen, setExportOpen] = useState(false);
-  const [metricsSeq, setMetricsSeq] = useState(0);
-  const shareSheet = useShare((s) => s.sheet);
   const readyAt = useShare((s) => s.readyAt);
   const [readyBusy, setReadyBusy] = useState(false);
-  // counsel's answers and comments are read only for a firm document with the live memory service
   const { canShare } = useShareRules();
-  // the sheet is read only for a shareable (demo) document: the Worker needs its doc_ref
   useCounselPoll(canShare);
-  const qidByKey = useMemo(() => questionIdsByKey(shareSheet), [shareSheet]);
 
   useEffect(() => {
     void load(doc?.id ?? null);
   }, [doc?.id, load]);
 
   const qs = useMemo(() => questionRows(rows), [rows]);
-  const items = useMemo(() => questionItems(rows), [rows]);
   const prior = useMemo(() => priorItems(rows), [rows]);
-  // Variance P04: owner sections only when change questions exist (error-only = Phase 08 list)
-  const grouped = items.some((q) => q.change) || view.hasChanges;
-  const ownerN = view.counts.owners;
-  const openItems = items.filter(itemNeedsAnswer);
-  const inTab = (q: QuestionItem) => tab === 'all' || q.owner === tab;
-  const numbered = items.map((q, i) => [q, i + 1] as const);
-  const shown = numbered.filter(([q]) => inTab(q) && (filter === 'all' || itemNeedsAnswer(q)));
   const gateN = view.gate.reasons.length;
-  const candidateOf = (id: string) => (vMeta?.[id] ?? regMeta[id])?.assertion_candidate;
+  const waiting = requests.reduce((n, r) => n + r.waiting, 0);
   const defaultBy = doc?.firmName ? `Counsel, ${doc.firmName}` : 'Counsel';
 
-  // gate popover links: open the question (or the prior item) and bring it into view
+  // gate popover links to a prior item (not in any request): open the prior list
   useEffect(() => {
     if (!focus) return;
     const id = focus.id;
-    // a question key (owner reason) or a plain finding id (first question of that finding)
-    const hit = items.find((q) => q.key === id) ?? items.find((q) => q.findingId === id);
-    if (hit) {
-      setFilter('all');
-      setTab('all');
-      setSel(hit.key);
-      setMode('view');
-      requestAnimationFrame(() => {
-        const b = document.querySelector<HTMLElement>(
-          `[data-testid="counsel-row"][data-key="${CSS.escape(hit.key)}"] .rowb`,
-        );
-        b?.scrollIntoView({ block: 'nearest' });
-        b?.focus({ preventScroll: true });
-      });
-    } else if ([...prior.answered, ...prior.awaiting].some((r) => r.f.id === id)) {
+    if ([...prior.answered, ...prior.awaiting].some((r) => r.f.id === id)) {
       setPriorOpen(true);
       requestAnimationFrame(() =>
         document.getElementById(`cs-x-${id}`)?.scrollIntoView({ block: 'center' }),
@@ -134,51 +83,6 @@ function AnalystQuestionsScreen() {
     }
     // focus.seq re-triggers on the same id
   }, [focus]);
-
-  const meta = useMemo(
-    () => ({
-      title: exportOwner
-        ? `Questions for ${OWNER_LABEL[exportOwner]} · ${doc?.fund || doc?.name || 'Document'}`
-        : `Counsel query sheet · ${doc?.fund || doc?.name || 'Document'}`,
-      firm: doc?.firmId ? doc.firmName || null : null,
-      fund: doc?.fund || null,
-      version: doc?.version || null,
-    }),
-    [doc, exportOwner],
-  );
-  const sheet = useMemo(
-    () => buildSheet(meta, rows, exportOwner ?? undefined),
-    [meta, rows, exportOwner],
-  );
-  const rowsById = useMemo(() => new Map(rows.map((r) => [r.f.id, r])), [rows]);
-  // question key -> wording (a key `<findingId>@<owner>` resolves its row by the plain id)
-  const wording = (key: string) => {
-    const r = rowsById.get(parseQuestionKey(key).findingId);
-    return r ? wordingFor(r, drafts, key).text : '';
-  };
-  const onSheet = new Set(sheet.questions.map((q) => q.findingKey));
-  const scoped = exportOwner ? items.filter((q) => q.owner === exportOwner) : items;
-  const withPrior = !exportOwner || exportOwner === 'counsel';
-  const leftOut = [
-    ...scoped
-      .filter((q) => !onSheet.has(q.key))
-      .map((q) => ({
-        id: q.key,
-        text: `Q${items.indexOf(q) + 1} ${q.row.f.title}${q.change ? ` · ${OWNER_LABEL[q.owner]}` : ''} (${(q.change ? itemNeedsAnswer(q) : needsAnswer(q.row)) ? 'already handled for this firm' : 'answered'})`,
-      })),
-    ...(withPrior ? prior.answered : []).map((r) => ({
-      id: r.f.id,
-      text: `${r.f.title} (already answered${r.prior?.fund_name ? `, ${r.prior.fund_name}` : ''})`,
-    })),
-    ...(withPrior ? prior.awaiting : []).map((r) => ({
-      id: r.f.id,
-      text: `${r.f.title} (awaiting counsel${r.prior?.fund_name ? `, ${r.prior.fund_name}` : ''})`,
-    })),
-  ];
-  const openExport = (o: Owner | null) => {
-    setExportOwner(o);
-    setExportOpen(true);
-  };
 
   const toggleAi = async () => {
     if (drafts.useAi) {
@@ -218,62 +122,45 @@ function AnalystQuestionsScreen() {
   return (
     <section className="view" aria-labelledby="h-counsel" data-testid="counsel-view">
       <header className="pagehead">
-        <div className="tt">
+        <div className="tt qt-tt">
           <h1 id="h-counsel" tabIndex={-1}>
-            Questions
+            Requests
           </h1>
           <p className="meta" data-testid="counsel-meta">
-            {doc
-              ? `${items.length} question${items.length === 1 ? '' : 's'} · ${openItems.length} unanswered`
-              : 'No document open'}
-            {readyAt ? (
-              <span className="tag t-ok" data-testid="counsel-ready-pill">
-                <Icon name="check" />
-                Ready to digitize
-              </span>
-            ) : null}
+            {doc ? requestsMeta(waiting) : 'No document open'}
           </p>
+          {doc ? (
+            <span role="status" data-testid="counsel-gate-line" data-blocked={gateN > 0}>
+              <button
+                type="button"
+                className={gateN ? 'tag t-re qt-gate' : 'tag t-ok qt-gate'}
+                aria-haspopup="dialog"
+                data-testid="counsel-gate-reasons"
+                title="Accepting a finding does not open the gate. Only a counsel answer does."
+                onClick={() => requestAnimationFrame(() => openGate(true))}
+              >
+                <Icon name={gateN ? 'lock' : 'unlock'} />
+                {gateN ? `Blocked · ${gateN}` : 'Ready'}
+                <span className="sr">
+                  {gateN
+                    ? `: digitization is blocked, ${gateN} critical item${gateN > 1 ? 's' : ''} open. See reasons. Accepting a finding does not open the gate. Only a counsel answer does.`
+                    : ': every critical item is resolved. See reasons.'}
+                </span>
+              </button>
+            </span>
+          ) : null}
+          {readyAt ? (
+            <span className="tag t-ok" data-testid="counsel-ready-pill">
+              <Icon name="check" />
+              Ready to digitize
+            </span>
+          ) : null}
         </div>
         {doc ? (
           <div className="hacts">
-            <div className="seg" role="group" aria-label="Show questions">
-              <button
-                type="button"
-                data-testid="counsel-filter-all"
-                aria-pressed={filter === 'all'}
-                onClick={() => setFilter('all')}
-              >
-                All <span>{items.length}</span>
-              </button>
-              <button
-                type="button"
-                data-testid="counsel-filter-open"
-                aria-pressed={filter === 'open'}
-                onClick={() => setFilter('open')}
-              >
-                Unanswered <span>{openItems.length}</span>
-              </button>
-            </div>
-            {grouped ? (
-              <div className="seg" role="group" aria-label="Questions by owner">
-                {(['all', ...OWNER_ORDER] as OwnerTab[]).map((k) => (
-                  <button
-                    key={k}
-                    type="button"
-                    data-testid={`questions-tab-${k}`}
-                    data-count={k === 'all' ? openItems.length : ownerN[k]}
-                    aria-pressed={tab === k}
-                    onClick={() => setTab(k)}
-                  >
-                    {k === 'all' ? 'All' : OWNER_LABEL[k]}{' '}
-                    <span>{k === 'all' ? openItems.length : ownerN[k]}</span>
-                  </button>
-                ))}
-              </div>
-            ) : null}
             <button
               type="button"
-              className="btn"
+              className="btn sm"
               data-testid="counsel-ai-draft"
               aria-pressed={drafts.useAi}
               disabled={!aiOn || aiState === 'running' || !aiDraftRows(qs).length}
@@ -285,18 +172,7 @@ function AnalystQuestionsScreen() {
             </button>
             <button
               type="button"
-              className="btn pri"
-              data-testid={tab === 'all' ? 'counsel-export' : 'questions-export-owner'}
-              data-owner={tab === 'all' ? undefined : tab}
-              onClick={() => openExport(tab === 'all' ? null : tab)}
-            >
-              <Icon name="doc" />
-              {tab === 'all' ? 'Export DOCX' : `Export for ${OWNER_LABEL[tab]} (DOCX)`}
-            </button>
-            <ShareButton rows={rows} />
-            <button
-              type="button"
-              className="btn pri"
+              className="btn sm"
               data-testid="counsel-mark-ready"
               disabled={gateN > 0 || phase !== 'ready' || readyBusy}
               title={gateN > 0 ? 'Every critical item needs a counsel answer first' : undefined}
@@ -321,36 +197,10 @@ function AnalystQuestionsScreen() {
           </div>
         ) : null}
       </header>
-      {doc ? (
-        <div
-          className={gateN ? 'gline' : 'gline ready'}
-          role="status"
-          data-testid="counsel-gate-line"
-        >
-          <Icon name={gateN ? 'lock' : 'unlock'} />
-          {gateN ? (
-            <>
-              <span>
-                Digitization is blocked · {gateN} critical item{gateN > 1 ? 's' : ''} open
-              </span>
-              <button
-                className="btn lnk"
-                type="button"
-                aria-haspopup="dialog"
-                data-testid="counsel-gate-reasons"
-                onClick={() => requestAnimationFrame(() => openGate(true))}
-              >
-                See reasons
-              </button>
-              <span className="tail">
-                Accepting a finding does not open the gate. Only a counsel answer does.
-              </span>
-            </>
-          ) : (
-            <span>Ready to digitize · every critical item is resolved</span>
-          )}
-        </div>
-      ) : null}
+      <PageIntro testId="page-intro-questions">
+        One request each for counsel, the GP and the fund admin. Open a request to see its questions
+        and documents, send it, and track the answers here.
+      </PageIntro>
       {doc && !doc.firmId ? (
         <p className="cs-note" data-testid="counsel-no-firm">
           <Icon name="info" />
@@ -380,73 +230,49 @@ function AnalystQuestionsScreen() {
           </div>
         ) : (
           <>
-            <GpRequestGroup />
-            <ul className="rows" data-testid="counsel-list">
-              {shown.length ? (
-                (grouped && tab === 'all' ? OWNER_ORDER : [null]).flatMap((o) => {
-                  const list = o ? shown.filter(([q]) => q.owner === o) : shown;
-                  if (!list.length) return [];
-                  const all = o ? items.filter((q) => q.owner === o) : [];
-                  const head = o ? (
-                    <li
-                      className="ghd"
-                      key={`h-${o}`}
-                      data-testid="questions-owner-group"
-                      data-owner={o}
-                    >
-                      <h2>{OWNER_LABEL[o]}</h2>
-                      <span className="dim">
-                        {all.length} question{all.length === 1 ? '' : 's'} ·{' '}
-                        {all.filter(itemNeedsAnswer).length} unanswered
-                      </span>
+            <ul className="rq-list" data-testid="requests-list" aria-label="Requests">
+              {requests.map((r) => {
+                const none = r.status === 'none';
+                const body = (
+                  <>
+                    <span className="who">{OWNER_LABEL[r.owner]}</span>
+                    <RequestStatusTag status={r.status} overdue={r.overdue} sentAt={r.sentAt} />
+                    <span className="mut" data-testid="requests-row-answered">
+                      {none ? '' : `${r.counts.answered} of ${r.counts.total} answered`}
+                    </span>
+                    <span className="mut" data-testid="requests-row-docs">
+                      {r.owner === 'gp' && r.counts.documents
+                        ? `${r.counts.documents} document${r.counts.documents === 1 ? '' : 's'}`
+                        : ''}
+                    </span>
+                    <span className="mut">{none ? '' : `Needed by ${fmtDay(r.neededBy)}`}</span>
+                  </>
+                );
+                return (
+                  <li key={r.owner}>
+                    {none ? (
+                      <div
+                        className="rq-row"
+                        aria-disabled="true"
+                        data-testid={`requests-row-${r.owner}`}
+                        data-status="none"
+                      >
+                        {body}
+                      </div>
+                    ) : (
                       <button
                         type="button"
-                        className="btn sm"
-                        data-testid="questions-export-owner"
-                        data-owner={o}
-                        disabled={!all.some(itemNeedsAnswer)}
-                        title={
-                          all.some(itemNeedsAnswer)
-                            ? undefined
-                            : `Every question for ${OWNER_LABEL[o]} has an answer`
-                        }
-                        onClick={() => openExport(o)}
+                        className="rq-row"
+                        data-testid={`requests-row-${r.owner}`}
+                        data-status={r.status}
+                        onClick={() => openDrawer(r.owner)}
                       >
-                        <Icon name="doc" />
-                        Export for {OWNER_LABEL[o]} (DOCX)
+                        {body}
                       </button>
-                    </li>
-                  ) : null;
-                  return [
-                    ...(head ? [head] : []),
-                    ...list.map(([q, n]) => (
-                      <QuestionRow
-                        key={q.key}
-                        q={q}
-                        n={n}
-                        selected={sel === q.key}
-                        mode={sel === q.key ? mode : 'view'}
-                        defaultBy={defaultBy}
-                        candidate={q.change ? candidateOf(q.findingId) : undefined}
-                        questionId={qidByKey[q.key]}
-                        onToggle={() => {
-                          setSel(sel === q.key ? null : q.key);
-                          setMode('view');
-                        }}
-                        onMode={setMode}
-                      />
-                    )),
-                  ];
-                })
-              ) : (
-                <li className="empty2" data-testid="counsel-none">
-                  {items.some(inTab)
-                    ? 'Every question on this sheet has an answer. You can still export it.'
-                    : grouped
-                      ? 'No questions yet. Use Ask owner on a change, or Needs counsel on an error, in Findings.'
-                      : 'No questions yet. Mark a finding "Needs counsel" in Findings and it appears here.'}
-                </li>
-              )}
+                    )}
+                  </li>
+                );
+              })}
             </ul>
             <section className="prevwrap" aria-label="Not on this sheet">
               <button
@@ -462,7 +288,7 @@ function AnalystQuestionsScreen() {
                   Already answered ({prior.answered.length}) · Awaiting counsel (
                   {prior.awaiting.length})
                 </span>
-                <span className="help">From earlier reviews, not on this sheet</span>
+                <span className="help">From earlier reviews, not in these requests</span>
               </button>
               <div
                 className="prevlist"
@@ -485,47 +311,10 @@ function AnalystQuestionsScreen() {
                 )}
               </div>
             </section>
-            <MetricsPanel docId={doc.id} refresh={metricsSeq} />
+            <MetricsPanel docId={doc.id} refresh={0} />
           </>
         )}
       </div>
-      {doc && result ? (
-        <ExportDialog
-          open={exportOpen}
-          onOpenChange={(o) => {
-            setExportOpen(o);
-            if (!o) setExportOwner(null);
-          }}
-          sheet={sheet}
-          rowsById={rowsById}
-          leftOut={leftOut}
-          wording={wording}
-          gateCount={gateN}
-          noFirm={!doc.firmId}
-          onDownload={async () => {
-            const out = await exportCounselSheet({
-              doc,
-              sheet,
-              rows,
-              // change rows and regression findings are on the sheet too (variance P04)
-              findings: rows.map((r) => r.f),
-              memory,
-              wording,
-            });
-            setExportOpen(false);
-            setExportOwner(null);
-            setMetricsSeq((n) => n + 1);
-            showToast(
-              `Query sheet exported: ${out.questionCount} question${out.questionCount === 1 ? '' : 's'}.` +
-                (out.memoryNote
-                  ? ` ${out.memoryNote}`
-                  : out.recorded
-                    ? ''
-                    : ' The export is not recorded in memory.'),
-            );
-          }}
-        />
-      ) : null}
     </section>
   );
 }

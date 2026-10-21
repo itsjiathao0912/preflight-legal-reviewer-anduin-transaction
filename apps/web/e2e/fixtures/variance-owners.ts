@@ -47,6 +47,22 @@ export async function gotoQuestions(page: Page) {
   await expect(page.getByRole('heading', { level: 1, name: 'Questions' })).toBeVisible();
 }
 
+/** Questions table (20-10-26): open the in-flow filter panel (Status / Who / Severity chips). */
+export async function openQuestionFilters(page: Page) {
+  const b = page.getByTestId('questions-filter');
+  if ((await b.getAttribute('aria-expanded')) !== 'true') await b.click();
+  await expect(page.getByTestId('questions-filters')).toBeVisible();
+}
+
+/** Questions table: open Export DOCX and pick one owner in the export dialog (per-owner export). */
+export async function openOwnerExport(page: Page, owner: string) {
+  await page.getByTestId('counsel-export').click();
+  const dlg = page.getByTestId('export-dialog');
+  await expect(dlg).toBeVisible();
+  await dlg.getByTestId(`export-owner-${owner}`).click();
+  await expect(dlg.getByTestId(`export-owner-${owner}`)).toHaveAttribute('aria-pressed', 'true');
+}
+
 /** A question row on the Questions screen by its question key (`<findingId>@<owner>`). */
 export const questionRow = (page: Page, key: string) =>
   page.locator(`[data-testid="counsel-row"][data-key="${key}"]`);

@@ -58,6 +58,6 @@ test.describe('intake-no-package-ui-on-samples', () => {
     await upload(page, 'sections-parts.html', SECTIONS);
     await expect(page.getByTestId('findings-coverage-line')).toHaveText(/^Coverage: partial/);
     await page.getByTestId('nav-structure').click();
-    await expect(page.getByTestId('structure-lens-terms')).toHaveText(/^Terms & package/);
+    await expect(page.getByTestId('structure-lens-terms')).toHaveText(/^Terms & references/);
   });
 });

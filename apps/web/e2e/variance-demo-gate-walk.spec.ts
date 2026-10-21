@@ -5,6 +5,8 @@ import {
   changeRow,
   gotoQuestions,
   openFundIIIvsII,
+  openOwnerExport,
+  openQuestionFilters,
   ownerRows,
   questionRow,
   recordAnswer,
@@ -54,6 +56,7 @@ async function countsAgree(page: Page, step: string): Promise<number> {
   expect(sum, `${step}: popover groups sum to Blocked N`).toBe(n);
   expect(__reasons, `${step}: gate reasons equal Blocked N`).toBe(n);
   let asked = 0;
+  await openQuestionFilters(page);
   for (const o of OWNERS) {
     const tab = page.getByTestId(`questions-tab-${o}`);
     const tabCount = (await tab.count()) ? Number(await tab.getAttribute('data-count')) : 0;
@@ -110,10 +113,8 @@ test.describe('variance-demo-gate-walk', () => {
     // step 3: one DOCX per owner
     await gotoQuestions(page);
     for (const o of OWNERS) {
-      const group = page.locator(`[data-testid="questions-owner-group"][data-owner="${o}"]`);
-      await group.getByTestId('questions-export-owner').click();
+      await openOwnerExport(page, o);
       const dlg = page.getByTestId('export-dialog');
-      await expect(dlg).toBeVisible();
       const [download] = await Promise.all([
         page.waitForEvent('download'),
         dlg.getByTestId('export-download').click(),

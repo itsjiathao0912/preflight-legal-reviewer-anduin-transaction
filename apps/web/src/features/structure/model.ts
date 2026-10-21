@@ -14,25 +14,26 @@ export const LENS_LABEL: Record<LensId, string> = {
 export const PACKAGE_LENS = 'package';
 
 /**
- * The Structure screen has three tabs. Sections is the map; Logic merges cross-references,
- * conditions, option groups and investor types; Terms & package merges defined terms and the
- * package group (only when a package is open).
+ * The Document map screen has two tabs. Logic merges cross-references, conditions, option groups
+ * and investor types; Terms & references merges defined terms and the package group (only when a
+ * package is open). The old Sections tab was removed.
  */
-export type StructureTabId = 'sections' | 'logic' | 'terms';
-export const DEFAULT_TAB: StructureTabId = 'sections';
+export type StructureTabId = 'logic' | 'terms';
+export const DEFAULT_TAB: StructureTabId = 'logic';
+
+/** Core lenses shown in the tabs (every lens except the removed Sections map). */
+export type TabLensId = Exclude<LensId, 'sections'>;
 
 /** Core lenses shown in each tab, in order. */
-export const TAB_LENSES: Record<StructureTabId, readonly LensId[]> = {
-  sections: ['sections'],
+export const TAB_LENSES: Record<StructureTabId, readonly TabLensId[]> = {
   logic: ['crossrefs', 'conditions', 'options', 'investors'],
   terms: ['terms'],
 };
 
 export function tabsFor(hasPackage: boolean): ReadonlyArray<{ id: StructureTabId; label: string }> {
   return [
-    { id: 'sections', label: 'Sections' },
     { id: 'logic', label: 'Logic' },
-    { id: 'terms', label: hasPackage ? 'Terms & package' : 'Defined terms' },
+    { id: 'terms', label: hasPackage ? 'Terms & references' : 'Defined terms' },
   ];
 }
 
@@ -42,10 +43,9 @@ export function tabCount(v: StructureView, tab: StructureTabId): number {
 }
 
 /** Rows shown for a lens: "Issues only" (default) or everything. */
-export function visibleCount(v: StructureView, lens: LensId, all: boolean): number {
+export function visibleCount(v: StructureView, lens: TabLensId, all: boolean): number {
   if (lens === 'investors') return v.investors.types.length;
   if (all) return v.totals[lens];
-  if (lens === 'sections') return v.sections.filter((s) => s.depth === 0 && s.flags > 0).length;
   return v[lens].filter((r) => r.issue).length;
 }
 

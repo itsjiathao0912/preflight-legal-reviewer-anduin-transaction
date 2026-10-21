@@ -1,10 +1,11 @@
 import { AiFindingSchema } from '../../contracts/ai';
 import { CLAUSE_JUDGMENT_MODEL_SCHEMA } from '../schemas';
+import { REVIEW_PLAYBOOK } from '../playbook';
 import type { LlmTask } from '../task';
 import { UNTRUSTED_NOTICE, userMessage, wrapEnvelope } from './shared';
 
 /** Frozen prompt version (cache key `prompt_ver`). Any prompt text change MUST bump it. */
-export const CLAUSE_JUDGMENT_PROMPT_VERSION = 'clause-judgment@1';
+export const CLAUSE_JUDGMENT_PROMPT_VERSION = 'clause-judgment@2';
 export const CLAUSE_JUDGMENT_SCHEMA_VERSION = 'clause-judgment.s1';
 
 const SYSTEM = [
@@ -16,6 +17,7 @@ const SYSTEM = [
   'Severity is high, medium or low; never more than high. Explain in one or two plain sentences; ' +
     'interpretations lists the plausible readings (may be empty).',
   UNTRUSTED_NOTICE,
+  REVIEW_PLAYBOOK,
   'Answer with JSON only.',
 ].join('\n');
 

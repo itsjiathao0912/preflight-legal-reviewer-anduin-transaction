@@ -70,7 +70,16 @@ export function useShareRules() {
 }
 
 /** "Share with counsel" button (analyst only; callers hide it in counsel mode). */
-export function ShareButton({ rows, testId = 'counsel-share' }: { rows: Rows; testId?: string }) {
+export function ShareButton({
+  rows,
+  testId = 'counsel-share',
+  onShared,
+}: {
+  rows: Rows;
+  testId?: string;
+  /** Called once the link exists (the Request drawer marks the counsel request as sent). */
+  onShared?: () => void;
+}) {
   const doc = useReview((s) => s.doc);
   const memory = useReview((s) => s.memory);
   const showToast = useReview((s) => s.showToast);
@@ -98,6 +107,7 @@ export function ShareButton({ rows, testId = 'counsel-share' }: { rows: Rows; te
               memory,
               items,
             });
+            onShared?.();
             let copied = false;
             try {
               await navigator.clipboard.writeText(l.url);

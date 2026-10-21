@@ -1,4 +1,5 @@
 import { useRefView } from '../../state/ref-view';
+import { PageIntro } from '../../components/ui/PageIntro';
 import { useReview } from '../../state/review';
 import { StageStatus } from '../processing/StageStatus';
 import { isScanResult } from '../scan/scan-model';
@@ -59,6 +60,12 @@ export function FindingsScreen() {
           <StageStatus />
         </div>
       </header>
+      {counselMode ? null : (
+        <PageIntro testId="page-intro-findings">
+          Everything that could break the form, each with its quote and where it is. Ask counsel or
+          close each item; the gate opens when nothing blocks.
+        </PageIntro>
+      )}
       {counselMode ? null : <ShareLine />}
       <Banners />
       <div className="work fv2-work">

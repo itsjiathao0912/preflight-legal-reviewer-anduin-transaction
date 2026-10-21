@@ -9,6 +9,13 @@ export * from './registry';
 export * from './verify-quote';
 export * from './candidates';
 export * from './dedupe';
+export * from './reference-pairs';
+export { REVIEW_PLAYBOOK } from './playbook';
+export {
+  referenceTargetV1,
+  REFERENCE_TARGET_PROMPT_VERSION,
+  REFERENCE_TARGET_SCHEMA_VERSION,
+} from './tasks/reference-target.v1';
 export {
   clauseJudgmentV1,
   CLAUSE_JUDGMENT_PROMPT_VERSION,

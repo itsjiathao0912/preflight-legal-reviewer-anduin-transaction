@@ -17,6 +17,8 @@
     "spike:s07": "tsx src/spikes/s07-browser-timing/run.ts",
     "spike:s06-local": "tsx src/spikes/s06-local/run.ts",
     "record:author": "tsx src/record/author-recordings.ts",
+    "bench:defects": "tsx src/bench/bench-defects.ts",
+    "bench:author": "tsx src/bench/author-bench-recordings.ts",
     "record:ai": "tsx src/record/record-ai.ts",
     "record:derive": "tsx src/record/derive-live-recordings.ts",
     "precompute:ai": "tsx src/precompute/precompute-ai.ts",

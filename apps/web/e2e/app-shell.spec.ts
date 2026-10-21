@@ -14,7 +14,7 @@ test.describe('app-shell', () => {
     await expect(nav.locator('.ni .lbl')).toHaveText([
       'Findings',
       'Questions',
-      'Structure',
+      'Document map',
       'Compare versions',
       'Firm memory',
       'Documents',

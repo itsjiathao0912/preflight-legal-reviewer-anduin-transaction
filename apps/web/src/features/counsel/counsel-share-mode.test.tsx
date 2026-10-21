@@ -14,6 +14,8 @@ import {
 import { FindingsPanelV2 } from '../review/v2/FindingsPanelV2';
 import * as h from '../review/v2/test-helpers';
 import { CounselScreen } from './CounselScreen';
+import { RequestDrawer } from '../requests/RequestDrawer';
+import { useRequests } from '../requests/request-store';
 import { getSheet, setCounselShareFetch } from '../../api/counselShareApi';
 import { captureCounselToken, refreshSheet, remoteAnswers, useShare } from './counsel-share';
 import { DEMO_ONLY, ShareError, shareWithCounsel } from './share-flow';
@@ -34,7 +36,12 @@ vi.mock('../review/use-review-view', () => ({
   }),
 }));
 vi.mock('../metrics/MetricsPanel', () => ({ MetricsPanel: () => null }));
-vi.mock('./GpRequestGroup', () => ({ GpRequestGroup: () => null }));
+vi.mock('../package/package-view', () => ({ usePackageView: () => null }));
+vi.mock('./GpRequestGroup', () => ({
+  GpRequestGroup: () => null,
+  useGpRequests: () => null,
+  gpRequestFacts: (n: number) => ({ owner: 'gp', sev: 'fix', waiting: n > 0 }),
+}));
 vi.mock('../../api/counselShareApi', async (orig) => ({
   ...(await orig<typeof import('../../api/counselShareApi')>()),
   getSheet: vi.fn(() => new Promise(() => undefined)),
@@ -184,6 +191,49 @@ describe('counsel-share-mode: Findings panel in counsel mode', () => {
   });
 });
 
+describe('counsel-share-mode: counsel sees the questions sent to them first', () => {
+  const E3 = h.fv('e3', 'high', { order: 3 });
+  function mountWith(triage: Record<string, unknown>) {
+    useReview.setState({ triage: triage as never, selectedId: 'e2' });
+    const view = h.makeView([E1, E2, E3], useReview.getState().triage);
+    mounted = h.renderV2(
+      <div className="work">
+        <FindingsPanelV2 view={view} />
+      </div>,
+    );
+  }
+  const groupsShown = () =>
+    Array.from(document.body.querySelectorAll('[data-testid^="group-"]')).map((g) =>
+      g.getAttribute('data-group'),
+    );
+
+  it('should show only the sent group, open the first unanswered sent question and count them', () => {
+    enterCounsel();
+    mountWith({ e1: { status: 'counsel', counselAnswer: 'A' }, e3: { status: 'counsel' } });
+    expect(groupsShown()).toEqual(['sent']);
+    expect(useReview.getState().selectedId).toBe('e3');
+    expect(q('counsel-summary')?.textContent).toBe('2 questions for you · 1 answered');
+    const toggle = q('counsel-show-all')!;
+    expect(toggle.textContent).toBe('Show all findings (1)');
+    act(() => toggle.click());
+    expect(groupsShown()).toEqual(['sent', 'review']);
+  });
+
+  it('should not auto-open a non-sent finding when every sent question is answered', () => {
+    enterCounsel();
+    mountWith({ e1: { status: 'counsel', counselAnswer: 'A' } });
+    expect(useReview.getState().selectedId).toBeNull();
+  });
+
+  it('should keep the analyst list order and selection unchanged', () => {
+    mountWith({ e3: { status: 'counsel' } });
+    expect(groupsShown()).toEqual(['review', 'sent']);
+    expect(useReview.getState().selectedId).toBe('e2');
+    expect(q('counsel-summary')).toBeNull();
+    expect(q('counsel-show-all')).toBeNull();
+  });
+});
+
 describe('counsel-share-mode: no memory session or write in counsel mode', () => {
   it('should never mint a session, look up memory or queue writes', async () => {
     enterCounsel();
@@ -281,7 +331,9 @@ describe('counsel-share-mode: Share is for bundled demo documents only', () => {
 
   it('should disable the Share button for an upload with the reason', () => {
     useReview.setState({ doc: UPLOAD });
-    mounted = h.renderV2(<CounselScreen />);
+    // 22-10-26: Share link lives in the Request drawer (Counsel tab)
+    useRequests.getState().openDrawer('counsel');
+    mounted = h.renderV2(<RequestDrawer />);
     const b = q('counsel-share') as HTMLButtonElement;
     expect(b.disabled).toBe(true);
     expect(b.title).toBe(DEMO_ONLY);

@@ -7,7 +7,7 @@ import {
 import { useState } from 'react';
 import { Icon } from '../../components/ui/icon';
 import { usePackage } from '../../state/package';
-import { ROLE_LABELS, TYPE_LABELS } from '../open-document/PackageConfirmTable';
+import { ROLE_OPTION_LABELS, TYPE_LABELS } from '../open-document/PackageConfirmTable';
 import type { PackageActionRefusal, PackageDocView, PackageView } from './contract';
 
 const REFUSAL: Record<PackageActionRefusal, string> = {
@@ -16,6 +16,12 @@ const REFUSAL: Record<PackageActionRefusal, string> = {
   cross_firm: 'Only a document from the same firm can be a baseline.',
   role_not_allowed: 'Only a subscription agreement can be a baseline.',
 };
+
+/** Same plain words as the Upload confirm step. */
+function statusLabel(d: PackageDocView): string {
+  if (d.confidence === 'high') return 'Sure';
+  return d.confirmed ? 'Checked by you' : 'Please check';
+}
 
 const EDIT_ROLES: readonly PackageDocRole[] = ['reference', 'baseline'];
 
@@ -27,7 +33,10 @@ function Row({ d, onError }: { d: PackageDocView; onError: (msg: string | null) 
     <tr data-testid="package-lens-doc" data-doc-id={d.id}>
       <td className="pkg-lens-name">{name}</td>
       {d.isPrimary ? (
-        <td colSpan={2}>Document to digitize</td>
+        <>
+          <td>{TYPE_LABELS[d.type]}</td>
+          <td>{ROLE_OPTION_LABELS.to_digitize}</td>
+        </>
       ) : (
         <>
           <td>
@@ -57,7 +66,7 @@ function Row({ d, onError }: { d: PackageDocView; onError: (msg: string | null) 
             >
               {EDIT_ROLES.map((r) => (
                 <option key={r} value={r} disabled={r === 'baseline' && d.type !== 'sub_agreement'}>
-                  {ROLE_LABELS[r]}
+                  {ROLE_OPTION_LABELS[r]}
                 </option>
               ))}
             </select>
@@ -66,9 +75,8 @@ function Row({ d, onError }: { d: PackageDocView; onError: (msg: string | null) 
       )}
       <td>
         <span className="pkg-lens-st">
-          <Icon name={d.confidence === 'high' ? 'check' : 'warn'} />
-          {d.confidence === 'high' ? 'High' : 'Low'}
-          {d.confirmed ? ', confirmed' : ''}
+          <Icon name={d.confidence === 'high' || d.confirmed ? 'check' : 'warn'} />
+          {statusLabel(d)}
         </span>
       </td>
       <td className="pkg-lens-reason">{maskAndClamp(d.reason, 200)}</td>
@@ -93,8 +101,8 @@ export function PackageDocuments({ view }: { view: PackageView }) {
             <th scope="col">File</th>
             <th scope="col">Type</th>
             <th scope="col">Role</th>
-            <th scope="col">Confidence</th>
-            <th scope="col">Reason</th>
+            <th scope="col">Status</th>
+            <th scope="col">Detail description</th>
           </tr>
         </thead>
         <tbody>

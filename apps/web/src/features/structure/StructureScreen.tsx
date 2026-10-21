@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { PageIntro } from '../../components/ui/PageIntro';
 import '../../styles/structure.css';
 import { Icon } from '../../components/ui/icon';
 import { useReview } from '../../state/review';
@@ -19,12 +20,13 @@ import {
   tabCount,
   tabsFor,
   type StructureTabId,
+  type TabLensId,
 } from './model';
 import { StructureDrawer } from './StructureDrawer';
 import { TableLens } from './StructureLenses';
 
 /**
- * #structure (AC17): three tabs (Sections, Logic, Terms & package) grouping the six lenses with
+ * #structure (AC17): two tabs (Logic, Terms & references) grouping the six lenses with
  * summed issue counts, "Issues only" by
  * default, "Show everything" (full lists, external citations, flow list), row detail in a right
  * drawer. Reads the engine's StructureView from the review store (types only from core).
@@ -45,6 +47,45 @@ export function StructureScreen() {
   const trigger = useRef<HTMLElement | null>(null);
   const docKey = useReview((s) => s.result?.docHash ?? '');
 
+  // "See in Structure" from a finding: open the tab, flash the matching row, then clear the request
+  const focus = useShell((s) => s.structureFocus);
+  useEffect(() => {
+    if (!focus || !view) return;
+    useShell.getState().clearStructureFocus();
+    setTab(focus.tab);
+    setRow(null);
+    const key = focus.key?.toLowerCase();
+    if (!key) return;
+    let tries = 0;
+    const find = () => {
+      const panel = document.getElementById('st-panel');
+      const rows = panel
+        ? [
+            ...panel.querySelectorAll<HTMLElement>(
+              '[data-testid="structure-row"], [data-testid="package-term"], [data-testid="package-reference-group"]',
+            ),
+          ]
+        : [];
+      const el = rows.find(
+        (r) =>
+          r.dataset.targetKey === key ||
+          (r.querySelector('.rb.dq, strong, .pkg-ref-name')?.textContent ?? '')
+            .trim()
+            .toLowerCase() === key,
+      );
+      if (!el) {
+        if (tries++ < 10) requestAnimationFrame(find);
+        return;
+      }
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      el.classList.remove('st-flash');
+      void el.offsetWidth;
+      el.classList.add('st-flash');
+      window.setTimeout(() => el.classList.remove('st-flash'), 1800);
+    };
+    requestAnimationFrame(find);
+  }, [focus, view]);
+
   // a new document resets the selection, the drawer and the investor type
   useEffect(() => {
     setRow(null);
@@ -59,6 +100,13 @@ export function StructureScreen() {
   };
 
   const openRow = (key: string, el: HTMLElement) => {
+    // investor path steps are sections: there is no section detail any more, so jump to the text
+    if (key.startsWith('ps:')) {
+      const n = key.slice(3);
+      const s = view?.sections.find((x) => x.depth === 0 && x.number === n);
+      if (s?.blockId) showInDoc(s.blockId, null);
+      return;
+    }
     trigger.current = el.querySelector('button') ?? el;
     setRow(key);
   };
@@ -95,7 +143,7 @@ export function StructureScreen() {
     <header className="pagehead">
       <div className="tt">
         <h1 id="h-structure" tabIndex={-1}>
-          Structure
+          Document map
         </h1>
         {view ? null : (
           <p className="meta" data-testid="structure-meta">
@@ -208,7 +256,7 @@ export function StructureScreen() {
       </span>
     ) : null;
 
-  const lensBody = (l: LensId) =>
+  const lensBody = (l: TabLensId) =>
     l === 'investors' ? (
       <InvestorTypesLens
         view={view.investors}
@@ -229,9 +277,7 @@ export function StructureScreen() {
     );
 
   const panel =
-    tab === 'sections' ? (
-      <TableLens v={view} lens="sections" all={all} selected={row} onRow={openRow} />
-    ) : tab === 'logic' ? (
+    tab === 'logic' ? (
       TAB_LENSES.logic.map((l) => group(l, LENS_LABEL[l], lensCount(l), lensBody(l)))
     ) : pkg ? (
       <>
@@ -266,6 +312,11 @@ export function StructureScreen() {
       onKeyDown={onKey}
     >
       {header}
+      <PageIntro testId="structure-description">
+        How this agreement is built: the instructions that become form logic, and the terms and
+        other documents it relies on. Use it to check a finding; you review and ask questions in
+        Findings.
+      </PageIntro>
       <div className="subbar">
         <div className="seg segx" role="tablist" aria-label="Structure lists" onKeyDown={onTabKey}>
           {tabs.map((t) => {

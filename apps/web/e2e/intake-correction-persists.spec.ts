@@ -3,12 +3,13 @@ import { gotoApp, openDialog } from './fixtures/app';
 import {
   confirmAllRows,
   hartwellFiles,
+  openPackageFiles,
   runPackage,
   uploadPackage,
   waitForChecks,
 } from './fixtures/package';
 
-// Intake Phase 3 track 3a (AC-I8): corrections made in the Package lens (Fund II role, LPA type)
+// Intake Phase 3 track 3a (AC-I8): corrections made in the package file list (Documents) (Fund II role, LPA type)
 // are stored with the package and survive a reload plus restore from Recent packages.
 const docRow = (page: Page, name: string) =>
   page.getByTestId('package-lens-doc').filter({ hasText: name });
@@ -40,6 +41,8 @@ test.describe('intake-correction-persists', () => {
     await confirmAllRows(page);
     await runPackage(page);
     await openLens(page);
+    await expect(unitsTerm(page)).toHaveAttribute('data-status', 'defined_in_package');
+    await openPackageFiles(page);
     // E5: read the current role and pick a different one
     const role = docRow(page, 'fund-ii-subscription-agreement-prior').getByTestId(
       'package-lens-doc-role',
@@ -48,10 +51,10 @@ test.describe('intake-correction-persists', () => {
     await role.selectOption(next);
     await expect(role).toHaveValue(next);
     // move the LPA away from type lpa: Units is no longer defined in the package
-    await expect(unitsTerm(page)).toHaveAttribute('data-status', 'defined_in_package');
     const type = docRow(page, 'northgate-lpa-definitions').getByTestId('package-lens-doc-type');
     await type.selectOption('other');
     await expect(type).toHaveValue('other');
+    await openLens(page);
     await expect(unitsDefined(page)).toHaveCount(0);
     const line = (await page.getByTestId('package-lens-line').textContent()) ?? '';
     expect(line).toMatch(/^Coverage: /);
@@ -67,13 +70,14 @@ test.describe('intake-correction-persists', () => {
     await expect(recent).toBeVisible();
     await recent.click();
     await waitForChecks(page);
-    await openLens(page);
+    await openPackageFiles(page);
     await expect(
       docRow(page, 'fund-ii-subscription-agreement-prior').getByTestId('package-lens-doc-role'),
     ).toHaveValue(next);
     await expect(
       docRow(page, 'northgate-lpa-definitions').getByTestId('package-lens-doc-type'),
     ).toHaveValue('other');
+    await openLens(page);
     await expect(unitsDefined(page)).toHaveCount(0);
     await expect(page.getByTestId('package-lens-line')).toHaveText(line);
     await page.getByTestId('nav-findings').click();

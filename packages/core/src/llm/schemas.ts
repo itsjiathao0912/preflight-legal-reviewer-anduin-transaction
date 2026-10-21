@@ -70,3 +70,43 @@ export const COUNSEL_DRAFT_MODEL_SCHEMA: ModelResultSchema = Object.freeze({
     },
   }),
 });
+
+/**
+ * reference-target model schema: same item shape as clause judgment; the issue class is limited to
+ * the two reference classes the task judges.
+ */
+export const REFERENCE_TARGET_MODEL_SCHEMA: ModelResultSchema = Object.freeze({
+  name: 'reference_target_v1',
+  schema: Object.freeze({
+    type: 'object',
+    additionalProperties: false,
+    required: ['findings'],
+    properties: {
+      findings: {
+        type: 'array',
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          required: [
+            'candidate_id',
+            'issue_class',
+            'severity',
+            'confidence',
+            'quote',
+            'explanation',
+            'interpretations',
+          ],
+          properties: {
+            candidate_id: str(64),
+            issue_class: { type: 'string', enum: ['broken_cross_reference', 'broken_conditional'] },
+            severity: { type: 'string', enum: ['high', 'medium', 'low'] },
+            confidence: { type: 'number', minimum: 0, maximum: 1 },
+            quote: str(1000),
+            explanation: str(1000),
+            interpretations: { type: 'array', maxItems: 6, items: str(500) },
+          },
+        },
+      },
+    },
+  }),
+});

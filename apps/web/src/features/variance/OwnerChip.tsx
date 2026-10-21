@@ -1,12 +1,14 @@
-import type { VarianceMeta } from '@aduin/core';
+import { questionKey, type VarianceMeta } from '@aduin/core';
 import { useEffect } from 'react';
 import { useReview } from '../../state/review';
+import { useRequests } from '../requests/request-store';
 import type { Row } from '../review/model';
 import {
   askedOwners,
   choiceOf,
   effectiveOwners,
   OWNER_CHOICES,
+  OWNER_LABEL,
   ownersLabel,
   type OwnerChoice,
 } from './owner-groups';
@@ -85,6 +87,21 @@ export function OwnerSelect({ r, meta }: { r: Row; meta: VarianceMeta | undefine
           </option>
         ))}
       </select>
+      {o.owners
+        .filter((w) => o.asked && w !== 'counsel')
+        .map((w) => (
+          <button
+            key={w}
+            type="button"
+            className="ochip"
+            data-testid="owner-chip-open"
+            data-owner={w}
+            title={`Open the request to ${w === 'gp' ? 'the GP' : 'the fund admin'}`}
+            onClick={() => useRequests.getState().openDrawer(w, questionKey(r.f.id, w))}
+          >
+            {OWNER_LABEL[w]} request
+          </button>
+        ))}
       {meta?.owner_reason ? (
         <span className="mut" id={`${id}-why`} data-testid="owner-reason">
           Suggested: {ownersLabel(o.suggested)}. {meta.owner_reason}

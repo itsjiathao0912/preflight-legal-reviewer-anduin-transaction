@@ -124,16 +124,36 @@ describe('variance-gate-state-matrix', () => {
 
   it('should gate an asked-unanswered error finding of any severity, only with the policy on', () => {
     const err: GateFinding = { id: 'e1', severity: 'low', detector_kind: 'rule' };
-    const st = { e1: { status: 'accepted' } } as Record<string, GateState>;
+    const st = { e1: { status: 'counsel' } } as Record<string, GateState>;
     expect(computeGate([err], st, {}).status).toBe('ready');
     expect(computeGate([err], st, {}, ON).reasons).toEqual([
-      { findingKey: 'e1', kind: 'unanswered', link: '#findings/e1' },
+      { findingKey: 'e1', kind: 'awaiting_counsel', link: '#findings/e1' },
     ]);
     expect(computeGate([err], st, {}, { ...ON, asked_unanswered_blocks: false }).status).toBe(
       'ready',
     );
     // an untriaged low error finding never gates (legacy critical-only rule)
     expect(computeGate([err], {}, {}, ON).status).toBe('ready');
+  });
+
+  it('should not gate a non-critical error finding closed as a real issue (accepted, not asked)', () => {
+    const err: GateFinding = { id: 'e1', severity: 'medium', detector_kind: 'rule' };
+    const acc = { e1: { status: 'accepted' } } as Record<string, GateState>;
+    expect(computeGate([err], acc, {}, ON)).toEqual({ status: 'ready', reasons: [] });
+    // still a question when an owner was asked or counsel answered unclear
+    const owner = { e1: { status: 'accepted', ownerAnswers: { counsel: null } } } as Record<
+      string,
+      GateState
+    >;
+    expect(computeGate([err], owner, {}, ON).status).toBe('blocked');
+    const unclear = { e1: { status: 'accepted', counselAnswer: 'unclear' } } as Record<
+      string,
+      GateState
+    >;
+    expect(computeGate([err], unclear, {}, ON).reasons[0]!.kind).toBe('unclear');
+    // an accepted critical still waits for counsel
+    const crit: GateFinding = { ...err, severity: 'critical' };
+    expect(computeGate([crit], acc, {}, ON).reasons[0]!.kind).toBe('unanswered');
   });
 
   it('should never gate an AI finding, even when asked or marked gating', () => {

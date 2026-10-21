@@ -51,7 +51,9 @@ async function runTwoLpas(page: Page) {
   const lpa = page.locator('[data-testid="package-reference"][data-target-key="lpa"]');
   await expect(lpa.first()).toHaveAttribute('data-resolution', 'unclear');
   await expect(lpa.first()).toContainText('Needs confirmation');
-  const select = lpa.first().getByTestId('package-reference-confirm');
+  const select = page
+    .locator('[data-testid="package-reference-group"][data-target-key="lpa"]')
+    .getByTestId('package-reference-confirm');
   const options = await select.locator('option').allTextContents();
   expect(options).toEqual(
     expect.arrayContaining(['northgate-lpa-definitions.docx', AMENDED.name, 'None of these']),

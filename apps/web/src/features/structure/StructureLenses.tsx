@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Icon } from '../../components/ui/icon';
 import type { IconName } from '../../icons/sprite';
 import { CONDITION_KIND, REF_STATUS, TERM_STATUS } from './model';
+import { SeeInFindings } from './SeeInFindings';
 
 /** Table lenses of the #structure view (app.html secTable / refTable / condTable / optTable / termTable). */
 type RowHandler = (key: string, el: HTMLElement) => void;
@@ -92,7 +93,7 @@ export function TableLens({
   compact,
 }: {
   v: StructureView;
-  lens: Exclude<LensId, 'investors'>;
+  lens: Exclude<LensId, 'investors' | 'sections'>;
   all: boolean;
   selected: string | null;
   onRow: RowHandler;
@@ -101,53 +102,6 @@ export function TableLens({
 }) {
   const props = { selected, onRow };
   const none = <Empty compact={compact} />;
-  if (lens === 'sections') {
-    const rows = all ? v.sections : v.sections.filter((s) => s.depth === 0 && s.flags > 0);
-    if (!rows.length) return none;
-    return (
-      <Table
-        caption="Sections"
-        head={all ? ['Section', 'Numbering', 'References', 'To check'] : ['Section', 'To check']}
-      >
-        {rows.map((s) => (
-          <Row key={s.id} k={s.id} {...props}>
-            <td>
-              <button type="button" className="rb" style={{ paddingLeft: s.depth * 22 }}>
-                <span className="num">{s.number}</span>
-                <span>{s.title}</span>
-              </button>
-            </td>
-            {all ? (
-              <>
-                <td>
-                  {s.restart ? (
-                    <>
-                      <Badge cls="b-note" icon="undo">
-                        Restarts
-                      </Badge>{' '}
-                    </>
-                  ) : null}
-                  <span className="dim">{s.numbering}</span>
-                </td>
-                <td className="dim">
-                  {s.refsIn} in · {s.refsOut} out
-                </td>
-              </>
-            ) : null}
-            <td>
-              {s.flags ? (
-                <Badge cls="b-fix" icon="warn">
-                  {s.flags} to check
-                </Badge>
-              ) : (
-                <span className="dim">None</span>
-              )}
-            </td>
-          </Row>
-        ))}
-      </Table>
-    );
-  }
   if (lens === 'crossrefs') {
     const rows = all ? v.crossrefs : v.crossrefs.filter((r) => r.issue);
     return (
@@ -292,11 +246,17 @@ export function TableLens({
   const rows = all ? v.terms : v.terms.filter((t) => t.issue);
   if (!rows.length) return none;
   return (
-    <Table caption="Defined terms" head={['Term', 'Defined at', 'Uses', 'Status']}>
+    <Table
+      caption="Defined terms"
+      head={['Defined in', 'Term', 'Where it is defined', 'Uses', 'Status', 'Actions']}
+    >
       {rows.map((t) => {
         const st = TERM_STATUS[t.status];
         return (
           <Row key={t.id} k={t.id} {...props}>
+            <td>
+              <span className="badge b-st">{t.status === 'none' ? '—' : 'This doc'}</span>
+            </td>
             <td>
               <button type="button" className="rb dq">
                 {t.term}
@@ -309,6 +269,7 @@ export function TableLens({
                 {st.label}
               </Badge>
             </td>
+            <td>{t.findingId ? <SeeInFindings findingId={t.findingId} label={t.term} /> : null}</td>
           </Row>
         );
       })}

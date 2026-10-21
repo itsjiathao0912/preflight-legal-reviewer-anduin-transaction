@@ -1,7 +1,8 @@
+import type { ReactNode } from 'react';
 import type { Progress } from './groups';
 
 /** D8: "N of M reviewed", a thin bar and Counsel · Closed · Left counts on one row (P-1: from `view.main`). */
-export function ProgressHeader({ progress }: { progress: Progress }) {
+export function ProgressHeader({ progress, right }: { progress: Progress; right?: ReactNode }) {
   const { total, reviewed, sent, closed, left } = progress;
   const width = `${total ? Math.round((reviewed / total) * 100) : 0}%`;
   return (
@@ -35,6 +36,7 @@ export function ProgressHeader({ progress }: { progress: Progress }) {
           </span>
         </p>
       </div>
+      {right ? <div className="fv2-head-r">{right}</div> : null}
     </div>
   );
 }

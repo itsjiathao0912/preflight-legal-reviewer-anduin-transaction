@@ -208,7 +208,8 @@
         "enum": [
           "clause-judgment",
           "counsel-draft",
-          "drift-narrative"
+          "drift-narrative",
+          "reference-target"
         ],
         "type": "string"
       },

@@ -31,21 +31,23 @@ test.describe('intake-low-confidence-gate', () => {
     await expect(b).toHaveAttribute('data-confidence', 'low');
     await expect(snippet).toHaveAttribute('data-confidence', 'low');
     await expect(snippet.getByTestId('package-row-type')).toHaveValue('other');
-    await expect(a.getByTestId('package-row-low-mark')).toContainText('Needs your confirmation');
+    await expect(a.getByTestId('package-row-low-mark')).toContainText('Please check');
     await expect(page.getByTestId('package-run')).toBeDisabled();
     const problems = page.getByTestId('package-notice').getByTestId('package-problem');
     const multiple = problems.and(page.locator('[data-code="multiple_to_digitize"]'));
-    await expect(problems.filter({ hasText: 'Confirm or fix x.html' })).toHaveCount(1);
+    await expect(problems.filter({ hasText: /Tick Looks right on .*x\.html/ })).toHaveCount(1);
     await expect(a.getByTestId('package-row-role')).toHaveValue('to_digitize');
     await expect(b.getByTestId('package-row-role')).toHaveValue('to_digitize');
-    await expect(multiple).toContainText('2 files are set to To digitize');
+    await expect(multiple).toContainText('Only one file can be To digitize (2 are picked now)');
     // edit one to baseline (an edit confirms it) and confirm the others
     await b.getByTestId('package-row-role').selectOption('baseline');
     await expect(multiple).toHaveCount(0);
     await expect(page.getByTestId('package-run')).toBeDisabled();
-    await a.getByTestId('package-row-confirm').check();
+    await a.getByTestId('package-row-confirm').click();
+    await expect(a).toHaveAttribute('data-confirmed', 'true');
+    await expect(a.getByTestId('package-row-checked')).toContainText('Checked');
     await expect(page.getByTestId('package-run')).toBeDisabled();
-    await snippet.getByTestId('package-row-confirm').check();
+    await snippet.getByTestId('package-row-confirm').click();
     await expect(problems).toHaveCount(0);
     await runPackage(page);
   });

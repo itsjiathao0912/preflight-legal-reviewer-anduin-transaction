@@ -4,10 +4,12 @@ import { useFilters } from '../../state/filters';
 import { useReview } from '../../state/review';
 import { useShell } from '../../state/shell';
 import { useCounsel } from '../counsel/counsel-store';
+import { useRequests } from '../requests/request-store';
 import { isQuestion } from '../counsel/sheet-model';
 import { memoryLabelText } from '../review/memory-labels';
 import type { Row } from '../review/model';
 import {
+  askedOwners,
   GATE_GROUP_LABEL,
   GATE_GROUP_ORDER,
   gateGroups,
@@ -17,7 +19,7 @@ import {
 
 /**
  * Gate popover reasons (AC22). Each reason links to where it is resolved: a counsel question or an
- * Awaiting-counsel item opens it in Counsel questions; anything else selects the finding. A
+ * Awaiting-counsel item opens its owner's request in the Request drawer (a prior Awaiting-counsel item opens Requests); anything else selects the finding. A
  * `reconfirm_required` item shows "Dismissed in [fund], re-confirm": re-confirm it by dismissing it
  * again with a reason in Findings, or by a clear counsel answer (D-2).
  */
@@ -82,6 +84,7 @@ function ReasonList({ items, onGo }: { items: readonly GroupedReason[]; onGo: ()
   const setRoute = useShell((s) => s.setRoute);
   const reset = useFilters((s) => s.reset);
   const focusItem = useCounsel((s) => s.focusItem);
+  const openDrawer = useRequests((s) => s.openDrawer);
   return (
     <ul>
       {items.map(({ reason: r, row }) => {
@@ -98,6 +101,16 @@ function ReasonList({ items, onGo }: { items: readonly GroupedReason[]; onGo: ()
               data-target={target}
               onClick={() => {
                 onGo();
+                if (target === 'counsel' && row && isQuestion(row)) {
+                  // a question: open its owner's request in the drawer, over the current screen
+                  const owner = r.owner ?? (isChangeRow(row) ? askedOwners(row.triage)[0] : null);
+                  const o = owner ?? 'counsel';
+                  openDrawer(
+                    o,
+                    r.owner || isChangeRow(row) ? questionKey(r.findingKey, o) : r.findingKey,
+                  );
+                  return;
+                }
                 if (target === 'counsel') {
                   setRoute('counsel');
                   focusItem(r.owner ? questionKey(r.findingKey, r.owner) : r.findingKey);

@@ -62,7 +62,7 @@ test.describe('counsel-sheet', () => {
     await markAccepted(page, crit.id); // critical + Accepted = a question
     await markAccepted(page, other.id); // medium + Accepted = not a question
     await gotoCounsel(page);
-    await expect(page.getByTestId('counsel-meta')).toHaveText('2 questions · 2 unanswered');
+    await expect(page.getByTestId('counsel-meta')).toHaveText('2 questions · 2 waiting');
     await expect(page.getByTestId('counsel-row')).toHaveCount(2);
     await expect(counselRow(page, a.id)).toHaveAttribute('data-state', 'new');
     await expect(counselRow(page, crit.id)).toHaveAttribute('data-state', 'accepted');
@@ -88,8 +88,9 @@ test.describe('counsel-sheet', () => {
     await markCounsel(page, a.id);
     await gotoCounsel(page);
     const r = counselRow(page, a.id);
-    const template = (await r.getByTestId('counsel-question-text').textContent())!;
+    // the full question wording is shown inside the expanded row (the row header is a short title)
     await r.getByTestId('counsel-row-toggle').click();
+    const template = (await r.getByTestId('counsel-question-text').textContent())!;
     await r.getByTestId('counsel-edit').click();
     await r.getByTestId('counsel-edit-text').fill('Please confirm who fills in the investor name.');
     await r.getByTestId('counsel-edit-save').click();
@@ -108,10 +109,10 @@ test.describe('counsel-sheet', () => {
     await page.reload();
     await openFund(page, 'fund-II');
     await gotoCounsel(page);
+    await counselRow(page, a.id).getByTestId('counsel-row-toggle').click();
     await expect(counselRow(page, a.id).getByTestId('counsel-question-text')).toHaveText(
       'Please confirm who fills in the investor name.',
     );
-    await counselRow(page, a.id).getByTestId('counsel-row-toggle').click();
     await counselRow(page, a.id).getByTestId('counsel-edit').click();
     await counselRow(page, a.id).getByTestId('counsel-edit-reset').click();
     await expect(counselRow(page, a.id).getByTestId('counsel-question-text')).toHaveText(template);
@@ -163,8 +164,8 @@ test.describe('counsel-sheet', () => {
     expect(draftCall.body.law_firm_id).toBeNull();
     expect(draftCall.body.candidates.map((c) => c.id)).toEqual([a.id]);
     const r = counselRow(page, a.id);
-    await expect(r.getByTestId('counsel-question-text')).toHaveText(texts[0]!);
     await r.getByTestId('counsel-row-toggle').click();
+    await expect(r.getByTestId('counsel-question-text')).toHaveText(texts[0]!);
     await expect(r.getByTestId('counsel-ai-chip')).toBeVisible();
     await expect(r.getByTestId('counsel-provenance')).toContainText(MODEL);
     // toggle back to the template draft

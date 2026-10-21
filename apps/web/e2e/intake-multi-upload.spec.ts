@@ -19,7 +19,7 @@ test.describe('intake-multi-upload', () => {
       const r = rows.nth(i);
       await expect(r.getByTestId('package-row-type')).toBeVisible();
       await expect(r.getByTestId('package-row-role')).toBeVisible();
-      await expect(r.getByTestId('package-row-confidence')).toHaveText(/High|Low/);
+      await expect(r.getByTestId('package-row-confidence')).toHaveText(/Sure|Please check|Checked/);
       await expect(r.getByTestId('package-row-reason')).not.toBeEmpty();
     }
     const sub = rows.filter({ hasText: 'fund-iii-subscription-agreement.html' });

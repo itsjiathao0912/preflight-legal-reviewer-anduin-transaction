@@ -81,3 +81,46 @@
   gap: 6px;
   margin: 0 0 8px;
 }
+
+/* Terms & references tables (reuse table.t, badge, seg, btn; tokens only) */
+.pkg-sechead {
+  flex-wrap: wrap;
+}
+.pkg-seg {
+  margin-left: auto;
+}
+.pkg-ref-t td,
+.pkg-term-t td {
+  vertical-align: middle;
+}
+.pkg-ref-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.pkg-ref-n {
+  font-variant-numeric: tabular-nums;
+}
+.pkg-ref-file {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pkg-ref-file select {
+  font: inherit;
+  max-width: 240px;
+}
+.pkg-ref-acts {
+  white-space: nowrap;
+}
+.pkg-ref-acts .btn + .btn {
+  margin-left: 6px;
+}
+table.t tr.pkg-ref-m td {
+  background: var(--panel);
+  font-size: 13px;
+}
+.pkg-ref-foot {
+  margin: 6px 0 0;
+}

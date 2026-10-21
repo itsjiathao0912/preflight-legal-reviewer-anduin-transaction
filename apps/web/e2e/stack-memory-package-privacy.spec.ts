@@ -86,7 +86,7 @@ test.describe('stack-memory-package-privacy', () => {
       await r.getByTestId('package-row-type').selectOption(type);
       await r.getByTestId('package-row-role').selectOption(role);
       const box = r.getByTestId('package-row-confirm');
-      if (!(await box.isChecked())) await box.check();
+      if (await box.count()) await box.click();
     }
     const version = page.getByTestId('package-version-input');
     if (!(await version.inputValue())) await version.fill('v1');

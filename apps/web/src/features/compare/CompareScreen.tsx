@@ -1,4 +1,5 @@
 import { mask, type DiffMode, type DiffResult, type Excerpt, type Segment } from '@aduin/core';
+import { PageIntro } from '../../components/ui/PageIntro';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import './compare.css';
 import { Icon } from '../../components/ui/icon';
@@ -516,6 +517,10 @@ export function CompareScreen() {
           </p>
         </div>
       </header>
+      <PageIntro testId="page-intro-compare">
+        This agreement next to an earlier version, with every change marked. Changes that affect the
+        form also appear in Findings under Changes.
+      </PageIntro>
       <div className="cband">
         <div className="cbar">
           <div className="sent" role="group" aria-label="Documents being compared">

@@ -43,7 +43,7 @@ test.describe('variance-no-baseline-errors-only', () => {
     await errorRows(page).first().click();
     await page.getByTestId('action-counsel').click();
     await page.getByTestId('nav-counsel').click();
-    await expect(page.getByTestId('counsel-meta')).toHaveText('1 question · 1 unanswered');
+    await expect(page.getByTestId('counsel-meta')).toHaveText('1 question · 1 waiting');
     await page.getByTestId('nav-findings').click();
 
     // next document of the same firm: the first one is the baseline now

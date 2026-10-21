@@ -15,11 +15,13 @@ const ZONE_NAME = ['itsjiathao', 'com'].join('.');
 const PREFIX = 'aduin-transaction';
 /** User-approved exact-name exception (Worker only, 19-10-26). Not a prefix. */
 export const ALLOWED_EXACT_NAMES: readonly string[] = ['preflight-legal-reviewer'];
-/** The only allowed zone-name occurrence: the author website link in the root README. */
+/** The only allowed zone-name occurrence: the author website link (a plain URL, never config). */
 const README_AUTHOR_LINK = `https://${ZONE_NAME}/`;
+/** Files where that exact link may appear: the root README and the welcome screen links (user-approved 21-10-26). */
+const AUTHOR_LINK_FILES: readonly string[] = ['README.md', 'apps/web/src/features/welcome/links.ts'];
 
 function isAllowedZoneName(file: string, text: string, index: number): boolean {
-  if (file !== 'README.md') return false;
+  if (!AUTHOR_LINK_FILES.includes(file)) return false;
   const start = index - 'https://'.length;
   return start >= 0 && text.slice(start, start + README_AUTHOR_LINK.length) === README_AUTHOR_LINK;
 }

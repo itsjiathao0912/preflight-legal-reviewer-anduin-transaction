@@ -47,7 +47,7 @@ describe('gp-request-group', () => {
       req({}),
       req({ targetKey: 'side_letter:x', label: 'Side Letter', quote: 'any Side Letter', count: 1 }),
     ]);
-    const c = render(<GpRequestGroup />);
+    const c = render(<GpRequestGroup open />);
     const items = c.querySelectorAll('[data-testid="gp-request-item"]');
     expect(items).toHaveLength(2);
     expect(items[0]?.getAttribute('data-target-key')).toBe('annex:f');
@@ -61,6 +61,32 @@ describe('gp-request-group', () => {
     expect(c.textContent).not.toContain('021000021');
     expect(c.querySelector('[data-testid="gp-request-export"]')).not.toBeNull();
     expect(c.querySelector('[data-testid="gp-request-none"]')).toBeNull();
+    expect(c.querySelector('[data-testid="gp-group"]')?.textContent).toContain(
+      'Send 2 missing documents',
+    );
+  });
+
+  it('should keep the expanded body closed until the row is opened', () => {
+    current = view([req({})]);
+    const c = render(<GpRequestGroup />);
+    expect(
+      c.querySelector('[data-testid="gp-request-toggle"]')?.getAttribute('aria-expanded'),
+    ).toBe('false');
+    expect(c.querySelectorAll('[data-testid="gp-request-item"]')).toHaveLength(0);
+  });
+
+  it('should start a cut-off quote at a word boundary', () => {
+    current = view([req({ quote: 'p Agreement and the Annex F schedule' })]);
+    const c = render(<GpRequestGroup open />);
+    expect(c.querySelector('[data-testid="gp-request-quote"]')?.textContent).toBe(
+      '…Agreement and the Annex F schedule',
+    );
+  });
+
+  it('should hide the row when the filters exclude GP', () => {
+    current = view([req({})]);
+    const c = render(<GpRequestGroup filters={{ status: 'all', who: 'counsel', sev: 'all' }} />);
+    expect(c.querySelector('[data-testid="gp-group"]')).toBeNull();
   });
 
   it('should show the none state for a package without missing documents', () => {

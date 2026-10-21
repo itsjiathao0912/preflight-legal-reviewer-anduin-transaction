@@ -65,7 +65,7 @@ test.describe('source-file-smoke', () => {
     await expect(page.getByTestId('ref-view-bar')).toHaveCount(0);
     await expect(page.getByTestId('doc-highlight').first()).toBeVisible();
 
-    // Structure -> Terms & package -> a term defined in the LPA shows its location + Open
+    // Structure -> Terms & references -> a term defined in the LPA shows its location + Open
     await page.getByTestId('nav-structure').click();
     await page.getByTestId('structure-lens-terms').click();
     const term = page

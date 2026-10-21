@@ -234,6 +234,11 @@ test.describe('a11y-keyboard', () => {
     await askOwner(page, /Investor Domicile/);
     await gotoQuestions(page);
     await audit(page, 'questions by owner');
+    // Questions table: the Filter button opens the in-flow chip panel from the keyboard
+    await page.getByTestId('questions-filter').focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('questions-filters')).toBeVisible();
+    await audit(page, 'questions filters');
     await page.getByTestId('questions-tab-all').focus();
     await tabTo(page, 'questions-tab-gp', 10);
     await expectVisibleFocus(page);

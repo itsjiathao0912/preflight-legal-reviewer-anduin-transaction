@@ -55,3 +55,14 @@ export function loadDemoPackages(): Promise<DemoPackage[]> {
     .catch(() => []);
   return cached;
 }
+
+/** Smallest demo package shown in the Open a document dialog (smaller ones stay reachable by link). */
+export const MIN_SHOWN_DEMO_MEMBERS = 6;
+
+/**
+ * Demo packages listed in the dialog: only the full packages (6+ files). `showAll` (the e2e build)
+ * lists every package so the specs can still open the small ones.
+ */
+export function visibleDemoPackages(list: readonly DemoPackage[], showAll: boolean): DemoPackage[] {
+  return showAll ? [...list] : list.filter((p) => p.members.length >= MIN_SHOWN_DEMO_MEMBERS);
+}

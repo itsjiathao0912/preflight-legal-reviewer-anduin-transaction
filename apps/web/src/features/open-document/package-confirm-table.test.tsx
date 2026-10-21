@@ -63,7 +63,7 @@ describe('package-confirm-table', () => {
     expect(low.getAttribute('data-confidence')).toBe('low');
     expect(low.getAttribute('data-needs-ocr')).toBe('true');
     expect(low.querySelector('[data-testid="package-row-low-mark"]')?.textContent).toContain(
-      'Needs your confirmation',
+      'Please check',
     );
     expect(rows[0]!.querySelector('[data-testid="package-row-low-mark"]')).toBeNull();
     expect(low.textContent).toContain('needs OCR');
@@ -74,6 +74,39 @@ describe('package-confirm-table', () => {
     for (const id of ['package-row-type', 'package-row-role', 'package-row-confirm'])
       for (const n of el.querySelectorAll(`[data-testid="${id}"]`))
         expect(n.getAttribute('aria-label')?.length).toBeGreaterThan(0);
+  });
+
+  it('shows Looks right only on an unconfirmed low row; pressing it marks the row Checked', () => {
+    const el = render(<PackageConfirmTable onRun={() => undefined} onBack={() => undefined} />);
+    const rows = () => el.querySelectorAll('[data-testid="package-row"]');
+    expect(rows()[0]!.querySelector('[data-testid="package-row-confirm"]')).toBeNull();
+    expect(rows()[0]!.querySelector('[data-testid="package-row-confidence"]')!.textContent).toBe(
+      'Sure',
+    );
+    const btn = rows()[1]!.querySelector<HTMLButtonElement>('[data-testid="package-row-confirm"]')!;
+    expect(btn.tagName).toBe('BUTTON');
+    expect(btn.textContent).toBe('Looks right');
+    expect(rows()[1]!.getAttribute('data-confirmed')).toBe('false');
+    act(() => btn.click());
+    expect(rows()[1]!.getAttribute('data-confirmed')).toBe('true');
+    expect(rows()[1]!.querySelector('[data-testid="package-row-confirm"]')).toBeNull();
+    expect(rows()[1]!.querySelector('[data-testid="package-row-checked"]')!.textContent).toBe(
+      'Checked',
+    );
+    expect(rows()[1]!.querySelector('[data-testid="package-row-low-mark"]')).toBeNull();
+  });
+
+  it('has no OK? column and removes a row with an icon-only button', () => {
+    const el = render(<PackageConfirmTable onRun={() => undefined} onBack={() => undefined} />);
+    const heads = [...el.querySelectorAll('th')].map((t) => t.textContent);
+    expect(heads).not.toContain('OK?');
+    expect(heads.at(-1)).toBe('Remove');
+    const rm = el.querySelector<HTMLButtonElement>('[data-testid="package-row-remove"]')!;
+    expect(rm.textContent).toBe('');
+    expect(rm.querySelector('svg')).not.toBeNull();
+    expect(rm.getAttribute('aria-label')).toBe('Remove fund-iii-subscription-agreement.html');
+    act(() => rm.click());
+    expect(el.querySelectorAll('[data-testid="package-row"]')).toHaveLength(1);
   });
 
   it('reasons and file names pass through maskAndClamp', () => {
@@ -97,7 +130,7 @@ describe('package-confirm-table', () => {
     const ps = el.querySelectorAll('[data-testid="package-problem"]');
     expect(ps).toHaveLength(1);
     expect(ps[0]!.getAttribute('data-code')).toBe('low_confidence_unconfirmed');
-    expect(ps[0]!.textContent).toContain('Confirm or fix scan');
+    expect(ps[0]!.textContent).toContain('Tick Looks right on scan');
     expect(ps[0]!.textContent).not.toContain(SSN);
   });
 
@@ -111,7 +144,7 @@ describe('package-confirm-table', () => {
     const ps = el.querySelectorAll('[data-testid="package-problem"]');
     expect(ps).toHaveLength(1);
     expect(ps[0]!.getAttribute('data-code')).toBe('multiple_to_digitize');
-    expect(ps[0]!.textContent).toContain('2 files are set to To digitize');
+    expect(ps[0]!.textContent).toContain('Only one file can be To digitize (2 are picked now)');
     expect(el.querySelector<HTMLButtonElement>('[data-testid="package-run"]')!.disabled).toBe(true);
   });
 

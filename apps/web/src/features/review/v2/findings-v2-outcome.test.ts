@@ -52,8 +52,22 @@ describe('findings-v2-outcome', () => {
 
   it('close-real-issue on non-blocking accepted does not count as a question', () => {
     const o = run([f('a')], {}, { id: 'a', action: 'close-real-issue' });
-    expect(o.text).toBe('Closed as a real issue · Gate now blocked (1)');
+    expect(o.text).toBe('Closed as a real issue · Gate ready');
     expect(o.questionCount).toBe(0);
+  });
+
+  it('close-real-issue on a non-blocking row keeps an answered blocker resolved (gate count stays)', () => {
+    // repro: Annex F critical answered B via the share sync, one other critical open; closing a
+    // medium placeholder as a real issue must not add a blocker
+    const triage: Record<string, Triage> = {
+      annex: { status: 'counsel', counselAnswer: 'B', answeredBy: 'Counsel', answeredAt: 1 },
+    };
+    const o = run([crit('annex'), crit('other'), f('ph', { severity: 'medium' })], triage, {
+      id: 'ph',
+      action: 'close-real-issue',
+    });
+    expect(o.text).toBe('Closed as a real issue · Gate still blocked (1)');
+    expect(o.gateReasons).toBe(1);
   });
 
   it('close-dismiss: blocked to ready, and still blocked with two blockers', () => {

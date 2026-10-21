@@ -1,5 +1,6 @@
 import type {
   AiCandidate,
+  AiTaskId,
   BlockKind,
   CrossDocDefinition,
   DiffMode,
@@ -123,6 +124,11 @@ export interface EngineResult {
   outline?: OutlineDraft;
   /** Phase 05 (additive, optional): graph-selected AI candidates (core llm/candidates.ts, worker only). */
   aiCandidates?: AiCandidate[];
+  /**
+   * llm-defect-detection (additive, optional): packed reference-target candidates (pointer sentence
+   * plus TARGET blocks, core llm/reference-pairs.ts); the AI lane sends them as a second call.
+   */
+  pairs?: AiCandidate[];
   /** Phase 06 (additive): which adapter read the document (absent = html, the Phase 03 default). */
   source?: DocSource;
   /** Phase 06 (additive): page count for PDF / OCR sources. */
@@ -189,6 +195,8 @@ export type AnalyzeInput =
 export interface VerifyAiContext {
   model: string;
   provenance: 'fresh' | 'cache';
+  /** Task of the verified result; `reference-target` scopes quotes to the pair (pointer) sites. */
+  task?: AiTaskId;
 }
 
 export interface AiRejection {

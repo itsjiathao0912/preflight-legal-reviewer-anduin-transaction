@@ -356,7 +356,7 @@ table.t tr.sel td:first-child {
   font-size: 12px;
 }
 
-/* Structure v2: grouped sub-lists inside the Logic and Terms & package tabs */
+/* Structure v2: grouped sub-lists inside the Logic and Terms & references tabs */
 .stgroup + .stgroup {
   margin-top: 8px;
 }
@@ -381,4 +381,15 @@ table.t tr.sel td:first-child {
 }
 .st-none {
   margin: 4px 0 8px;
+}
+
+/* "See in Structure" from a finding: flash the matching row (reuses the document's ref-flash) */
+table.t tr.st-flash td {
+  animation: ref-flash 1.6s var(--ease);
+}
+@media (prefers-reduced-motion: reduce) {
+  table.t tr.st-flash td {
+    animation: none;
+    background: var(--accent-tint);
+  }
 }

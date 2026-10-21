@@ -99,18 +99,16 @@ test.describe('variance-baseline-from-package', () => {
       body.getByTestId('owner-chip').or(page.getByTestId('owner-chip').first()),
     ).toBeVisible();
 
-    // a role change in the Package lens re-runs the pass WITHOUT re-opening the primary
+    // a role change in the package file list (Documents) re-runs the pass WITHOUT re-opening the primary
     await watchReopen(page);
-    await page.getByTestId('nav-structure').click();
-    await page.getByTestId('structure-lens-terms').click();
+    await page.getByTestId('nav-documents').click();
     const lensRow = page.getByTestId('package-lens-doc').filter({ hasText: NGI_2024_NAME });
     await lensRow.getByTestId('package-lens-doc-role').selectOption('reference');
     await page.getByTestId('nav-findings').click();
     await varianceSettled(page);
     await expect(changeRows(page)).toHaveCount(0);
     await expect(page.getByTestId('baseline-control')).toContainText('No baseline');
-    await page.getByTestId('nav-structure').click();
-    await page.getByTestId('structure-lens-terms').click();
+    await page.getByTestId('nav-documents').click();
     await lensRow.getByTestId('package-lens-doc-role').selectOption('baseline');
     await page.getByTestId('nav-findings').click();
     await varianceSettled(page);

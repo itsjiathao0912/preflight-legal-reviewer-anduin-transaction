@@ -8,6 +8,8 @@ import { buildAiCandidates } from '../../../src/llm/candidates';
 import { provenanceOf, provenanceText } from '../../../src/llm/provenance';
 import { limits } from '../../../src/config/limits';
 import { analyzed } from '../../helpers/samples';
+import { REVIEW_PLAYBOOK } from '../../../src/llm/playbook';
+import { UNTRUSTED_NOTICE } from '../../../src/llm/tasks/shared';
 
 const input = {
   candidates: [
@@ -20,12 +22,16 @@ describe('llm task registry and wire (Phase 05 Stage 0)', () => {
   it('registers every contract task id; prompt versions are frozen', () => {
     expect(Object.keys(TASKS).sort()).toEqual([...AI_TASK_IDS].sort());
     expect(DEFAULT_TASK_ID).toBe('clause-judgment');
-    expect(TASKS['clause-judgment'].promptVersion).toBe('clause-judgment@1');
+    expect(TASKS['clause-judgment'].promptVersion).toBe('clause-judgment@2');
     expect(TASKS['counsel-draft'].promptVersion).toBe('counsel-draft@1');
     expect(TASKS['clause-judgment'].schemaVersion).toBe('clause-judgment.s1');
     expect(TASKS['counsel-draft'].schemaVersion).toBe('counsel-draft.s1');
     expect(TASKS['drift-narrative'].promptVersion).toBe('drift-narrative@1');
     expect(TASKS['drift-narrative'].schemaVersion).toBe('drift-narrative.s1');
+    expect(TASKS['reference-target'].promptVersion).toBe('reference-target@1');
+    expect(TASKS['reference-target'].schemaVersion).toBe('reference-target.s1');
+    expect(AI_TASK_IDS).toContain('reference-target');
+    expect(taskById('reference-target')).toBe(TASKS['reference-target']);
     expect(taskById('nope')).toBeUndefined();
     expect(taskById('counsel-draft')).toBe(TASKS['counsel-draft']);
   });
@@ -36,9 +42,28 @@ describe('llm task registry and wire (Phase 05 Stage 0)', () => {
     );
     expect(h).toMatch(/^[0-9a-f]{64}$/);
     expect(inputHash16(h)).toHaveLength(16);
+    // clause-judgment@2 (review playbook added): pin moved on purpose
     expect(h).toMatchInlineSnapshot(
-      `"487cdcb3491a84dbaa8f5556a35e3107584c39ee721652744d6e730781782e47"`,
+      `"24759d8d4e863092545a1f0307c37945f5d82d63775042673f8f3d44ac02fe8a"`,
     );
+    expect(
+      inputHash(TASKS['reference-target'].buildMessages(input, selectInjectedRules(['Rule A.']))),
+    ).toMatchInlineSnapshot(`"26ec21ff056889965ff15d061f9a7d4d3df95413dc4af268bde24002a1defa60"`);
+  });
+
+  it('reference-target: system prompt carries the untrusted notice, playbook and pointer-only quote rule', () => {
+    const [sys] = TASKS['reference-target'].buildMessages(input, selectInjectedRules([]));
+    expect(sys!.content).toContain(UNTRUSTED_NOTICE);
+    expect(sys!.content).toContain(REVIEW_PLAYBOOK);
+    expect(sys!.content).toMatch(/POINTER sentence only/);
+    const [cj] = TASKS['clause-judgment'].buildMessages(input, selectInjectedRules([]));
+    expect(cj!.content).toContain(REVIEW_PLAYBOOK);
+    const items = (
+      TASKS['reference-target'].modelResultSchema.schema as {
+        properties: { findings: { items: { properties: { issue_class: { enum: string[] } } } } };
+      }
+    ).properties.findings.items.properties.issue_class.enum;
+    expect(items).toEqual(['broken_cross_reference', 'broken_conditional']);
   });
 
   it('AiRequestSchema defaults task to clause-judgment and rejects unknown tasks', () => {

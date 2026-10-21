@@ -16,6 +16,7 @@ import { reasonLabel } from '../reasons';
 import { SEV } from '../severity';
 import { isBlocking } from './groups';
 import { QuoteBody } from './QuoteBody';
+import { SeeInStructure } from './SeeInStructure';
 
 const letter = (i: number): string => String.fromCharCode(65 + i);
 
@@ -187,6 +188,7 @@ export function ExpandedBlock({ row, twin }: { row: Row; twin?: FindingView | un
               </dd>
             </>
           ) : null}
+          <SeeInStructure f={f} />
           <dt>Confidence</dt>
           <dd>{Math.round(f.confidence * 100)}%</dd>
           <dt>Why it was flagged</dt>

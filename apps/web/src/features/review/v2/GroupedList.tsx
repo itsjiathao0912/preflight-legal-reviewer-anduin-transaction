@@ -21,6 +21,7 @@ export function GroupedList({
   view,
   empty,
   twins,
+  order,
 }: {
   groups: Grouped;
   selectedId: string | null;
@@ -28,7 +29,14 @@ export function GroupedList({
   view: ReviewView;
   empty: string | null;
   twins?: Readonly<Record<string, FindingView>> | undefined;
+  /** Group order; counsel share mode puts "Sent to counsel" first. Default: review, sent, closed. */
+  order?: readonly GroupKey[];
 }) {
+  const headings = order
+    ? HEADINGS.filter(([g]) => order.includes(g)).sort(
+        (a, b) => order.indexOf(a[0]) - order.indexOf(b[0]),
+      )
+    : HEADINGS;
   return (
     <ul className="rows fv2-list" data-testid="findings-list">
       {empty !== null ? (
@@ -36,7 +44,7 @@ export function GroupedList({
           {empty}
         </li>
       ) : (
-        HEADINGS.map(([g, label]) => {
+        headings.map(([g, label]) => {
           const rows: Row[] = groups[g];
           if (!rows.length) return null;
           return (

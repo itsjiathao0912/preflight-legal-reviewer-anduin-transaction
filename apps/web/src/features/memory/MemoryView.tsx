@@ -1,4 +1,5 @@
 import type { ActiveDecision, Rule } from '@aduin/core';
+import { PageIntro } from '../../components/ui/PageIntro';
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import '../../styles/structure.css';
 import '../../styles/memory.css';
@@ -274,6 +275,10 @@ export function MemoryView() {
           ) : null}
         </div>
       </header>
+      <PageIntro testId="page-intro-memory">
+        What past reviews decided for this law firm: answers, closed issues and suggested rules.
+        They are reused on the firm’s next fund.
+      </PageIntro>
       <div className="pgbody">
         {m.status === 'noFirm' ? (
           <div className="empty2" data-testid="memory-no-firm">

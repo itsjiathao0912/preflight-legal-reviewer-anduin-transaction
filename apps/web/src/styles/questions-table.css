@@ -1,0 +1,199 @@
+/* Questions table (20-10-26): one compact table for every owner, a Filter button with an in-flow
+   chip panel, click-to-expand rows. Reuses the shipped .rows/.row/.rowb/.rbody accordion and the
+   Findings v2 chip look. Tokens only. */
+.qt-tt {
+  align-items: center;
+  flex-wrap: wrap;
+}
+.qt-gate {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+}
+.qt-gate:hover {
+  filter: brightness(0.96);
+}
+.pagehead .hacts {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* ---------- filter panel ---------- */
+.qt-filters {
+  margin: 0 24px 12px;
+  padding: 10px 12px;
+  border-radius: var(--r);
+  background: var(--card);
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+.qt-frow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.qt-flabel {
+  width: 64px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.qt-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.qt-chips button {
+  border: 0;
+  background: var(--panel);
+  border-radius: var(--r);
+  padding: 2px 8px;
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--ink-2);
+  min-height: 28px;
+}
+.qt-chips button:hover {
+  background: var(--step);
+}
+.qt-chips button[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.qt-chips button[aria-pressed='true'] svg {
+  color: inherit;
+}
+.qt-chips .n {
+  color: inherit;
+  opacity: 0.75;
+}
+.qt-chips svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* ---------- table ---------- */
+.qt {
+  display: grid;
+  gap: 2px;
+}
+.qt-grid {
+  display: grid;
+  grid-template-columns: 16px 28px minmax(0, 1fr) 96px 84px 132px;
+  gap: 10px;
+  align-items: center;
+}
+.qt-head {
+  padding: 0 10px 2px 12px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.qt-rows .rowb.qt-grid {
+  grid-template-columns: 16px 28px minmax(0, 1fr) 96px 84px 132px;
+  min-height: 40px;
+  padding: 8px 10px 8px 12px;
+}
+.qt-chev {
+  display: inline-flex;
+  color: var(--ink-3);
+}
+.qt-chev svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.15s var(--ease);
+}
+.row.sel .qt-chev svg {
+  transform: rotate(90deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .qt-chev svg {
+    transition: none;
+  }
+}
+.qt-rows .qn {
+  color: var(--ink-3);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.qt-rows .rowb .t .re {
+  color: var(--block-fg);
+  margin-right: 4px;
+  vertical-align: -2px;
+}
+.qt-rows .rowb .t .re svg {
+  width: 14px;
+  height: 14px;
+}
+.qt-who,
+.qt-st {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+.qt-sev {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 13px;
+}
+.qt-sev svg {
+  width: 14px;
+  height: 14px;
+}
+.qt-sev > span:last-child {
+  color: var(--ink-2);
+}
+.qt-wait {
+  color: var(--ink-2);
+}
+.qt-rows .rbody {
+  padding-left: 66px;
+}
+.qt-loc {
+  margin: 0;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.qt-loc svg {
+  width: 13px;
+  height: 13px;
+}
+.qt-q {
+  margin: 0;
+  font-weight: 500;
+  line-height: 1.45;
+}
+.qt-none {
+  padding: 12px;
+  color: var(--ink-3);
+  font-size: 14px;
+}
+
+/* narrow: the table collapses to number, title and status */
+@media (max-width: 959px) {
+  .qt-head {
+    display: none;
+  }
+  .qt-rows .rowb.qt-grid {
+    grid-template-columns: 16px 24px minmax(0, 1fr) auto;
+  }
+  .qt-rows .qt-who,
+  .qt-rows .qt-sev {
+    display: none;
+  }
+  .qt-rows .rbody {
+    padding-left: 12px;
+  }
+  .qt-filters {
+    margin: 0 16px 12px;
+  }
+}
