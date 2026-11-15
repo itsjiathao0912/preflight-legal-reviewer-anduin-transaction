@@ -2,6 +2,7 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { setCounselMode } from '../../state/share-role';
+import { WEBSITE_URL } from './links';
 import { WelcomeScreen } from './WelcomeScreen';
 import { WELCOME_SEEN_KEY, shouldShowWelcome } from './welcome-gate';
 
@@ -10,7 +11,7 @@ import { WELCOME_SEEN_KEY, shouldShowWelcome } from './welcome-gate';
 afterEach(() => {
   setCounselMode(false);
   localStorage.clear();
-  document.body.innerHTML = '';
+  document.body.replaceChildren();
 });
 
 describe('welcome screen', () => {
@@ -30,9 +31,9 @@ describe('welcome screen', () => {
       'Fewer rebuilds',
     ])
       expect(text).toContain(t);
-    const site = el.querySelector<HTMLButtonElement>('[data-testid="welcome-website"]');
-    expect(site?.disabled).toBe(true);
-    expect(site?.title).toBe('Link coming soon');
+    const site = el.querySelector<HTMLAnchorElement>('[data-testid="welcome-website"]');
+    expect(site?.getAttribute('href')).toBe(WEBSITE_URL);
+    expect(site?.target).toBe('_blank');
     expect(el.querySelector('[data-testid="welcome-slides"]')).not.toBeNull();
     act(() => el.querySelector<HTMLButtonElement>('[data-testid="welcome-start"]')?.click());
     expect(onEnter).toHaveBeenCalledOnce();
