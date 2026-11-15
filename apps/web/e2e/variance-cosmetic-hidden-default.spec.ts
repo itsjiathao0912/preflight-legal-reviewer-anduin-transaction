@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoApp } from './fixtures/app';
+import { gotoApp, openFilterMenu } from './fixtures/app';
 import {
   changeRows,
   NGI_2024,
@@ -30,6 +30,7 @@ test.describe('variance-cosmetic-hidden-default', () => {
     await varianceSettled(page);
     const changes = await changeRows(page).count();
     expect(changes).toBeGreaterThan(0);
+    await openFilterMenu(page);
     await expect(page.getByTestId('kind-changes')).toContainText(`Changes${changes}`);
     // hidden by default, count stated (summary.cosmetic hunks)
     const toggle = page.getByTestId('show-cosmetic');
@@ -52,9 +53,11 @@ test.describe('variance-cosmetic-hidden-default', () => {
       /^\+\d+ more groups \(\d+ changes\)$/,
     );
     // the Errors segment hides change rows and the cosmetic option
+    await openFilterMenu(page);
     await page.getByTestId('kind-errors').click();
     await expect(changeRows(page)).toHaveCount(0);
     await expect(page.getByTestId('cosmetic-groups')).toHaveCount(0);
+    await openFilterMenu(page);
     await page.getByTestId('kind-changes').click();
     await expect(changeRows(page)).toHaveCount(changes);
     await expect(page.locator('[data-testid="finding-row"]:not([data-kind="change"])')).toHaveCount(
@@ -62,6 +65,7 @@ test.describe('variance-cosmetic-hidden-default', () => {
     );
     // the filter state survives a reload
     await page.reload();
+    await openFilterMenu(page);
     await expect(page.getByTestId('kind-changes')).toHaveAttribute('aria-pressed', 'true', {
       timeout: 30_000,
     });

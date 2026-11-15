@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { limits } from '@aduin/core';
-import { gotoApp, openDialog } from './fixtures/app';
+import { clearPickedFiles, gotoApp, openDialog } from './fixtures/app';
 
 const FIXTURES = resolve(import.meta.dirname, '..', '..', '..', 'fixtures');
 const fixture = (...p: string[]) => readFileSync(join(FIXTURES, ...p));
@@ -13,6 +13,7 @@ async function readStage(page: Page) {
 }
 
 async function upload(page: Page, name: string, buffer: Buffer, mimeType = 'text/html') {
+  await clearPickedFiles(page);
   await page.getByTestId('upload-input').setInputFiles({ name, mimeType, buffer });
   await page.getByTestId('firm-combobox').fill('Other / no firm');
   await page.getByTestId('fund-input').fill('Test Fund');
@@ -56,9 +57,6 @@ test.describe('upload-limits', () => {
     await expect(page.getByTestId('upload-error')).toContainText('empty');
     await expect(page.getByTestId('upload-error')).not.toContainText('later build');
     await expect(page.getByTestId('open-document-dialog')).toBeVisible();
-    await expect(page.getByTestId('ai-allowance')).toContainText(
-      `${limits.visitorAiDocsPerDay} of ${limits.visitorAiDocsPerDay}`,
-    );
   });
 
   test('a file exactly at the limit is accepted and opens', async ({ page }) => {

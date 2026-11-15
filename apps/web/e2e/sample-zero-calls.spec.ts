@@ -1,5 +1,4 @@
 import { expect, test, type Request } from '@playwright/test';
-import { limits } from '@aduin/core';
 import {
   aiRows,
   blockOpenRouter,
@@ -9,6 +8,7 @@ import {
   interceptQuota,
 } from './fixtures/ai';
 import { gotoApp, openSample } from './fixtures/app';
+import { openBundledSample5 } from './fixtures/package';
 
 // AC34: bundled samples (and identical documents) open with zero new AI calls. Lookup order is
 // static /precomputed/{docHash}.{rulesHash8}.json first; samples without a file show an explicit
@@ -49,7 +49,7 @@ test.describe('sample-zero-calls', () => {
     const ai = await forbidAi(page);
     await interceptQuota(page);
     await enableLane(page);
-    await openSample(page, '05');
+    await openBundledSample5(page);
     await expectStage(page, /^Checks done · AI review not run/);
     await expect(page.getByTestId('ai-not-precomputed')).toBeVisible();
     await expect(page.getByTestId('ai-run-sample')).toHaveText('Run AI on this sample');
@@ -72,9 +72,6 @@ test.describe('sample-zero-calls', () => {
     await expect(aiRows(page)).toHaveCount(0);
     await expect(page.getByTestId('ai-banner')).toHaveCount(0);
     await expect(page.getByTestId('ai-not-precomputed')).toHaveCount(0);
-    await expect(page.getByTestId('ai-allowance')).toHaveText(
-      `${limits.visitorAiDocsPerDay} of ${limits.visitorAiDocsPerDay} fresh-AI documents left today`,
-    );
     expect(net, 'no /api or /precomputed request without the hook').toEqual([]);
   });
 });
@@ -96,7 +93,7 @@ test.describe('sample-zero-calls (firm rules)', () => {
       ).__aduinE2E.setFirmRules(['Placeholders on the wire FFC line are firm standard wording.']),
     );
     await enableLane(page);
-    await openSample(page, '03');
+    await openBundledSample5(page); // Partners Group, like #3: the firm has active rules
     await expectStage(page, /^Checks done · AI review not run/);
     await expect(page.getByTestId('ai-run-sample')).toBeVisible();
     await expect(aiRows(page)).toHaveCount(0);

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { blockOpenRouter, enableLane, forbidAi, interceptQuota } from './fixtures/ai';
-import { gotoApp, openDialog, openSample } from './fixtures/app';
+import { gotoApp, openDialog, openFindingsView, openSample } from './fixtures/app';
 import { openCompare, pickPair, waitDiff } from './fixtures/compare';
 import {
   EXPECT,
@@ -135,9 +135,8 @@ test.describe('csp-headers', () => {
     await openSample(page, '03');
     await expectClean(page, csp, 'sample open');
 
-    // outline export (Structure view download)
-    await page.getByTestId('nav-structure').click();
-    await expect(page.getByTestId('structure-view')).toBeVisible();
+    // outline export (Form flow view download)
+    await openFindingsView(page, 'flow');
     await Promise.all([page.waitForEvent('download'), page.getByTestId('outline-export').click()]);
     await expectClean(page, csp, 'outline export');
 

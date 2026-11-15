@@ -7,10 +7,13 @@ import {
   enableLane,
   expectStage,
   hb,
+  callsOf,
   interceptAi,
+  isRefTarget,
   interceptQuota,
   MODEL,
   ndjson,
+  noRefTargetFindings,
   recording,
   resultFrame,
 } from './fixtures/ai';
@@ -51,14 +54,21 @@ test.describe('provenance', () => {
     await interceptQuota(page);
     await page.route('**/precomputed/**', (r) => r.fulfill({ status: 404, body: '' }));
     let cache: 'hit' | 'miss' = 'miss';
-    const calls = await interceptAi(page, () => ({
-      kind: 'stream',
-      body: ndjson(hb, hb, resultFrame(rec.response.parsed.findings, cache, rec.meta.served_model)),
-    }));
+    const calls = await interceptAi(page, (call) =>
+      isRefTarget(call)
+        ? noRefTargetFindings()
+        : {
+            kind: 'stream',
+            body: ndjson(
+              hb,
+              hb,
+              resultFrame(rec.response.parsed.findings, cache, rec.meta.served_model),
+            ),
+          },
+    );
     await enableLane(page);
+    // an upload goes through the AI lane on open (no "Run AI on this sample" step)
     await openSample(page, '03');
-    await expectStage(page, /^Checks done · AI review not run/);
-    await page.getByTestId('ai-run-sample').click();
     await expectStage(page, /^Checks done · AI review done/);
     // derived #3 recording: 3 model findings (1 dropped with its rule-sentence candidate),
     // 1 verified, 2 rejected (quote not found)
@@ -71,8 +81,9 @@ test.describe('provenance', () => {
     await expect(page.getByTestId('finding-provenance')).toContainText(`${MODEL} · fresh`);
 
     // request contract: client header, document header, task, the engine's candidates
-    expect(calls).toHaveLength(1);
-    const c = calls[0]!;
+    const cj = callsOf(calls, 'clause-judgment');
+    expect(cj).toHaveLength(1);
+    const c = cj[0]!;
     expect(c.headers['x-aduin-client']).toBe('1');
     expect(c.headers['x-aduin-doc']).toBe(hash03);
     expect(c.body.v).toBe(1);
@@ -83,8 +94,7 @@ test.describe('provenance', () => {
 
     cache = 'hit';
     await openSample(page, '03');
-    await page.getByTestId('ai-run-sample').click();
-    await expectStage(page, /^Checks done · AI review from cache/);
+    await expectStage(page, /^Checks done · AI review done/);
     await aiRows(page).first().click();
     await expect(page.getByTestId('finding-provenance')).toHaveAttribute(
       'data-provenance',

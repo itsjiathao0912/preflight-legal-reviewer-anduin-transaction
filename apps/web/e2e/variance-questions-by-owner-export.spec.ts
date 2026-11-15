@@ -2,25 +2,19 @@ import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import mammoth from 'mammoth';
 import { gotoApp } from './fixtures/app';
-import {
-  askOwner,
-  gotoQuestions,
-  openFundIIIvsII,
-  openOwnerExport,
-  openQuestionFilters,
-} from './fixtures/variance-owners';
+import { openRequest } from './fixtures/counsel';
+import { askOwner, gotoQuestions, openFundIIIvsII } from './fixtures/variance-owners';
 
-// Variance Phase 04 (AC-V13, counts agree): Questions with per-owner unanswered counts (Who filter
-// chips of the 20-10-26 table; the per-owner export is picked in the export dialog); one DOCX per owner with only that owner's questions (quote, old vs new text, options); the tab counts
-// equal the gate popover owner groups and the gate reasons.
+// Variance Phase 04 (AC-V13, counts agree): the Requests drawer has one tab per owner with its
+// unanswered count; "Export DOCX" in an owner's tab gives one DOCX per owner with only that owner's
+// questions (quote, old vs new text, options); the tab counts equal the gate popover owner groups
+// and the gate reasons. (The questions table with its Who filter and export dialog is gone.)
 async function exportOwner(page: Page, owner: string): Promise<{ name: string; text: string }> {
-  await openOwnerExport(page, owner);
-  const dlg = page.getByTestId('export-dialog');
+  await openRequest(page, owner as 'counsel' | 'gp' | 'fund_admin');
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    dlg.getByTestId('export-download').click(),
+    page.getByTestId('request-export').click(),
   ]);
-  await expect(dlg).toBeHidden();
   const { value } = await mammoth.extractRawText({ buffer: readFileSync(await download.path()) });
   return { name: download.suggestedFilename(), text: value };
 }
@@ -38,14 +32,16 @@ test.describe('variance-questions-by-owner-export', () => {
     // sidebar badge: one per asked owner
     await expect(page.getByTestId('nav-badge-counsel')).toContainText('5');
     await gotoQuestions(page);
-    await openQuestionFilters(page);
-    const tab = (k: string) => page.getByTestId(`questions-tab-${k}`);
+    const tab = (k: string) => page.getByTestId(`request-tab-${k}`);
     await expect(tab('counsel')).toHaveAttribute('data-count', '2');
     await expect(tab('gp')).toHaveAttribute('data-count', '2');
     await expect(tab('fund_admin')).toHaveAttribute('data-count', '1');
-    await expect(tab('all')).toHaveAttribute('data-count', '5');
-    // one table for every owner: the five owner questions, no per-owner sections
-    await expect(page.getByTestId('counsel-row')).toHaveCount(5);
+    // each tab holds only its own owner's questions: 2 + 2 + 1 = the five owner questions
+    await expect(page.getByTestId('counsel-row')).toHaveCount(2);
+    await openRequest(page, 'gp');
+    await expect(page.getByTestId('counsel-row')).toHaveCount(2);
+    await openRequest(page, 'fund_admin');
+    await expect(page.getByTestId('counsel-row')).toHaveCount(1);
 
     // counts agree: tabs == popover owner groups; groups sum to the gate reasons (Blocked N)
     await page.getByTestId('gate-button').click();
@@ -79,13 +75,8 @@ test.describe('variance-questions-by-owner-export', () => {
     expect(counsel.text).toContain('Singapore'); // the two-owner finding is in each owner's export
     expect(counsel.text).not.toContain('Source of Funds');
 
-    // Who = GP: the header export is per owner
-    await openQuestionFilters(page);
-    await tab('gp').click();
-    await expect(page.getByTestId('questions-filter')).toHaveText(/Filter · 1/);
+    // the drawer lists only the chosen owner's questions
+    await openRequest(page, 'gp');
     await expect(page.getByTestId('counsel-row')).toHaveCount(2);
-    await expect(page.locator('header [data-testid="questions-export-owner"]')).toHaveText(
-      /Export for GP \(DOCX\)/,
-    );
   });
 });

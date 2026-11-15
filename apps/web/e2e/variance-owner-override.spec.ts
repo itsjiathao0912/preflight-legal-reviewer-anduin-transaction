@@ -62,7 +62,7 @@ test.describe('variance-owner-override', () => {
     await expect(sel).toHaveAttribute('title', /already asked/);
 
     // Questions: the GP question exists; answering creates the question with owner_source override
-    await gotoQuestions(page);
+    await gotoQuestions(page, 'gp');
     const gpRows = page.locator('[data-testid="counsel-row"][data-owner="gp"]');
     await expect(gpRows).toHaveCount(1);
     await expect(page.locator('[data-testid="counsel-row"][data-owner="counsel"]')).toHaveCount(0);

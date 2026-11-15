@@ -20,9 +20,7 @@ test.describe('gate-pill', () => {
     const [a, b] = goldens('05');
     const n = engineFindings('05').length;
     await expect(page.getByTestId('gate-button')).toHaveText(new RegExp(`Blocked · ${n}`));
-    await expect(page.getByTestId('findings-meta')).toHaveText(
-      `${n} open · ${n} block digitization`,
-    );
+    await expect(page.getByTestId('progress-counts')).toContainText(`Left ${n}`);
     // Accept on a blocking row = Ask counsel (it still needs counsel's answer, so the gate stays)
     expect(await askCounsel(page, a!.id)).toBe('accepted');
     await expect(page.getByTestId('gate-button')).toHaveText(new RegExp(`Blocked · ${n}`));
@@ -113,7 +111,8 @@ test.describe('gate-pill', () => {
       );
     }, b.id);
     await openSample(page, '05');
-    await page.getByTestId('nav-structure').click();
+    // open the popover from another screen: the reason jump must come back to Findings
+    await page.getByTestId('nav-documents').click();
     await page.getByTestId('gate-button').click();
     await expect(page.getByTestId('gate-popover')).toBeVisible();
     await expect(page.getByTestId('gate-reason')).toHaveCount(1);

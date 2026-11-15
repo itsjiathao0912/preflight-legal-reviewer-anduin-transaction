@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoApp } from './fixtures/app';
+import { gotoApp, openFilterMenu } from './fixtures/app';
 import {
   changeRows,
   errorRows,
@@ -10,6 +10,7 @@ import {
   uploadOne,
   varianceSettled,
 } from './fixtures/variance';
+import { gotoFindings } from './fixtures/counsel';
 
 // Variance Phase 02 (AC-V8): no earlier document of the firm -> errors only with the muted line and
 // an empty Changes filter; the document then becomes the firm's baseline and is offered next time.
@@ -28,23 +29,28 @@ test.describe('variance-no-baseline-errors-only', () => {
     });
     await varianceSettled(page);
     await expect(page.getByTestId('variance-line')).toHaveText(NO_BASELINE);
+    await openFilterMenu(page);
     await expect(page.getByTestId('kind-changes')).toContainText('Changes0');
     await expect(changeRows(page)).toHaveCount(0);
     const errors = await errorRows(page).count();
     expect(errors).toBeGreaterThan(0);
+    await openFilterMenu(page);
     await expect(page.getByTestId('kind-errors')).toContainText(`Errors${errors}`);
     await expect(page.getByTestId('baseline-control')).toContainText('No baseline');
     // the Changes filter shows an empty state; errors work as today
+    await openFilterMenu(page);
     await page.getByTestId('kind-changes').click();
     await expect(page.getByTestId('empty-state')).toHaveText('No changes against a baseline.');
+    await openFilterMenu(page);
     await page.getByTestId('kind-all').click();
     await expect(errorRows(page)).toHaveCount(errors);
     // counsel is unaffected on a no-baseline run: Questions holds no change rows
     await errorRows(page).first().click();
     await page.getByTestId('action-counsel').click();
     await page.getByTestId('nav-counsel').click();
-    await expect(page.getByTestId('counsel-meta')).toHaveText('1 question · 1 waiting');
-    await page.getByTestId('nav-findings').click();
+    // one counsel question (the document is a one-document package: the GP row may add documents)
+    await expect(page.getByTestId('requests-row-counsel')).toContainText('0 of 1 answered');
+    await gotoFindings(page);
 
     // next document of the same firm: the first one is the baseline now
     await uploadOne(page, rawFile(NGI_2026, 'ngi-2026.htm'), {

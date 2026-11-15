@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoApp, openDialog } from './fixtures/app';
+import { gotoApp, openFindingsView } from './fixtures/app';
 import {
   confirmAllRows,
   hartwellFiles,
@@ -14,19 +14,18 @@ import {
 const docRow = (page: Page, name: string) =>
   page.getByTestId('package-lens-doc').filter({ hasText: name });
 const unitsTerm = (page: Page) =>
-  page.getByTestId('package-term').filter({ has: page.locator('strong', { hasText: /^Units$/ }) });
+  page
+    .getByTestId('sources-row')
+    .filter({ has: page.locator('td:first-child', { hasText: /^Units$/ }) });
 
-const unitsDefined = (page: Page) =>
-  page.locator('[data-testid="package-term"][data-status="defined_in_package"]', {
-    has: page.locator('strong', { hasText: /^Units$/ }),
-  });
+// "Units" defined by the package LPA: kind "Term · LPA"
+const unitsDefined = (page: Page) => unitsTerm(page).filter({ hasText: 'Term · LPA' });
 const unitsFinding = (page: Page) =>
   page.getByTestId('finding-title').filter({ hasText: '"Units" is used for the offered security' });
 
 async function openLens(page: Page) {
-  await page.getByTestId('nav-structure').click();
-  await page.getByTestId('structure-lens-terms').click();
-  await expect(page.getByTestId('package-lens')).toBeVisible();
+  await openFindingsView(page, 'sources');
+  await expect(page.getByTestId('sources-row').first()).toBeVisible();
 }
 
 test.describe('intake-correction-persists', () => {
@@ -41,7 +40,7 @@ test.describe('intake-correction-persists', () => {
     await confirmAllRows(page);
     await runPackage(page);
     await openLens(page);
-    await expect(unitsTerm(page)).toHaveAttribute('data-status', 'defined_in_package');
+    await expect(unitsDefined(page)).toHaveCount(1);
     await openPackageFiles(page);
     // E5: read the current role and pick a different one
     const role = docRow(page, 'fund-ii-subscription-agreement-prior').getByTestId(
@@ -56,19 +55,19 @@ test.describe('intake-correction-persists', () => {
     await expect(type).toHaveValue('other');
     await openLens(page);
     await expect(unitsDefined(page)).toHaveCount(0);
-    const line = (await page.getByTestId('package-lens-line').textContent()) ?? '';
+    await openPackageFiles(page);
+    const line = (await page.getByTestId('package-summary-line').textContent()) ?? '';
     expect(line).toMatch(/^Coverage: /);
 
     // the dependent check follows: Units is flagged again in Findings
-    await page.getByTestId('nav-findings').click();
+    await openFindingsView(page, 'issues');
     await expect(unitsFinding(page)).toHaveCount(1);
 
     await page.reload();
     await waitForChecks(page);
-    await openDialog(page);
-    const recent = page.getByTestId('package-recent-option').first();
-    await expect(recent).toBeVisible();
-    await recent.click();
+    // reopen from Documents (the Recent packages list left the Open dialog)
+    await page.getByTestId('nav-documents').click();
+    await page.getByTestId('documents-row').first().click();
     await waitForChecks(page);
     await openPackageFiles(page);
     await expect(
@@ -79,8 +78,9 @@ test.describe('intake-correction-persists', () => {
     ).toHaveValue('other');
     await openLens(page);
     await expect(unitsDefined(page)).toHaveCount(0);
-    await expect(page.getByTestId('package-lens-line')).toHaveText(line);
-    await page.getByTestId('nav-findings').click();
+    await openPackageFiles(page);
+    await expect(page.getByTestId('package-summary-line')).toHaveText(line);
+    await openFindingsView(page, 'issues');
     await expect(unitsFinding(page)).toHaveCount(1);
   });
 });

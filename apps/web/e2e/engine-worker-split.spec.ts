@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test } from '@playwright/test';
-import { gotoApp, openDialog, sample } from './fixtures/app';
+import { gotoApp, openDialog, submitSample } from './fixtures/app';
 
 const TEXT_PDF = resolve(import.meta.dirname, '..', '..', '..', 'fixtures', 'pdf', 'text.pdf');
 
@@ -22,7 +22,7 @@ test.describe('engine-worker-split', () => {
       }).observe({ type: 'longtask', buffered: false });
     });
     await openDialog(page);
-    await sample(page, '02').click();
+    await submitSample(page, '02');
     await expect(page.getByTestId('stage-status-button')).toContainText('Checks done', {
       timeout: 30_000,
     });

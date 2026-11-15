@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoApp } from './fixtures/app';
+import { gotoApp, openFindingsView } from './fixtures/app';
 import {
   confirmAllRows,
   hartwellFiles,
@@ -39,9 +39,8 @@ test.describe('intake-reload-restores-package', () => {
     await waitForChecks(page);
     expect(await coverageText(page)).toBe(text);
     await expect(page.getByTestId('open-document-dialog')).toHaveCount(0);
-    await page.getByTestId('nav-structure').click();
-    await page.getByTestId('structure-lens-terms').click();
-    await expect(page.getByTestId('package-lens')).toBeVisible();
+    await openFindingsView(page, 'sources');
+    await expect(page.getByTestId('sources-row').first()).toBeVisible();
     await page.getByTestId('nav-documents').click();
     await expect(page.getByTestId('package-lens-doc')).toHaveCount(3);
   });

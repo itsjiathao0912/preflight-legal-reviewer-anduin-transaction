@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoApp, openDialog } from './fixtures/app';
+import { gotoApp, openDialog, openFindingsView } from './fixtures/app';
 import { confirmAllRows, runPackage, waitForChecks } from './fixtures/package';
 
 // Source File traceability smoke (Northgate demo package): a term row names where the LPA
@@ -65,16 +65,14 @@ test.describe('source-file-smoke', () => {
     await expect(page.getByTestId('ref-view-bar')).toHaveCount(0);
     await expect(page.getByTestId('doc-highlight').first()).toBeVisible();
 
-    // Structure -> Terms & references -> a term defined in the LPA shows its location + Open
-    await page.getByTestId('nav-structure').click();
-    await page.getByTestId('structure-lens-terms').click();
+    // Sources view: a term defined in the LPA shows its location + Open
+    await openFindingsView(page, 'sources');
     const term = page
-      .getByTestId('package-term')
-      .filter({ has: page.locator('strong', { hasText: /^Capital Commitment$/ }) });
-    await expect(term.getByTestId('package-term-status')).toContainText(
-      /Defined in LPA · Section 1\.1, ¶ \d+/,
-    );
-    await term.getByTestId('package-term-open').click();
+      .getByTestId('sources-row')
+      .filter({ has: page.locator('td:first-child', { hasText: /^Capital Commitment$/ }) });
+    await expect(term).toContainText('Term · LPA');
+    await expect(term).toContainText('Defined');
+    await term.getByTestId('sources-open-file').click();
     const bar = page.getByTestId('ref-view-bar');
     await expect(bar).toContainText('Viewing LPA (reference file)');
     await expect(bar.getByTestId('ref-view-back')).toHaveText(/^← Back to /);

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
-import { gotoApp, openDialog, sample } from './fixtures/app';
+import { gotoApp, openDialog, submitSample } from './fixtures/app';
 import { hcFile, openHc } from './fixtures/variance-owners';
 import { changeRows, uploadOne } from './fixtures/variance';
 
@@ -46,10 +46,10 @@ async function timeOpen(page: Page, id: string): Promise<number> {
     document.addEventListener(
       'click',
       (e) => {
-        if ((e.target as Element | null)?.closest('[data-testid="sample-option"]'))
+        if ((e.target as Element | null)?.closest('[data-testid="open-submit"]'))
           w.__perf!.t0 = performance.now();
       },
-      { capture: true, once: true },
+      { capture: true },
     );
     const done = () => {
       const el = document.querySelector('[data-testid="stage-status-button"]');
@@ -64,7 +64,7 @@ async function timeOpen(page: Page, id: string): Promise<number> {
     });
     mo.observe(document.body, { subtree: true, childList: true, characterData: true });
   });
-  await sample(page, id).click();
+  await submitSample(page, id);
   await expect(page.getByTestId('stage-status-button')).toContainText('Checks done', {
     timeout: 30_000,
   });

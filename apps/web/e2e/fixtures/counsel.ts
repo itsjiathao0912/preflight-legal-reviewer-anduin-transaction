@@ -109,17 +109,59 @@ export async function openFund(page: Page, fund: FundId, firmOverride?: string):
 
 export const counselRow = (page: Page, id: string) =>
   page.locator(`[data-testid="counsel-row"][data-finding-id="${id}"]`);
+/** Expand a question row in the drawer unless it is already expanded. */
+export async function expandCounselRow(page: Page, id: string): Promise<void> {
+  const t = counselRow(page, id).getByTestId('counsel-row-toggle');
+  if ((await t.getAttribute('aria-expanded')) !== 'true') await t.click();
+  await expect(t).toHaveAttribute('aria-expanded', 'true');
+}
 export const priorItem = (page: Page, id: string) =>
   page.locator(`[data-testid="counsel-prior"][data-finding-id="${id}"]`);
 export const gateReason = (page: Page, id: string) =>
   page.locator(`[data-testid="gate-reason"][data-finding-id="${id}"]`);
 
-export async function gotoCounsel(page: Page): Promise<void> {
+/**
+ * Open the Requests screen (route `#counsel`). Since the Requests rework the questions live in a
+ * per-owner drawer, so by default this also opens that owner's request drawer (`owner: null` stays
+ * on the list).
+ */
+export async function gotoCounsel(
+  page: Page,
+  owner: 'counsel' | 'gp' | 'fund_admin' | null = 'counsel',
+): Promise<void> {
   await page.getByTestId('nav-counsel').click();
   await expect(page.getByTestId('counsel-view')).toBeVisible();
+  if (owner) await openRequest(page, owner);
+}
+
+/** Close the request drawer (Escape); the header actions behind it become clickable again. */
+export async function closeRequest(page: Page): Promise<void> {
+  if (!(await page.getByTestId('request-drawer').count())) return;
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('request-drawer')).toHaveCount(0);
+}
+
+/** Open one request's drawer from the Requests list. */
+export async function openRequest(
+  page: Page,
+  owner: 'counsel' | 'gp' | 'fund_admin' = 'counsel',
+): Promise<void> {
+  const drawer = page.getByTestId('request-drawer');
+  if ((await drawer.count()) && (await drawer.getAttribute('data-owner')) === owner) return;
+  // a request with nothing in it (status "none") is a disabled row and opens no drawer
+  if (
+    !(await drawer.count()) &&
+    (await page.getByTestId(`requests-row-${owner}`).getAttribute('data-status')) === 'none'
+  )
+    return;
+  if (await drawer.count()) await page.getByTestId(`request-tab-${owner}`).click();
+  else await page.getByTestId(`requests-row-${owner}`).click();
+  await expect(drawer).toHaveAttribute('data-owner', owner);
 }
 
 export async function gotoFindings(page: Page): Promise<void> {
+  // the request drawer is a global overlay: it would cover the Findings panel
+  await closeRequest(page);
   await page.getByTestId('nav-findings').click();
   // The header subtitle (findings-meta) only shows with no document open since 93245b2.
   await expect(page.getByTestId('findings-header')).toBeVisible();
@@ -160,17 +202,21 @@ export async function answerQuestion(
   await expect(form).toHaveCount(0);
 }
 
-/** Open the export preview, download the DOCX and return its raw text (mammoth parse-back). */
-export async function exportDocxText(page: Page): Promise<{ text: string; filename: string }> {
-  await page.getByTestId('counsel-export').click();
-  await expect(page.getByTestId('export-dialog')).toBeVisible();
+/**
+ * Export one request's DOCX from its drawer (the counsel request by default; the old export
+ * preview dialog is gone) and return its raw text (mammoth parse-back).
+ */
+export async function exportDocxText(
+  page: Page,
+  owner: 'counsel' | 'gp' | 'fund_admin' = 'counsel',
+): Promise<{ text: string; filename: string }> {
+  await openRequest(page, owner);
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByTestId('export-download').click(),
+    page.getByTestId('request-export').click(),
   ]);
   const path = await download.path();
   const { value } = await mammoth.extractRawText({ buffer: readFileSync(path) });
-  await expect(page.getByTestId('export-dialog')).toBeHidden();
   return { text: value, filename: download.suggestedFilename() };
 }
 

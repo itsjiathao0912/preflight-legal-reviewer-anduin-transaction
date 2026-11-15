@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { expect, test } from '@playwright/test';
-import { gotoApp } from './fixtures/app';
+import { gotoApp, openFilterMenu } from './fixtures/app';
 import { changeRows, chooseBaseline } from './fixtures/variance';
 import {
   askOwner,
@@ -11,6 +11,7 @@ import {
   openHc,
   recordFirmTemplateAnswer,
 } from './fixtures/variance-owners';
+import { gotoFindings } from './fixtures/counsel';
 
 // Variance Phase 05 (AC-V4, demo story L9): Hartwell & Crane, Fund III against the Fund II baseline
 // through the upload route. 214 raw changes become 7 shown (3 New, 4 Logic); 207 cosmetic changes
@@ -62,7 +63,7 @@ test.describe('variance-demo-214-to-7', () => {
       page.getByTestId('counsel-row').first(),
       'Every fund keeps the Appendix C questionnaire.',
     );
-    await page.getByTestId('nav-findings').click();
+    await gotoFindings(page);
     await openHc(page, 'fund-III.html', 'Fund III');
     // the firm pointer is the first document (Fund I): the presenter picks Fund II in the control
     await chooseBaseline(page, 'fund-II.html');
@@ -77,6 +78,7 @@ test.describe('variance-demo-214-to-7', () => {
     expect(EXPECTED.raw).toBe(214);
     expect(EXPECTED.shown).toBe(7);
     await expect(shown).toHaveCount(EXPECTED.shown);
+    await openFilterMenu(page);
     await expect(page.getByTestId('kind-changes')).toContainText(`Changes${EXPECTED.shown + 1}`);
     await expect(shown.and(page.locator('[data-change-type="new"]'))).toHaveCount(EXPECTED.new);
     await expect(shown.and(page.locator('[data-change-type="changed_logic"]'))).toHaveCount(

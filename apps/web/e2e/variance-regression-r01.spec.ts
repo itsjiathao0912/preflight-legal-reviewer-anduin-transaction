@@ -9,6 +9,7 @@ import {
   recordFirmTemplateAnswer,
   stubRows,
 } from './fixtures/variance-owners';
+import { gotoFindings } from './fixtures/counsel';
 
 // Variance Phase 04 (AC-V16): R-01 end to end. A firm-template answer "Appendix C must exist" on the
 // Fund II change (Appendix C removed vs Fund I) creates a check; Fund III without Appendix C shows a
@@ -44,7 +45,7 @@ test.describe('variance-regression-r01', () => {
       .toEqual([['appendix c', 'active']]);
 
     // Fund III (no Appendix C): blocking regression finding with the check statement as the quote
-    await page.getByTestId('nav-findings').click();
+    await gotoFindings(page);
     await openHc(page, 'fund-III.html', 'Fund III');
     const reg = regressionRows(page);
     await expect(reg).toHaveCount(1, { timeout: 20_000 });

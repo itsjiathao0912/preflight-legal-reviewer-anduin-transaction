@@ -1,3 +1,4 @@
+import { openRequest } from './counsel';
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { expect, type Locator, type Page } from '@playwright/test';
@@ -42,9 +43,17 @@ export async function askOwner(page: Page, title: RegExp) {
   await page.getByTestId('action-counsel').click();
 }
 
-export async function gotoQuestions(page: Page) {
+/**
+ * Open the Requests screen and one owner's request drawer (default counsel). The questions table
+ * with its filter panel is gone: every owner's questions live in that owner's drawer.
+ */
+export async function gotoQuestions(
+  page: Page,
+  owner: 'counsel' | 'gp' | 'fund_admin' = 'counsel',
+) {
   await page.getByTestId('nav-counsel').click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Questions' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Requests' })).toBeVisible();
+  await openRequest(page, owner);
 }
 
 /** Questions table (20-10-26): open the in-flow filter panel (Status / Who / Severity chips). */

@@ -32,25 +32,23 @@ const listed = (
 
 /** Assert the GP group items and the exported request DOCX for the expected labels. */
 async function checkGroupAndExport(page: Page, labels: string[]) {
-  await gotoCounsel(page);
-  const group = page.getByTestId('gp-group');
+  // the missing documents are the GP request's "Documents to send" section in its drawer
+  await gotoCounsel(page, 'gp');
+  const group = page.getByTestId('request-documents');
   await expect(group).toBeVisible();
-  // Questions table: the GP request is one row; its documents show when it is expanded
-  await group.getByTestId('gp-request-toggle').click();
-  const items = group.getByTestId('gp-request-item');
+  const items = group.getByTestId('request-doc');
   await expect(items).toHaveCount(labels.length);
   const quotes: string[] = [];
   for (const label of labels) {
     const item = items.filter({ hasText: label }).first();
     await expect(item).toBeVisible();
-    await expect(item.getByTestId('gp-request-count')).toHaveText(/referenced \d+ times?/);
-    const q = (await item.getByTestId('gp-request-quote').textContent())?.trim() ?? '';
+    const q = (await item.getByTestId('request-doc-quote').textContent())?.trim() ?? '';
     expect(q.length).toBeGreaterThan(0);
     quotes.push(q);
   }
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByTestId('gp-request-export').click(),
+    page.getByTestId('request-export').click(),
   ]);
   expect(download.suggestedFilename()).toMatch(/^missing-documents-.*\.docx$/);
   const { value } = await mammoth.extractRawText({ buffer: readFileSync(await download.path()) });

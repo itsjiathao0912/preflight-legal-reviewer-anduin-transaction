@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoApp } from './fixtures/app';
+import { gotoApp, openFindingsView } from './fixtures/app';
 import {
   confirmAllRows,
   hartwellFile,
@@ -26,6 +26,14 @@ const AMENDED: UploadFile = {
   ),
 };
 
+/** The package coverage line on Documents, then back to the Sources view. */
+async function summaryLine(page: Page): Promise<string> {
+  await page.getByTestId('nav-documents').click();
+  const text = (await page.getByTestId('package-summary-line').textContent()) ?? '';
+  await openFindingsView(page, 'sources');
+  return text;
+}
+
 async function runTwoLpas(page: Page) {
   await gotoApp(page);
   await uploadPackage(
@@ -46,19 +54,15 @@ async function runTwoLpas(page: Page) {
   }
   await confirmAllRows(page);
   await runPackage(page);
-  await page.getByTestId('nav-structure').click();
-  await page.getByTestId('structure-lens-terms').click();
-  const lpa = page.locator('[data-testid="package-reference"][data-target-key="lpa"]');
-  await expect(lpa.first()).toHaveAttribute('data-resolution', 'unclear');
-  await expect(lpa.first()).toContainText('Needs confirmation');
-  const select = page
-    .locator('[data-testid="package-reference-group"][data-target-key="lpa"]')
-    .getByTestId('package-reference-confirm');
+  await openFindingsView(page, 'sources');
+  const lpa = page.locator('[data-testid="sources-row"][data-target-key="lpa"]');
+  await expect(lpa).toContainText('Pick a file');
+  const select = lpa.getByTestId('sources-confirm');
   const options = await select.locator('option').allTextContents();
   expect(options).toEqual(
     expect.arrayContaining(['northgate-lpa-definitions.docx', AMENDED.name, 'None of these']),
   );
-  return { lpa, select, before: (await page.getByTestId('package-lens-line').textContent()) ?? '' };
+  return { lpa, select, before: await summaryLine(page) };
 }
 
 test.describe('intake-reference-confirm', () => {
@@ -67,17 +71,16 @@ test.describe('intake-reference-confirm', () => {
     const { lpa, select, before } = await runTwoLpas(page);
     const value = await select.locator('option', { hasText: AMENDED.name }).getAttribute('value');
     await select.selectOption(value!);
-    await expect(lpa.first()).toHaveAttribute('data-resolution', 'resolved');
-    await expect(lpa.first()).toContainText(`Resolved to ${AMENDED.name}`);
-    await expect(page.getByTestId('package-lens-line')).not.toHaveText(before);
+    await expect(lpa).toContainText('Found');
+    await expect(lpa.getByTestId('sources-open-file')).toBeVisible();
+    expect(await summaryLine(page)).not.toBe(before);
   });
 
   test('should mark the reference not in package for "None of these"', async ({ page }) => {
     test.setTimeout(120_000);
     const { lpa, select, before } = await runTwoLpas(page);
     await select.selectOption('none');
-    await expect(lpa.first()).toHaveAttribute('data-resolution', 'not_in_package');
-    await expect(lpa.first()).toContainText('Not in package');
-    await expect(page.getByTestId('package-lens-line')).not.toHaveText(before);
+    await expect(lpa).toContainText('Missing');
+    expect(await summaryLine(page)).not.toBe(before);
   });
 });

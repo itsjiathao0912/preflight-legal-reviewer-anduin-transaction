@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test';
-import { limits } from '@aduin/core';
 import {
   aiRows,
   enableLane,
@@ -13,6 +12,7 @@ import {
   type AiReply,
 } from './fixtures/ai';
 import { gotoApp, openSample } from './fixtures/app';
+import { openBundledSample5 } from './fixtures/package';
 
 // AC26/AC32/AC33/AC35/AC3: one banner per reason from terminal NDJSON error frames (the same map
 // as HTTP bodies), unusable answers, dropped streams, the real allowance and the AI toggle.
@@ -94,7 +94,7 @@ test.describe('ai-banners', () => {
     await enableLane(page);
     for (const f of FRAMES) {
       current = f;
-      await openSample(page, '05');
+      await openBundledSample5(page);
       await page.getByTestId('ai-run-sample').click();
       const banner = page.getByTestId('ai-banner');
       await expect(banner, f.banner).toHaveAttribute('data-reason', f.banner);
@@ -105,31 +105,22 @@ test.describe('ai-banners', () => {
     }
   });
 
-  test('allowance comes from /api/quota with the client header; a failed quota keeps the stub silently', async ({
-    page,
-  }) => {
+  // The allowance line (`ai-allowance`) is no longer rendered anywhere, so only the quota request
+  // itself (with the client header) is asserted.
+  test('quota is read from /api/quota with the client header', async ({ page }) => {
     await gotoApp(page);
     const q = await interceptQuota(page, { used: 1, limit: 3 });
     await enableLane(page);
-    await expect(page.getByTestId('ai-allowance')).toHaveText(
-      '2 of 3 fresh-AI documents left today',
-    );
-    await expect(page.getByTestId('ai-allowance')).toHaveAttribute('data-source', 'quota');
-    expect(q.calls).toBeGreaterThan(0);
+    await expect.poll(() => q.calls).toBeGreaterThan(0);
     expect(q.headerOk).toBe(true);
   });
 
-  test('a failing /api/quota falls back to the stub allowance with no banner', async ({ page }) => {
+  test('a failing /api/quota shows no banner', async ({ page }) => {
     await gotoApp(page);
     await interceptQuota(page, { status: 500 });
     await forbidAi(page);
     await enableLane(page);
     await openSample(page, '01');
-    const n = limits.visitorAiDocsPerDay;
-    await expect(page.getByTestId('ai-allowance')).toHaveText(
-      `${n} of ${n} fresh-AI documents left today`,
-    );
-    await expect(page.getByTestId('ai-allowance')).toHaveAttribute('data-source', 'stub');
     await expect(page.getByTestId('ai-banner')).toHaveCount(0);
   });
 
@@ -151,14 +142,16 @@ test.describe('ai-banners', () => {
     await expect(aiRows(page)).toHaveCount(0);
     await expectStage(page, /^Checks done · AI review off/);
     const seen = pre.length;
-    await openSample(page, '05');
+    await openBundledSample5(page);
     await expectStage(page, /^Checks done · AI review off/);
     await expect(page.getByTestId('ai-not-precomputed')).toHaveCount(0);
     await expect(page.getByTestId('ai-banner')).toHaveCount(0);
     expect(pre.length).toBe(seen);
     // switching back on (after the privacy notice) brings the lane back for the open document
     await page.getByTestId('ai-on').click();
-    await page.getByTestId('privacy-accept').click();
+    // (the notice shows only until it was accepted once: the earlier upload accepted it already)
+    if (await page.getByTestId('privacy-accept').isVisible())
+      await page.getByTestId('privacy-accept').click();
     await expectStage(page, /^Checks done · AI review not run/);
     await expect(page.getByTestId('ai-run-sample')).toBeVisible();
     expect(ai).toEqual([]);

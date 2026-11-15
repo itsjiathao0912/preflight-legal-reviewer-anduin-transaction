@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { enableLane, expectStage, interceptAi, interceptQuota, type AiReply } from './fixtures/ai';
-import { gotoApp, openSample } from './fixtures/app';
+import { gotoApp } from './fixtures/app';
+import { openBundledSample5 } from './fixtures/package';
 
 // AC35: each downgrade reason shows ONE banner that names the reason and what is skipped; the
 // deterministic review keeps working (rule findings stay).
@@ -85,7 +86,7 @@ test.describe('auto-downgrade', () => {
     await interceptQuota(page);
     const calls = await interceptAi(page, () => CASES[0]!.reply);
     await enableLane(page);
-    await openSample(page, '05');
+    await openBundledSample5(page);
     const rules = await page.getByTestId('finding-row').count();
     await page.getByTestId('ai-run-sample').click();
     const banner = page.getByTestId('ai-banner');
@@ -108,7 +109,7 @@ test.describe('auto-downgrade', () => {
     await enableLane(page);
     for (const c of CASES) {
       current = c;
-      await openSample(page, '05');
+      await openBundledSample5(page);
       await page.getByTestId('ai-run-sample').click();
       const banner = page.getByTestId('ai-banner');
       await expect(banner, c.name).toHaveAttribute('data-reason', c.banner);

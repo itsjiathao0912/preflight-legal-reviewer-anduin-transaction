@@ -49,10 +49,8 @@ test.describe('intake-demo-packages', () => {
     for (const id of ids) {
       await openDemoPackage(page, id);
       const table = page.getByTestId('package-confirm-table');
-      // under full-suite load the draft table can take longer than the 5 s default to mount
-      await expect(table.or(page.getByTestId('open-document-dialog')).first()).toBeVisible({
-        timeout: 30_000,
-      });
+      // a single high-confidence sub agreement auto-runs and closes the dialog before the table
+      // ever shows, so wait for either (the poll below) instead of requiring one of them visible
       await expect
         .poll(
           async () =>

@@ -8,7 +8,7 @@ import {
   type StructureView,
 } from '@aduin/core';
 import { expect, test, type Page } from '@playwright/test';
-import { gotoApp, openSample } from './fixtures/app';
+import { gotoApp, openFindingsView, openSample } from './fixtures/app';
 
 /**
  * logic-outline-export (AC63): the Structure header exports a JSON form logic outline. Expected
@@ -27,8 +27,7 @@ type Hook = {
 
 async function openStructure(page: Page, id: string) {
   await openSample(page, id);
-  await page.getByTestId('nav-structure').click();
-  await expect(page.getByTestId('structure-view')).toBeVisible();
+  await openFindingsView(page, 'flow');
 }
 
 test.describe('logic-outline-export', () => {
@@ -47,15 +46,7 @@ test.describe('logic-outline-export', () => {
     expect(expected.investorPaths).toBeGreaterThan(0);
     await gotoApp(page);
     await openStructure(page, '03');
-    // on-screen counts (preview) equal the Node-derived totals
-    const preview = page.getByTestId('outline-preview');
-    await expect(preview).toBeVisible();
-    await expect(preview).toContainText(`${expected.sections} sections incl. parts`);
-    for (const [k, n] of Object.entries(expected))
-      await expect(page.getByTestId(`outline-preview-${k}`)).toHaveAttribute(
-        'data-count',
-        String(n),
-      );
+    // (the on-screen outline preview is gone; the downloaded counts are checked below)
     const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.getByTestId('outline-export').click(),
@@ -92,10 +83,8 @@ test.describe('logic-outline-export', () => {
     await page.evaluate(() => (window as unknown as Hook).__aduinE2E.failStage('structure'));
     await openSample(page, '01');
     await expect(page.getByTestId('stage-status-button')).toHaveText(/Structuring failed/);
-    await page.getByTestId('nav-structure').click();
-    await expect(page.getByTestId('structure-meta')).toHaveText('No structure for this document');
+    await openFindingsView(page, 'flow');
     await expect(page.getByTestId('outline-export')).toBeDisabled();
     await expect(page.getByTestId('outline-export-disabled-reason')).toBeVisible();
-    await expect(page.getByTestId('outline-preview')).toHaveCount(0);
   });
 });

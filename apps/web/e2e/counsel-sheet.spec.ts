@@ -12,8 +12,10 @@ import {
 } from './fixtures/ai';
 import { gotoApp } from './fixtures/app';
 import {
+  closeRequest,
   counselRow,
   EXPECT,
+  expandCounselRow,
   findingByQuote,
   gotoCounsel,
   gotoFindings,
@@ -62,7 +64,7 @@ test.describe('counsel-sheet', () => {
     await markAccepted(page, crit.id); // critical + Accepted = a question
     await markAccepted(page, other.id); // medium + Accepted = not a question
     await gotoCounsel(page);
-    await expect(page.getByTestId('counsel-meta')).toHaveText('2 questions · 2 waiting');
+    await expect(page.getByTestId('counsel-meta')).toHaveText('3 requests · 2 items waiting');
     await expect(page.getByTestId('counsel-row')).toHaveCount(2);
     await expect(counselRow(page, a.id)).toHaveAttribute('data-state', 'new');
     await expect(counselRow(page, crit.id)).toHaveAttribute('data-state', 'accepted');
@@ -72,11 +74,15 @@ test.describe('counsel-sheet', () => {
     await expect(r.getByTestId('counsel-template-chip')).toHaveText('Template draft');
     await expect(r.getByTestId('counsel-quote')).toContainText(a.quote);
     expect(await r.getByTestId('counsel-interp').count()).toBeGreaterThanOrEqual(2);
-    // no AI lane (no API base): the template draft stays and the user is told
+    // no AI lane (no API base): the template draft stays and the user is told (the AI draft button
+    // sits behind the drawer: close it first)
+    await closeRequest(page);
     await page.getByTestId('counsel-ai-draft').click();
     await expect(page.getByText('The AI draft is not available right now.')).toBeVisible();
     await expect(page.getByTestId('counsel-ai-draft')).toHaveAttribute('aria-pressed', 'false');
-    await expect(r.getByTestId('counsel-template-chip')).toBeVisible();
+    await gotoCounsel(page);
+    await expandCounselRow(page, a.id);
+    await expect(counselRow(page, a.id).getByTestId('counsel-template-chip')).toBeVisible();
   });
 
   test('edit wording: saved, marked "Edited by you", persists across reload, reset restores', async ({
@@ -157,20 +163,24 @@ test.describe('counsel-sheet', () => {
     const a = q('n1-new-placeholder');
     await gotoFindings(page);
     await markCounsel(page, a.id);
-    await gotoCounsel(page);
+    await gotoCounsel(page, null);
     await page.getByTestId('counsel-ai-draft').click();
     await expect(page.getByTestId('counsel-ai-draft')).toHaveAttribute('aria-pressed', 'true');
     const draftCall = calls.find((c) => c.body.task === 'counsel-draft')!;
     expect(draftCall.body.law_firm_id).toBeNull();
     expect(draftCall.body.candidates.map((c) => c.id)).toEqual([a.id]);
+    await gotoCounsel(page);
     const r = counselRow(page, a.id);
     await r.getByTestId('counsel-row-toggle').click();
     await expect(r.getByTestId('counsel-question-text')).toHaveText(texts[0]!);
     await expect(r.getByTestId('counsel-ai-chip')).toBeVisible();
     await expect(r.getByTestId('counsel-provenance')).toContainText(MODEL);
-    // toggle back to the template draft
+    // toggle back to the template draft (the button sits behind the drawer: close it first)
+    await closeRequest(page);
     await page.getByTestId('counsel-ai-draft').click();
-    await expect(r.getByTestId('counsel-template-chip')).toBeVisible();
+    await gotoCounsel(page);
+    await expandCounselRow(page, a.id);
+    await expect(counselRow(page, a.id).getByTestId('counsel-template-chip')).toBeVisible();
     expect(openrouter).toEqual([]);
   });
 });

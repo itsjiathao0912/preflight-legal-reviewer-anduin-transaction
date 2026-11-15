@@ -6,10 +6,10 @@ import {
   changeRow,
   gotoQuestions,
   openFundIIIvsII,
-  openQuestionFilters,
   ownerRows,
   recordAnswer,
 } from './fixtures/variance-owners';
+import { openRequest } from './fixtures/counsel';
 
 // Variance Phase 04 (AC-V12): Singapore (routed GP + Counsel) gives one GP question and one Counsel
 // question, keyed `<findingId>@<owner>`, each answerable alone; one of two answered keeps it blocking.
@@ -29,22 +29,23 @@ test.describe('variance-two-owner-two-questions', () => {
       'counsel',
     );
 
-    await gotoQuestions(page);
-    await openQuestionFilters(page);
-    await expect(page.getByTestId('questions-tab-gp')).toHaveAttribute('data-count', '1');
-    await expect(page.getByTestId('questions-tab-counsel')).toHaveAttribute('data-count', '1');
+    // Requests: one drawer tab per owner (the questions table is gone); the GP question first
+    await gotoQuestions(page, 'gp');
+    await expect(page.getByTestId('request-tab-gp')).toHaveAttribute('data-count', '1');
+    await expect(page.getByTestId('request-tab-counsel')).toHaveAttribute('data-count', '1');
     const gp = page.locator(`[data-testid="counsel-row"][data-key="${id}@gp"]`);
     const counsel = page.locator(`[data-testid="counsel-row"][data-key="${id}@counsel"]`);
     await expect(gp).toHaveCount(1);
-    await expect(counsel).toHaveCount(1);
+    await expect(counsel).toHaveCount(0); // the Counsel question lives in the Counsel tab
     await expect(gp).toHaveAttribute('data-finding-id', id!);
 
     // answer GP alone: GP resolved, Counsel still open and the finding still blocks
     await recordAnswer(page, gp, { option: 'A' });
     await expect(gp).toHaveAttribute('data-state', 'answered');
+    await expect(page.getByTestId('request-tab-gp')).toHaveAttribute('data-count', '0');
+    await expect(page.getByTestId('request-tab-counsel')).toHaveAttribute('data-count', '1');
+    await openRequest(page, 'counsel');
     await expect(counsel).toHaveAttribute('data-state', 'new');
-    await expect(page.getByTestId('questions-tab-gp')).toHaveAttribute('data-count', '0');
-    await expect(page.getByTestId('questions-tab-counsel')).toHaveAttribute('data-count', '1');
     await page.getByTestId('gate-button').click();
     await expect(
       page.locator(`[data-testid="gate-reason"][data-finding-id="${id}"][data-owner="counsel"]`),
@@ -62,6 +63,7 @@ test.describe('variance-two-owner-two-questions', () => {
       0,
     );
     await page.keyboard.press('Escape');
+    await openRequest(page, 'gp');
     await expect(ownerRows(page, 'gp')).toHaveCount(1);
   });
 });

@@ -39,7 +39,9 @@ test.describe('intake-firm-tagging', () => {
     await confirmAllRows(page);
     // version label is required for a package: empty holds the run
     await expect(page.getByTestId('package-version-input')).toHaveValue('');
-    await expect(page.getByTestId('package-notice')).toContainText('Enter the version label');
+    await expect(page.getByTestId('package-notice')).toContainText(
+      'Enter a version name before you run checks',
+    );
     await expect(page.getByTestId('package-run')).toBeDisabled();
     await page.getByTestId('package-version-input').fill('2026 draft');
     await runPackage(page);

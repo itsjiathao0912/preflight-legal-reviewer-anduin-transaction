@@ -21,9 +21,9 @@ test.describe('intake-gate-warning-policy', () => {
       'warn',
     );
     await expect(pop.getByTestId('package-gate-reason')).toHaveCount(0);
-    // Core gate: blocked count equals the Findings header "N block digitization".
-    const meta = (await page.getByTestId('findings-meta').textContent()) ?? '';
-    const n = Number(/(\d+) block digitization/.exec(meta)?.[1] ?? 'NaN');
+    // Core gate: the blocked count equals the core reasons listed in the popover (the Findings
+    // header "N block digitization" line is gone).
+    const n = await pop.getByTestId('gate-reason').count();
     if (n === 0) await expect(btn).toContainText('Ready to digitize');
     else await expect(btn).toContainText(`Blocked · ${n}`);
   });

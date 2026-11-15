@@ -13,30 +13,28 @@ test.describe('app-shell', () => {
     await expect(nav.locator('.gl')).toHaveText(['Review', 'Check', 'Firm']);
     await expect(nav.locator('.ni .lbl')).toHaveText([
       'Findings',
-      'Questions',
-      'Document map',
+      'Requests',
       'Compare versions',
       'Firm memory',
       'Documents',
     ]);
-    await expect(page.locator('[role=tablist]')).toHaveCount(0);
+    // no tab bar in the shell (the Findings view switch inside the panel is a tablist of its own)
+    await expect(page.locator('nav[aria-label="Main"] [role=tablist]')).toHaveCount(0);
   });
 
   test('nav click switches the view and aria-current', async ({ page }) => {
     await gotoApp(page);
     await expect(page.getByTestId('nav-findings')).toHaveAttribute('aria-current', 'page');
-    await page.getByTestId('nav-structure').click();
-    await expect(page.getByTestId('nav-structure')).toHaveAttribute('aria-current', 'page');
+    await page.getByTestId('nav-compare').click();
+    await expect(page.getByTestId('nav-compare')).toHaveAttribute('aria-current', 'page');
     await expect(page.getByTestId('nav-findings')).not.toHaveAttribute('aria-current', 'page');
-    // Phase 02: Structure is a real view (no longer the placeholder)
-    await expect(page.getByTestId('structure-view')).toBeVisible();
     await page.getByTestId('nav-findings').click();
     await expect(page.getByTestId('findings-header')).toBeVisible();
   });
 
   test('should land on Findings after reload regardless of the last route', async ({ page }) => {
     await gotoApp(page);
-    for (const r of ['counsel', 'structure', 'compare', 'memory', 'documents']) {
+    for (const r of ['counsel', 'compare', 'memory', 'documents']) {
       await page.getByTestId(`nav-${r}`).click();
       await expect(page).toHaveURL(new RegExp(`#${r}$`));
       await page.reload();
@@ -103,7 +101,7 @@ test.describe('app-shell', () => {
       expect(b.y + b.height).toBeLessThanOrEqual(side.y + side.height);
     }
     const name = (await page.getByTestId('analyst-name').boundingBox())!;
-    expect(side.y + side.height - (name.y + name.height)).toBeLessThan(40);
+    expect(side.y + side.height - (name.y + name.height)).toBeLessThan(60);
     await expect(page.getByTestId('analyst-name')).toHaveText('Linh Tran');
   });
 

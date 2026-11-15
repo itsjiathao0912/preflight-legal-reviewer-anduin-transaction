@@ -5,12 +5,11 @@ import {
   changeRow,
   gotoQuestions,
   openFundIIIvsII,
-  openOwnerExport,
-  openQuestionFilters,
   ownerRows,
   questionRow,
   recordAnswer,
 } from './fixtures/variance-owners';
+import { gotoFindings, openRequest } from './fixtures/counsel';
 
 // Variance Phase 05 (AC-V18, demo gate walk): from Blocked, the analyst resolves their own items
 // (Mark as expected with a reason), asks the owners, exports one DOCX per owner, records each
@@ -48,28 +47,30 @@ async function popoverGroups(page: Page): Promise<Record<string, number>> {
 
 /** The counts-agree invariant at one step; returns Blocked N. */
 async function countsAgree(page: Page, step: string): Promise<number> {
-  await gotoQuestions(page);
   const n = await blockedN(page);
   const groups = n ? await popoverGroups(page) : { __reasons: 0 };
   const { __reasons, ...byGroup } = groups as Record<string, number>;
   const sum = Object.values(byGroup).reduce((a, b) => a + b, 0);
   expect(sum, `${step}: popover groups sum to Blocked N`).toBe(n);
   expect(__reasons, `${step}: gate reasons equal Blocked N`).toBe(n);
-  let asked = 0;
-  await openQuestionFilters(page);
+  // Requests rows: waiting = total - answered per owner (no documents in this fixture)
+  await page.getByTestId('nav-counsel').click();
+  await expect(page.getByTestId('counsel-view')).toBeVisible();
   for (const o of OWNERS) {
-    const tab = page.getByTestId(`questions-tab-${o}`);
-    const tabCount = (await tab.count()) ? Number(await tab.getAttribute('data-count')) : 0;
-    expect(tabCount, `${step}: Questions tab ${o} equals popover group`).toBe(byGroup[o] ?? 0);
-    asked += tabCount;
+    const text =
+      (await page
+        .getByTestId(`requests-row-${o}`)
+        .getByTestId('requests-row-answered')
+        .textContent()) ?? '';
+    const m = /(\d+) of (\d+) answered/.exec(text);
+    const waiting = m ? Number(m[2]) - Number(m[1]) : 0;
+    expect(waiting, `${step}: Requests row ${o} equals popover group`).toBe(byGroup[o] ?? 0);
   }
-  const all = page.getByTestId('questions-tab-all');
-  if (await all.count()) expect(Number(await all.getAttribute('data-count'))).toBe(asked);
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
   expect(overflow, `${step}: no horizontal overflow`).toBeLessThanOrEqual(0);
-  await page.getByTestId('nav-findings').click();
+  await gotoFindings(page);
   return n;
 }
 
@@ -111,24 +112,22 @@ test.describe('variance-demo-gate-walk', () => {
     expect(n2).toBeGreaterThan(0);
 
     // step 3: one DOCX per owner
-    await gotoQuestions(page);
+    await page.getByTestId('nav-counsel').click();
     for (const o of OWNERS) {
-      await openOwnerExport(page, o);
-      const dlg = page.getByTestId('export-dialog');
+      await openRequest(page, o);
       const [download] = await Promise.all([
         page.waitForEvent('download'),
-        dlg.getByTestId('export-download').click(),
+        page.getByTestId('request-export').click(),
       ]);
       expect(download.suggestedFilename()).toMatch(/-questions-fund-iii\.docx$/);
-      await expect(dlg).toBeHidden();
     }
-    await page.getByTestId('nav-findings').click();
+    await gotoFindings(page);
     expect(await countsAgree(page, 'exported')).toBe(n2);
 
     // step 4: each owner answers; the gate drops by one per answer until Ready
     let prev = n2;
     for (const o of OWNERS) {
-      await gotoQuestions(page);
+      await gotoQuestions(page, o);
       const keys = await ownerRows(page, o).evaluateAll((els) =>
         els.map((e) => e.getAttribute('data-key')!),
       );
@@ -138,7 +137,7 @@ test.describe('variance-demo-gate-walk', () => {
         await recordAnswer(page, row, { option: 'A' });
         await expect(row.getByTestId('counsel-answer')).toBeVisible();
       }
-      await page.getByTestId('nav-findings').click();
+      await gotoFindings(page);
       const n = await countsAgree(page, `${o} answered`);
       expect(n).toBeLessThan(prev);
       prev = n;

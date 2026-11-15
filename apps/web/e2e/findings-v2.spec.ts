@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { findingsV2Widths } from '../test/support/mockupCss';
-import { DOCZOOM_KEY, gotoApp, openSample, row, rowsLoc } from './fixtures/app';
+import { DOCZOOM_KEY, gotoApp, openFilterMenu, openSample, row, rowsLoc } from './fixtures/app';
 import { askCounsel, closeAsRealIssue, closeWithReason } from './fixtures/findings-actions';
 import { changeRow, openFundIIIvsII } from './fixtures/variance-owners';
 
@@ -605,6 +605,7 @@ test.describe('findings-v2', () => {
     await expect(row(page, block)).toHaveAttribute('aria-expanded', 'true');
 
     // the open blocking row is filtered out: the bar shows nothing open and C does nothing
+    await openFilterMenu(page);
     await page.getByTestId('severity-chip-note').click();
     await expect(row(page, block)).toHaveCount(0);
     await expect(page.getByTestId('action-counsel')).toBeDisabled();
@@ -613,6 +614,7 @@ test.describe('findings-v2', () => {
     await page.keyboard.press('x');
     await expect(page.getByTestId('dismiss-modal')).toHaveCount(0);
     await expect(toast(page)).toHaveCount(0);
+    await openFilterMenu(page);
     await page.getByTestId('severity-chip-note').click();
     await expect(row(page, block)).toHaveAttribute('data-status', 'open');
 
@@ -638,8 +640,9 @@ test.describe('findings-v2', () => {
     await gotoApp(page);
     await openFundIIIvsII(page);
     // the All / Errors / Changes track hugs its buttons: same height as a severity chip
+    await openFilterMenu(page);
     const seg = (await page.getByTestId('kind-segment').boundingBox())!;
-    const chip = (await page.locator('.fv2-fhead .fv2-chips button').first().boundingBox())!;
+    const chip = (await page.getByTestId('severity-chip-block').boundingBox())!;
     expect(Math.abs(seg.height - chip.height)).toBeLessThanOrEqual(1);
     const tax = changeRow(page, /Tax Status/);
     await expect(tax.getByTestId('owner-chip')).toHaveText('Counsel');

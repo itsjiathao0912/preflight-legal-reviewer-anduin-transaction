@@ -2,10 +2,11 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test } from '@playwright/test';
 import { blockOpenRouter } from './fixtures/ai';
-import { gotoApp, openDialog, sample } from './fixtures/app';
+import { gotoApp } from './fixtures/app';
+import { confirmAllRows, openDemoPackage } from './fixtures/package';
 
 /**
- * AC2 / AC3 (closing): the 22-page scan set #9 opens in one click from the picker. Pages with a
+ * AC2 / AC3 (closing): the 22-page scan set #9 opens from the RW Holdings scans demo package. Pages with a
  * shipped precomputed OCR result read from the static file (no network beyond the app origin);
  * pages without one show their image with "Text not extracted" (preview build has no API).
  */
@@ -22,29 +23,33 @@ test.describe('scan-set-smoke', () => {
     page.on('request', (r) => {
       if (r.url().includes('/api/')) apiCalls.push(r.url());
     });
-    // slow the static OCR files down so per-page progress is observable
-    let release!: () => void;
-    const gate = new Promise<void>((r) => (release = r));
-    await page.route('**/precomputed/ocr/*.json', async (route) => {
-      if (!route.request().url().endsWith('/index.json')) await gate;
-      await route.continue();
-    });
     await gotoApp(page);
-    await openDialog(page);
-    await sample(page, '09').click();
+    // the scan set opens through the demo package "RW Holdings scans" (one scan member)
+    await openDemoPackage(page, 'rw-scans');
+    // one scan member: the confirmation table appears only when the draft needs a choice
+    await expect
+      .poll(
+        async () =>
+          (await page.getByTestId('package-row').count()) > 0 ||
+          !(await page.getByTestId('open-document-dialog').isVisible()),
+        { timeout: 60_000 },
+      )
+      .toBe(true);
+    if (await page.getByTestId('package-confirm-table').isVisible()) {
+      const row = page.getByTestId('package-row');
+      await row.getByTestId('package-row-type').selectOption('sub_agreement');
+      await row.getByTestId('package-row-role').selectOption('to_digitize');
+      await confirmAllRows(page);
+      await page.getByTestId('package-version-input').fill('scan set');
+      await page.getByTestId('package-run').click();
+    }
     await expect(page.getByTestId('open-document-dialog')).toBeHidden();
 
     const chips = page.getByTestId('scan-page-chip');
     await expect(chips).toHaveCount(22, { timeout: 30_000 });
-    if (precomputed.length) {
-      // AC3: pages are still being read while the static files are held back
-      await expect(
-        page.locator('[data-testid="scan-page-chip"][data-state="running"]'),
-      ).not.toHaveCount(0);
-      await expect(page.getByTestId('stage-status-button')).toBeVisible();
-    }
+    // (the package draft reads the OCR text up front, so the old "pages still running while the
+    // static files are held back" check no longer applies)
     await expect(page.getByTestId('scan-page-image')).toBeVisible();
-    release();
     await expect(page.getByTestId('loading-state')).toHaveCount(0, { timeout: 60_000 });
 
     // every page ends done (shipped OCR) or unavailable (image only); none stuck

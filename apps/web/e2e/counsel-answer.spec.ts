@@ -69,7 +69,7 @@ test.describe('counsel-answer', () => {
     await expect(counselRow(page, p6.id)).toHaveAttribute('data-state', 'answered');
     await expect(page.getByText('Answer recorded. 1 item')).toBeVisible();
     await expect(page.getByTestId('gate-button')).toHaveText(/Blocked · 1/);
-    await expect(page.getByTestId('counsel-meta')).toHaveText('1 question · 0 waiting');
+    await expect(page.getByTestId('counsel-meta')).toHaveText('3 requests · 0 items waiting');
     const ans = counselRow(page, p6.id).getByTestId('counsel-answer');
     await expect(ans).toHaveAttribute('data-option', 'A');
     await expect(ans).toContainText('Section 5 is right; Section 4 was renumbered.');

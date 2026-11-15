@@ -6,7 +6,8 @@ import { defineConfig, devices } from '@playwright/test';
 //            Phase 04a's slice.spec.ts.
 // Playwright starts every configured webServer regardless of --project, so the stack server is only
 // configured when the stack project is requested (`--project=stack` / `--project stack`).
-const PREVIEW_PORT = 4317;
+// E2E_PREVIEW_PORT lets a second checkout/worktree run the suite while 4317 is busy (default 4317).
+const PREVIEW_PORT = Number(process.env['E2E_PREVIEW_PORT'] ?? 4317);
 const PREVIEW_URL = `http://127.0.0.1:${PREVIEW_PORT}`;
 const LOCAL_STACK_URL = 'http://127.0.0.1:8787';
 // SLICE_BASE_URL (https only) points the stack project at a deployed Worker; no local stack server then.

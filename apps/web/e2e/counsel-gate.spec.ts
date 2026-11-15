@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { chooseReasonAndSave, gotoApp, row } from './fixtures/app';
 import {
+  closeRequest,
   counselRow,
   EXPECT,
   findingByQuote,
@@ -39,12 +40,16 @@ test.describe('counsel-gate', () => {
     await expect(gateReason(page, p6.id)).toHaveAttribute('data-target', 'counsel');
 
     await gateReason(page, p6.id).click();
-    await expect(page.getByTestId('counsel-view')).toBeVisible();
+    // a question reason opens its owner's request drawer over the current screen
+    await expect(page.getByTestId('request-drawer')).toHaveAttribute('data-owner', 'counsel');
     await expect(counselRow(page, p6.id).getByTestId('counsel-row-toggle')).toHaveAttribute(
       'aria-expanded',
       'true',
     );
 
+    await closeRequest(page);
+    await page.getByTestId('nav-counsel').click();
+    await expect(page.getByTestId('counsel-view')).toBeVisible();
     await page.getByTestId('counsel-gate-reasons').click();
     await gateReason(page, p4.id).click();
     await expect(page.getByTestId('nav-findings')).toHaveAttribute('aria-current', 'page');

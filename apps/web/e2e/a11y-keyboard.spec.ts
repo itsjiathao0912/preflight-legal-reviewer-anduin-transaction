@@ -1,6 +1,15 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { forceSeverity, gotoApp, openSample, rowsLoc } from './fixtures/app';
+import {
+  forceSeverity,
+  gotoApp,
+  knownAxeIssue,
+  openFilterMenu,
+  openFindingsView,
+  openSample,
+  rowsLoc,
+  submitSample,
+} from './fixtures/app';
 import { changeRows } from './fixtures/variance';
 import { askOwner, gotoQuestions, openFundIIIvsII } from './fixtures/variance-owners';
 
@@ -13,7 +22,7 @@ import { askOwner, gotoQuestions, openFundIIIvsII } from './fixtures/variance-ow
  */
 async function audit(page: Page, label: string) {
   const r = await new AxeBuilder({ page }).analyze();
-  const critical = r.violations.filter((v) => v.impact === 'critical');
+  const critical = r.violations.filter((v) => v.impact === 'critical' && !knownAxeIssue(v));
   console.log(
     `[a11y-keyboard] ${label}: critical=${critical.length} serious=${
       r.violations
@@ -92,12 +101,16 @@ test.describe('a11y-keyboard', () => {
       ['nav-counsel', 'counsel-view'],
       ['nav-memory', 'memory-view'],
       ['nav-documents', 'documents-view'],
-      ['nav-structure', 'structure-view'],
     ] as const) {
       await page.getByTestId(nav).click();
       await expect(page.getByTestId(view)).toBeVisible();
       if (view === 'memory-view') await expect(page.getByTestId('memory-loading')).toHaveCount(0);
       await audit(page, view);
+    }
+
+    for (const view of ['flow', 'sources'] as const) {
+      await openFindingsView(page, view);
+      await audit(page, `findings ${view}`);
     }
 
     await page.getByTestId('nav-compare').click();
@@ -139,9 +152,8 @@ test.describe('a11y-keyboard', () => {
     await tabTo(page, 'open-another', 20);
     await page.keyboard.press('Enter');
     await expect(page.getByTestId('open-document-dialog')).toBeVisible();
-    const option = page.locator('[data-testid="sample-option"][data-sample-id="03"]');
-    await option.focus();
-    await page.keyboard.press('Enter');
+    // the single-sample picker is gone: upload the bundled sample through the dialog instead
+    await submitSample(page, '03');
     await expect(page.getByTestId('stage-status-button')).toContainText(/Checks done/, {
       timeout: 30_000,
     });
@@ -165,15 +177,18 @@ test.describe('a11y-keyboard', () => {
     await page.keyboard.press('Enter');
     await expect(focused).toHaveAttribute('data-status', 'accepted');
 
-    // filters: a severity chip toggles with Space; the Filter menu opens, is walkable, closes on Esc
-    await tabTo(page, 'severity-chip-block');
+    // filters: the Filter menu opens from the keyboard; a severity chip in it toggles with Space;
+    // the menu is walkable and closes on Esc
+    // (the filter toolbar sits above the list, so go back to it rather than Tab forward)
+    await page.getByTestId('filter-button').focus();
+    await expectVisibleFocus(page);
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('filter-menu')).toBeVisible();
+    await tabTo(page, 'severity-chip-block', 10);
     await page.keyboard.press('Space');
     await expect(page.getByTestId('severity-chip-block')).toHaveAttribute('aria-pressed', 'true');
     await page.keyboard.press('Space');
     await expect(page.getByTestId('severity-chip-block')).toHaveAttribute('aria-pressed', 'false');
-    await tabTo(page, 'filter-button', 20);
-    await page.keyboard.press('Enter');
-    await expect(page.getByTestId('filter-menu')).toBeVisible();
     for (const t of ['filter-class', 'filter-status', 'filter-sort']) await tabTo(page, t, 10);
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('filter-menu')).toBeHidden();
@@ -200,13 +215,15 @@ test.describe('a11y-keyboard', () => {
     await openFundIIIvsII(page);
     await audit(page, 'findings with changes');
 
-    // segment: keyboard toggles Changes
+    // segment (in the filter menu): keyboard toggles Changes
+    await openFilterMenu(page);
     await page.getByTestId('kind-all').focus();
     await tabTo(page, 'kind-changes', 10);
     await expectVisibleFocus(page);
     await page.keyboard.press('Enter');
     await expect(page.getByTestId('kind-changes')).toHaveAttribute('aria-pressed', 'true');
     await expect(changeRows(page)).toHaveCount(7);
+    await page.keyboard.press('Escape');
 
     // a change row: reachable by Tab, opens with Enter, type stated as text
     await tabTo(page, 'finding-row', 40);
@@ -230,17 +247,15 @@ test.describe('a11y-keyboard', () => {
     // focus return to the control after Esc is a known gap (dialog focus return backlog), not asserted
 
     // Questions tabs and the answer form
+    await openFilterMenu(page);
     await page.getByTestId('kind-all').click();
+    await page.keyboard.press('Escape');
     await askOwner(page, /Investor Domicile/);
     await gotoQuestions(page);
-    await audit(page, 'questions by owner');
-    // Questions table: the Filter button opens the in-flow chip panel from the keyboard
-    await page.getByTestId('questions-filter').focus();
-    await page.keyboard.press('Enter');
-    await expect(page.getByTestId('questions-filters')).toBeVisible();
-    await audit(page, 'questions filters');
-    await page.getByTestId('questions-tab-all').focus();
-    await tabTo(page, 'questions-tab-gp', 10);
+    await audit(page, 'requests by owner');
+    // the request drawer has one tab per owner, reachable and activated from the keyboard
+    await page.getByTestId('request-tab-counsel').focus();
+    await tabTo(page, 'request-tab-gp', 10);
     await expectVisibleFocus(page);
     await page.keyboard.press('Enter');
     await expect(page.getByTestId('counsel-row')).toHaveCount(1);

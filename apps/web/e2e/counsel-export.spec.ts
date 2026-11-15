@@ -15,7 +15,9 @@ import {
 // AC21 + D-1: the DOCX lists only UNANSWERED New/Accepted questions with citation (masked quote)
 // and interpretations; recorded answers stay in the app. Parsed back with mammoth. AC45 (zero
 // repeated questions across funds) is in memory-prior-answer. Review fix F1: a memory failure
-// never blocks the deliverable; the DOCX still downloads with a quiet "not recorded" note.
+// never blocks the deliverable; the DOCX still downloads. Since the Requests rework (22-10-26) the
+// export runs from the counsel request drawer ("Export DOCX"); the preview dialog and its summary,
+// gate warning and left-out list are gone.
 const q = (key: string) =>
   findingByQuote(
     'fund-II',
@@ -39,22 +41,13 @@ test.describe('counsel-export', () => {
     await gotoCounsel(page);
     await answerQuestion(page, n2.id, 'B', 'SECRET-NOTE counsel prefers option B');
 
-    await page.getByTestId('counsel-export').click();
-    await expect(page.getByTestId('export-summary')).toHaveText(
-      '2 unanswered questions go to counsel: 1 New, 1 Accepted. Law firm: Firm X.',
-    );
-    await expect(page.getByTestId('export-item')).toHaveCount(2);
-    await expect(page.getByTestId('export-gate-warning')).toContainText(
-      'The gate is still Blocked',
-    );
-    await expect(page.getByTestId('export-left-out')).toContainText('Left out of this export (1)');
-    await page.getByTestId('export-close').click();
-
+    // 3 questions in the counsel request, 1 already answered: only the 2 open ones are exported
+    await expect(page.getByTestId('counsel-row')).toHaveCount(3);
     const { text, filename } = await exportDocxText(page);
     expect(filename).toBe('counsel-questions-demo-fund-ii.docx');
-    expect(text).toContain('Counsel query sheet · Demo Fund II');
+    expect(text).toContain('Questions for Counsel · Demo Fund II');
     expect(text).toContain('Law firm: Firm X');
-    expect(text).toContain('2 questions for counsel');
+    expect(text).toContain('2 questions for Counsel');
     expect(text).toContain(n1.quote);
     expect(text).toContain(p6.quote);
     expect(text).toMatch(/^A\. /m);
@@ -64,7 +57,7 @@ test.describe('counsel-export', () => {
     expect(text).not.toContain(n2.quote);
     expect(text).not.toContain('SECRET-NOTE');
     expect(text).not.toContain('Answered: option');
-    await expect(page.getByText('Query sheet exported: 2 questions.')).toBeVisible();
+    await expect(page.getByText('Request exported.')).toBeVisible();
   });
 
   test('sensitive numbers in a quote are masked in the preview and the DOCX', async ({ page }) => {
@@ -90,9 +83,6 @@ test.describe('counsel-export', () => {
     await expect(counselRow(page, n1.id).getByTestId('counsel-quote')).not.toContainText(
       RAW_NUMBER,
     );
-    await page.getByTestId('counsel-export').click();
-    await expect(page.getByTestId('export-preview')).not.toContainText(RAW_NUMBER);
-    await page.getByTestId('export-close').click();
     const { text } = await exportDocxText(page);
     expect(text).toContain('ABA routing number: #8097');
     expect(text).not.toContain(RAW_NUMBER);
@@ -116,16 +106,12 @@ test.describe('counsel-export', () => {
       api['exportRun'] = () =>
         Promise.reject(Object.assign(new Error('HTTP 503'), { code: 'unavailable', status: 503 }));
     });
-    await page.getByTestId('counsel-export').click();
     const [download] = await Promise.all([
       page.waitForEvent('download'),
-      page.getByTestId('export-download').click(),
+      page.getByTestId('request-export').click(),
     ]);
     expect(download.suggestedFilename()).toBe('counsel-questions-demo-fund-ii.docx');
-    await expect(
-      page.getByText('Query sheet exported: 1 question. Saved locally; not recorded in memory.'),
-    ).toBeVisible();
-    await expect(page.getByTestId('export-error')).toHaveCount(0);
+    await expect(page.getByText('Request exported.')).toBeVisible();
     // still editable: answer the question after the failure
     await answerQuestion(page, n1.id, 'A');
     await expect(counselRow(page, n1.id)).toHaveAttribute('data-state', 'answered');
@@ -137,10 +123,6 @@ test.describe('counsel-export', () => {
       };
       w.__aduinE2E.memory()['exportRun'] = w.__origExport;
     });
-    await page.getByTestId('counsel-export').click();
-    await expect(page.getByTestId('export-summary')).toHaveText(
-      'Nothing to send: every question has an answer.',
-    );
-    await expect(page.getByTestId('export-download')).toBeDisabled();
+    await expect(page.getByTestId('request-export')).toBeDisabled();
   });
 });

@@ -13,7 +13,7 @@ test.describe('variance-intent-human-only', () => {
     await gotoApp(page);
     await openFundIIIvsII(page);
     await askOwner(page, /Investor Type/);
-    await gotoQuestions(page);
+    await gotoQuestions(page, 'gp');
     // change questions never get an AI draft: the AI draft action has nothing to draft
     await expect(page.getByTestId('counsel-ai-draft')).toBeDisabled();
     const row = page.locator('[data-testid="counsel-row"][data-owner="gp"]').first();

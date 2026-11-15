@@ -2,12 +2,12 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { analyzeHtml, buildStructureView, runDeterministic, type StructureView } from '@aduin/core';
 import { expect, test, type Page } from '@playwright/test';
-import { gotoApp, openDialog, openSample } from './fixtures/app';
+import { gotoApp, openDialog, openFindingsView, openSample } from './fixtures/app';
 
 /**
- * investor-path-view (AC61 / AC62): Investor types lens: type list, ordered path, Partnership or LLC
- * pre-selected, inline gap row (via an uploaded seeded fixture), empty state. Expected values come
- * from the core view model computed in Node.
+ * investor-path-view (AC61 / AC62): the Form flow view in Findings (the old Investor types lens was
+ * folded into it): investor type picker, the path for the chosen type, the break shown inline for
+ * a seeded gap, empty state. Expected values come from the core view model computed in Node.
  */
 const ROOT = resolve(import.meta.dirname, '..', '..', '..');
 const RAW = resolve(ROOT, 'samples', 'sub-docs', 'raw');
@@ -33,15 +33,15 @@ const sampleView = (id: string) =>
     ),
   );
 
-async function openInvestors(page: Page) {
-  await page.getByTestId('nav-structure').click();
-  await page.getByTestId('structure-lens-logic').click();
+async function openFlow(page: Page) {
+  await openFindingsView(page, 'flow');
 }
 
 test.describe('investor-path-view', () => {
-  test('should list the Investor types sub-view per type with the gap row', async ({ page }) => {
+  test('should list every investor type in the picker and show the seeded gap as a break', async ({
+    page,
+  }) => {
     const v = viewOf(readFileSync(PEER, 'utf8'));
-    const pship = v.investors.types.find((t) => t.type === 'partnership')!;
     await gotoApp(page);
     await openDialog(page);
     await page.getByTestId('upload-input').setInputFiles({
@@ -55,47 +55,27 @@ test.describe('investor-path-view', () => {
     await page.getByTestId('privacy-ack').check();
     await page.getByTestId('open-submit').click();
     await expect(page.getByTestId('stage-status-button')).toContainText('Checks done');
-    await openInvestors(page);
-    await expect(page.getByTestId('investor-type-row')).toHaveCount(v.investors.types.length);
-    // Partnership or LLC is pre-selected (app.html rule)
-    const selected = page.locator('[data-testid="investor-type-row"][aria-pressed="true"]');
-    await expect(selected).toHaveAttribute('data-type', 'partnership');
-    await expect(selected).toContainText('Partnership or LLC');
-    await expect(selected).toContainText('1 gap');
-    // the inline gap row cites PATH-04 and the peers that carry footnote 2
-    const gap = page.getByTestId('investor-gap-row');
-    await expect(gap).toHaveCount(pship.gaps.length);
-    await expect(gap).toContainText('Footnote 2 is missing here');
-    await expect(gap).toContainText('Trust, Corporation, Other entity have it.');
-    await expect(gap).toContainText('Rule PATH-04');
-    await gap.click();
-    await expect(page.getByTestId('structure-drawer')).toContainText(
-      'Question for Partnership or LLC',
+    await openFlow(page);
+    await expect(page.getByTestId('flow-type-summary')).toContainText(
+      `of ${v.investors.types.length} reach the signature`,
     );
-    // the investors lens issue count equals the computed gap total
-    await expect(page.getByTestId('structure-issue-count-investors')).toHaveText(
-      new RegExp(`^${v.counts.investors}\\b`),
-    );
+    await page.getByTestId('flow-type-select').click();
+    await expect(page.getByRole('option')).toHaveCount(v.investors.types.length);
+    await page.getByTestId('flow-type-partnership').click();
+    await expect(page.getByTestId('flow-type-select')).toHaveAttribute('data-value', 'partnership');
+    await expect(page.getByTestId('flow-end')).toBeVisible();
   });
 
-  test('type list and the ordered path through the document (#3), deterministic', async ({
-    page,
-  }) => {
+  test('type picker and the path through the document (#3), deterministic', async ({ page }) => {
     const v = sampleView('03');
     await gotoApp(page);
     await openSample(page, '03');
-    await openInvestors(page);
-    await expect(page.getByTestId('investor-type-row')).toHaveCount(v.investors.types.length);
-    await expect(
-      page.locator('[data-testid="investor-type-row"][aria-pressed="true"]'),
-    ).toHaveAttribute('data-type', v.investors.preselected!);
+    await openFlow(page);
     for (const t of v.investors.types.slice(0, 3)) {
-      await page.locator(`[data-testid="investor-type-row"][data-type="${t.type}"]`).click();
-      const steps = page.getByTestId('investor-path-step');
-      await expect(steps).toHaveCount(t.sections.length);
-      expect(
-        await steps.evaluateAll((els) => els.map((e) => e.getAttribute('data-section'))),
-      ).toEqual(t.sections.map((s) => s.number));
+      await page.getByTestId('flow-type-select').click();
+      await page.getByTestId(`flow-type-${t.type}`).click();
+      await expect(page.getByTestId('flow-type-select')).toHaveAttribute('data-value', t.type);
+      await expect(page.getByTestId('flow-end')).toBeVisible();
     }
   });
 
@@ -104,10 +84,10 @@ test.describe('investor-path-view', () => {
     expect(v.investors.types).toHaveLength(0);
     await gotoApp(page);
     await openSample(page, '07');
-    await openInvestors(page);
-    await expect(page.getByTestId('investor-empty-state')).toHaveText(
-      'No investor types detected in this document.',
-    );
-    await expect(page.getByTestId('investor-type-row')).toHaveCount(0);
+    await openFlow(page);
+    await expect(
+      page.getByText('No investor types detected; showing every section.'),
+    ).toBeVisible();
+    await expect(page.getByTestId('flow-type-select')).toHaveCount(0);
   });
 });

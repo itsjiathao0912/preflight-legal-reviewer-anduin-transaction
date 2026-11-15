@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoApp } from './fixtures/app';
+import { gotoApp, openFindingsView } from './fixtures/app';
 import { hartwellFile, uploadPackage, waitForChecks } from './fixtures/package';
 
 // Intake Phase 3 track 3a (AC-I16): Hartwell Fund III alone (no LPA): the cross-document logic
@@ -21,17 +21,14 @@ test.describe('intake-terms-unverified-without-lpa', () => {
     await expect(
       titles.filter({ hasText: '"Stock" is used for the offered security' }),
     ).toHaveCount(1);
-    await page.getByTestId('nav-structure').click();
-    await page.getByTestId('structure-lens-terms').click();
-    const terms = page.getByTestId('package-term');
+    await openFindingsView(page, 'sources');
+    // package terms with no defining document are the Sources rows marked Unverified
+    const terms = page.getByTestId('sources-row').filter({ hasText: 'Unverified' });
     await expect(terms.first()).toBeVisible();
     const n = await terms.count();
-    await expect(
-      page.locator('[data-testid="package-term"][data-status="unverified"]'),
-    ).toHaveCount(n);
-    for (let i = 0; i < n; i++)
-      await expect(terms.nth(i)).toContainText('Unverified: No LPA in the package');
-    const line = (await page.getByTestId('package-lens-line').textContent()) ?? '';
+    for (let i = 0; i < n; i++) await expect(terms.nth(i)).toContainText('Unverified');
+    await page.getByTestId('nav-documents').click();
+    const line = (await page.getByTestId('package-summary-line').textContent()) ?? '';
     expect(Number(/(\d+) terms? unverified/.exec(line)?.[1])).toBe(n);
   });
 });

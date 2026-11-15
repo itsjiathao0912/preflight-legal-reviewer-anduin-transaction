@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoApp, openDialog } from './fixtures/app';
+import { clearPickedFiles, gotoApp, openDialog } from './fixtures/app';
 import { idbCounts } from './fixtures/package';
 
 // Intake Phase 2 H2 (AC-I1): over the package limits a plain message shows and nothing is stored.
@@ -42,6 +42,7 @@ test.describe('intake-limits-refusal', () => {
       },
     ];
     for (const c of cases) {
+      await clearPickedFiles(page); // the input appends to the picked files
       await page.getByTestId('upload-input').setInputFiles(c.files);
       await expect(page.getByTestId('upload-error')).toContainText(c.msg);
       await page.getByTestId('firm-combobox').fill('Other / no firm');

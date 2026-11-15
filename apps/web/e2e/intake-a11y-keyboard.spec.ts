@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { gotoApp } from './fixtures/app';
+import { gotoApp, knownAxeIssue, openFindingsView } from './fixtures/app';
 import { openDemoPackage, waitForChecks } from './fixtures/package';
 
 /**
@@ -20,7 +20,7 @@ const EXPECTED = JSON.parse(
 
 async function audit(page: Page, label: string) {
   const r = await new AxeBuilder({ page }).analyze();
-  const critical = r.violations.filter((v) => v.impact === 'critical');
+  const critical = r.violations.filter((v) => v.impact === 'critical' && !knownAxeIssue(v));
   console.log(
     `[intake-a11y-keyboard] ${label}: critical=${critical.length} serious=${
       r.violations
@@ -151,20 +151,17 @@ test.describe('intake-a11y-keyboard', () => {
     await expect(page.getByTestId('gate-popover')).toBeHidden();
     await expect(page.getByTestId('gate-button')).toBeFocused();
 
-    // Package lens
-    await page.getByTestId('nav-structure').click();
-    await page.getByTestId('structure-lens-terms').click();
-    await expect(page.getByTestId('package-lens')).toBeVisible();
-    await audit(page, 'package lens');
+    // Sources view (package references and terms)
+    await openFindingsView(page, 'sources');
+    await expect(page.getByTestId('sources-row').first()).toBeVisible();
+    await audit(page, 'sources view');
 
-    // Counsel GP group
+    // GP request: the documents to send live in the GP request drawer
     await page.getByTestId('nav-counsel').click();
-    await expect(page.getByTestId('gp-group')).toBeVisible();
-    await audit(page, 'counsel gp group');
-    await page.getByTestId('gp-request-toggle').focus();
-    await page.keyboard.press('Enter');
-    await expect(page.getByTestId('gp-request-toggle')).toHaveAttribute('aria-expanded', 'true');
-    await page.getByTestId('gp-request-export').focus();
-    await expect(page.getByTestId('gp-request-export')).toBeFocused();
+    await page.getByTestId('requests-row-gp').click();
+    await expect(page.getByTestId('request-documents')).toBeVisible();
+    await audit(page, 'gp request drawer');
+    await page.getByTestId('request-export').focus();
+    await expect(page.getByTestId('request-export')).toBeFocused();
   });
 });

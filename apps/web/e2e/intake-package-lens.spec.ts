@@ -1,13 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
-import { gotoApp } from './fixtures/app';
+import { gotoApp, openFindingsView } from './fixtures/app';
 import { confirmAllRows, openDemoPackage, openPackageFiles, runPackage } from './fixtures/package';
 import { uploadOne } from './fixtures/variance';
 
-// Intake Phase 3 track 3a (AC-I17 lens half, AC-I9 lens): the Package lens in Structure lists
-// references, terms and the five coverage groups; the package file list (with the baseline
-// control) lives on the Documents screen.
+// Intake Phase 3 track 3a (AC-I17 lens half, AC-I9 lens): the Sources view in Findings lists
+// references and terms (the old Package lens and its five coverage groups are gone); the package
+// file list (with the baseline control) and the coverage line live on the Documents screen.
 const ROOT = resolve(import.meta.dirname, '..', '..', '..');
 const expected = JSON.parse(readFileSync(resolve(ROOT, 'fixtures/package/expected.json'), 'utf8'));
 const listed = (
@@ -15,13 +15,6 @@ const listed = (
     readFileSync(resolve(import.meta.dirname, '..', 'public/samples/packages.json'), 'utf8'),
   ) as { packages: { id: string }[] }
 ).packages.map((p) => p.id);
-const GROUPS = [
-  'structure_flow',
-  'internal_refs',
-  'defined_terms',
-  'external_refs',
-  'investor_paths',
-];
 
 type FileSpec = Record<string, { type: string; finalRole: string }>;
 
@@ -42,10 +35,11 @@ async function openAndRun(page: Page, id: string, files: FileSpec) {
 }
 
 async function openLens(page: Page) {
-  await page.getByTestId('nav-structure').click();
-  await page.getByTestId('structure-lens-terms').click();
-  await expect(page.getByTestId('package-lens')).toBeVisible();
+  await openFindingsView(page, 'sources');
 }
+
+const source = (page: Page, key: string) =>
+  page.locator(`[data-testid="sources-row"][data-target-key="${key}"]`);
 
 test.describe('intake-package-lens', () => {
   test('should show documents, references, terms and coverage for Hartwell', async ({ page }) => {
@@ -54,26 +48,13 @@ test.describe('intake-package-lens', () => {
     await gotoApp(page);
     await openAndRun(page, 'hartwell', hw.files);
     await openLens(page);
-    const lens = page.getByTestId('package-lens');
-    // references: LPA resolved, the other three families not in the package
-    await expect(
-      lens.locator('[data-testid="package-reference"][data-target-key="lpa"]').first(),
-    ).toHaveAttribute('data-resolution', 'resolved');
+    // references: LPA found, the other three families missing from the package
+    await expect(source(page, 'lpa').first()).toContainText('Found');
     for (const key of ['annex:annex f', 'side_letter', 'tax_form:form w-8ben-e']) {
-      const r = lens.locator(`[data-testid="package-reference"][data-target-key="${key}"]`);
-      await expect(r.first()).toHaveAttribute('data-resolution', 'not_in_package');
-      await expect(r.first()).toContainText('Not in package');
-      await expect(r.first()).toContainText(/, paragraph \d+/);
+      await expect(source(page, key).first()).toContainText('Missing');
     }
-    await expect(lens.getByTestId('package-term').first()).toBeVisible();
-    const groups = lens.getByTestId('package-coverage-group');
-    await expect(groups).toHaveCount(5);
-    expect(await groups.evaluateAll((e) => e.map((x) => x.getAttribute('data-group')))).toEqual(
-      GROUPS,
-    );
-    await expect(page.getByTestId('package-lens-line')).toHaveText(hw.coverageLine);
-    // the file list moved to Documents
-    await expect(lens.getByTestId('package-lens-doc')).toHaveCount(0);
+    await expect(page.getByTestId('sources-row').filter({ hasText: /Term/ }).first()).toBeVisible();
+    // the file list and the coverage line live on Documents
     await openPackageFiles(page);
     const files = page.getByTestId('package-summary');
     await expect(files.getByTestId('package-lens-doc')).toHaveCount(Object.keys(hw.files).length);
@@ -107,11 +88,12 @@ test.describe('intake-package-lens', () => {
       { name: 'note.html', buffer: Buffer.from('<html><body><p>Cover note.</p></body></html>') },
       { firm: 'Other / no firm', fund: 'Test Fund' },
     );
-    await page.getByTestId('nav-structure').click();
-    await expect(page.getByTestId('structure-view')).toBeVisible();
-    await expect(page.getByTestId('structure-lens-terms')).toHaveText(/^Defined terms/);
-    await page.getByTestId('structure-lens-terms').click();
-    await expect(page.getByTestId('structure-group-package')).toHaveCount(0);
+    await openFindingsView(page, 'sources');
+    await expect(page.getByTestId('sources-confirm')).toHaveCount(0);
+    await expect(page.getByTestId('sources-open-file')).toHaveCount(0);
+    await page.getByTestId('nav-documents').click();
+    await expect(page.getByTestId('documents-view')).toBeVisible();
+    await expect(page.getByTestId('package-summary')).toHaveCount(0);
   });
 
   test('should show the Northgate III baseline and references from expected.json', async ({
@@ -123,19 +105,13 @@ test.describe('intake-package-lens', () => {
     await gotoApp(page);
     await openAndRun(page, 'northgate-iii', ng.files);
     await openLens(page);
-    const lens = page.getByTestId('package-lens');
     const baseline = Object.entries(ng.files as FileSpec).find(
       ([, f]) => f.finalRole === 'baseline',
     )![0];
     for (const fam of ng.resolved as string[])
-      await expect(
-        lens.locator(`[data-testid="package-reference"][data-target-key="${fam}"]`).first(),
-      ).toHaveAttribute('data-resolution', 'resolved');
+      await expect(source(page, fam).first()).toContainText('Found');
     for (const key of ng.notInPackage as string[])
-      await expect(
-        lens.locator(`[data-testid="package-reference"][data-target-key="${key}"]`).first(),
-      ).toHaveAttribute('data-resolution', 'not_in_package');
-    await expect(lens.getByTestId('package-coverage-group')).toHaveCount(5);
+      await expect(source(page, key).first()).toContainText('Missing');
     await openPackageFiles(page);
     await expect(
       page

@@ -16,17 +16,20 @@ test.describe('placeholder-routes', () => {
     await expect(v.locator('h1')).toHaveText('Documents');
     await expect(page.getByTestId('placeholder-view')).toHaveCount(0);
   });
-  test('Structure is no longer a placeholder', async ({ page }) => {
+  test('the old Document map route lands on Findings (Form flow)', async ({ page }) => {
     await gotoApp(page);
-    await page.getByTestId('nav-structure').click();
-    await expect(page.getByTestId('structure-view')).toBeVisible();
+    await page.evaluate(() => {
+      location.hash = '#structure';
+    });
+    await expect(page.getByTestId('findings-header')).toBeVisible();
+    await expect(page.getByTestId('nav-findings')).toHaveAttribute('aria-current', 'page');
     await expect(page.getByTestId('placeholder-view')).toHaveCount(0);
   });
   test('counsel is no longer a placeholder', async ({ page }) => {
     await gotoApp(page);
     await page.getByTestId('nav-counsel').click();
     await expect(page.getByTestId('counsel-view')).toBeVisible();
-    await expect(page.getByTestId('counsel-view').locator('h1')).toHaveText('Questions');
+    await expect(page.getByTestId('counsel-view').locator('h1')).toHaveText('Requests');
     await expect(page.getByTestId('placeholder-view')).toHaveCount(0);
   });
   test('Memory is a real view', async ({ page }) => {

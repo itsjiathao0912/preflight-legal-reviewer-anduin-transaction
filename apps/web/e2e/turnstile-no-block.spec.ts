@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoApp, openDialog, rowsLoc, sample } from './fixtures/app';
+import { gotoApp, openDialog, rowsLoc, submitSample } from './fixtures/app';
 import { demoSeed, installFakeWorker, useFakeWorkerClient } from './fixtures/memory-stub-rules';
 
 // Phase 10 EVL fix: opening a firm sample must render deterministic findings without waiting for
@@ -37,7 +37,7 @@ async function stubTurnstile(page: Page, mode: 'never' | 'interactive') {
 async function openFirmSample(page: Page, id: string): Promise<number> {
   await openDialog(page);
   const t0 = Date.now();
-  await sample(page, id).click();
+  await submitSample(page, id);
   await expect(rowsLoc(page).first()).toBeVisible({ timeout: 5_000 });
   return Date.now() - t0;
 }

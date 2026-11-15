@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { gotoApp } from './fixtures/app';
-import { hartwellFile, uploadPackage, waitForChecks } from './fixtures/package';
+import { coverageLine, hartwellFile, uploadPackage, waitForChecks } from './fixtures/package';
 
 // Intake Phase 3 track 3b (AC-I18): a partial package shows the coverage line next to the gate.
 test.describe('intake-coverage-next-to-gate', () => {
@@ -13,8 +13,8 @@ test.describe('intake-coverage-next-to-gate', () => {
       fund: 'Fund III',
     });
     await waitForChecks(page);
-    const line = page.getByTestId('findings-coverage-line');
     await expect(page.getByTestId('gate-button')).toBeVisible();
+    const line = await coverageLine(page);
     await expect(line).toBeVisible();
     await expect(line).toHaveAttribute('data-status', /partial|blocked/);
     await expect(line).toContainText(/LPA|PPM|missing|no /i);

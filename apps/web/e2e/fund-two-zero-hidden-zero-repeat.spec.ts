@@ -72,7 +72,7 @@ test.describe('fund-two-zero-hidden-zero-repeat', () => {
     for (const f of answered) await expect(counselRow(page, f.id)).toHaveCount(0);
     const { text } = await exportDocxText(page);
     for (const f of answered) expect(text).not.toContain(f.quote);
-    expect(text).toMatch(new RegExp(`\\b${ids.length} questions? for counsel`));
+    expect(text).toMatch(new RegExp(`\\b${ids.length} questions? for counsel`, 'i'));
   });
 
   test('should keep blocking findings dismissed at fund I in the main list', async ({ page }) => {

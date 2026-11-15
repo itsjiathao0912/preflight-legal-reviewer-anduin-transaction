@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { chooseReasonAndSave, gotoApp, row } from './fixtures/app';
 import {
+  closeRequest,
   EXPECT,
   exportDocxText,
   findingByQuote,
@@ -50,6 +51,10 @@ test.describe('metrics', () => {
     await gotoCounsel(page);
     await expect(page.getByTestId('metrics-panel')).toHaveCount(0);
     await exportDocxText(page);
+    // the metrics panel reads the stored export when the Requests screen mounts
+    await closeRequest(page);
+    await gotoFindings(page);
+    await gotoCounsel(page, null);
 
     const panel = page.getByTestId('metrics-panel');
     await expect(panel).toBeVisible();
@@ -63,6 +68,9 @@ test.describe('metrics', () => {
     await markCounsel(page, q('p4-broken-conditional').id);
     await gotoCounsel(page);
     await exportDocxText(page);
+    await closeRequest(page);
+    await gotoFindings(page);
+    await gotoCounsel(page, null);
     await expect(page.getByTestId('metric-defects')).toHaveText(String(total - 1));
     await expect(page.getByTestId('metric-questions')).toHaveText('1 in one round');
     await expect(page.getByTestId('metric-time')).toHaveText(time!);

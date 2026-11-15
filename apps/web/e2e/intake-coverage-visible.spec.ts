@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test';
 import { gotoApp } from './fixtures/app';
-import { hartwellFile, uploadPackage, waitForChecks } from './fixtures/package';
+import { coverageLine, hartwellFile, uploadPackage, waitForChecks } from './fixtures/package';
 
-// Intake Phase 3 track 3b (AC-I17): the coverage line shows in the Findings header and the gate
-// popover with the same text as the Package lens line.
+// Intake Phase 3 track 3b (AC-I17): the coverage line shows in the gate popover with the same text
+// as the package summary on Documents (the Findings header line and the Package lens are gone).
 test.describe('intake-coverage-visible', () => {
-  test('should show the same partial coverage line in header, popover and lens', async ({
+  test('should show the same partial coverage line in the gate popover and on Documents', async ({
     page,
   }) => {
     await gotoApp(page);
@@ -14,15 +14,12 @@ test.describe('intake-coverage-visible', () => {
       fund: 'Fund III',
     });
     await waitForChecks(page);
-    const header = page.getByTestId('findings-coverage-line');
-    await expect(header).toBeVisible();
-    await expect(header).toHaveText(/^Coverage: partial/);
-    const text = (await header.textContent()) ?? '';
-    await page.getByTestId('gate-button').click();
-    await expect(page.getByTestId('gate-coverage-line')).toHaveText(text);
+    const popover = await coverageLine(page);
+    await expect(popover).toBeVisible();
+    await expect(popover).toHaveText(/^Coverage: partial/);
+    const text = (await popover.textContent()) ?? '';
     await page.keyboard.press('Escape');
-    await page.getByTestId('nav-structure').click();
-    await page.getByTestId('structure-lens-terms').click();
-    await expect(page.getByTestId('package-lens-line')).toHaveText(text);
+    await page.getByTestId('nav-documents').click();
+    await expect(page.getByTestId('package-summary-line')).toHaveText(text);
   });
 });

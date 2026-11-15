@@ -32,7 +32,7 @@ test.describe('variance-gate-two-states', () => {
     }
     await expect(gate).toContainText('Blocked · 1');
     // "unclear" keeps it blocking
-    await gotoQuestions(page);
+    await gotoQuestions(page, 'gp');
     const q = page.locator('[data-testid="counsel-row"][data-owner="gp"]').first();
     await recordAnswer(page, q, { option: 'unclear' });
     await expect(q).toHaveAttribute('data-state', 'unclear');

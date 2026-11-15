@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { gotoApp, rowsLoc } from './fixtures/app';
 import {
+  counselRow,
   EXPECT,
   exportDocxText,
   findingByQuote,
@@ -8,6 +9,7 @@ import {
   gotoCounsel,
   markCounsel,
   openFund,
+  openRequest,
   priorItem,
   seedFundI,
   trackOpenRouter,
@@ -79,7 +81,7 @@ test.describe('memory-prior-answer', () => {
     const { text } = await exportDocxText(page);
     expect(text).toContain(edited.quote);
     for (const f of answered) expect(text).not.toContain(f.quote);
-    expect(text).toContain('1 question for counsel');
+    expect(text).toContain('1 question for Counsel');
   });
 
   test('awaiting counsel from fund I is not re-sent: it stays out of the sheet', async ({
@@ -100,17 +102,12 @@ test.describe('memory-prior-answer', () => {
     ]);
     await openFund(page, 'fund-II');
     await markCounsel(page, n2.id);
-    await gotoCounsel(page);
+    await gotoCounsel(page, null);
     await page.getByTestId('counsel-prior-toggle').click();
     await expect(priorItem(page, n1.id)).toHaveAttribute('data-kind', 'awaiting');
-    await page.getByTestId('counsel-export').click();
-    await expect(page.getByTestId('export-left-out')).toContainText(
-      'awaiting counsel, Demo Fund I',
-    );
-    await expect(
-      page.locator(`[data-testid="export-item"][data-finding-id="${n1.id}"]`),
-    ).toHaveCount(0);
-    await page.getByTestId('export-close').click();
+    // the awaiting item is not a question of this request, so it is not in the sheet
+    await openRequest(page);
+    await expect(counselRow(page, n1.id)).toHaveCount(0);
     const { text } = await exportDocxText(page);
     expect(text).toContain(n2.quote);
     expect(text).not.toContain(n1.quote);
