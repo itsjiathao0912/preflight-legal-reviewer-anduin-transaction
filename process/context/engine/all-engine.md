@@ -164,6 +164,16 @@ Source of truth: `process/features/variance-management/active/variance-mvp_17-10
 - **Known gaps:** impact precision on real documents is unproven (labelled "uncertain"; backlog `variance-impact-real-sample-ground-truth`).
 - Gate result: core 3158 (+3 skip); 18 `variance-*` tokens, see `process/context/tests/all-tests.md`.
 
+## llm-defect-detection additions (`llm/`; commits b683b8c, dded9c7, d6a4e5d, 22-10-26)
+
+Plan and report: `process/general-plans/completed/llm-defect-detection_22-10-26/` (`llm-defect-detection_REPORT_22-10-26.md`).
+
+- **Prompt versions:** `clause-judgment@2` (schema `clause-judgment.s1` unchanged; the system prompt now includes `REVIEW_PLAYBOOK`) and `reference-target@2` (schema `reference-target.s2`, model-side schema `reference_target_v2`). Both are pinned in the Worker byte-parity digests; changing either prompt re-keys recordings and needs a deliberate digest re-pin.
+- **Playbook** (`llm/playbook.ts`, `REVIEW_PLAYBOOK`, at most 10,000 chars): defect kinds, six NOT-A-DEFECT items (statute/CFR citations, W-8 "Complete Part V", terms defined by reference to PPM/Memorandum/Bylaws and similar) and synthetic examples X1-X6. It must not contain real ground-truth quotes (`playbook.test.ts`).
+- **Reference-pairs resolver** (`llm/reference-pairs.ts`, `buildReferencePairs`): finds pointer sentences ("Section E", "Part C", lettered headings), resolves each label to a heading entry in the same document, and builds one pair per (pointer, label). A pair is at most 1000 chars with the pointer sentence as an exact prefix, one TARGET block and an optional `[NOTE: ...]` line (other labels, duplicate-label count and the rule used to pick one). Rules: top-level entries win, lettered nested `field` blocks are fallback only, short prefixed headings (block at most 200 chars) count as headings, qualified sub-references (`Part A of Section I`, `Exhibit C, Section I`) and external statute/form references are not pointers; at most 40 pairs per document. A label with no target shows `NOT FOUND`.
+- **Task** (`llm/tasks/reference-target.v1.ts`, id `reference-target`, in `TASKS` and `AI_TASK_IDS`): one item per excerpt with `label`, `pointer_addresses`, `target_is_for` and `verdict` (match / mismatch / unclear) generated before the finding text; `validate()` keeps only `mismatch` items with enough confidence. The quote must be the pointer sentence; a quote from the target text fails the verify chain with `quote_not_found`. The contracts snapshot gained only the `reference-target` task enum value.
+- **Known limits:** it finds pointer-shaped defects only. Absence defects (selector vs instruction, cover vs detail, per-investor contradictions) need new detectors (backlog F2-F4). Held-out precision is unproven (F1).
+
 ## Gate commands (no `--` under pnpm 11.13.1)
 
 `pnpm --filter @aduin/core test` | `test:golden` | `test:property` | `test:corpus` | `test:vectors` | `test security` | `test contracts`, plus `pnpm typecheck && pnpm lint && pnpm guard:cf && pnpm secrets:scan`. Phase 01 results: 217 / 44 / 29 / 13 / 38 / 16 / 34 tests green; after Phase 05 the whole core suite is 51 files / 355 tests; after Phase 07 and 09 it is 73 files / 501 tests (golden 67); `--passWithNoTests` removed so an unmatched token exits 1.

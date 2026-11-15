@@ -8,7 +8,7 @@ feature: none
 # LLM defect detection upgrade (grounded in verified EDGAR defects)
 
 Date: 22-10-26
-Status: CODE DONE (22-10-26 EXECUTE: steps 1-8 done, 25 offline gates green); AC10 live RED (recall 1 of 3) -> CONDITIONAL, backlog F1
+Status: COMPLETE_WITH_GAPS (22-10-26): all ACs met after EVL cycle 1 (`reference-target@2`, AC10 live 3 of 3), 26 offline gates green, deployed f7b25f68; gaps in backlog F1, F7b, F8, F9. Archived to completed/. Closeout: `llm-defect-detection_REPORT_22-10-26.md`
 Complexity: COMPLEX (single plan, 8 steps; not a phase program)
 
 ## Overview

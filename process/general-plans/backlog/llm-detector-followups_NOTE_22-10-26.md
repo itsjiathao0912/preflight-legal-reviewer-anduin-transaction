@@ -10,7 +10,7 @@ metadata:
 
 # LLM detector follow-ups (from llm-defect-detection_22-10-26)
 
-**Status:** open. Source plan: `process/general-plans/active/llm-defect-detection_22-10-26/llm-defect-detection_PLAN_22-10-26.md`.
+**Status:** open. Source plan: `process/general-plans/completed/llm-defect-detection_22-10-26/llm-defect-detection_PLAN_22-10-26.md`.
 
 | # | Follow-up | Why it is not in the plan |
 |---|---|---|
@@ -22,3 +22,5 @@ metadata:
 | F6 | Third Point and unlettered-block cases: "Co-Investor block has no letter" (Franklin 4A and 4B). | Structurer labeling issue. |
 | F7 | RESOLVED 22-10-26 (pre-deploy): `ai-resume`, `ai-no-duplicates` and `variance-ai-never-gates` now answer `task: 'reference-target'` with a clean result and count `/api/ai` calls per task (helpers `isRefTarget`, `callsOf`, `noRefTargetFindings` in `apps/web/e2e/fixtures/ai.ts`). Root cause was the tests, not the product: the two-pass lane already sends no reference-target after a failed clause-judgment call and runs each pass once per attempt. All 5 tests pass. AI-vs-AI dedupe: still none added (open). | - |
 | F7b | Harness drift found while closing F7 (not caused by this plan): 0c3a6a2 replaced the single-sample picker (`sample-option`) with demo packages, so every spec using `openSample` in `apps/web/e2e/fixtures/app.ts` times out (e.g. `sample-zero-calls`, `provenance`, `auto-downgrade`, `ai-banners`, `csp-headers`, `ocr-unavailable`, `sample-picker-smoke`; about 48 specs import it). The two F7 specs moved to the new `uploadSample` helper (uploads the raw sample bytes, same doc hash; uploads auto-run AI so the 'Run AI on this sample' click is gone). Also failing for copy/screen drift: `counsel-sheet` ('3 requests · 2 items waiting'), `variance-intent-human-only` (no 'Questions' h1), `ai-banners` allowance. Fix: migrate the remaining specs, decide whether sample-only behavior (not_precomputed banner) still needs a test. | Out of scope for F7; test-breakage, product unchanged. |
+| F8 | 4 eslint errors in `scripts/src/bench/bench-defects.ts` (found at EVL; `pnpm lint` red for the scripts package). Fix the lint errors only, no behavior change. | Found after the final deploy; not a plan criterion. |
+| F9 | Stack slice smoke `apps/web/e2e/slice.spec.ts` fails: the welcome screen (added in dded9c7) overlays the doc switcher, so the click times out. Fix: dismiss the welcome screen in the spec (or use the new `uploadSample` helper), then re-run `SLICE_BASE_URL=... playwright test --project=stack`. | Test-breakage from another session's UI change; product unchanged. |
