@@ -315,6 +315,21 @@
   background: var(--fv2-ai-bg);
   color: var(--fv2-ai-fg);
 }
+.fv2-tag-ok {
+  background: var(--ok-bg);
+  color: var(--ok-fg);
+}
+.fv2-tag-fix {
+  background: var(--fix-bg);
+  color: var(--fix-fg);
+}
+.fv2-hist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
 
 /* ---------- expanded body ---------- */
 .fv2-body {

@@ -193,6 +193,7 @@ export function QuestionRow({
   candidate,
   questionId,
   baseline,
+  asked,
   onToggle,
   onMode,
 }: {
@@ -207,6 +208,8 @@ export function QuestionRow({
   questionId?: string | undefined;
   /** Variance baseline name for the "Changed since …" short title. */
   baseline?: string | null | undefined;
+  /** Rounds this question was sent in; 2+ while still open shows "Asked N×". */
+  asked?: number | undefined;
   onToggle: () => void;
   onMode: (m: RowMode) => void;
 }) {
@@ -287,6 +290,14 @@ export function QuestionRow({
             </span>
           ) : null}
           {title}
+          {asked && asked >= 2 && state !== 'answered' ? (
+            <>
+              {' '}
+              <span className="tag t-warn" data-testid="question-asked-times">
+                Asked {asked}×
+              </span>
+            </>
+          ) : null}
         </span>
         <span className="qt-who">
           <span className="sr">Who: </span>

@@ -15,7 +15,7 @@ import { buildSheet, wordingFor } from '../counsel/sheet-model';
 import { usePackageView } from '../package/package-view';
 import { itemNeedsAnswer, OWNER_LABEL, OWNER_ORDER } from '../variance/owner-groups';
 import { useVariance } from '../variance/variance-store';
-import { aboutLine, requestText } from './request-model';
+import { aboutLine, requestText, shortDay } from './request-model';
 import { useRequests } from './request-store';
 import { RequestStatusTag } from './RequestStatusTag';
 import { useOwnerRequests } from './use-requests';
@@ -47,7 +47,9 @@ function Drawer({ owner }: { owner: Owner }) {
   const openDrawer = useRequests((s) => s.openDrawer);
   const close = useRequests((s) => s.close);
   const setMeta = useRequests((s) => s.setMeta);
-  const markSent = useRequests((s) => s.markSent);
+  const markSentRaw = useRequests((s) => s.markSent);
+  const addExtra = useRequests((s) => s.addExtra);
+  const removeExtra = useRequests((s) => s.removeExtra);
   const focus = useRequests((s) => s.focus);
   const memory = useReview((s) => s.memory);
   const showToast = useReview((s) => s.showToast);
@@ -118,6 +120,14 @@ function Drawer({ owner }: { owner: Owner }) {
   };
   const openQs = req.questions.filter(itemNeedsAnswer);
   const docs = owner === 'gp' ? groups : [];
+  const markSent = (o: Owner) =>
+    markSentRaw(
+      o,
+      req.questions.length,
+      req.questions.filter(itemNeedsAnswer).map((q) => q.key),
+    );
+  const nQs = req.questions.length + req.extra.length;
+  const nextDraft = req.round > 0 && nQs > req.sentCount;
   const nDocs = docs.reduce((n, g) => n + g.docs.length, 0);
   const about = aboutLine(doc);
   const defaultBy = doc?.firmName ? `Counsel, ${doc.firmName}` : 'Counsel';
@@ -135,6 +145,7 @@ function Drawer({ owner }: { owner: Owner }) {
         answer: itemNeedsAnswer(q) ? null : q.answer,
       })),
       groups: docs,
+      extra: req.extra,
     });
     try {
       await navigator.clipboard.writeText(text);
@@ -184,7 +195,7 @@ function Drawer({ owner }: { owner: Owner }) {
     }
   };
 
-  const nothing = !openQs.length && !nDocs;
+  const nothing = !openQs.length && !nDocs && !req.extra.length;
 
   return (
     <aside
@@ -223,13 +234,26 @@ function Drawer({ owner }: { owner: Owner }) {
       </div>
       <div className="rq-body" role="tabpanel" aria-labelledby="rq-title">
         <div className="rq-status">
-          <RequestStatusTag
-            status={req.status}
-            overdue={req.overdue}
-            sentAt={req.sentAt}
-            testId="request-status"
-          />
-          {req.counts.total ? (
+          {nextDraft ? (
+            <>
+              <span className="tag t-st" data-testid="request-status" data-status="draft">
+                Round {req.round + 1} · draft
+              </span>
+              <span className="mut" data-testid="request-last-round">
+                Round {req.round} sent {req.sentAt ? shortDay(req.sentAt) : ''} ·{' '}
+                {req.counts.answered} of {req.counts.total} answered
+              </span>
+            </>
+          ) : (
+            <RequestStatusTag
+              status={req.status}
+              overdue={req.overdue}
+              sentAt={req.sentAt}
+              round={req.round}
+              testId="request-status"
+            />
+          )}
+          {req.counts.total && !nextDraft ? (
             <span className="mut">
               {req.counts.answered} of {req.counts.total} answered
             </span>
@@ -268,9 +292,9 @@ function Drawer({ owner }: { owner: Owner }) {
         </dl>
         <section aria-labelledby="rq-qh">
           <h3 id="rq-qh" className="rq-h">
-            Questions <span className="n">{req.questions.length}</span>
+            Questions <span className="n">{nQs}</span>
           </h3>
-          {req.questions.length ? (
+          {req.questions.length || req.extra.length ? (
             <ul className="rows qt-rows rq-qs" data-testid="request-questions">
               {req.questions.map((q, i) => (
                 <QuestionRow
@@ -288,7 +312,26 @@ function Drawer({ owner }: { owner: Owner }) {
                     setMode('view');
                   }}
                   onMode={setMode}
+                  asked={req.asked[q.key]}
                 />
+              ))}
+              {req.extra.map((x, i) => (
+                <li key={x.id} className="rq-extra" data-testid="request-extra">
+                  <span className="mut">{req.questions.length + i + 1}.</span>
+                  <div>
+                    {x.where ? <small className="mut">{x.where} · </small> : null}
+                    <span>{x.question}</span> <span className="tag t-st">Added by you</span>
+                    {x.quote ? <q>{x.quote}</q> : null}
+                  </div>
+                  <button
+                    type="button"
+                    className="btn"
+                    aria-label="Remove question"
+                    onClick={() => removeExtra(owner, x.id)}
+                  >
+                    <Icon name="x" />
+                  </button>
+                </li>
               ))}
             </ul>
           ) : (
@@ -298,6 +341,13 @@ function Drawer({ owner }: { owner: Owner }) {
                 : `No questions yet. Use Ask owner on a change for the ${OWNER_LABEL[owner]}.`}
             </p>
           )}
+          <AddQuestion
+            round={req.round + 1}
+            onAdd={(q) => {
+              addExtra(owner, q);
+              showToast('Question added.');
+            }}
+          />
         </section>
         {owner === 'gp' ? (
           <section aria-labelledby="rq-dh" data-testid="request-documents">
@@ -370,7 +420,7 @@ function Drawer({ owner }: { owner: Owner }) {
             type="button"
             className="btn pri"
             data-testid="request-mark-sent"
-            disabled={nothing || !!req.sentAt}
+            disabled={nothing || (req.round > 0 && !nextDraft)}
             onClick={() => {
               markSent(owner);
               showToast(
@@ -379,10 +429,88 @@ function Drawer({ owner }: { owner: Owner }) {
             }}
           >
             <Icon name="check" />
-            {req.sentAt ? 'Sent' : 'Mark as sent'}
+            {req.round === 0
+              ? 'Mark as sent'
+              : nextDraft
+                ? `Send round ${req.round + 1}`
+                : `Round ${req.round} sent`}
           </button>
         ) : null}
       </footer>
     </aside>
+  );
+}
+
+/** "+ Add question": a small inline form for a question the checks did not raise. */
+function AddQuestion({
+  round,
+  onAdd,
+}: {
+  round: number;
+  onAdd: (q: { where: string; quote: string; question: string }) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [where, setWhere] = useState('');
+  const [quote, setQuote] = useState('');
+  const [question, setQuestion] = useState('');
+  const reset = () => {
+    setWhere('');
+    setQuote('');
+    setQuestion('');
+    setOpen(false);
+  };
+  if (!open)
+    return (
+      <button
+        type="button"
+        className="btn rq-add"
+        data-testid="request-add-question"
+        onClick={() => setOpen(true)}
+      >
+        + Add question
+      </button>
+    );
+  return (
+    <form
+      className="rq-addf"
+      data-testid="request-add-form"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!question.trim()) return;
+        onAdd({ where, quote, question });
+        reset();
+      }}
+    >
+      <input
+        type="text"
+        maxLength={200}
+        aria-label="Where"
+        placeholder="Where · e.g. Section 12"
+        value={where}
+        onChange={(e) => setWhere(e.target.value)}
+      />
+      <textarea
+        maxLength={2000}
+        aria-label="Quote"
+        placeholder="Paste the sentence from the document"
+        value={quote}
+        onChange={(e) => setQuote(e.target.value)}
+      />
+      <textarea
+        maxLength={2000}
+        aria-label="Question"
+        placeholder="Your question · options A / B (optional)"
+        value={question}
+        onChange={(e) => setQuestion(e.target.value)}
+      />
+      <div className="rq-addb">
+        <button type="submit" className="btn pri" disabled={!question.trim()}>
+          Add to round {round}
+        </button>
+        <button type="button" className="btn" onClick={reset}>
+          Cancel
+        </button>
+      </div>
+    </form>
   );
 }

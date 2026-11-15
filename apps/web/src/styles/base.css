@@ -335,6 +335,18 @@ nav.snav ul {
 .gate .gn {
   display: none;
 }
+.gate .gwhere {
+  display: block;
+  font-weight: 400;
+  font-size: 12px;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app.rail .gate .gwhere {
+  display: none;
+}
 .app.rail .gate {
   grid-template-columns: 1fr;
   justify-items: center;

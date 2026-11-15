@@ -32,7 +32,30 @@ export interface RequestMeta {
   neededBy?: string;
   /** Epoch ms when the request was sent (Mark as sent, or Share link / export for counsel). */
   sentAt?: number;
+  /** Rounds sent so far (0 = never sent). Old data with `sentAt` but no round reads as round 1. */
+  round?: number;
+  /** Number of questions in the request at the last send (new ones after it form the next round). */
+  sentCount?: number;
+  /** Times each question key was included in a send ("Asked 2×"). */
+  asked?: Record<string, number>;
+  /** Questions the analyst added by hand (local only, not part of the gate). */
+  extra?: ExtraQuestion[];
 }
+
+export interface ExtraQuestion {
+  id: string;
+  where: string;
+  quote: string;
+  question: string;
+  at: number;
+}
+
+/** Rounds sent: the stored round, else 1 when a send date exists. */
+export const roundOf = (m: RequestMeta | undefined): number => m?.round ?? (m?.sentAt ? 1 : 0);
+
+/** "20 Oct". */
+export const shortDay = (ms: number): string =>
+  new Date(ms).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
 export interface RequestCounts {
   /** Questions for this owner. */
@@ -211,17 +234,24 @@ export interface LetterInput {
   neededBy: string;
   questions: readonly { text: string; quote: string; loc: string; answer: string | null }[];
   groups: readonly RequestDocGroup[];
+  extra?: readonly ExtraQuestion[];
 }
 
 /** Plain-text request for e-mail: header, open questions, documents to send. */
 export function requestText(x: LetterInput): string {
   const lines = [`To: ${x.to}`, `About: ${x.about}`, `Needed by: ${fmtDay(x.neededBy)}`, ''];
   const open = x.questions.filter((q) => !q.answer);
-  if (open.length) {
+  const extra = x.extra ?? [];
+  if (open.length || extra.length) {
     lines.push(`Questions for ${OWNER_LABEL[x.owner]}`);
     open.forEach((q, i) => {
       lines.push(`${i + 1}. ${q.text}`);
       if (q.quote) lines.push(`   "${q.quote}" (${q.loc})`);
+    });
+    extra.forEach((q, i) => {
+      lines.push(`${open.length + i + 1}. ${q.question}`);
+      if (q.quote) lines.push(`   "${q.quote}"${q.where ? ` (${q.where})` : ''}`);
+      else if (q.where) lines.push(`   (${q.where})`);
     });
     lines.push('');
   }

@@ -236,7 +236,12 @@ function RequestsScreen() {
                 const body = (
                   <>
                     <span className="who">{OWNER_LABEL[r.owner]}</span>
-                    <RequestStatusTag status={r.status} overdue={r.overdue} sentAt={r.sentAt} />
+                    <RequestStatusTag
+                      status={r.status}
+                      overdue={r.overdue}
+                      sentAt={r.sentAt}
+                      round={r.round}
+                    />
                     <span className="mut" data-testid="requests-row-answered">
                       {none ? '' : `${r.counts.answered} of ${r.counts.total} answered`}
                     </span>

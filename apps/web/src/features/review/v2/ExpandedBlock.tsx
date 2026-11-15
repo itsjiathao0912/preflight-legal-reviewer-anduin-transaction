@@ -10,6 +10,8 @@ import { EMPTY_DRAFTS, wordingFor } from '../../counsel/sheet-model';
 import { fileLabel, openPackageFile } from '../../package/open-file';
 import { usePackageView } from '../../package/package-view';
 import { sourceFilesFor } from '../../package/source-files';
+import { useRequests } from '../../requests/request-store';
+import { shortDay } from '../../requests/request-model';
 import { memoryLabelText } from '../memory-labels';
 import type { Row } from '../model';
 import { reasonLabel } from '../reasons';
@@ -55,6 +57,26 @@ export function ExpandedBlock({ row, twin }: { row: Row; twin?: FindingView | un
   const hint = readings.length ? 'Counsel will choose A or B' : 'Counsel will confirm the wording';
   const reconfirm = row.label === 'dismissed_reconfirm' && row.status !== 'dismissed';
   const prior = row.label !== 'new' ? row.prior : undefined;
+  // rounds: when this finding's counsel question was sent, and what counsel chose before
+  const docKey = useReview((s) => (s.doc ? (s.doc.packageId ?? s.doc.id) : null));
+  const loadRequests = useRequests((s) => s.load);
+  useEffect(() => loadRequests(docKey), [docKey, loadRequests]);
+  const counselMeta = useRequests((s) => s.meta.counsel);
+  const askedTimes = counselMeta?.asked?.[f.id] ?? 0;
+  const askedAt = askedTimes ? counselMeta?.sentAt : undefined;
+  const memChoice =
+    row.label === 'already_answered' || row.label === 'awaiting_counsel'
+      ? (row.prior?.counsel_option ?? null)
+      : null;
+  const choice = row.triage?.counselAnswer ?? memChoice;
+  const choiceIdx = choice ? choice.charCodeAt(0) - 65 : -1;
+  const choiceText = choice
+    ? `counsel chose ${choice}${readings[choiceIdx] ? ` “${readings[choiceIdx]}”` : ''}`
+    : '';
+  const historyText = [askedAt ? `Asked ${shortDay(askedAt)}` : '', choiceText]
+    .filter(Boolean)
+    .join(' · ');
+  const askedAgain = askedTimes >= 2 && !row.triage?.counselAnswer;
   const dismissedReason = row.status === 'dismissed' ? row.triage?.reasonCode : undefined;
   return (
     <>
@@ -136,6 +158,16 @@ export function ExpandedBlock({ row, twin }: { row: Row; twin?: FindingView | un
             'Counsel will confirm the intended wording.'
           )}
         </p>
+        {historyText || askedAgain ? (
+          <p className="fv2-hist" data-testid="question-history">
+            {historyText ? <span className="dim">{historyText}</span> : null}
+            {askedAgain ? (
+              <span className="fv2-tag fv2-tag-fix" data-testid="question-asked-times">
+                Asked {askedTimes}×
+              </span>
+            ) : null}
+          </p>
+        ) : null}
       </details>
       <FindingCounselBlock row={row} />
       <details className="fv2-details" data-testid="finding-details">

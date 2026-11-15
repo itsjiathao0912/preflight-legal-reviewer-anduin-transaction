@@ -81,6 +81,11 @@ export function AccordionRow({
             {f.loc}
           </span>
         ) : null}
+        {row.label === 'already_answered' ? (
+          <span className="fv2-tag fv2-tag-ok" data-testid="answer-kept-tag">
+            {row.prior?.fund_name ? `Answer kept from ${row.prior.fund_name}` : 'Answer kept'}
+          </span>
+        ) : null}
         {change ? <OwnerChip r={row} meta={meta} /> : null}
         <StatusTag row={row} />
         {!change && f.detector_kind === 'ai' ? (

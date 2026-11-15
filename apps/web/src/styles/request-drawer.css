@@ -163,10 +163,9 @@
 .rq-row {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(110px, 1fr) minmax(150px, 1.4fr) minmax(110px, 1fr) minmax(
-      110px,
-      1fr
-    ) minmax(120px, 1fr);
+  grid-template-columns:
+    minmax(110px, 1fr) minmax(150px, 1.4fr) minmax(110px, 1fr) minmax(110px, 1fr)
+    minmax(120px, 1fr);
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
@@ -188,4 +187,45 @@ button.rq-row:hover {
 }
 .rq-row .who {
   font-weight: 600;
+}
+/* Rounds (22-10-26): analyst-added questions and the "+ Add question" form. */
+.rq-extra {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: start;
+  padding: 10px 12px;
+  border-top: 1px solid var(--step);
+  font-size: 14px;
+}
+.rq-extra q {
+  display: block;
+  margin-top: 4px;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+.rq-add {
+  margin-top: 10px;
+}
+.rq-addf {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+.rq-addf input,
+.rq-addf textarea {
+  font: inherit;
+  font-size: 13px;
+  border: 1px solid var(--step);
+  border-radius: var(--r, 4px);
+  padding: 6px 8px;
+  background: var(--card);
+}
+.rq-addf textarea {
+  min-height: 52px;
+  resize: vertical;
+}
+.rq-addb {
+  display: flex;
+  gap: 8px;
 }

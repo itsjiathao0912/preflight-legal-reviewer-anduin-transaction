@@ -179,7 +179,7 @@ describe('request drawer', () => {
     mountAll();
     click(q('request-mark-sent'));
     expect(q('request-status')?.dataset.status).toBe('sent');
-    expect(q('request-status')?.textContent).toMatch(/^Sent /);
+    expect(q('request-status')?.textContent).toMatch(/^Round 1 · sent /);
     expect((q('request-mark-sent') as HTMLButtonElement).disabled).toBe(true);
     const stored = JSON.parse(window.localStorage.getItem('requests:v1:d1') ?? '{}') as {
       gp?: { sentAt?: number };

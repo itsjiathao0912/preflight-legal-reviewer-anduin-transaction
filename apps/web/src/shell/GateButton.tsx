@@ -9,6 +9,30 @@ import { usePackageView } from '../features/package/package-view';
 import { useReviewView } from '../features/review/use-review-view';
 import { useReview } from '../state/review';
 
+/** "Sections 2, 4, 7A, 9" (max 4, then "+N") from the blocking findings' locations. */
+export function gateSectionsLine(locs: readonly string[]): string {
+  const secs = [
+    ...new Set(
+      locs.map((l) => /^sections?\s+(.+)$/i.exec(l.trim())?.[1]?.trim() ?? '').filter(Boolean),
+    ),
+  ];
+  // Natural document order: number, then letter suffix; unparseable last (stable sort keeps order).
+  const key = (s: string) => {
+    const m = /^(\d+)([A-Za-z]*)/.exec(s);
+    return m ? { n: Number(m[1]), x: m[2]!.toUpperCase() } : null;
+  };
+  secs.sort((a, b) => {
+    const ka = key(a);
+    const kb = key(b);
+    if (!ka || !kb) return ka ? -1 : kb ? 1 : 0;
+    return ka.n - kb.n || (ka.x < kb.x ? -1 : ka.x > kb.x ? 1 : 0);
+  });
+  if (!secs.length) return '';
+  const shown = secs.slice(0, 4).join(', ');
+  const more = secs.length > 4 ? ` +${secs.length - 4}` : '';
+  return `${secs.length === 1 ? 'Section' : 'Sections'} ${shown}${more}`;
+}
+
 export function GateButton() {
   const open = useGatePopover((s) => s.open);
   const setOpen = useGatePopover((s) => s.setOpen);
@@ -31,6 +55,12 @@ export function GateButton() {
     pending && base.state === 'ready'
       ? { ...base, className: 'gate pending', label: 'Checking changes' }
       : base;
+  const where =
+    v.state === 'blocked'
+      ? gateSectionsLine(
+          gate.reasons.map((r) => rows.find((x) => x.f.id === r.findingKey)?.f.loc ?? ''),
+        )
+      : '';
   return (
     <Popover
       open={open}
@@ -51,6 +81,11 @@ export function GateButton() {
           <Icon name={v.icon} />
           <span className="lbl" aria-live="polite">
             {v.label}
+            {where ? (
+              <small className="gwhere" data-testid="gate-sections">
+                {where}
+              </small>
+            ) : null}
           </span>
           {v.state === 'blocked' ? (
             <span className="gn" aria-hidden="true">

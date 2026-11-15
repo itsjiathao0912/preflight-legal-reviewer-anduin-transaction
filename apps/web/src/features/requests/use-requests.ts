@@ -16,6 +16,8 @@ import {
   type RequestCounts,
   type RequestDocGroup,
   type RequestStatus,
+  roundOf,
+  type ExtraQuestion,
 } from './request-model';
 import { useRequests } from './request-store';
 
@@ -24,6 +26,12 @@ export interface OwnerRequest {
   to: string;
   neededBy: string;
   sentAt: number | undefined;
+  /** Rounds sent (0 = never). */
+  round: number;
+  /** Questions (incl. added) at the last send. */
+  sentCount: number;
+  asked: Record<string, number>;
+  extra: ExtraQuestion[];
   counts: RequestCounts;
   waiting: number;
   status: RequestStatus;
@@ -59,6 +67,10 @@ export function useOwnerRequests() {
           to: m?.to?.trim() || defaultTo(owner, doc),
           neededBy,
           sentAt: m?.sentAt,
+          round: roundOf(m),
+          sentCount: m?.sentCount ?? (roundOf(m) ? counts.total + (m?.extra?.length ?? 0) : 0),
+          asked: m?.asked ?? {},
+          extra: m?.extra ?? [],
           counts,
           waiting: waitingOf(counts),
           status,
