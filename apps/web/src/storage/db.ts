@@ -86,6 +86,62 @@ export interface DecisionRow extends ActiveDecision {
   seq: number;
 }
 
+/** Projects v1 role ids (advisory, client-only). */
+export type ProjectRole = 'counsel' | 'analyst' | 'advisor' | 'approver';
+export interface ProjectMember {
+  name: string;
+  /** Personal data: stays in this table only (never in the URL, logs or analytics). */
+  email: string;
+  role: ProjectRole;
+}
+export type ProjectGate = 'blocked' | 'ready' | 'not_started';
+export interface ProjectSummary {
+  gate: ProjectGate;
+  openItems: number;
+  lastActivity: number;
+}
+/** Projects v1: a client-only project (purged 30 days after its last update). */
+export interface StoredProject {
+  id: string;
+  name: string;
+  description: string;
+  members: ProjectMember[];
+  createdAt: number;
+  updatedAt: number;
+  docIds: string[];
+  seeded?: boolean;
+  /** Seeded projects: the bundled demo package opened on entry. */
+  demoPackageId?: string;
+  /** Static list summary shown until a real document is opened. */
+  summary?: ProjectSummary;
+}
+
+/** Notifications v1: the five client-only project events. */
+export type NotificationType =
+  | 'answers'
+  | 'member_added'
+  | 'new_version'
+  | 'gate_ready'
+  | 'marked_ready';
+/** Notifications v1: one event row (names only, never emails; read state per View-as role). */
+export interface StoredNotification {
+  id: string;
+  dedupeKey: string;
+  type: NotificationType;
+  projectId: string;
+  forRoles: ProjectRole[];
+  actor: { name: string; role?: ProjectRole };
+  /** The sentence shown in the row. */
+  title: string;
+  target: 'questions' | 'findings_changes';
+  count?: number;
+  /** answers events: the answer keys this batch covered (next batch counts only new ones). */
+  answerKeys?: string[];
+  createdAt: number;
+  readByRole: Partial<Record<ProjectRole, number>>;
+  seeded?: boolean;
+}
+
 export class AppDb extends Dexie {
   documents!: Table<StoredDocument, string>;
   parsedModels!: Table<ParsedModel, string>;
@@ -95,6 +151,8 @@ export class AppDb extends Dexie {
   allowance!: Table<AllowanceRow, string>;
   decisions!: Table<DecisionRow, string>;
   packages!: Table<StoredPackage, string>;
+  projects!: Table<StoredProject, string>;
+  notifications!: Table<StoredNotification, string>;
 
   constructor(name = 'aduin-web') {
     super(name);
@@ -111,6 +169,14 @@ export class AppDb extends Dexie {
     this.version(2).stores({
       packages: '&id, firmId, createdAt',
       documents: '&id, createdAt, packageId',
+    });
+    // Projects v1 (additive): client-only projects table; existing tables untouched.
+    this.version(3).stores({
+      projects: '&id, updatedAt',
+    });
+    // Notifications v1 (additive): client-only notifications table; existing tables untouched.
+    this.version(4).stores({
+      notifications: '&id, &dedupeKey, projectId, createdAt',
     });
   }
 }
@@ -142,6 +208,28 @@ export async function purgeExpired(db: AppDb, now: number = Date.now()): Promise
       })
       .delete();
   });
+  return n;
+}
+
+/** Projects live longer than uploads (separate from the 24 h purge). */
+export const PROJECT_RETENTION_DAYS = 30;
+export const PROJECT_RETENTION_MS = PROJECT_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+
+/** Delete projects whose last update is at or past 30 days. Never touches other tables. */
+export async function purgeProjectsExpired(db: AppDb, now: number = Date.now()): Promise<number> {
+  const cutoff = now - PROJECT_RETENTION_MS;
+  return db.projects.where('updatedAt').belowOrEqual(cutoff).delete();
+}
+
+/** Delete notifications at or past 30 days and rows whose project no longer exists. */
+export async function purgeNotificationsExpired(
+  db: AppDb,
+  now: number = Date.now(),
+): Promise<number> {
+  const cutoff = now - PROJECT_RETENTION_MS;
+  let n = await db.notifications.where('createdAt').belowOrEqual(cutoff).delete();
+  const ids = new Set(await db.projects.toCollection().primaryKeys());
+  n += await db.notifications.filter((r) => !ids.has(r.projectId)).delete();
   return n;
 }
 

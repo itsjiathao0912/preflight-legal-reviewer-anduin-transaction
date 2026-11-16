@@ -12,6 +12,12 @@ import { useShare } from './features/counsel/counsel-share';
 import { isCounselMode } from './state/share-role';
 import { WelcomeScreen } from './features/welcome/WelcomeScreen';
 import { shouldShowWelcome } from './features/welcome/welcome-gate';
+import { ProjectsPage } from './features/projects/ProjectsPage';
+import { buildSeedProjects } from './features/projects/seed';
+import { enterProject } from './features/projects/enter-project';
+import { initialProjectsView } from './features/projects/initial-view';
+import { loadDemoPackages } from './features/open-document/demo-packages';
+import { activeProject, useProjects } from './state/projects';
 
 let restoreStarted = false;
 
@@ -62,8 +68,44 @@ function watchPackageAttach(): void {
   });
 }
 
+/** Projects v1: a document opened inside a project is remembered on that project. */
+let projectDocWatchStarted = false;
+function watchProjectDocs(): void {
+  if (projectDocWatchStarted) return;
+  projectDocWatchStarted = true;
+  useReview.subscribe((s, prev) => {
+    const id = s.doc?.id;
+    if (!id || id === prev.doc?.id) return;
+    if (useProjects.getState().view !== 'project') return;
+    useProjects.getState().attachDoc(id);
+  });
+}
+
+let startView: ReturnType<typeof initialProjectsView> | null = null;
+function startViewOnce(): ReturnType<typeof initialProjectsView> {
+  startView ??= initialProjectsView({
+    counsel: isCounselMode(),
+    pendingToken: !!useShare.getState().pendingToken,
+  });
+  return startView;
+}
+
 export function App() {
   const refreshAllowance = useSession((s) => s.refreshAllowance);
+  const [projectsEnabled] = useState(() => {
+    const v = startViewOnce();
+    useProjects.getState().setView(v.view);
+    return v.projectsEnabled;
+  });
+  const view = useProjects((s) => s.view);
+  const activeId = useProjects((s) => s.activeProjectId);
+  const [entered, setEntered] = useState<string | null>(null);
+  useEffect(() => {
+    if (!projectsEnabled || view !== 'project' || !activeId || activeId === entered) return;
+    setEntered(activeId);
+    const p = activeProject(useProjects.getState());
+    if (p) void enterProject(p, restoreOnStart).catch(() => undefined);
+  }, [projectsEnabled, view, activeId, entered]);
   useEffect(() => {
     // counsel share link: a counsel tab opens only the shared document and calls no analyst API;
     // a pending link skips the analyst restore (the join opens the shared document)
@@ -74,10 +116,31 @@ export function App() {
     }
     if (useShare.getState().pendingToken) return;
     watchPackageAttach();
-    void restoreOnStart().catch(() => undefined);
+    // the Projects page comes first: the last-doc restore waits until a project is entered
+    if (projectsEnabled) {
+      watchProjectDocs();
+      void useProjects
+        .getState()
+        .load(async () => buildSeedProjects(await loadDemoPackages()))
+        .then(() => {
+          // a reload inside a project returns to it (falls back to the list when it is gone)
+          if (useProjects.getState().view === 'projects') useProjects.getState().restoreActive();
+        })
+        .catch(() => undefined);
+    } else {
+      void restoreOnStart().catch(() => undefined);
+    }
     void refreshAllowance();
-  }, [refreshAllowance]);
+  }, [refreshAllowance, projectsEnabled]);
   const [welcome, setWelcome] = useState(() => shouldShowWelcome());
+  if (projectsEnabled && view === 'projects') {
+    return (
+      <>
+        <ProjectsPage onOpen={(id) => useProjects.getState().open(id)} />
+        {welcome && <WelcomeScreen onEnter={() => setWelcome(false)} />}
+      </>
+    );
+  }
   return (
     <>
       <AppShell />

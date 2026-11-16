@@ -62,7 +62,8 @@ describe('package-db-v2', () => {
 
     const db = new AppDb(name);
     await db.open();
-    expect(db.verno).toBe(2);
+    // Projects v1 added version 3 (additive): a v1 database upgrades to the latest version
+    expect(db.verno).toBeGreaterThanOrEqual(2);
     expect((await db.documents.get('d1'))?.name).toBe('a.htm');
     expect(await db.decisions.count()).toBe(1);
     await db.packages.put(pkgRow('p1', T0));

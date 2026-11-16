@@ -1,5 +1,5 @@
 import { PageIntro } from '../../components/ui/PageIntro';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '../../components/ui/icon';
 import { useReview } from '../../state/review';
 import { useSession } from '../../state/session';
@@ -19,6 +19,20 @@ import { ShareLine, useShareRules } from './ShareControls';
 import '../../styles/questions-table.css';
 import '../../styles/request-drawer.css';
 import { PriorCard } from './PriorCard';
+import {
+  activeProject,
+  canMarkReady,
+  MARK_READY_REASON,
+  useProjects,
+  type Project,
+} from '../../state/projects';
+import {
+  emitSafe,
+  onGateReady,
+  onMarkedReady,
+  type AppNotification,
+} from '../../state/notifications';
+import { isCounselMode } from '../../state/share-role';
 import { aiDraftRows, priorItems, questionRows } from './sheet-model';
 
 /** Header line: always three requests; waiting = open questions of every owner + GP documents. */
@@ -35,6 +49,30 @@ export function requestsMeta(waiting: number): string {
 export function CounselScreen() {
   // counsel share link v2: counsel mode never routes here (the shell shows Findings only)
   return <RequestsScreen />;
+}
+
+/** Notifications v1: emit only inside an open project, never in a counsel share tab. */
+function notifyProject(build: (p: Project) => AppNotification | null): void {
+  if (isCounselMode()) return;
+  const ps = useProjects.getState();
+  if (ps.view !== 'project') return;
+  const p = activeProject(ps);
+  if (p) emitSafe(() => build(p));
+}
+
+/** Gate Blocked -> Ready for the open document: ignores the first read and not-started docs. */
+function useGateNotifier(gateN: number, docId: string | null): void {
+  const prev = useRef<{ docId: string; n: number } | null>(null);
+  useEffect(() => {
+    if (!docId) {
+      prev.current = null;
+      return;
+    }
+    const last = prev.current;
+    prev.current = { docId, n: gateN };
+    if (!last || last.docId !== docId) return;
+    if (last.n > 0 && gateN === 0) notifyProject((p) => onGateReady(p, `${docId}:${Date.now()}`));
+  }, [gateN, docId]);
 }
 
 function RequestsScreen() {
@@ -58,6 +96,8 @@ function RequestsScreen() {
   const [answeringPrior, setAnsweringPrior] = useState<string | null>(null);
   const readyAt = useShare((s) => s.readyAt);
   const [readyBusy, setReadyBusy] = useState(false);
+  // Projects v1: advisory View-as gate (UI-only); only the Approver may mark ready
+  const roleAllowsReady = useProjects((s) => canMarkReady(s.viewAs));
   const { canShare } = useShareRules();
   useCounselPoll(canShare);
 
@@ -68,6 +108,7 @@ function RequestsScreen() {
   const qs = useMemo(() => questionRows(rows), [rows]);
   const prior = useMemo(() => priorItems(rows), [rows]);
   const gateN = view.gate.reasons.length;
+  useGateNotifier(gateN, phase === 'ready' ? (doc?.id ?? null) : null);
   const waiting = requests.reduce((n, r) => n + r.waiting, 0);
   const defaultBy = doc?.firmName ? `Counsel, ${doc.firmName}` : 'Counsel';
 
@@ -174,13 +215,21 @@ function RequestsScreen() {
               type="button"
               className="btn sm"
               data-testid="counsel-mark-ready"
-              disabled={gateN > 0 || phase !== 'ready' || readyBusy}
-              title={gateN > 0 ? 'Every critical item needs a counsel answer first' : undefined}
+              disabled={gateN > 0 || phase !== 'ready' || readyBusy || !roleAllowsReady}
+              title={
+                !roleAllowsReady
+                  ? MARK_READY_REASON
+                  : gateN > 0
+                    ? 'Every critical item needs a counsel answer first'
+                    : undefined
+              }
+              aria-describedby={roleAllowsReady ? undefined : 'counsel-ready-role-reason'}
               onClick={async () => {
-                if (!doc || gateN > 0) return;
+                if (!doc || gateN > 0 || !roleAllowsReady) return;
                 setReadyBusy(true);
                 try {
                   const out = await markReadyToDigitize({ doc, items, drafts });
+                  notifyProject((p) => onMarkedReady(p, doc.id));
                   showToast(
                     `Ready to digitize. Final answers downloaded.${out.note ? ` ${out.note}` : ''}`,
                   );
@@ -194,6 +243,15 @@ function RequestsScreen() {
               <Icon name="unlock" />
               Mark ready to digitize
             </button>
+            {roleAllowsReady ? null : (
+              <span
+                className="pj-ready-reason"
+                id="counsel-ready-role-reason"
+                data-testid="counsel-ready-role-reason"
+              >
+                {MARK_READY_REASON}
+              </span>
+            )}
           </div>
         ) : null}
       </header>

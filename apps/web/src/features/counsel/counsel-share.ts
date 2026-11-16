@@ -12,6 +12,8 @@ import { docRefOf } from '../open-document/demo-refs';
 import { useReview, type RemoteAnswer } from '../../state/review';
 import { useSession } from '../../state/session';
 import { isCounselMode, setCounselMode } from '../../state/share-role';
+import { activeProject, useProjects } from '../../state/projects';
+import { emitSafe, onAnswers, seenAnswerKeys, useNotifications } from '../../state/notifications';
 
 /**
  * Counsel share link state (counsel-share-link plan, 19-10-26).
@@ -230,7 +232,21 @@ export async function applySheet(sheet: CounselSheetResponse): Promise<void> {
   const review = useReview.getState();
   if (!review.doc || review.phase !== 'ready') return;
   if (isCounselMode()) review.mergeRemoteStates(sheet.questions, sheet.decisions);
-  await useReview.getState().mergeRemoteAnswers(remoteAnswers(sheet));
+  const answers = remoteAnswers(sheet);
+  await useReview.getState().mergeRemoteAnswers(answers);
+  notifyAnswers(answers);
+}
+
+/** Notifications v1: one "answered N questions" event per batch of new answers (project only). */
+function notifyAnswers(answers: readonly RemoteAnswer[]): void {
+  if (isCounselMode() || !answers.length) return;
+  const ps = useProjects.getState();
+  if (ps.view !== 'project') return;
+  const project = activeProject(ps);
+  if (!project) return;
+  emitSafe(() =>
+    onAnswers(project, answers, seenAnswerKeys(useNotifications.getState().items, project.id)),
+  );
 }
 
 /**

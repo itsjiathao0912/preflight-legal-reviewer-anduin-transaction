@@ -144,8 +144,8 @@ describe('variance-store', () => {
     });
     expect(s.result?.rulesVersion).toMatch(/^\d{4}\./);
     expect(s.result?.rulesHash8).toMatch(/^[0-9a-f]{8}$/);
-    // no Dexie version bump
-    expect(appDb()!.verno).toBe(2);
+    // no Dexie version bump from variance (3 = Projects v1, 4 = Notifications v1, both additive)
+    expect(appDb()!.verno).toBe(4);
   });
 
   it('drops a stale run when the baseline changes mid-run (run id)', async () => {

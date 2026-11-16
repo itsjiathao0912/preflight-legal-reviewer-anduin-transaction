@@ -11,6 +11,7 @@ import { NavGroup } from './NavGroup';
 import { StartFresh } from './StartFresh';
 import { useShare } from '../features/counsel/counsel-share';
 import { UnsyncedChip } from './UnsyncedChip';
+import { ProjectContext } from '../features/projects/ProjectContext';
 
 const GROUPS: { id: NavGroupId; label: string }[] = [
   { id: 'review', label: 'Review' },
@@ -57,6 +58,7 @@ export function Sidebar() {
           <Icon name="panel" />
         </button>
       </div>
+      {counselMode ? null : <ProjectContext />}
       {counselMode ? (
         <p className="dim sb-counsel" data-testid="counsel-mode-note">
           Shared review · answering as {counselName ?? 'Counsel'}

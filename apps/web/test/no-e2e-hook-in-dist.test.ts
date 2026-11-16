@@ -48,6 +48,8 @@ describe('no-e2e-hook-in-dist', () => {
     expect(prod.includes('useRealMemory')).toBe(false);
     // Phase 10: the e2e Turnstile site-key override must not ship either
     expect(prod.includes('__aduinTurnstileSiteKey')).toBe(false);
+    // Projects v1: the e2e opt-in key for the Projects page must not ship either
+    expect(prod.includes('e2e.projects')).toBe(false);
     // Variance Phase 02 (C1b): the variance delay / failure seam must not ship either
     expect(prod.includes('varianceDelayMs')).toBe(false);
     expect(prod.includes('varianceFail')).toBe(false);
